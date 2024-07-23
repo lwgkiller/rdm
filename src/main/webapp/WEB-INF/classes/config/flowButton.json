@@ -1,0 +1,18 @@
+{
+	task:[
+		{id:"btnApprove",type:"approve", name:"下一步",alias:"approve", iconCls:"icon-approve",script:"window.formFrame.projectApprove()"},
+		{id:"btnReject",type:"approve",name:"驳回",alias:"reject",iconCls:"icon-reject",script:"reject()"},
+		{id:"btnDiscard",type:"approve",name:"作废",alias:"discard",iconCls:"icon-discard",script:"discardInst()"},
+		{id:"btnFlowImg",type:"commons",name:"流程图",alias:"flowImg",iconCls:"icon-flowimg",script:"openTaskFlowImg()"},
+		{id:"btnHistory",type:"commons",name:"审批历史",alias:"history",iconCls:"icon-table",script:"openBpmOpinions()"},
+		{id:"btnClose",type:"commons",name:"关闭",alias:"close",iconCls:"icon-close",script:"CloseWindow"}
+	]
+,
+	inst:[
+		{id:"btnStart", name:"提交",alias:"start", iconCls:"icon-start",script:"startProcess"},
+		{id:"btnReject",name:"保存",alias:"save",iconCls:"icon-save",script:"saveDraft"},
+		{id:"btnPrint",name:"打印",alias:"print",iconCls:"icon-print",script:"formPrint"},
+		{id:"btnFlowimg",name:"流程图",alias:"flowimg",iconCls:"icon-flowimg",script:"openFlowImg"}
+	]
+}
+

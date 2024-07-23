@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.componentTest.core.dao.ComponentResourcesPlatformDataDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="queryWhereMasterDataListQuery">
+        <if test="@Ognl@isNotEmpty(platformName)">
+            AND business.platformName like CONCAT('%',#{platformName},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(ids)">
+            AND business.id IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+    <!---->
+    <select id="masterDataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        date_format(business.CREATE_TIME_, '%Y-%m-%d') AS CREATE_TIME_NAME,
+        os_user.FULLNAME_ AS CREATE_BY_NAME
+        FROM
+        component_test_resources_platform as business
+        LEFT JOIN os_user
+        ON business.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <include refid="queryWhereMasterDataListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countMasterDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        component_test_resources_platform as business
+        <where>
+            <include refid="queryWhereMasterDataListQuery"/>
+        </where>
+    </select>
+    <!---->
+    <select id="getMasterDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            date_format(business.CREATE_TIME_, '%Y-%m-%d') AS CREATE_TIME_NAME,
+            os_user.FULLNAME_                              AS CREATE_BY_NAME
+        FROM
+            component_test_resources_platform AS business
+            LEFT JOIN os_user
+                ON business.CREATE_BY_ = os_user.USER_ID_
+        WHERE business.id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteMasterData" parameterType="java.util.Map">
+        delete from component_test_resources_platform
+        <where>
+            <if test="@Ognl@isNotEmpty(ids)">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(ids)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="insertMasterData" parameterType="java.util.Map">
+        insert into component_test_resources_platform(
+        id,
+        orderNo,
+        platformName,
+        monthlyUtiRate,
+        remarks,
+        fileName,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{orderNo,jdbcType=VARCHAR},
+        #{platformName,jdbcType=VARCHAR},
+        #{monthlyUtiRate,jdbcType=VARCHAR},
+        #{remarks,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateMasterData" parameterType="java.util.Map">
+        UPDATE component_test_resources_platform
+        SET
+        orderNo=#{orderNo,jdbcType=VARCHAR},
+        platformName=#{platformName,jdbcType=VARCHAR},
+        monthlyUtiRate=#{monthlyUtiRate,jdbcType=VARCHAR},
+        remarks=#{remarks,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+</mapper>

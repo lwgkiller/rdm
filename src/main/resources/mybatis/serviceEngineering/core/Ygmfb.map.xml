@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.YgmfbDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="changjia !=null and changjia !=''">
+            AND business.changjia like CONCAT('%',#{changjia},'%')
+        </if>
+        <if test="ygType !=null and ygType !=''">
+            AND business.ygType like CONCAT('%',#{ygType},'%')
+        </if>
+        <if test="applyUser !=null and applyUser !=''">
+            AND business.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="ygMatNo !=null and ygMatNo !=''">
+            AND business.ygMatNo like CONCAT('%',#{ygMatNo},'%')
+        </if>
+        <if test="ygXinghao !=null and ygXinghao !=''">
+            AND business.ygXinghao like CONCAT('%',#{ygXinghao},'%')
+        </if>
+        <if test="ygMatDesc !=null and ygMatDesc !=''">
+            AND business.ygMatDesc like CONCAT('%',#{ygMatDesc},'%')
+        </if>
+        <if test="status !=null and status !=''">
+            AND bpm_inst.STATUS_ = #{status}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        service_engineering_ygmfb AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="query_where"></include>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_ygmfb AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="query_where"></include>
+        </where>
+    </select>
+    <!---->
+    <select id="queryFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from service_engineering_ygmfbfileinfo
+        where mainId IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <delete id="deleteBusinessFile" parameterType="java.util.Map">
+        delete from service_engineering_ygmfbfileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from service_engineering_ygmfb
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="queryDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM service_engineering_ygmfb AS business
+            LEFT JOIN os_user ON business.applyUserId = os_user.USER_ID_
+            LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+              AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+              AND os_rel_inst.DIM1_ = '1'
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_ygmfb(
+            id,
+            changjia,
+            ygType,
+            ygMatNo,
+            ygXinghao,
+            ygMatDesc,
+            mfbMatNo,
+            mfbMatDesc,
+            useDesc,
+            needTime,
+            receiverIds,
+            receivers,
+            remark,
+            applyUserId,
+            applyUser,
+            applyDepId,
+            applyDep,
+            bjgsfzrId,
+            bjgsfzr,
+            fwgcywyId,
+            fwgcywy,
+            fwgcfzrId,
+            fwgcfzr,
+            fgldId,
+            fgld,
+            REF_ID_,
+            PARENT_ID_,
+            INST_ID_,
+            INST_STATUS_,
+            TENANT_ID_,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{changjia,jdbcType=VARCHAR},
+            #{ygType,jdbcType=VARCHAR},
+            #{ygMatNo,jdbcType=VARCHAR},
+            #{ygXinghao,jdbcType=VARCHAR},
+            #{ygMatDesc,jdbcType=VARCHAR},
+            #{mfbMatNo,jdbcType=VARCHAR},
+            #{mfbMatDesc,jdbcType=VARCHAR},
+            #{useDesc,jdbcType=VARCHAR},
+            #{needTime,jdbcType=VARCHAR},
+            #{receiverIds,jdbcType=VARCHAR},
+            #{receivers,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{applyUserId,jdbcType=VARCHAR},
+            #{applyUser,jdbcType=VARCHAR},
+            #{applyDepId,jdbcType=VARCHAR},
+            #{applyDep,jdbcType=VARCHAR},
+            #{bjgsfzrId,jdbcType=VARCHAR},
+            #{bjgsfzr,jdbcType=VARCHAR},
+            #{fwgcywyId,jdbcType=VARCHAR},
+            #{fwgcywy,jdbcType=VARCHAR},
+            #{fwgcfzrId,jdbcType=VARCHAR},
+            #{fwgcfzr,jdbcType=VARCHAR},
+            #{fgldId,jdbcType=VARCHAR},
+            #{fgld,jdbcType=VARCHAR},
+            #{REF_ID_,jdbcType=VARCHAR},
+            #{PARENT_ID_,jdbcType=VARCHAR},
+            #{INST_ID_,jdbcType=VARCHAR},
+            #{INST_STATUS_,jdbcType=VARCHAR},
+            #{TENANT_ID_,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_ygmfb
+        set
+            changjia=#{changjia,jdbcType=VARCHAR},
+            ygType=#{ygType,jdbcType=VARCHAR},
+            ygMatNo=#{ygMatNo,jdbcType=VARCHAR},
+            ygXinghao=#{ygXinghao,jdbcType=VARCHAR},
+            ygMatDesc=#{ygMatDesc,jdbcType=VARCHAR},
+            mfbMatNo=#{mfbMatNo,jdbcType=VARCHAR},
+            mfbMatDesc=#{mfbMatDesc,jdbcType=VARCHAR},
+            useDesc=#{useDesc,jdbcType=VARCHAR},
+            needTime=#{needTime,jdbcType=VARCHAR},
+            receiverIds=#{receiverIds,jdbcType=VARCHAR},
+            receivers=#{receivers,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            applyUserId=#{applyUserId,jdbcType=VARCHAR},
+            applyUser=#{applyUser,jdbcType=VARCHAR},
+            applyDepId=#{applyDepId,jdbcType=VARCHAR},
+            applyDep=#{applyDep,jdbcType=VARCHAR},
+            bjgsfzrId=#{bjgsfzrId,jdbcType=VARCHAR},
+            bjgsfzr=#{bjgsfzr,jdbcType=VARCHAR},
+            fwgcywyId=#{fwgcywyId,jdbcType=VARCHAR},
+            fwgcywy=#{fwgcywy,jdbcType=VARCHAR},
+            fwgcfzrId=#{fwgcfzrId,jdbcType=VARCHAR},
+            fwgcfzr=#{fwgcfzr,jdbcType=VARCHAR},
+            fgldId=#{fgldId,jdbcType=VARCHAR},
+            fgld=#{fgld,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_ygmfbfileinfo(
+        id,
+        fileName,
+        fileSize,
+        fileDesc,
+        mainId,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+</mapper>

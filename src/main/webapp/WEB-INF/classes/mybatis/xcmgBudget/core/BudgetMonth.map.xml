@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgbudget.core.dao.BudgetMonthDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField}
+            </if>
+        </if>
+    </sql>
+
+    <select id="querySmallTypeList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        budget_smallType
+        order by smallTypeNum
+    </select>
+
+    <select id="queryBudgetMonthList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *,
+		    B.id as mid,
+		    B.CREATE_BY_ as cid,
+		    B.UPDATE_BY_ as uid,
+		    C.CREATE_BY_ as bid
+        FROM budget_subjectinfo A
+        LEFT JOIN
+				(
+                    SELECT * FROM budget_month
+                    WHERE budget_month.budgetId = #{budgetId}
+				) B
+		ON A.id = B.subjectId
+		LEFT JOIN budget_projectinfo C ON B.budgetId = C.budgetId
+		WHERE FIND_IN_SET(#{applyType},A.applyType)
+		ORDER BY A.subjectCode
+    </select>
+
+    <select id="queryBudgetMonthExist" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select * from budget_month
+        where
+        id =#{id}
+        AND subjectId=#{subjectMonthId}
+        AND budgetId=#{budgetId}
+    </select>
+
+    <insert id="createBudgetMonth" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into budget_month(
+            id
+            ,budgetId
+            ,subjectId
+            ,zjMonthExpect
+            ,zjDetail
+            ,fyMonthExpect
+            ,fyDetail
+            ,glcwddh
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR}
+            ,#{budgetId,jdbcType=VARCHAR}
+            ,#{subjectMonthId,jdbcType=VARCHAR}
+            ,#{zjMonthExpect,jdbcType=VARCHAR}
+            ,#{zjDetail,jdbcType=VARCHAR}
+            ,#{fyMonthExpect,jdbcType=VARCHAR}
+            ,#{fyDetail,jdbcType=VARCHAR}
+            ,#{glcwddh,jdbcType=VARCHAR}
+            ,#{CREATE_BY_,jdbcType=VARCHAR}
+            ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateBudgetMonth" parameterType="com.alibaba.fastjson.JSONObject">
+        update budget_month
+        set
+        zjMonthExpect=#{zjMonthExpect,jdbcType=DOUBLE},
+        zjDetail=#{zjDetail,jdbcType=VARCHAR},
+        fyMonthExpect=#{fyMonthExpect,jdbcType=DOUBLE},
+        fyDetail=#{fyDetail,jdbcType=VARCHAR},
+        glcwddh=#{glcwddh,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+
+    <select id="queryBudgetMonthSumList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            budget_subjectinfo
+        LEFT JOIN
+        (
+        SELECT
+            budget_month.subjectId,
+            SUM(zjMonthExpect) as zjMonthExpect,
+            SUM(fyMonthExpect) as fyMonthExpect,
+            GROUP_CONCAT(`zjDetail` SEPARATOR ';') as zjDetail,
+            GROUP_CONCAT(`fyDetail` SEPARATOR ';') as fyDetail,
+            GROUP_CONCAT(`FULLNAME_` SEPARATOR ',') as applyNames
+        FROM
+            budget_month
+            LEFT JOIN budget_projectinfo ON budget_month.budgetId = budget_projectinfo.budgetId
+            LEFT JOIN bpm_inst ON budget_projectInfo.budgetId = bpm_inst.BUS_KEY_
+            LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+            LEFT JOIN os_user ON budget_projectinfo.CREATE_BY_ = os_user.USER_ID_
+        WHERE bpm_inst.STATUS_ = 'SUCCESS_END'
+        AND budget_projectinfo.yearMonth = #{yearMonth}
+        GROUP BY subjectId
+        ) month_tmp on budget_subjectinfo.id = month_tmp.subjectId
+        WHERE
+            FIND_IN_SET(1,applyType)
+            OR FIND_IN_SET(2,applyType)
+        ORDER BY
+            budget_subjectinfo.subjectCode
+    </select>
+
+    <select id="queryBudgetMonthDeptSumList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+         budget_projectinfo.yearMonth,
+         budget_projectinfo.deptName,
+         SUM( zjMonthExpect ) AS zjMonthExpect,
+         SUM( fyMonthExpect ) AS fyMonthExpect,
+         GROUP_CONCAT( `zjDetail` SEPARATOR ';' ) AS zjDetail,
+          GROUP_CONCAT( `fyDetail` SEPARATOR ';' ) AS fyDetail
+        FROM
+         budget_projectinfo
+         LEFT JOIN os_user ON os_user.USER_ID_ = budget_projectInfo.CREATE_BY_
+         LEFT JOIN bpm_inst ON budget_projectInfo.budgetId = bpm_inst.BUS_KEY_
+         LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+         LEFT JOIN os_group ON budget_projectInfo.deptId = os_group.GROUP_ID_
+         LEFT JOIN budget_month ON budget_projectInfo.budgetId = budget_month.budgetId
+         LEFT JOIN budget_subjectinfo ON budget_month.subjectId = budget_subjectinfo.id
+        WHERE
+         yearMonth = #{yearMonth}
+         AND bpm_inst.STATUS_ = 'SUCCESS_END'
+         AND budget_subjectinfo.id != 'yf0029'
+        GROUP BY
+         budget_projectinfo.deptName
+        ORDER BY budget_projectinfo.deptId DESC
+    </select>
+
+    <select id="queryBudgetSubjectList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            budget_month
+            LEFT JOIN budget_projectinfo ON budget_month.budgetId = budget_projectinfo.budgetId
+            LEFT JOIN bpm_inst ON budget_projectInfo.budgetId = bpm_inst.BUS_KEY_
+            LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+            LEFT JOIN os_user ON budget_projectinfo.CREATE_BY_ = os_user.USER_ID_
+        WHERE bpm_inst.STATUS_ = 'SUCCESS_END'
+        AND budget_projectinfo.yearMonth = #{yearMonth}
+				AND budget_month.subjectId = #{subjectId}
+    </select>
+
+    <select id="queryMonthProcessList"  parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+            budget_monthprocess.*,
+            os_user.FULLNAME_ as applyName
+        from budget_monthprocess
+        LEFT JOIN budget_projectinfo ON budget_monthprocess.budgetId = budget_projectinfo.budgetId
+        LEFT JOIN os_user ON budget_projectinfo.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            budget_monthprocess.budgetId=#{budgetId}
+            AND budget_monthprocess.subjectId=#{subjectId}
+            <if test="zjOrFy != null and zjOrFy != ''">
+                AND budget_monthprocess.zjOrFy= #{zjOrFy}
+            </if>
+        </where>
+        order by budget_monthprocess.CREATE_TIME_ desc
+    </select>
+
+    <insert id="createBudgetMonthProcess" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into budget_monthprocess(
+        id,
+        budgetId,
+        subjectId,
+        zjOrFy,
+        moneyNum,
+        moneyDesc,
+        moneyNumBeforeRate,
+        rate,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        <foreach collection="list" separator="," open="" close="" item="item" index="index">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.budgetId,jdbcType=VARCHAR},
+            #{item.subjectId,jdbcType=VARCHAR},
+            #{item.zjOrFy,jdbcType=VARCHAR},
+            #{item.moneyNum,jdbcType=VARCHAR},
+            #{item.moneyDesc,jdbcType=VARCHAR},
+            #{item.moneyNumBeforeRate,jdbcType=VARCHAR},
+            #{item.rate,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+
+
+    <update id="updateBudgetMonthProcess" parameterType="com.alibaba.fastjson.JSONObject">
+        update budget_monthprocess
+        set
+        zjOrFy=#{zjOrFy,jdbcType=NUMERIC},
+        moneyNum=#{moneyNum,jdbcType=NUMERIC},
+        moneyNumBeforeRate=#{moneyNumBeforeRate,jdbcType=NUMERIC},
+        rate=#{rate,jdbcType=NUMERIC},
+        moneyDesc=#{moneyDesc,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=VARCHAR}
+        where id=#{id}
+    </update>
+
+    <update id="syncBudgetMonthProcess" parameterType="com.alibaba.fastjson.JSONObject">
+        update budget_monthprocess
+        set
+        zjOrFy=#{zjOrFy,jdbcType=NUMERIC},
+        moneyNum=#{moneyNum,jdbcType=NUMERIC},
+        moneyNumBeforeRate=#{moneyNumBeforeRate,jdbcType=NUMERIC},
+        rate=#{rate,jdbcType=NUMERIC},
+        moneyDesc=#{moneyDesc,jdbcType=VARCHAR}
+        where id=#{bxId}
+    </update>
+
+    <delete id="deleteBudgetMonthProcessByIds" parameterType="java.util.Map">
+        delete from budget_monthprocess
+        where
+        id in
+        <foreach collection="deleteProcessIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+
+</mapper>

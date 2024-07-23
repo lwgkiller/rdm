@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.ClhbDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertWj" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO environmental_vehicle (
+        wjId,
+        dlId,
+        dlName,
+        applyId,
+        applyName,
+        deptId,
+        deptName,
+        carType,
+        nationStandard,
+        fdjzcwlh,
+        fdjscdz,
+        designXhId,
+        designXh,
+        wjNo,
+        wjEmission,
+        wjModel,
+        wjName,
+        zlName,
+        wjWeight,
+        wjSize,
+        wjBrand,
+        classA,
+        classB,
+        bsLocation,
+        dmLocation,
+        bqLocation,
+        producter,
+        adress,
+        parameter,
+        fuelType,
+        fuelSpecies,
+        grMeasures,
+        grMeasuresMs,
+        hclLocation,
+        jqSystem,
+        resistance,
+        coldType,
+        pqPressure,
+        fdjxh,
+        fdjzzs,
+        fdjgkbh,
+        zjgkh,
+        zjwlh,
+        type,
+        oldWjId,
+        noteStatus,
+        ratedPower,
+        fdjsb,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{wjId,jdbcType=VARCHAR},
+        #{dlId,jdbcType=VARCHAR},
+        #{dlName,jdbcType=VARCHAR},
+        #{applyId,jdbcType=VARCHAR},
+        #{applyName,jdbcType=VARCHAR},
+        #{deptId,jdbcType=VARCHAR},
+        #{deptName,jdbcType=VARCHAR},
+        #{carType,jdbcType=VARCHAR},
+        #{nationStandard,jdbcType=VARCHAR},
+        #{fdjzcwlh,jdbcType=VARCHAR},
+        #{fdjscdz,jdbcType=VARCHAR},
+        #{designXhId,jdbcType=VARCHAR},
+        #{designXh,jdbcType=VARCHAR},
+        #{wjNo,jdbcType=VARCHAR},
+        #{wjEmission,jdbcType=VARCHAR},
+        #{wjModel,jdbcType=VARCHAR},
+        #{wjName,jdbcType=TIMESTAMP},
+        #{zlName,jdbcType=VARCHAR},
+        #{wjWeight,jdbcType=VARCHAR},
+        #{wjSize,jdbcType=VARCHAR},
+        #{wjBrand,jdbcType=VARCHAR},
+        #{classA,jdbcType=VARCHAR},
+        #{classB,jdbcType=VARCHAR},
+        #{bsLocation,jdbcType=VARCHAR},
+        #{dmLocation,jdbcType=VARCHAR},
+        #{bqLocation,jdbcType=VARCHAR},
+        #{producter,jdbcType=VARCHAR},
+        #{adress,jdbcType=VARCHAR},
+        #{parameter,jdbcType=VARCHAR},
+        #{fuelType,jdbcType=VARCHAR},
+        #{fuelSpecies,jdbcType=VARCHAR},
+        #{grMeasures,jdbcType=VARCHAR},
+        #{grMeasuresMs,jdbcType=VARCHAR},
+        #{hclLocation,jdbcType=VARCHAR},
+        #{jqSystem,jdbcType=VARCHAR},
+        #{resistance,jdbcType=VARCHAR},
+        #{coldType,jdbcType=VARCHAR},
+        #{pqPressure,jdbcType=VARCHAR},
+        #{fdjxh,jdbcType=VARCHAR},
+        #{fdjzzs,jdbcType=VARCHAR},
+        #{fdjgkbh,jdbcType=VARCHAR},
+        #{zjgkh,jdbcType=VARCHAR},
+        #{zjwlh,jdbcType=VARCHAR},
+        #{type,jdbcType=VARCHAR},
+        #{oldWjId,jdbcType=VARCHAR},
+        #{noteStatus,jdbcType=VARCHAR},
+        #{ratedPower,jdbcType=VARCHAR},
+        #{fdjsb,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateWj" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_vehicle
+        <set>
+            wjId=#{wjId,jdbcType=VARCHAR},
+            dlId=#{dlId,jdbcType=VARCHAR},
+            dlName=#{dlName,jdbcType=VARCHAR},
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            deptId=#{deptId,jdbcType=VARCHAR},
+            deptName=#{deptName,jdbcType=VARCHAR},
+            carType=#{carType,jdbcType=VARCHAR},
+            nationStandard=#{nationStandard,jdbcType=VARCHAR},
+            fdjzcwlh=#{fdjzcwlh,jdbcType=VARCHAR},
+            fdjscdz=#{fdjscdz,jdbcType=VARCHAR},
+            designXhId=#{designXhId,jdbcType=VARCHAR},
+            designXh=#{designXh,jdbcType=VARCHAR},
+            wjNo=#{wjNo,jdbcType=VARCHAR},
+            wjEmission=#{wjEmission,jdbcType=VARCHAR},
+            wjModel=#{wjModel,jdbcType=VARCHAR},
+            wjName=#{wjName,jdbcType=TIMESTAMP},
+            zlName=#{zlName,jdbcType=VARCHAR},
+            wjWeight=#{wjWeight,jdbcType=VARCHAR},
+            wjSize=#{wjSize,jdbcType=VARCHAR},
+            wjBrand=#{wjBrand,jdbcType=VARCHAR},
+            classA=#{classA,jdbcType=VARCHAR},
+            classB=#{classB,jdbcType=VARCHAR},
+            bsLocation=#{bsLocation,jdbcType=VARCHAR},
+            dmLocation=#{dmLocation,jdbcType=VARCHAR},
+            bqLocation=#{bqLocation,jdbcType=VARCHAR},
+            producter=#{producter,jdbcType=VARCHAR},
+            adress=#{adress,jdbcType=VARCHAR},
+            parameter=#{parameter,jdbcType=VARCHAR},
+            fuelType=#{fuelType,jdbcType=VARCHAR},
+            fuelSpecies=#{fuelSpecies,jdbcType=VARCHAR},
+            grMeasures=#{grMeasures,jdbcType=VARCHAR},
+            grMeasuresMs=#{grMeasuresMs,jdbcType=VARCHAR},
+            hclLocation=#{hclLocation,jdbcType=VARCHAR},
+            jqSystem=#{jqSystem,jdbcType=VARCHAR},
+            resistance=#{resistance,jdbcType=VARCHAR},
+            coldType=#{coldType,jdbcType=VARCHAR},
+            pqPressure=#{pqPressure,jdbcType=VARCHAR},
+            fdjxh=#{fdjxh,jdbcType=VARCHAR},
+            fdjzzs=#{fdjzzs,jdbcType=VARCHAR},
+            fdjgkbh=#{fdjgkbh,jdbcType=VARCHAR},
+            zjgkh=#{zjgkh,jdbcType=VARCHAR},
+            zjwlh=#{zjwlh,jdbcType=VARCHAR},
+            ratedPower=#{ratedPower,jdbcType=VARCHAR},
+            fdjsb=#{fdjsb,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        wjId=#{wjId}
+    </update>
+    <select id="queryWjById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select environmental_vehicle.*,
+        bpm_inst.INST_ID_ as instId
+        from environmental_vehicle
+        left join os_user on environmental_vehicle.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on environmental_vehicle.wjId=bpm_inst.BUS_KEY_
+        where
+        environmental_vehicle.wjId=#{wjId}
+    </select>
+    <select id="queryOldWjById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        carType,
+        nationStandard,
+        fdjzcwlh,
+        fdjscdz,
+        designXhId,
+        designXh,
+        wjNo,
+        wjEmission,
+        wjModel,
+        wjName,
+        zlName,
+        wjWeight,
+        wjSize,
+        wjBrand,
+        classA,
+        classB,
+        bsLocation,
+        dmLocation,
+        bqLocation,
+        producter,
+        adress,
+        parameter,
+        fuelType,
+        fuelSpecies,
+        grMeasures,
+        grMeasuresMs,
+        hclLocation,
+        jqSystem,
+        resistance,
+        coldType,
+        pqPressure,
+        fdjxh,
+        fdjzzs,
+        fdjgkbh,
+        zjgkh,
+        ratedPower,
+        zjwlh
+        from environmental_vehicle
+        where
+        wjId=#{wjId}
+    </select>
+    <select id="queryWjFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        fileId,
+        fileName,
+        belongId as wjId,
+        fileType,
+        fileSize,
+        CREATE_BY_,
+        CREATE_TIME_
+        FROM
+        environmental_vehiclefile
+        WHERE
+        belongId=#{wjId}
+        <if test="fileType != null and fileType !='' ">
+            and fileType=#{fileType}
+        </if>
+    </select>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_vehiclefile(
+          fileId,
+          fileName,
+          fileSize,
+          fileType,
+          belongId,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) values(
+          #{fileId,jdbcType=VARCHAR},
+          #{fileName,jdbcType=VARCHAR},
+          #{fileSize,jdbcType=VARCHAR},
+          #{fileType,jdbcType=VARCHAR},
+          #{belongId,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="queryWj" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        environmental_vehicle.*,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId
+        from
+        environmental_vehicle
+        LEFT JOIN os_rel_inst ON environmental_vehicle.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_vehicle.CREATE_BY_
+        left join bpm_inst on environmental_vehicle.wjId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="wjModel != null and wjModel != ''">
+                and environmental_vehicle.wjModel like CONCAT('%',#{wjModel},'%')
+            </if>
+            <if test="designXh != null and designXh != ''">
+                and environmental_vehicle.designXh like CONCAT('%',#{designXh},'%')
+            </if>
+            <if test="fdjxh != null and fdjxh != ''">
+                and environmental_vehicle.fdjxh like CONCAT('%',#{fdjxh},'%')
+            </if>
+            <if test="fdjzzs != null and fdjzzs != ''">
+                and environmental_vehicle.fdjzzs like CONCAT('%',#{fdjzzs},'%')
+            </if>
+            <if test="applyName != null and applyName != ''">
+                and environmental_vehicle.applyName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="deptName != null and deptName != ''">
+                and environmental_vehicle.deptName like CONCAT('%',#{deptName},'%')
+            </if>
+            <if test="zjwlh != null and zjwlh != ''">
+                and environmental_vehicle.zjwlh like CONCAT('%',#{zjwlh},'%')
+            </if>
+            AND (bpm_inst.STATUS_ != 'DRAFTED' OR environmental_vehicle.CREATE_BY_ = #{currentUserId})
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countWjList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        from
+        environmental_vehicle
+        LEFT JOIN os_rel_inst ON environmental_vehicle.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_vehicle.CREATE_BY_
+        left join bpm_inst on environmental_vehicle.wjId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="wjModel != null and wjModel != ''">
+                and environmental_vehicle.wjModel like CONCAT('%',#{wjModel},'%')
+            </if>
+            <if test="designXh != null and designXh != ''">
+                and environmental_vehicle.designXh like CONCAT('%',#{designXh},'%')
+            </if>
+            <if test="fdjxh != null and fdjxh != ''">
+                and environmental_vehicle.fdjxh like CONCAT('%',#{fdjxh},'%')
+            </if>
+            <if test="fdjzzs != null and fdjzzs != ''">
+                and environmental_vehicle.fdjzzs like CONCAT('%',#{fdjzzs},'%')
+            </if>
+            <if test="zjwlh != null and zjwlh != ''">
+                and environmental_vehicle.zjwlh like CONCAT('%',#{zjwlh},'%')
+            </if>
+            <if test="applyName != null and applyName != ''">
+                and environmental_vehicle.applyName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="deptName != null and deptName != ''">
+                and environmental_vehicle.deptName like CONCAT('%',#{deptName},'%')
+            </if>
+            AND (bpm_inst.STATUS_ != 'DRAFTED' OR environmental_vehicle.CREATE_BY_ = #{currentUserId})
+        </where>
+    </select>
+    <delete id="deleteWjFile" parameterType="java.util.Map">
+        delete from environmental_vehiclefile
+        <where>
+            <if test="fileId != null and fileId !=''">
+                fileId=#{fileId}
+            </if>
+            <if test="wjId != null and wjId !=''">
+                and belongId=#{wjId}
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteWj" parameterType="java.util.Map">
+        delete from environmental_vehicle
+        where
+                        wjId=#{wjId}
+    </delete>
+    <select id="queryMsgInfo" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT DISTINCT
+        	os_rel_inst.PARTY2_ AS userId,
+        	os_user.CERT_NO_ AS sfz,
+        	os_user.FULLNAME_ AS userName,
+        	os_group.NAME_ AS detpName
+        FROM
+        	os_user
+        	LEFT JOIN os_rel_inst ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        	LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        	os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        	AND (os_rel_inst.DIM1_ = "1" or os_rel_inst.DIM1_ = '2')
+        	AND (
+        	os_group.NAME_ = "服务管理部"
+        	OR os_group.NAME_ = "制造管理部"
+        	OR os_group.NAME_ = "供方发展部"
+        	OR os_group.NAME_ = "工艺技术部"
+        	OR os_group.NAME_ = "装配三厂"
+					OR os_group.NAME_ =  "环保信息公开通知"
+        	)
+    </select>
+    <update id="updateNumber" parameterType="java.util.Map">
+        update environmental_vehicle
+        set
+          num=#{num,jdbcType=VARCHAR}
+        where
+          wjId=#{wjId}
+    </update>
+    <select id="queryMaxClhbNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        num
+        FROM
+            environmental_vehicle
+        WHERE
+            num like CONCAT('%',#{applyTimeStart},'%')
+        ORDER BY
+            num DESC
+            LIMIT 1
+    </select>
+    <select id="queryBox" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        environmental_bzh
+        WHERE
+            textType=#{textType}
+    </select>
+
+    <select id="queryApiList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+            wjId,
+            num,
+            zjgkh as 整机环保信息公开号,
+            designXh as 整机设计型号,
+            wjModel as 机械型号,
+            wjName as 机械名称,
+            fdjzzs as 发动机品牌,
+            fdjxh as 发动机型号,
+            os_user.FULLNAME_ AS userName,
+            bpm_inst.STATUS_ as status
+        FROM
+            environmental_vehicle
+            LEFT JOIN os_user ON os_user.USER_ID_ = environmental_vehicle.CREATE_BY_
+            left join bpm_inst on environmental_vehicle.wjId=bpm_inst.BUS_KEY_
+        WHERE
+            num like CONCAT('%',#{searchValue},'%')
+    </select>
+    <select id="queryFileById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        environmental_vehiclefile
+        WHERE
+            fileId=#{fileId}
+    </select>
+    <update id="statusChange" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_vehicle
+        set
+        noteStatus=#{noteStatus,jdbcType=VARCHAR}
+        where
+        wjId=#{wjId}
+    </update>
+</mapper>

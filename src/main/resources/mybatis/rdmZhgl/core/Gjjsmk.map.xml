@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.GjjsDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertGjjsData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into gjjs_proname_tab(
+          pId,
+          proName,
+          jdTime,
+          proRespUserName,
+          proRespUserId,
+          CREATE_BY_,
+          CREATE_TIME_,
+          TENANT_ID_,
+          UPDATE_BY_,
+          UPDATE_TIME_
+        )
+        values
+        (
+          #{pId,jdbcType=VARCHAR},
+          #{proName,jdbcType=VARCHAR},
+          #{jdTime,jdbcType=VARCHAR},
+          #{proRespUserName,jdbcType=VARCHAR},
+          #{proRespUserId,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP},
+          #{TENANT_ID_,jdbcType=VARCHAR},
+          #{UPDATE_BY_,jdbcType=VARCHAR},
+          #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateGjjsData" parameterType="com.alibaba.fastjson.JSONObject">
+        update gjjs_proname_tab
+        set
+          proName = #{proName,jdbcType=VARCHAR},
+          jdTime = #{jdTime,jdbcType=VARCHAR},
+          proRespUserName = #{proRespUserName,jdbcType=VARCHAR},
+          proRespUserId = #{proRespUserId,jdbcType=VARCHAR},
+          TENANT_ID_= #{TENANT_ID_,jdbcType=VARCHAR},
+          UPDATE_BY_= #{UPDATE_BY_,jdbcType=VARCHAR},
+          UPDATE_TIME_= #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        pId=#{pId}
+    </update>
+
+    <!---->
+    <select id="queryList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        a.pId,
+        b.xId,
+        a.jdTime as jdTime,
+        a.proName,
+        b.jsName,
+        b.jssp,
+        b.beizhu,
+        c.FULLNAME_ AS FULLNAME_,
+        a.pId as czId,
+        a.proRespUserName,
+        a.proRespUserId
+        from
+        gjjs_proname_tab a
+        LEFT JOIN gjjs_xinxi_tab b on a.pId = b.zId
+        LEFT JOIN os_user c ON a.CREATE_BY_ = c.USER_ID_
+        <where>
+            <if test="proName != null and proName != ''">
+                a.proName like CONCAT('%',#{proName},'%')
+            </if>
+            <if test="proRespUserName != null and proRespUserName != ''">
+                AND a.proRespUserName like CONCAT('%',#{proRespUserName},'%')
+            </if>
+            <if test="jssp != null and jssp != ''">
+                AND b.jssp like CONCAT('%',#{jssp},'%')
+            </if>
+            <if test="jdTimeStart !=null and jdTimeStart !=''">
+                AND a.jdTime &gt;= #{jdTimeStart}
+            </if>
+            <if test="jdTimeEnd !=null and jdTimeEnd !=''">
+                AND a.jdTime &lt;= #{jdTimeEnd}
+            </if>
+        </where>
+        order by jdTime desc ,a.pId,a.proName
+        <include refid="pageSql"/>
+    </select>
+    <select id="countList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select
+          count( * )
+        from
+        gjjs_proname_tab a
+        LEFT JOIN gjjs_xinxi_tab b on a.pId = b.zId
+        <where>
+            <if test="proName != null and proName != ''">
+                a.proName like CONCAT('%',#{proName},'%')
+            </if>
+            <if test="proRespUserName != null and proRespUserName != ''">
+                AND a.proRespUserName like CONCAT('%',#{proRespUserName},'%')
+            </if>
+            <if test="jssp != null and jssp != ''">
+                AND b.jssp like CONCAT('%',#{jssp},'%')
+            </if>
+            <if test="jdTimeStart !=null and jdTimeStart !=''">
+                AND a.jdTime &gt;= #{jdTimeStart}
+            </if>
+            <if test="jdTimeEnd !=null and jdTimeEnd !=''">
+                AND a.jdTime &lt;= #{jdTimeEnd}
+            </if>
+        </where>
+    </select>
+
+    <!---->
+    <select id="queryDataId" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        a.pId,
+        b.xId,
+        a.jdTime as jdTime,
+        a.proName,
+        b.jsName,
+        b.jssp,
+        b.beizhu,
+        c.FULLNAME_ AS FULLNAME_,
+        a.proRespUserName,
+        a.proRespUserId
+        from
+        gjjs_proname_tab a
+        LEFT JOIN gjjs_xinxi_tab b on a.pId = b.zId
+        LEFT JOIN os_user c ON a.CREATE_BY_ = c.USER_ID_
+       <where>
+           <if test="pId != null and pId != ''">
+               a.pId = #{pId}
+           </if>
+       </where>
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO gjjs_fujian_tab
+		(
+		id,
+		zId,
+		fjlx,
+		fileName,
+		fileSize,
+		CREATE_BY_,
+		CREATE_TIME_,
+		TENANT_ID_,
+		UPDATE_BY_,
+		UPDATE_TIME_
+		)
+		VALUES
+		(
+			#{id,jdbcType=VARCHAR},
+			#{zId,jdbcType=VARCHAR},
+			#{fjlx,jdbcType=VARCHAR},
+			#{fileName,jdbcType=VARCHAR},
+			#{fileSize,jdbcType=VARCHAR},
+			#{CREATE_BY_,jdbcType=VARCHAR},
+			#{CREATE_TIME_,jdbcType=TIMESTAMP},
+			#{TENANT_ID_,jdbcType=VARCHAR},
+			#{UPDATE_BY_,jdbcType=VARCHAR},
+			#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+		)
+	</insert>
+
+    <select id="getFiles" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+          a.id,
+          a.zId,
+          a.fileName,
+          a.fileSize,
+          DATE_FORMAT(a.CREATE_TIME_,'%Y-%m-%d')  CREATE_TIME_,
+          b.FULLNAME_ AS CREATE_BY_NAME
+        from
+        gjjs_fujian_tab a
+        left join OS_user b on a.CREATE_BY_=b.USER_ID_
+        <where>
+            <if test="standardId != null and standardId != ''">
+                a.zId = #{standardId}
+            </if>
+            <if test="fileName != null and fileName != ''">
+                AND a.fileName like concat('%', #{fileName},'%')
+            </if>
+            <if test="fjlx != null and fjlx != ''">
+                AND a.fjlx like concat('%', #{fjlx},'%')
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteFileByIds" parameterType="java.util.Map">
+        delete from gjjs_fujian_tab
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getJiShuList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        xId,
+        jsName,
+        jssp,
+        beizhu
+        FROM
+        gjjs_xinxi_tab
+        <where>
+            <if test="meetingId !=null and meetingId !=''">
+                zId = #{meetingId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertJiShuData" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO gjjs_xinxi_tab
+		(
+		xId,
+		zId,
+		jsName,
+		jssp,
+		beizhu,
+		CREATE_BY_,
+		CREATE_TIME_,
+		TENANT_ID_,
+		UPDATE_BY_,
+		UPDATE_TIME_
+		)
+		VALUES
+		(
+			#{xId,jdbcType=VARCHAR},
+			#{zId,jdbcType=VARCHAR},
+			#{jsName,jdbcType=VARCHAR},
+			#{jssp,jdbcType=VARCHAR},
+			#{beizhu,jdbcType=VARCHAR},
+			#{CREATE_BY_,jdbcType=VARCHAR},
+			#{CREATE_TIME_,jdbcType=TIMESTAMP},
+			#{TENANT_ID_,jdbcType=VARCHAR},
+			#{UPDATE_BY_,jdbcType=VARCHAR},
+			#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+		)
+	</insert>
+    <update id="updateJiShuData"  parameterType="com.alibaba.fastjson.JSONObject">
+        update gjjs_xinxi_tab
+        set zId = #{zId,jdbcType=VARCHAR},
+          jsName = #{jsName,jdbcType=VARCHAR},
+          jssp = #{jssp,jdbcType=VARCHAR},
+          beizhu = #{beizhu,jdbcType=VARCHAR},
+          TENANT_ID_= #{TENANT_ID_,jdbcType=VARCHAR},
+          UPDATE_BY_= #{UPDATE_BY_,jdbcType=VARCHAR},
+          UPDATE_TIME_= #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        xId=#{xId}
+    </update>
+    <!---->
+    <select id="queryGjjsFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        gjjs_fujian_tab.*
+        FROM
+        gjjs_fujian_tab
+        WHERE
+        gjjs_fujian_tab.zId IN
+        <foreach collection="gjjsIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <delete id="deleteGjjsFile" parameterType="java.util.Map">
+        delete from gjjs_fujian_tab
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="gjjsIds != null and gjjsIds !=''">
+                AND zId IN
+                <foreach collection="gjjsIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteJishu" parameterType="java.util.Map">
+        delete from gjjs_xinxi_tab
+        <where>
+            <if test="xId != null and xId != ''">
+                xId=#{xId}
+            </if>
+            <if test="gjjsIds != null and gjjsIds !=''">
+                AND zId IN
+                <foreach collection="gjjsIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteGjjs" parameterType="java.util.Map">
+        delete from gjjs_proname_tab
+        <where>
+            <if test="gjjsIds != null and gjjsIds !=''">
+                pId IN
+                <foreach collection="gjjsIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteJiShu" parameterType="java.util.Map">
+        delete from gjjs_xinxi_tab
+        <where>
+            <if test="jiShuId != null and jiShuId !=''">
+                xId IN
+                <foreach collection="jiShuId" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+</mapper>

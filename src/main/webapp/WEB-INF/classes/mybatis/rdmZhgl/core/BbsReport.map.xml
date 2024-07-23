@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.BbsReportDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="getBbsType" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.bbsType,
+            count( 1 ) AS bbsNum
+        FROM
+            bbs_baseinfo A
+        WHERE 1=1
+        <if test="bbs_startTime != null and bbs_startTime != ''">
+            AND A.CREATE_TIME_ &gt;= #{bbs_startTime}
+        </if>
+        <if test="bbs_endTime != null and bbs_endTime != ''">
+            AND A.CREATE_TIME_ &lt;= #{bbs_endTime}
+        </if>
+        GROUP BY
+        A.bbsType
+    </select>
+    <select id="getBbsData" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            count(1) as totalNum
+        FROM
+            bbs_baseinfo A
+        WHERE
+            A.bbsType = 'gjta'
+        <if test="isAdopt != null and isAdopt != ''">
+            AND A.isAdopt = #{isAdopt}
+        </if>
+        <if test="finishFlag != null and finishFlag != ''">
+            and A.actFinishDate is not null
+        </if>
+        <if test="unFinishFlag != null and unFinishFlag != ''">
+            and A.actFinishDate is null
+        </if>
+        <if test="bbs_startTime != null and bbs_startTime != ''">
+            AND A.CREATE_TIME_ &gt;= #{bbs_startTime}
+        </if>
+        <if test="bbs_endTime != null and bbs_endTime != ''">
+            AND A.CREATE_TIME_ &lt;= #{bbs_endTime}
+        </if>
+    </select>
+    <select id="getBbsGjtaData" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+         B.FULLNAME_ as postor,
+          count(1) as totalNum
+        FROM
+            bbs_baseinfo A
+            left join os_user B on A.CREATE_BY_ = B.USER_ID_
+        WHERE
+            A.bbsType = 'gjta'
+            <if test="bbs_startTime != null and bbs_startTime != ''">
+                AND A.CREATE_TIME_ &gt;= #{bbs_startTime}
+            </if>
+            <if test="bbs_endTime != null and bbs_endTime != ''">
+                AND A.CREATE_TIME_ &lt;= #{bbs_endTime}
+            </if>
+            GROUP BY A.CREATE_BY_
+            order by totalNum desc
+        limit 10
+    </select>
+    <select id="getBbsPostData" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            B.FULLNAME_ as postor,
+            count(1) as totalNum,
+            (select count(1) from bbs_baseinfo
+                where bbsType = 'gjta' and CREATE_BY_=A.CREATE_BY_
+                <if test="bbs_startTime != null and bbs_startTime != ''">
+                    AND CREATE_TIME_ &gt;= #{bbs_startTime}
+                </if>
+                <if test="bbs_endTime != null and bbs_endTime != ''">
+                    AND CREATE_TIME_ &lt;= #{bbs_endTime}
+                </if>
+            ) as gjtaNum,
+            (select count(1) from bbs_baseinfo where bbsType = 'gktl' and CREATE_BY_=A.CREATE_BY_
+                <if test="bbs_startTime != null and bbs_startTime != ''">
+                    AND CREATE_TIME_ &gt;= #{bbs_startTime}
+                </if>
+                <if test="bbs_endTime != null and bbs_endTime != ''">
+                    AND CREATE_TIME_ &lt;= #{bbs_endTime}
+                </if>
+            ) as gktlNum,
+            (select count(1) from bbs_baseinfo where bbsType = 'zsfx' and CREATE_BY_=A.CREATE_BY_
+                <if test="bbs_startTime != null and bbs_startTime != ''">
+                    AND CREATE_TIME_ &gt;= #{bbs_startTime}
+                </if>
+                <if test="bbs_endTime != null and bbs_endTime != ''">
+                    AND CREATE_TIME_ &lt;= #{bbs_endTime}
+                </if>
+            ) as zsfxNum
+        FROM
+            bbs_baseinfo A
+            left join os_user B on A.CREATE_BY_ = B.USER_ID_
+        WHERE
+            1=1
+        <if test="bbs_startTime != null and bbs_startTime != ''">
+            AND A.CREATE_TIME_ &gt;= #{bbs_startTime}
+        </if>
+        <if test="bbs_endTime != null and bbs_endTime != ''">
+            AND A.CREATE_TIME_ &lt;= #{bbs_endTime}
+        </if>
+            GROUP BY A.CREATE_BY_
+            order by totalNum desc
+            limit 10
+    </select>
+</mapper>

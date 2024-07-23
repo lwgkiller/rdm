@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.HgxFuncArchiveDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+
+        <if test="funcCode !=null and funcCode !=''">
+            AND zzz.funcCode like CONCAT('%',#{funcCode},'%')
+        </if>
+        <if test="fileName !=null and fileName !=''">
+            AND zzz.fileName like CONCAT('%',#{fileName},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND zzz.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="configDesc !=null and configDesc !=''">
+            AND zzz.configDesc like CONCAT('%',#{configDesc},'%')
+        </if>
+        <if test="gssVersion !=null and gssVersion !=''">
+            AND zzz.gssVersion like CONCAT('%',#{gssVersion},'%')
+        </if>
+        <if test="region !=null and region !=''">
+            AND zzz.region like CONCAT('%',#{region},'%')
+        </if>
+        <if test="creatorName != null and creatorName != ''">
+            AND zzz.creatorName like CONCAT('%',#{creatorName},'%')
+        </if>
+
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_maintenance_manualfile_standard_func_archive AS zzz
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM
+        service_engineering_maintenance_manualfile_standard_func_archive AS zzz
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            service_engineering_maintenance_manualfile_standard_func_archive
+        WHERE
+            id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.lang.String">
+        delete from service_engineering_maintenance_manualfile_standard_func_archive
+        where id = #{id}
+    </delete>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_maintenance_manualfile_standard_func_archive(
+        id,
+        funcCode,
+        fileName,
+        materialCode,
+        fitSalesModel,
+        fitDesignModel,
+        fitCode,
+        configDesc,
+        gssVersion,
+        remark,
+        creatorName,
+        versionStatus,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{funcCode,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{fitSalesModel,jdbcType=VARCHAR},
+        #{fitDesignModel,jdbcType=VARCHAR},
+        #{fitCode,jdbcType=VARCHAR},
+        #{configDesc,jdbcType=VARCHAR},
+        #{gssVersion,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{creatorName,jdbcType=VARCHAR},
+        #{versionStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update service_engineering_maintenance_manualfile_standard_func_archive
+        set
+        funcCode=#{funcCode,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        fitSalesModel=#{fitSalesModel,jdbcType=VARCHAR},
+        fitDesignModel=#{fitDesignModel,jdbcType=VARCHAR},
+        fitCode=#{fitCode,jdbcType=VARCHAR},
+        configDesc=#{configDesc,jdbcType=VARCHAR},
+        gssVersion=#{gssVersion,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+
+    <update id="updateVersion" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_maintenance_manualfile_standard_func_archive
+        set
+        versionStatus=#{versionStatus,jdbcType=VARCHAR}
+        WHERE
+        <if test="id != null and id != ''">
+            id = #{id}
+        </if>
+    </update>
+
+</mapper>

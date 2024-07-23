@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.NewItemFxpgDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+
+    <select id="queryXpsxList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            zwt.*,
+            os_group.NAME_ AS applyUserDeptName,
+            os_user.FULLNAME_ AS applyUserName,
+            act_ru_task.NAME_ as currentProcessTask,
+            act_ru_task.ID_ as taskId,
+            bpm_inst.STATUS_ as status,
+            bpm_inst.INST_ID_ as instId
+        FROM
+            xpsxfxpgTab zwt
+            LEFT JOIN os_rel_inst ON zwt.CREATE_BY_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN os_user ON os_user.USER_ID_ = zwt.CREATE_BY_
+            left join bpm_inst on zwt.id=bpm_inst.BUS_KEY_
+            left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="type != null and type != ''">
+                AND zwt.wtlx like CONCAT('%',#{type},'%')
+            </if>
+            <if test="smallJiXing != null and smallJiXing != ''">
+                AND zwt.smallJiXing like CONCAT('%',#{smallJiXing},'%')
+            </if>
+            <if test="gzlj != null and gzlj != ''">
+                AND zwt.gzlj like CONCAT('%',#{gzlj},'%')
+            </if>
+            <if test="wtms != null and wtms != ''">
+                AND zwt.wtms like CONCAT('%',#{wtms},'%')
+            </if>
+            <if test="xtfl != null and xtfl != ''">
+                AND zwt.xtfl = #{xtfl}
+            </if>
+            <if test="ssbmId != null and ssbmId != ''">
+                AND zwt.ssbmId = #{ssbmId}
+            </if>
+            <if test="zjbh != null and zjbh != ''">
+                AND zwt.zjbh like CONCAT('%',#{zjbh},'%')
+            </if>
+            <if test="jiXing != null and jiXing != ''">
+                AND zwt.jiXing like CONCAT('%',#{jiXing},'%')
+            </if>
+            <if test="applyUserId != null and applyUserId != ''">
+                AND zwt.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="applyDepId != null and applyDepId != ''">
+                AND os_group.GROUP_ID_ = #{applyDepId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR zwt.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countXpsxList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+            count( * )
+        FROM
+        xpsxfxpgTab zwt
+        LEFT JOIN os_rel_inst ON zwt.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on zwt.id=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="type != null and type != ''">
+                AND zwt.wtlx like CONCAT('%',#{type},'%')
+            </if>
+            <if test="smallJiXing != null and smallJiXing != ''">
+                AND zwt.smallJiXing like CONCAT('%',#{smallJiXing},'%')
+            </if>
+            <if test="gzlj != null and gzlj != ''">
+                AND zwt.gzlj like CONCAT('%',#{gzlj},'%')
+            </if>
+            <if test="wtms != null and wtms != ''">
+                AND zwt.wtms like CONCAT('%',#{wtms},'%')
+            </if>
+            <if test="xtfl != null and xtfl != ''">
+                AND zwt.xtfl = #{xtfl}
+            </if>
+            <if test="ssbmId != null and ssbmId != ''">
+                AND zwt.ssbmId = #{ssbmId}
+            </if>
+            <if test="zjbh != null and zjbh != ''">
+                AND zwt.zjbh like CONCAT('%',#{zjbh},'%')
+            </if>
+            <if test="jiXing != null and jiXing != ''">
+                AND zwt.jiXing like CONCAT('%',#{jiXing},'%')
+            </if>
+            <if test="applyUserId != null and applyUserId != ''">
+                AND zwt.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="applyDepId != null and applyDepId != ''">
+                AND os_group.GROUP_ID_ = #{applyDepId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR zwt.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertXpsx" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into xpsxfxpgTab(
+            id
+            ,xtfl
+            ,lbj
+            ,wtqd
+            ,gscs
+            ,gsrId
+            ,gsrName
+            ,zrrId
+            ,zrrName
+            ,sjsm
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{xtfl,jdbcType=VARCHAR},
+            #{lbj,jdbcType=VARCHAR},
+            #{wtqd,jdbcType=VARCHAR},
+            #{gscs,jdbcType=VARCHAR},
+            #{gsrId,jdbcType=VARCHAR},
+            #{gsrName,jdbcType=VARCHAR},
+            #{zrrId,jdbcType=VARCHAR},
+            #{zrrName,jdbcType=VARCHAR},
+            #{sjsm,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateXpsx" parameterType="com.alibaba.fastjson.JSONObject">
+        update xpsxfxpgTab
+        set
+            xtfl=#{xtfl,jdbcType=VARCHAR},
+            lbj=#{lbj,jdbcType=VARCHAR},
+            wtqd=#{wtqd,jdbcType=VARCHAR},
+            gscs=#{gscs,jdbcType=VARCHAR},
+            gsrId=#{gsrId,jdbcType=VARCHAR},
+            gsrName=#{gsrName,jdbcType=VARCHAR},
+            zrrId=#{zrrId,jdbcType=VARCHAR},
+            zrrName=#{zrrName,jdbcType=VARCHAR},
+            sjsm=#{sjsm,jdbcType=VARCHAR},
+            sffgsp=#{sffgsp,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+
+
+    <select id="queryXpsxById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+          zwt.*,
+          os_user.FULLNAME_ as applyUserName,
+          bpm_inst.INST_ID_ as instId
+        from xpsxfxpgTab zwt
+        left join os_user on zwt.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on zwt.id=bpm_inst.BUS_KEY_
+        where zwt.id=#{xpsxId}
+    </select>
+
+
+    <delete id="deleteXpsx" parameterType="java.util.Map">
+        delete from xpsxfxpgTab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                id IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <insert id="addFxpg" parameterType="java.util.Map">
+         INSERT INTO xpsxfxpg_dcTab (
+            id,
+            xpfxId,
+            CREATE_BY_,
+            CREATE_TIME_,
+            fxd,
+            gkcs,
+            yzfa,
+            wcTime
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{xpfxId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            now(),
+            #{fxd,jdbcType=VARCHAR},
+            #{gkcs,jdbcType=VARCHAR},
+            #{yzfa,jdbcType=VARCHAR},
+            #{wcTime,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updatFxpg" parameterType="java.util.Map">
+        update xpsxfxpg_dcTab
+        <set>
+            xpfxId=#{xpfxId,jdbcType=VARCHAR},
+            fxd=#{fxd,jdbcType=VARCHAR},
+            gkcs=#{gkcs,jdbcType=VARCHAR},
+            yzfa=#{yzfa,jdbcType=VARCHAR},
+            wcTime=#{wcTime,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=now()
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delFxpg" parameterType="java.lang.String">
+        delete from xpsxfxpg_dcTab where id = #{id}
+    </delete>
+    <delete id="deleteFxpg" parameterType="java.util.Map">
+        delete from xpsxfxpg_dcTab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                xpfxId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getFxpgList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlt.id,
+        zlt.xpfxId,
+        zlt.fxd,
+        zlt.gkcs,
+        zlt.yzfa,
+        DATE_FORMAT(zlt.wcTime,'%Y-%m-%d') wcTime
+        FROM
+        xpsxfxpg_dcTab zlt
+        <where>
+            <if test="xpsxId !=null and xpsxId !=''">
+                zlt.xpfxId = #{xpsxId}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryUser" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_user.USER_ID_,
+        os_user.FULLNAME_
+        FROM
+        os_user
+        WHERE
+        os_user.USER_ID_ = #{userId}
+    </select>
+</mapper>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.ZhglJsjdsOverviewDao">
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--查询参数时间段内 提交技术交底书所有部门-->
+    <select id="listJsjdsDept" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_group.GROUP_ID_ AS deptId,
+        os_group.NAME_ AS deptName,
+        count( 1 ) AS `count`
+        FROM
+        jsjds_baseinfo
+        LEFT JOIN os_rel_inst ON os_rel_inst.PARTY2_ = jsjds_baseinfo.CREATE_BY_
+        LEFT JOIN os_group ON os_group.GROUP_ID_ = os_rel_inst.PARTY1_
+        left join bpm_inst on jsjds_baseinfo.jsjdsId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ ='GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_='1'
+        AND jsjds_baseinfo.bmscwcTime IS NOT NULL
+        AND jsjds_baseinfo.bmscwcTime != ''
+        AND (bpm_inst.STATUS_ != 'DISCARD_END' or bpm_inst.STATUS_ is null or bpm_inst.STATUS_='')
+        <if test="zllx != null and zllx != ''">
+            AND jsjds_baseinfo.zllx = #{zllx}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND jsjds_baseinfo.bmscwcTime &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND jsjds_baseinfo.bmscwcTime &lt;= #{endTime}
+        </if>
+        GROUP BY
+        os_group.GROUP_ID_
+    </select>
+
+    <!--按照部门和时间查询技术交底书计划数量-->
+    <select id="listJsjdsPlan" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jp.id,
+        jp.deptId,
+        og.NAME_ AS deptName,
+        jp.`month`,
+        jp.total,
+        jp.CREATE_TIME_ AS createTime
+        FROM jsjds_plan jp
+        LEFT JOIN os_group og ON og.GROUP_ID_ = jp.deptId
+        WHERE 1=1
+        AND jp.`year` = YEAR(SYSDATE())
+        <if test="deptId != null and deptId != ''">
+            AND jp.deptId=#{deptId}
+        </if>
+    </select>
+
+    <!--查询参数时间段内 部门技术交底书计划总数-->
+    <select id="totalJsjdsPlanByParam" resultType="java.lang.Integer">
+        SELECT
+        sum(jp.inventTotal) as countTotal
+        FROM jsjds_plan jp
+        LEFT JOIN os_group og ON og.GROUP_ID_ = jp.deptId
+        WHERE 1=1
+        AND jp.`year` = YEAR(SYSDATE())
+        AND jp.deptId=#{deptId}
+        <if test="endMonth != null and endMonth != ''">
+            AND SUBSTRING_INDEX(jp.`month`,'月',1) &lt;= #{endMonth}
+        </if>
+        GROUP BY jp.deptId
+    </select>
+
+    <!--当前年 部门技术交底书计划总数-->
+    <select id="totalJsjdsPlan" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        sum(jp.total) as countTotal
+        FROM jsjds_plan jp
+        LEFT JOIN os_group og ON og.GROUP_ID_ = jp.deptId
+        WHERE 1=1
+        <if test="year != null and year != ''">AND jp.year=#{year}</if>
+        <if test="year == null or year == ''">AND jp.`year` = YEAR(SYSDATE())</if>
+        <if test="deptId != null and deptId != ''">AND jp.deptId=#{deptId}</if>
+    </select>
+    <select id="countApprovedJsjdsActual" resultType="java.lang.Integer">
+        SELECT
+            count(1) as count
+        FROM
+            `jsjds_baseinfo` jbi
+            LEFT JOIN bpm_inst bi ON bi.BUS_KEY_ = jbi.jsjdsId
+        WHERE
+            1 = 1
+            AND jbi.bmscwcTime IS NOT NULL
+            AND jbi.bmscwcTime != ''
+            AND (bi.STATUS_ != 'DISCARD_END' or bi.STATUS_ is null or bi.STATUS_='')
+            AND YEAR(jbi.bmscwcTime) = YEAR(SYSDATE())
+            AND MONTH(jbi.bmscwcTime) = #{month}
+    </select>
+
+
+    <!--当前年 部门发明类交底书计划总数-->
+    <select id="inventTotalJsjdsPlan" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        sum(jp.inventTotal) as countTotal
+        FROM jsjds_plan jp
+        LEFT JOIN os_group og ON og.GROUP_ID_ = jp.deptId
+        WHERE 1=1
+        <if test="year != null and year != ''">AND jp.year=#{year}</if>
+        <if test="year == null or year == ''">AND jp.`year` = YEAR(SYSDATE())</if>
+        <if test="deptId != null and deptId != ''">AND jp.deptId=#{deptId}</if>
+    </select>
+    <select id="countInventJsjdsActual" resultType="java.lang.Integer">
+        SELECT
+            count(1) as count
+        FROM
+            `jsjds_baseinfo` jbi
+            LEFT JOIN bpm_inst bi ON bi.BUS_KEY_ = jbi.jsjdsId
+        WHERE
+            jbi.zllx ='FM'
+            AND jbi.bmscwcTime IS NOT NULL
+            AND jbi.bmscwcTime != ''
+            AND (bi.STATUS_ != 'DISCARD_END' or bi.STATUS_ is null or bi.STATUS_='')
+            AND YEAR(jbi.bmscwcTime) = YEAR(SYSDATE())
+            AND MONTH(jbi.bmscwcTime) = #{month}
+    </select>
+</mapper>

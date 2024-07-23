@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.StandardvalueShipmentnotmadeDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        order by betaCompletion asc
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                , ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                , ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT service_engineering_standardvalue_shipmentnotmade.*,u.FULLNAME_ creator
+        FROM
+        service_engineering_standardvalue_shipmentnotmade
+        left join os_user u on u.USER_ID_ = service_engineering_standardvalue_shipmentnotmade.CREATE_BY_
+        <where>
+            <if test="department !=null and department !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.department like concat('%', #{department},'%')
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.materialCode like concat('%', #{materialCode},'%')
+            </if>
+            <if test="materialName !=null and materialName !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.materialName like concat('%', #{materialName},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.salesModel like concat('%', #{salesModel},'%')
+            </if>
+            <if test="principal !=null and principal !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.principal = #{principal}
+            </if>
+            <if test="versionType !=null and versionType !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.versionType = #{versionType}
+            </if>
+            <if test="betaCompletion !=null and betaCompletion !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.betaCompletion = #{betaCompletion}
+            </if>
+            <if test="responseStatus !=null and responseStatus !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.responseStatus = #{responseStatus}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_standardvalue_shipmentnotmade
+        <where>
+            <if test="department !=null and department !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.department like concat('%', #{department},'%')
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.materialCode like concat('%', #{materialCode},'%')
+            </if>
+            <if test="materialName !=null and materialName !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.materialName like concat('%', #{materialName},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.salesModel like concat('%', #{salesModel},'%')
+            </if>
+            <if test="principal !=null and principal !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.principal = #{principal}
+            </if>
+            <if test="versionType !=null and versionType !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.versionType = #{versionType}
+            </if>
+            <if test="betaCompletion !=null and betaCompletion !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.betaCompletion = #{betaCompletion}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_standardvalue_shipmentnotmade(
+          id,
+          departmentId,
+          department,
+          salesModel,
+          materialCode,
+          materialName,
+          pinFour,
+          principalId,
+          principal,
+          betaCompletion,
+          versionType,
+          responseStatus,
+          <if test="responseTime != null and responseTime != ''">responseTime,</if>
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id},
+          #{departmentId},
+          #{department},
+          #{salesModel},
+          #{materialCode},
+          #{materialName},
+          #{pinFour},
+          #{principalId},
+          #{principal},
+          #{betaCompletion},
+          #{versionType},
+          #{responseStatus},
+          <if test="responseTime != null and responseTime != ''">#{responseTime},</if>
+          #{CREATE_BY_},
+          #{CREATE_TIME_}
+        )
+    </insert>
+    <!---->
+    <update id="updateData" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_standardvalue_shipmentnotmade
+        set
+        departmentId = #{departmentId},
+        department = #{department},
+        salesModel = #{salesModel},
+        materialCode = #{materialCode},
+        materialName = #{materialName},
+        pinFour= #{pinFour},
+        principalId = #{principalId},
+        principal = #{principal},
+        betaCompletion = #{betaCompletion},
+        versionType = #{versionType},
+        responseStatus = #{responseStatus},
+        <if test="responseTime != null and responseTime != ''">responseTime = #{responseTime},</if>
+        UPDATE_BY_=#{UPDATE_BY_},
+        UPDATE_TIME_=#{UPDATE_TIME_}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteData" parameterType="java.util.Map">
+        delete from service_engineering_standardvalue_shipmentnotmade
+        where id IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from service_engineering_standardvalue_shipmentnotmade where id = #{id}
+    </select>
+
+    <!--查询组织id根据KEY值-->
+    <select id="getGroupById" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+	        A.GROUP_ID_ as groupId,A.NAME_,A.KEY_
+        FROM
+	        os_group A
+        WHERE
+            A.STATUS_ = 'ENABLED'
+            and A.DIM_ID_ = #{DimId}
+            and A.NAME_ = #{deptName}
+        LIMIT 1
+    </select>
+
+    <select id="queryUserByFullName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from os_user where FULLNAME_ = #{fullName} and STATUS_ = 'IN_JOB'
+    </select>
+
+    <select id="queryByMaterialCode" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select * from service_engineering_standardvalue_shipmentnotmade where materialCode = #{materialCode}
+    </select>
+
+    <select id="queryByResponseTime" resultType="com.alibaba.fastjson.JSONObject">
+        select * from service_engineering_standardvalue_shipmentnotmade where betaCompletion &lt;&gt; 'zzwc'
+    </select>
+
+    <select id="queryNeedTodoByUserId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            service_engineering_standardvalue_shipmentnotmade.*,
+            service_enginineering_jxbzzbsh.id as jxbzzbshId,
+            bpm_inst.INST_ID_ as instId
+        FROM
+            service_engineering_standardvalue_shipmentnotmade
+            left join service_enginineering_jxbzzbsh on service_engineering_standardvalue_shipmentnotmade.id=service_enginineering_jxbzzbsh.shipmentnotmadeId
+            left join bpm_inst on service_enginineering_jxbzzbsh.id=bpm_inst.BUS_KEY_
+        WHERE
+         principalId = #{principalId}
+        AND betaCompletion = 'dzz'
+    </select>
+
+</mapper>

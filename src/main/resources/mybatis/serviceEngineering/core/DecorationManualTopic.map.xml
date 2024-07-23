@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.DecorationManualTopicDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="@Ognl@isNotEmpty(businessNo)">
+            AND business.businessNo like CONCAT('%',#{businessNo},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(chapter)">
+            AND business.chapter like CONCAT('%',#{chapter},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(system)">
+            AND business.system like CONCAT('%',#{system},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(topicType)">
+            AND business.topicType like CONCAT('%',#{topicType},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(productSerie)">
+            AND business.productSerie like CONCAT('%',#{productSerie},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(salesArea)">
+            AND business.salesArea like CONCAT('%',#{salesArea},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(manualVersion)">
+            AND business.manualVersion like CONCAT('%',#{manualVersion},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(manualStatus)">
+            AND business.manualStatus like CONCAT('%',#{manualStatus},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(isPS)">
+            AND business.isPS like CONCAT('%',#{isPS},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(id)">
+            AND business.id = #{id}
+        </if>
+        <if test="@Ognl@isNotEmpty(ids)">
+            AND business.id IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        DATE_FORMAT(business.CREATE_TIME_,"%Y-%m-%d %T") as createTime,
+        os_user.FULLNAME_ as creatorName
+        FROM
+        service_engineering_decoration_manualtopic AS business
+        INNER JOIN os_user
+        ON business.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_decoration_manualtopic AS business
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_decoration_manualtopic AS business
+        WHERE business.id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.lang.String">
+        delete from service_engineering_decoration_manualtopic
+        where id = #{id}
+    </delete>
+    <!---->
+    <delete id="deleteBusinessFile" parameterType="java.util.Map">
+        delete from service_engineering_decoration_manualtopicfileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_decoration_manualtopic(
+        id,
+        businessNo,
+        chapter,
+        system,
+        topicCode,
+        topicName,
+        topicType,
+        materialCode,
+        productSerie,
+        salesArea,
+        salesModel,
+        designModel,
+        remark,
+        manualVersion,
+        manualStatus,
+        isPS,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{businessNo,jdbcType=VARCHAR},
+        #{chapter,jdbcType=VARCHAR},
+        #{system,jdbcType=VARCHAR},
+        #{topicCode,jdbcType=VARCHAR},
+        #{topicName,jdbcType=VARCHAR},
+        #{topicType,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{productSerie,jdbcType=VARCHAR},
+        #{salesArea,jdbcType=VARCHAR},
+        #{salesModel,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{manualVersion,jdbcType=VARCHAR},
+        #{manualStatus,jdbcType=VARCHAR},
+        #{isPS,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update service_engineering_decoration_manualtopic
+        set
+        businessNo=#{businessNo,jdbcType=VARCHAR},
+        chapter=#{chapter,jdbcType=VARCHAR},
+        system=#{system,jdbcType=VARCHAR},
+        topicCode=#{topicCode,jdbcType=VARCHAR},
+        topicName=#{topicName,jdbcType=VARCHAR},
+        topicType=#{topicType,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        productSerie=#{productSerie,jdbcType=VARCHAR},
+        salesArea=#{salesArea,jdbcType=VARCHAR},
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        manualVersion=#{manualVersion,jdbcType=VARCHAR},
+        manualStatus=#{manualStatus,jdbcType=VARCHAR},
+        isPS=#{isPS,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <insert id="addFileInfos" parameterType="java.util.Map">
+        insert into service_engineering_decoration_manualtopicfileinfo(
+        id,
+        fileName,
+        fileSize,
+        fileDesc,
+        mainId,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <select id="queryFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from service_engineering_decoration_manualtopicfileinfo
+        where mainId IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+</mapper>

@@ -1,0 +1,30 @@
+﻿[{
+    "UID": "1",
+    "ParentTaskUID": "-1",
+    "Name": "项目范围规划"
+},
+{
+    "UID": "2",
+    "ParentTaskUID": "1",
+    "Name": "确定项目范围"
+},
+{
+    "UID": "3",
+    "ParentTaskUID": "1",
+    "Name": "获得项目所需资金"
+},
+{
+    "UID": "4",
+    "ParentTaskUID": "1",
+    "Name": "定义预备资源"
+},
+{
+    "UID": "5",
+    "ParentTaskUID": "1",
+    "Name": "获得核心资源"
+},
+{
+    "UID": "6",
+    "ParentTaskUID": "1",
+    "Name": "完成项目范围规划"
+}]

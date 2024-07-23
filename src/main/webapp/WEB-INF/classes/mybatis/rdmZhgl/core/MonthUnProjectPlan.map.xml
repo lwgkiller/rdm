@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.MonthUnProjectPlanDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="getPlanLst" parameterType="java.util.Map" resultType="java.util.Map">
+        select T.* from
+        (SELECT
+        F.NAME_ AS deptName,
+        B.taskName,
+        B.taskFrom,
+        B.stageId,
+        B.startDate,
+        B.endDate,
+        B.deptId,
+        B.projectCode,
+        B.asyncStatus,
+        B.processRate,
+        B.processStatus,
+        (case B.processStatus when '1' then '正常' when '2' then '轻微落后' when '3' then '严重滞后' end) as processStatusText,
+        CONCAT(DATE_FORMAT(B.startDate,'%Y-%m-%d'),'至',DATE_FORMAT(B.endDate,'%Y-%m-%d')) as startEndDate,
+        E.FULLNAME_ as responseMan,
+        GROUP_CONCAT(C.FULLNAME_ ) AS planResponseMan,
+        B.isCompanyLevel,
+        A.*,
+        B.remark,
+        B.finishStatus,
+        B.isDelayApply,
+        B.reportDeptId,
+        B.yearMonth,
+        (case B.isCompanyLevel when '0' then '否' when '1' then '是' end) as isCompanyLevelText,
+        (case B.finishStatus when '0' then '完成' when '1' then '未完成' end) as finishStatusText,
+        (case B.isDelayApply when '0' then '否' when '1' then '是' end) as isDelayApplyText
+        FROM
+        ydgz_unprojectplan_item A
+        LEFT JOIN ydgz_unprojectplan B ON A.mainId = B.id
+        LEFT JOIN os_user C ON FIND_IN_SET(C.USER_ID_,A.responseUserId)
+        left join os_user E on B.responseMan = E.USER_ID_
+        left join os_group F on B.deptId =F.GROUP_ID_
+        <where>
+            <if test="deptId != null and deptId != ''">
+                <if test="userId != null and userId != ''">
+                    and (B.deptId in
+                    <foreach collection="deptId" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                    or FIND_IN_SET(#{userId},A.responseUserId)
+                    <if test="userIds != null and userIds != ''">
+                        or
+                        <foreach collection="userIds" index="index" item="userId" open="(" separator="or" close=")">
+                            FIND_IN_SET(#{userId},A.responseUserId)
+                        </foreach>
+                    </if>
+                    )
+                </if>
+                <if test="userId == null or userId == ''">
+                    <if test="apply != null and apply != ''">
+                        and (B.deptId in
+                        <foreach collection="deptId" index="index" item="item" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>
+                        or B.reportDeptId in
+                        <foreach collection="deptId" index="index" item="item" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>)
+                    </if>
+                    <if test="apply == null or apply == ''">
+                        and  (B.deptId in
+                        <foreach collection="deptId" index="index" item="item" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>)
+                    </if>
+                </if>
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                and B.yearMonth = #{yearMonth}
+            </if>
+            <if test="yearMonthStart != null and yearMonthStart != ''">
+                AND B.yearMonth &gt;= #{yearMonthStart}
+            </if>
+            <if test="yearMonthEnd != null and yearMonthEnd != ''">
+                AND B.yearMonth &lt;= #{yearMonthEnd}
+            </if>
+            <if test="responseMan != null and responseMan != ''">
+                and E.FULLNAME_ like CONCAT('%',#{responseMan},'%')
+            </if>
+            <if test="finishStatus != null and finishStatus != ''">
+                and B.finishStatus = #{finishStatus}
+            </if>
+            <if test="isCompanyLevel != null and isCompanyLevel != ''">
+                and FIND_IN_SET(B.isCompanyLevel,#{isCompanyLevel})
+            </if>
+            <if test="ids != null and ids != ''">
+                and B.id in
+                <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY A.id
+        )T
+        where 1=1
+        <if test="planResponseMan != null and planResponseMan != ''">
+            and T.planResponseMan like CONCAT('%',#{planResponseMan},'%')
+        </if>
+        order by T.deptId, T.mainId,T.sortIndex + ''
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,B.FULLNAME_ as responseManText,
+            C.NAME_ as reportDeptName,
+            D.NAME_ as deptName
+        FROM
+            ydgz_unprojectplan A
+            left join os_user B on A.responseMan = B.USER_ID_
+            left join os_group C on A.reportDeptId = C.GROUP_ID_
+            left join os_group D on A.deptId = D.GROUP_ID_
+            where A.id=#{id}
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO ydgz_unprojectplan (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            taskName,
+            taskFrom,
+            startDate,
+            endDate,
+            stageId,
+            responseMan,
+            isCompanyLevel,
+            deptId,
+            yearMonth,
+            finishStatus,
+            isDelayApply,
+            reportDeptId,
+            remark,
+            processRate,
+            processStatus,
+            asyncStatus,
+            projectCode
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{taskName,jdbcType=VARCHAR},
+            #{taskFrom,jdbcType=VARCHAR},
+            #{startDate,jdbcType=TIMESTAMP},
+            #{endDate,jdbcType=TIMESTAMP},
+            #{stageId,jdbcType=VARCHAR},
+            #{responseMan,jdbcType=VARCHAR},
+            #{isCompanyLevel,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR},
+            #{yearMonth,jdbcType=VARCHAR},
+            #{finishStatus,jdbcType=VARCHAR},
+            #{isDelayApply,jdbcType=VARCHAR},
+            #{reportDeptId,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{processRate,jdbcType=VARCHAR},
+            #{processStatus,jdbcType=VARCHAR},
+            #{asyncStatus,jdbcType=VARCHAR},
+            #{projectCode,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update ydgz_unprojectplan
+        <set>
+            <if test="taskName != null and taskName != ''">
+                taskName=#{taskName,jdbcType=VARCHAR},
+            </if>
+            <if test="processRate != null and processRate != ''">
+                processRate=#{processRate,jdbcType=VARCHAR},
+            </if>
+            <if test="processStatus != null and processStatus != ''">
+                processStatus=#{processStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="taskFrom != null and taskFrom != ''">
+                taskFrom=#{taskFrom,jdbcType=VARCHAR},
+            </if>
+            <if test="startDate != null and startDate != ''">
+                startDate=#{startDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="endDate != null and endDate != ''">
+                endDate=#{endDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="stageId != null and stageId != ''">
+                stageId=#{stageId,jdbcType=VARCHAR},
+            </if>
+            <if test="responseMan != null and responseMan != ''">
+                responseMan=#{responseMan,jdbcType=VARCHAR},
+            </if>
+            <if test="isCompanyLevel != null and isCompanyLevel != ''">
+                isCompanyLevel=#{isCompanyLevel,jdbcType=VARCHAR},
+            </if>
+            <if test="deptId != null and deptId != ''">
+                deptId=#{deptId,jdbcType=VARCHAR},
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                yearMonth=#{yearMonth,jdbcType=VARCHAR},
+            </if>
+            <if test="reportDeptId != null and reportDeptId != ''">
+                reportDeptId=#{reportDeptId,jdbcType=VARCHAR},
+            </if>
+            <if test="isDelayApply != null and isDelayApply != ''">
+                isDelayApply=#{isDelayApply,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null and remark != ''">
+                remark=#{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            finishStatus=#{finishStatus,jdbcType=VARCHAR}
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <insert id="addItem" parameterType="java.util.Map">
+         INSERT INTO ydgz_unprojectplan_item (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            workContent,
+            finishFlag,
+            responseUserId,
+            responseDeptId,
+            sortIndex
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{workContent,jdbcType=VARCHAR},
+            #{finishFlag,jdbcType=VARCHAR},
+            #{responseUserId,jdbcType=VARCHAR},
+            #{responseDeptId,jdbcType=VARCHAR},
+            #{sortIndex,jdbcType=INTEGER}
+        )
+    </insert>
+    <update id="updateItem" parameterType="java.util.Map">
+        update ydgz_unprojectplan_item
+        <set>
+            <if test="workContent != null and workContent != ''">
+                workContent=#{workContent,jdbcType=VARCHAR},
+            </if>
+            <if test="finishFlag != null and finishFlag != ''">
+                finishFlag=#{finishFlag,jdbcType=VARCHAR},
+            </if>
+            <if test="responseUserId != null and responseUserId != ''">
+                responseUserId=#{responseUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="responseDeptId != null and responseDeptId != ''">
+                responseDeptId=#{responseDeptId,jdbcType=VARCHAR},
+            </if>
+            <if test="sortIndex != null and sortIndex != ''">
+                sortIndex=#{sortIndex,jdbcType=INTEGER},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delItem" parameterType="java.lang.String">
+        delete from ydgz_unprojectplan_item where id = #{id}
+    </delete>
+    <select id="getItemList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select A.*,
+        GROUP_CONCAT(E.FULLNAME_ ) AS userName
+        from ydgz_unprojectplan_item A
+        left join os_user B on A.responseUserId = B.USER_ID_
+        LEFT JOIN os_user E ON FIND_IN_SET(E.USER_ID_,A.responseUserId)
+        <where>
+            <if test="mainId != null and mainId != ''">
+                and A.mainId=#{mainId}
+            </if>
+        </where>
+        group by A.id
+        ORDER BY A.sortIndex +''
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from ydgz_unprojectplan
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="batchDeleteItems" parameterType="java.util.Map">
+        delete from ydgz_unprojectplan_item
+        WHERE
+        mainId in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="batchDeleteItemsById" parameterType="java.util.Map">
+        delete from ydgz_unprojectplan_item
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="batchUpdate" parameterType="java.util.Map">
+        update ydgz_unprojectplan set isDelayApply = 1
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getObjMap" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT
+            A.*
+        FROM
+            ydgz_unprojectplan A
+            where id=#{id}
+    </select>
+    <select id="getItemMapList" parameterType="java.lang.String" resultType="java.util.Map">
+        select * from ydgz_unprojectplan_item where mainId = #{mainId}
+    </select>
+    <select id="getProjectCode" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+         	A.code,
+	        B.shortName
+        from ydgz_code A
+        LEFT JOIN ydgz_deptConfig B ON A.deptId = B.deptId
+        where A.deptId = #{deptId}
+        and A.codeYear = #{codeYear}
+        and A.codeMonth = #{codeMonth}
+    </select>
+    <update id="updateProjectCode" parameterType="com.alibaba.fastjson.JSONObject">
+        update ydgz_code
+         set code =  #{code}
+        where deptId = #{deptId}
+        and codeYear = #{codeYear}
+        and codeMonth = #{codeMonth}
+    </update>
+    <insert id="addCode" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO ydgz_code (
+            id,
+            deptId,
+            codeYear,
+            codeMonth,
+            code
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR},
+            #{codeYear,jdbcType=VARCHAR},
+            #{codeMonth,jdbcType=VARCHAR},
+            #{code,jdbcType=INTEGER}
+        )
+    </insert>
+    <select id="getDeptShortName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from ydgz_deptconfig where deptId = #{deptId} limit 1
+    </select>
+
+    <select id="getPersonUnPlanList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        B.taskName,
+        B.taskFrom,
+        B.stageId,
+        B.startDate,
+        B.endDate,
+        B.deptId,
+        B.projectCode,
+        B.asyncStatus,
+        B.processRate,
+        B.processStatus,
+        (case B.processStatus when '1' then '正常' when '2' then '轻微落后' when '3' then '严重滞后' end) as processStatusText,
+        CONCAT(DATE_FORMAT(B.startDate,'%Y-%m-%d'),'至',DATE_FORMAT(B.endDate,'%Y-%m-%d')) as startEndDate,
+        E.FULLNAME_ as responseMan,
+        GROUP_CONCAT(C.FULLNAME_ ) AS planResponseMan,
+        B.isCompanyLevel,
+        A.*,
+        B.remark,
+        B.finishStatus,
+        B.isDelayApply,
+        B.reportDeptId,
+        (case B.isCompanyLevel when '0' then '否' when '1' then '是' end) as isCompanyLevelText,
+        (case B.finishStatus when '0' then '完成' when '1' then '未完成' end) as finishStatusText,
+        (case B.isDelayApply when '0' then '否' when '1' then '是' end) as isDelayApplyText
+        FROM
+        ydgz_unprojectplan_item A
+        LEFT JOIN ydgz_unprojectplan B ON A.mainId = B.id
+        LEFT JOIN os_user C ON FIND_IN_SET(C.USER_ID_,A.responseUserId)
+        left join os_user E on B.responseMan = E.USER_ID_
+        <where>
+            <if test="userId != null and userId != ''">
+                and ( FIND_IN_SET(#{userId},B.responseMan)
+                or FIND_IN_SET(#{userId},A.responseUserId))
+            </if>
+            <if test="yearMonthStart != null and yearMonthStart != ''">
+                AND B.yearMonth &gt;= #{yearMonthStart}
+            </if>
+            <if test="yearMonthEnd != null and yearMonthEnd != ''">
+                AND B.yearMonth &lt;= #{yearMonthEnd}
+            </if>
+        </where>
+        GROUP BY A.id
+    </select>
+    <select id="getDeptUnFinishList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        B.taskName,
+        B.taskFrom,
+        B.stageId,
+        B.startDate,
+        B.endDate,
+        B.deptId,
+        B.projectCode,
+        B.asyncStatus,
+        B.processRate,
+        B.processStatus,
+        (case B.processStatus when '1' then '正常' when '2' then '轻微落后' when '3' then '严重滞后' end) as processStatusText,
+        CONCAT(DATE_FORMAT(B.startDate,'%Y-%m-%d'),'至',DATE_FORMAT(B.endDate,'%Y-%m-%d')) as startEndDate,
+        E.FULLNAME_ as responseMan,
+        GROUP_CONCAT(C.FULLNAME_ ) AS planResponseMan,
+        B.isCompanyLevel,
+        A.*,
+        B.remark,
+        B.finishStatus,
+        B.isDelayApply,
+        B.reportDeptId,
+        (case B.isCompanyLevel when '0' then '否' when '1' then '是' end) as isCompanyLevelText,
+        (case B.finishStatus when '0' then '完成' when '1' then '未完成' end) as finishStatusText,
+        (case B.isDelayApply when '0' then '否' when '1' then '是' end) as isDelayApplyText
+        FROM
+        ydgz_unprojectplan_item A
+        LEFT JOIN ydgz_unprojectplan B ON A.mainId = B.id
+        LEFT JOIN os_user C ON FIND_IN_SET(C.USER_ID_,A.responseUserId)
+        left join os_user E on B.responseMan = E.USER_ID_
+        where 1=1
+        and (B.isCompanyLevel = '1' or B.isCompanyLevel = '2')
+        <if test="deptId != null and deptId != ''">
+            and B.deptId = #{deptId}
+        </if>
+        <if test="finishStatus != null and finishStatus != ''">
+            and B.finishStatus = #{finishStatus}
+        </if>
+        <if test="yearMonthStart != null and yearMonthStart != ''">
+            AND B.yearMonth &gt;= #{yearMonthStart}
+        </if>
+        <if test="yearMonthEnd != null and yearMonthEnd != ''">
+            AND B.yearMonth &lt;= #{yearMonthEnd}
+        </if>
+        GROUP BY A.id
+    </select>
+    <select id="getPlanByCodeAndMonth" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            ydgz_unprojectplan A
+        WHERE
+            A.yearMonth = #{yearMonth}
+            AND A.projectCode = #{projectCode}
+    </select>
+</mapper>

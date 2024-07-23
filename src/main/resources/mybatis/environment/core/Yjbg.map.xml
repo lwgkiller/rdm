@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.YjbgDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryYjbg" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environment_yjbg.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        environment_yjbg
+        LEFT JOIN os_rel_inst ON environment_yjbg.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environment_yjbg.CREATE_BY_
+        left join bpm_inst on environment_yjbg.id=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="gridName != null and gridName != ''">
+            and environment_yjbg.gridName like CONCAT('%',#{gridName},'%')
+        </if>
+        <if test="bjName != null and bjName != ''">
+            and environment_yjbg.bjName like CONCAT('%',#{bjName},'%')
+        </if>
+            AND (
+            bpm_inst.STATUS_ != 'DRAFTED'  OR environment_yjbg.CREATE_BY_ = #{currentUserId}
+            )
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countYjbgList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        from
+        environment_yjbg
+        LEFT JOIN os_rel_inst ON environment_yjbg.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environment_yjbg.CREATE_BY_
+        left join bpm_inst on environment_yjbg.id=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="gridName != null and gridName != ''">
+            and environment_yjbg.gridName like CONCAT('%',#{gridName},'%')
+        </if>
+        <if test="bjName != null and bjName != ''">
+            and environment_yjbg.bjName like CONCAT('%',#{bjName},'%')
+        </if>
+        AND (
+        bpm_inst.STATUS_ != 'DRAFTED'  OR environment_yjbg.CREATE_BY_ = #{currentUserId}
+        )
+    </select>
+
+    <insert id="createYjbg" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environment_yjbg(
+            id
+            ,gridName
+            ,bjName
+            ,dlId
+            ,dlName
+            ,hqId
+            ,hqName
+            ,zlId
+            ,zlName
+            ,szrId
+            ,szrName
+            ,changeType
+            ,tzdName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{gridName,jdbcType=VARCHAR},
+            #{bjName,jdbcType=VARCHAR},
+            #{dlId,jdbcType=VARCHAR},
+            #{dlName,jdbcType=VARCHAR},
+            #{hqId,jdbcType=VARCHAR},
+            #{hqName,jdbcType=VARCHAR},
+            #{zlId,jdbcType=VARCHAR},
+            #{zlName,jdbcType=VARCHAR},
+            #{szrId,jdbcType=VARCHAR},
+            #{szrName,jdbcType=VARCHAR},
+            #{changeType,jdbcType=VARCHAR},
+            #{tzdName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateYjbg" parameterType="com.alibaba.fastjson.JSONObject">
+        update environment_yjbg
+        set
+            gridName=#{gridName,jdbcType=VARCHAR},
+            bjName=#{bjName,jdbcType=VARCHAR},
+            dlId=#{dlId,jdbcType=VARCHAR},
+            dlName=#{dlName,jdbcType=VARCHAR},
+            hqId=#{hqId,jdbcType=VARCHAR},
+            hqName=#{hqName,jdbcType=VARCHAR},
+            zlId=#{zlId,jdbcType=VARCHAR},
+            zlName=#{zlName,jdbcType=VARCHAR},
+            szrId=#{szrId,jdbcType=VARCHAR},
+            szrName=#{szrName,jdbcType=VARCHAR},
+            changeType=#{changeType,jdbcType=VARCHAR},
+            tzdName=#{tzdName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+
+
+    <select id="queryYjbgById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select environment_yjbg.*,
+        bpm_inst.INST_ID_ as instId
+        from environment_yjbg
+        left join bpm_inst on environment_yjbg.id=bpm_inst.BUS_KEY_
+        where id=#{id}
+    </select>
+
+    <select id="queryYjbgFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environment_yjbgfile.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        environment_yjbgfile
+        LEFT JOIN os_user ON os_user.USER_ID_ = environment_yjbgfile.CREATE_BY_
+        WHERE
+        belongId=#{wjId}
+        <if test="fileType != null and fileType !='' ">
+            and fileType=#{fileType}
+        </if>
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environment_yjbgfile(
+        fileId
+        ,fileName
+        ,fileSize
+        ,belongId
+        ,fileType
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{fileType,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteYjbgFile" parameterType="java.util.Map">
+        delete from environment_yjbgfile
+        <where>
+            <if test="fileId != null and fileId != ''">
+                fileId=#{fileId}
+            </if>
+            <if test="yjbgIds != null and yjbgIds !=''">
+                AND belongId IN
+                <foreach collection="yjbgIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteYjbg" parameterType="java.util.Map">
+        delete from environment_yjbg
+        <where>
+            <if test="id != null and id !=''">
+                id=#{id}
+            </if>
+        </where>
+    </delete>
+
+
+</mapper>

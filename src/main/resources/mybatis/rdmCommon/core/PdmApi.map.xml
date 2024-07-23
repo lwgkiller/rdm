@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmCommon.core.dao.PdmApiDao">
+    <select id="queryRdmUserByPdmUser" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from os_user
+        where
+        pdmUserNo = #{pdmUserNo}
+    </select>
+
+    <select id="pdmQueryProjectList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            projectTmp.*
+        FROM
+        (
+            SELECT
+                project_baseinfo.projectId,
+                project_baseinfo.projectName,
+                project_baseinfo.categoryId,
+                project_baseinfo.number
+            FROM
+                project_baseinfo
+            WHERE
+                project_baseinfo.projectId IN (
+                    SELECT
+                        distinct projectId
+                    FROM
+                        project_memberinfo
+                    WHERE
+                        project_memberinfo.userId = #{userId}
+                )
+                AND (categoryId is not null and categoryId != '')
+        ) projectTmp
+        LEFT JOIN bpm_inst ON projectTmp.projectId = bpm_inst.BUS_KEY_
+        WHERE
+            bpm_inst.STATUS_ = #{status}
+    </select>
+
+    <select id="queryStageDeliveryByCategoryIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_stagedivide.categoryId,
+            project_stage_leveldelivery.stageId,
+            project_stagedivide.stageName,
+            project_stage_leveldelivery.deliveryId,
+            project_stage_leveldelivery.deliveryName
+        FROM
+            project_stage_leveldelivery
+            LEFT JOIN project_stagedivide ON project_stage_leveldelivery.stageId = project_stagedivide.stageId
+        WHERE
+            project_stagedivide.categoryId IN
+              <foreach collection="categoryIds" index="index" item="item" open="(" close=")" separator=",">
+                  #{item}
+              </foreach>
+        ORDER BY
+            categoryId,
+            stageId,
+            deliveryId
+    </select>
+</mapper>

@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.ReplacementRelationshipDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="@Ognl@isNotEmpty(replaceType)">
+            AND business.replaceType = #{replaceType}
+        </if>
+        <if test="@Ognl@isNotEmpty(replaceTypeOri)">
+            AND business.replaceTypeOri = #{replaceTypeOri}
+        </if>
+        <if test="@Ognl@isNotEmpty(informationSources)">
+            AND business.informationSources like CONCAT('%',#{informationSources},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <sql id="whereMaster">
+        <if test="@Ognl@isNotEmpty(busunessNo)">
+            AND business.busunessNo = #{busunessNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(replaceType)">
+            AND business.replaceType = #{replaceType}
+        </if>
+        <if test="@Ognl@isNotEmpty(replaceTypeOri)">
+            AND business.replaceTypeOri = #{replaceTypeOri}
+        </if>
+        <if test="@Ognl@isNotEmpty(informationSources)">
+            AND business.informationSources like CONCAT('%',#{informationSources},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCodeOri)">
+            AND business.materialCodeOri like CONCAT('%',#{materialCodeOri},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCodeRep)">
+            AND business.materialCodeRep like CONCAT('%',#{materialCodeRep},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(oriGroups)">
+            AND business.busunessNo IN
+            <foreach collection="oriGroups" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="@Ognl@isNotEmpty(repGroups)">
+            AND business.busunessNo IN
+            <foreach collection="repGroups" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+    <!--特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst.INST_ID_ AS instId。其实现在没必要了，可以用business.INST_ID_取代-->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        service_engineering_replacement_relationship AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_replacement_relationship AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="masterdataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        os_user.FULLNAME_ as createUser,
+        DATE_FORMAT(business.CREATE_TIME_, "%Y-%m-%d") as createTime
+        FROM
+        service_engineering_replacement_relationship_masterdata AS business
+        LEFT JOIN os_user
+        ON business.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <include refid="whereMaster"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countMasterdataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_replacement_relationship_masterdata AS business
+        <where>
+            <include refid="whereMaster"/>
+        </where>
+    </select>
+    <!--和组织，用户，bpm_inst的关联没啥用了。业务表冗余存储了。特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst-->
+    <select id="queryDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            bpm_inst.INST_ID_ AS instId
+        FROM service_engineering_replacement_relationship AS business
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_replacement_relationship(
+            id,
+            replaceType,
+            replaceTypeOri,
+            applicableModels,
+            WIPHandlingComments,
+            informationSources,
+            applyTime,
+            applyUserId,
+            applyUser,
+            approverId,
+            approver,
+            remark,
+            businessStatus,
+            recordItems,
+            CREATE_BY_,
+            CREATE_TIME_,
+            INST_ID_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{replaceType,jdbcType=VARCHAR},
+            #{replaceTypeOri,jdbcType=VARCHAR},
+            #{applicableModels,jdbcType=VARCHAR},
+            #{WIPHandlingComments,jdbcType=VARCHAR},
+            #{informationSources,jdbcType=VARCHAR},
+            #{applyTime,jdbcType=VARCHAR},
+            #{applyUserId,jdbcType=VARCHAR},
+            #{applyUser,jdbcType=VARCHAR},
+            #{approverId,jdbcType=VARCHAR},
+            #{approver,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{recordItems,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{INST_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update service_engineering_replacement_relationship
+        set
+            replaceType=#{replaceType,jdbcType=VARCHAR},
+            replaceTypeOri=#{replaceTypeOri,jdbcType=VARCHAR},
+            applicableModels=#{applicableModels,jdbcType=VARCHAR},
+            WIPHandlingComments=#{WIPHandlingComments,jdbcType=VARCHAR},
+            informationSources=#{informationSources,jdbcType=VARCHAR},
+            applyTime=#{applyTime,jdbcType=VARCHAR},
+            applyUserId=#{applyUserId,jdbcType=VARCHAR},
+            applyUser=#{applyUser,jdbcType=VARCHAR},
+            approverId=#{approverId,jdbcType=VARCHAR},
+            approver=#{approver,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            recordItems=#{recordItems,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from service_engineering_replacement_relationship
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteBusinessMasterdata" parameterType="java.util.Map">
+        delete from service_engineering_replacement_relationship_masterdata
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="insertBusinessMasterData" parameterType="java.util.Map">
+        insert into service_engineering_replacement_relationship_masterdata(
+        id,
+        busunessNo,
+        busunessNoItem,
+        materialCodeOri,
+        materialNameOri,
+        materialCountOri,
+        materialCodeRep,
+        materialNameRep,
+        materialCountRep,
+        replaceTypeOri,
+        replaceType,
+        applicableModels,
+        WIPHandlingComments,
+        informationSources,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{busunessNo,jdbcType=VARCHAR},
+        #{busunessNoItem,jdbcType=VARCHAR},
+        #{materialCodeOri,jdbcType=VARCHAR},
+        #{materialNameOri,jdbcType=VARCHAR},
+        #{materialCountOri,jdbcType=VARCHAR},
+        #{materialCodeRep,jdbcType=VARCHAR},
+        #{materialNameRep,jdbcType=VARCHAR},
+        #{materialCountRep,jdbcType=VARCHAR},
+        #{replaceTypeOri,jdbcType=VARCHAR},
+        #{replaceType,jdbcType=VARCHAR},
+        #{applicableModels,jdbcType=VARCHAR},
+        #{WIPHandlingComments,jdbcType=VARCHAR},
+        #{informationSources,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <select id="getDistinctGroupList" parameterType="java.util.Map" resultType="java.lang.String">
+        SELECT
+        DISTINCT(business.busunessNo)
+        FROM
+        service_engineering_replacement_relationship_masterdata AS business
+        <where>
+            <if test="@Ognl@isNotEmpty(materialCodeOri)">
+                AND business.materialCodeOri = #{materialCodeOri}
+            </if>
+            <if test="@Ognl@isNotEmpty(materialCodeRep)">
+                AND business.materialCodeRep = #{materialCodeRep}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+</mapper>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardSystemDao">
+    <select id="querySystemCategory" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        FROM
+        standard_systemcategory
+        <where>
+            <if test="ids != null and ids != ''">
+                standard_systemcategory.systemCategoryId in
+                <foreach collection="ids" index="index" item="id" separator="," open="(" close=")">
+                     #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_systemcategory.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+
+    <select id="querySystem" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_system.*,
+        standard_systemcategory.systemCategoryName
+        FROM
+        standard_system
+        LEFT JOIN standard_systemcategory ON standard_system.systemCategoryId = standard_systemcategory.systemCategoryId
+        <where>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                standard_system.systemCategoryId = #{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_system.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <if test="systemId != null and systemId != ''">
+                AND standard_system.id=#{systemId}
+            </if>
+        </where>
+        order by standard_system.systemNumber
+    </select>
+
+    <select id="queryStandardBySystemIds" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        standard_source
+        <where>
+            <if test="systemIds != null and systemIds != ''">
+                standard_source.systemId in
+                <foreach collection="systemIds" index="index" item="id" separator="," open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+
+    <insert id="saveSystemNode" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_system
+        (id,systemName,systemCategoryId,systemNumber,systemCode,parentId,visibleGroupIds,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+        values(
+          #{id,jdbcType=VARCHAR},
+          #{systemName,jdbcType=VARCHAR},
+          #{systemCategoryId,jdbcType=VARCHAR},
+          #{systemNumber,jdbcType=VARCHAR},
+          #{systemCode,jdbcType=VARCHAR},
+          #{parentId,jdbcType=VARCHAR},
+          #{visibleGroupIds,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP},
+          #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateSystemNode" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_system SET
+         systemName= #{systemName,jdbcType=VARCHAR},
+         systemCategoryId= #{systemCategoryId,jdbcType=VARCHAR},
+         systemNumber= #{systemNumber,jdbcType=VARCHAR},
+         systemCode= #{systemCode,jdbcType=VARCHAR},
+         parentId= #{parentId,jdbcType=VARCHAR},
+         visibleGroupIds= #{visibleGroupIds,jdbcType=VARCHAR},
+         UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+         UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <delete id="delSystemNode" parameterType="java.lang.String">
+        delete from standard_system
+        where id=#{id}
+    </delete>
+
+    <select id="queryExportSystem" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            *
+        FROM
+            standard_system
+        where
+            systemCategoryId=#{systemCategoryId}
+            and parentId is not null
+            and parentId !=''
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_system.TENANT_ID_=#{TENANT_ID_}
+        </if>
+        order by systemNumber
+    </select>
+
+    <select id="queryGroupNamesByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select NAME_ from os_group
+        where
+        GROUP_ID_ IN
+        <foreach collection="groupIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+</mapper>

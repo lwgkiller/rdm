@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.componentTest.core.dao.ComponentTestResultDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="testNo !=null and testNo !=''">
+            AND component_test_kanban.testNo like CONCAT('%',#{testNo},'%')
+        </if>
+        <if test="componentName !=null and componentName !=''">
+            AND component_test_kanban.componentName like CONCAT('%',#{componentName},'%')
+        </if>
+        <if test="componentModel !=null and componentModel !=''">
+            AND component_test_kanban.componentModel like CONCAT('%',#{componentModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND component_test_kanban.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="testType !=null and testType !=''">
+            AND component_test_kanban.testType = #{testType}
+        </if>
+        <if test="componentCategory !=null and componentCategory !=''">
+            AND component_test_kanban.componentCategory = #{componentCategory}
+        </if>
+        <if test="completeTestMonth !=null and completeTestMonth !=''">
+            AND component_test_kanban.completeTestMonth = #{completeTestMonth}
+        </if>
+        <if test="laboratory !=null and laboratory !=''">
+            AND component_test_kanban.laboratory like CONCAT('%',#{laboratory},'%')
+        </if>
+        <if test="applyUser !=null and applyUser !=''">
+            AND component_test_kanban.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="applyDep !=null and applyDep !=''">
+            AND component_test_kanban.applyDep like CONCAT('%',#{applyDep},'%')
+        </if>
+        <if test="testLeader !=null and testLeader !=''">
+            AND component_test_kanban.testLeader like CONCAT('%',#{testLeader},'%')
+        </if>
+        <if test="testReportNo !=null and testReportNo !=''">
+            AND component_test_plan_reportinfo.fileDesc = #{testReportNo}
+        </if>
+        <if test="testReport !=null and testReport !=''">
+            AND component_test_plan_reportinfo.fileName like CONCAT('%',#{testReport},'%')
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="(roleName =='fgld' or roleName =='fgzr')">
+                </when>
+                <when test="roleName =='bmfzr'">
+                    AND component_test_kanban.applyDepId IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND (component_test_kanban.applyUserId = #{currentUserId} OR
+                    component_test_kanban.testLeaderId = #{currentUserId})
+                </when>
+            </choose>
+        </if>
+    </sql>
+    <sql id="query_where_pass">
+        <if test="componentName !=null and componentName !=''">
+            AND component_test_kanban.componentName like CONCAT('%',#{componentName},'%')
+        </if>
+        <if test="componentModel !=null and componentModel !=''">
+            AND component_test_kanban.componentModel like CONCAT('%',#{componentModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND component_test_kanban.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="machineModel !=null and machineModel !=''">
+            AND component_test_kanban.machineModel like CONCAT('%',#{machineModel},'%')
+        </if>
+        <if test="supplierName !=null and supplierName !=''">
+            AND component_test_kanban.supplierName like CONCAT('%',#{supplierName},'%')
+        </if>
+        <if test="testType !=null and testType !=''">
+            AND component_test_kanban.testType = #{testType}
+        </if>
+        <if test="componentCategory !=null and componentCategory !=''">
+            AND component_test_kanban.componentCategory = #{componentCategory}
+        </if>
+        <if test="completeTestMonth !=null and completeTestMonth !=''">
+            AND component_test_kanban.completeTestMonth = #{completeTestMonth}
+        </if>
+        <if test="laboratory !=null and laboratory !=''">
+            AND component_test_kanban.laboratory like CONCAT('%',#{laboratory},'%')
+        </if>
+        <if test="applyUser !=null and applyUser !=''">
+            AND component_test_kanban.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="applyDep !=null and applyDep !=''">
+            AND component_test_kanban.applyDep like CONCAT('%',#{applyDep},'%')
+        </if>
+        <if test="testLeader !=null and testLeader !=''">
+            AND component_test_kanban.testLeader like CONCAT('%',#{testLeader},'%')
+        </if>
+        <if test="ids != null and ids !=''">
+            component_test_kanban.id IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        AND component_test_kanban.testResult = '合格'
+    </sql>
+    <sql id="query_where_no_pass">
+        <if test="componentName !=null and componentName !=''">
+            AND component_test_kanban.componentName like CONCAT('%',#{componentName},'%')
+        </if>
+        <if test="componentModel !=null and componentModel !=''">
+            AND component_test_kanban.componentModel like CONCAT('%',#{componentModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND component_test_kanban.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="machineModel !=null and machineModel !=''">
+            AND component_test_kanban.machineModel like CONCAT('%',#{machineModel},'%')
+        </if>
+        <if test="supplierName !=null and supplierName !=''">
+            AND component_test_kanban.supplierName like CONCAT('%',#{supplierName},'%')
+        </if>
+        <if test="testType !=null and testType !=''">
+            AND component_test_kanban.testType = #{testType}
+        </if>
+        <if test="componentCategory !=null and componentCategory !=''">
+            AND component_test_kanban.componentCategory = #{componentCategory}
+        </if>
+        <if test="completeTestMonth !=null and completeTestMonth !=''">
+            AND component_test_kanban.completeTestMonth = #{completeTestMonth}
+        </if>
+        <if test="laboratory !=null and laboratory !=''">
+            AND component_test_kanban.laboratory like CONCAT('%',#{laboratory},'%')
+        </if>
+        <if test="applyUser !=null and applyUser !=''">
+            AND component_test_kanban.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="applyDep !=null and applyDep !=''">
+            AND component_test_kanban.applyDep like CONCAT('%',#{applyDep},'%')
+        </if>
+        <if test="testLeader !=null and testLeader !=''">
+            AND component_test_kanban.testLeader like CONCAT('%',#{testLeader},'%')
+        </if>
+        <if test="ids != null and ids !=''">
+            component_test_kanban.id IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        AND (component_test_kanban.unqualifiedStatus = '停止使用'
+        OR component_test_kanban.unqualifiedStatus = '未处理'
+        OR component_test_kanban.unqualifiedStatus = '改进后再次试验不合格')
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        component_test_kanban.id,
+        component_test_kanban.testNo,
+        component_test_kanban.componentName,
+        component_test_kanban.componentModel,
+        component_test_kanban.materialCode,
+        component_test_kanban.applyUser,
+        component_test_kanban.testLeader,
+        component_test_kanban.completeTestMonth,
+        component_test_plan_contractinfo.id AS testContractId,
+        component_test_plan_contractinfo.fileDesc AS testContractNo,
+        component_test_plan_contractinfo.fileName AS testContract,
+        component_test_plan_reportinfo.id AS testReportId,
+        component_test_plan_reportinfo.fileDesc AS testReportNo,
+        component_test_plan_reportinfo.fileName AS testReport
+        FROM
+        component_test_kanban
+        INNER JOIN component_test_plan_contractinfo
+        ON component_test_kanban.id = component_test_plan_contractinfo.mainKanbanId
+        INNER JOIN component_test_plan_reportinfo
+        ON component_test_kanban.id = component_test_plan_reportinfo.mainKanbanId
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        component_test_kanban
+        INNER JOIN component_test_plan_contractinfo
+        ON component_test_kanban.id = component_test_plan_contractinfo.mainKanbanId
+        INNER JOIN component_test_plan_reportinfo
+        ON component_test_kanban.id = component_test_plan_reportinfo.mainKanbanId
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="dataPassListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        component_test_kanban.*,
+        component_test_plan_reportinfo.fileDesc AS testReportNo
+        FROM
+        component_test_kanban
+        LEFT JOIN component_test_plan_reportinfo
+        ON component_test_kanban.id = component_test_plan_reportinfo.mainKanbanId
+        <where>
+            <include refid="query_where_pass"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataPassListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        component_test_kanban
+        LEFT JOIN component_test_plan_reportinfo
+        ON component_test_kanban.id = component_test_plan_reportinfo.mainKanbanId
+        <where>
+            <include refid="query_where_pass"/>
+        </where>
+    </select>
+    <!---->
+    <select id="dataNotPassListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        component_test_kanban.*,
+        component_test_plan_reportinfo.fileDesc AS testReportNo
+        FROM
+        component_test_kanban
+        LEFT JOIN component_test_plan_reportinfo
+        ON component_test_kanban.id = component_test_plan_reportinfo.mainKanbanId
+        <where>
+            <include refid="query_where_no_pass"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataNotPassListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        component_test_kanban
+        LEFT JOIN component_test_plan_reportinfo
+        ON component_test_kanban.id = component_test_plan_reportinfo.mainKanbanId
+        <where>
+            <include refid="query_where_no_pass"/>
+        </where>
+    </select>
+</mapper>

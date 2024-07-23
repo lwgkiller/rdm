@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.ZLAndFMOverviewDao">
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="listZltzEnumtable" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT ze.id, ze.enumType, ze.enumName FROM zltz_enumtable ze WHERE 1 = 1
+        <if test="enumType != null and enumType != ''">
+            AND ze.enumType = #{enumType}
+        </if>
+    </select>
+
+
+    <!--有效授权中国专利量 - pie-->
+    <select id="queryEffectiveAuthorizedPieChart" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zzz.zgzlId,
+        zzz.serialNumber,
+        zzz.departmentId,
+        zzz.billNo,
+        zzz.reportName,
+        zzz.patentName,
+        zzz.zllxId,
+        zzz.applicationNumber,
+        zzz.theInventors,
+        zzz.thepatentee,
+        zzz.examinationApproval,
+        zzz.byCase,
+        zzz.filingdate,
+        zzz.authorizationDate,
+        zzz.authionization,
+        zzz.specifyCountry,
+        zzz.permissionOthers,
+        zzz.personPermitted,
+        zzz.whetherPledge,
+        zzz.transferredCompany,
+        zzz.claimsNumber,
+        zzz.gnztId,
+        zzz.patentDate,
+        zzz.expiryDate,
+        zzz.failureReason,
+        zzz.agencyName,
+        zzz.agentThe,
+        YEAR(DATE_ADD(zzz.authionization, INTERVAL 8 HOUR)) as `year`,
+        MONTH(DATE_ADD(zzz.authionization, INTERVAL 8 HOUR)) as `month`
+        FROM
+        zltz_zhongguozhuanli zzz
+        LEFT JOIN zltz_enumtable ze ON ze.id = zzz.zllxId
+        WHERE
+        1 = 1
+        AND zzz.authionization IS NOT NULL
+        AND zzz.authionization &lt;> ''
+        <if test="zllxId != null and zllxId != ''">
+            AND zzz.zllxId = #{zllxId}
+        </if>
+        <if test="month != null and month != ''">
+            AND MONTH(DATE_ADD(zzz.authionization, INTERVAL 8 HOUR)) = #{month}
+        </if>
+        <if test="year != null and year != ''">
+            AND YEAR(DATE_ADD(zzz.authionization, INTERVAL 8 HOUR)) = #{year}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND zzz.authionization &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND zzz.authionization &lt;= #{endTime}
+        </if>
+        <if test="list != null and list.size > 0">
+            AND zzz.gnztId in
+            <foreach collection="list" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <!--有效授权中国专利量 - bar-->
+    <select id="queryEffectiveAuthorizedBarChart" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zzz.zgzlId,
+        zzz.zllxId,
+        zzz.filingdate,
+        zzz.authorizationDate,
+        zzz.authionization,
+        zzz.gnztId,
+        zzz.patentDate,
+        zzz.expiryDate,
+        YEAR(DATE_ADD(zzz.authionization, INTERVAL 8 HOUR)) as `year`,
+        MONTH(DATE_ADD(zzz.authionization, INTERVAL 8 HOUR)) as `month`,
+        ze.enumType,
+        ze.enumName
+        FROM
+        zltz_zhongguozhuanli zzz
+        LEFT JOIN zltz_enumtable ze ON ze.id = zzz.zllxId
+        WHERE
+        1 = 1
+        AND zzz.authionization IS NOT NULL
+        AND zzz.authionization &lt;> ''
+        <if test="zllxId != null and zllxId != ''">
+            AND zzz.zllxId = #{zllxId}
+        </if>
+        <if test="month != null and month != ''">
+            AND MONTH(zzz.authionization) = #{month}
+        </if>
+        <if test="year != null and year != ''">
+            AND YEAR(zzz.authionization) = #{year}
+        </if>
+        <if test="list != null and list.size > 0">
+            AND zzz.gnztId in
+            <foreach collection="list" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <!--中国专利申请情况 pie-->
+    <select id="queryPatenApplyPieChart" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zzz.zgzlId,
+        zzz.zllxId,
+        zzz.filingdate,
+        zzz.authorizationDate,
+        zzz.authionization,
+        zzz.gnztId,
+        zzz.patentDate,
+        zzz.expiryDate,
+        YEAR(DATE_ADD(zzz.filingdate, INTERVAL 8 HOUR)) as `year`,
+        MONTH(DATE_ADD(zzz.filingdate, INTERVAL 8 HOUR)) as `month`,
+        ze.enumType,
+        ze.enumName
+        FROM
+        zltz_zhongguozhuanli zzz
+        LEFT JOIN zltz_enumtable ze ON ze.id = zzz.zllxId
+        WHERE
+        1 = 1
+        AND zzz.filingdate IS NOT NULL
+        AND zzz.filingdate != ''
+        <if test="zllxId != null and zllxId != ''">
+            AND zzz.zllxId = #{zllxId}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND zzz.filingdate &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND zzz.filingdate &lt;= #{endTime}
+        </if>
+        <if test="list != null and list.size > 0">
+            AND zzz.gnztId in
+            <foreach collection="list" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <!--中国专利申请情况 - bar-->
+    <select id="queryPatenApplyBarChart" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zzz.zgzlId,
+        zzz.zllxId,
+        zzz.filingdate,
+        zzz.authorizationDate,
+        zzz.authionization,
+        zzz.gnztId,
+        zzz.patentDate,
+        zzz.expiryDate,
+        YEAR(DATE_ADD(zzz.filingdate, INTERVAL 8 HOUR)) as `year`,
+        MONTH(DATE_ADD(zzz.filingdate, INTERVAL 8 HOUR)) as `month`,
+        ze.enumType,
+        ze.enumName
+        FROM
+        zltz_zhongguozhuanli zzz
+        LEFT JOIN zltz_enumtable ze ON ze.id = zzz.zllxId
+        WHERE
+        1 = 1
+        AND zzz.filingdate IS NOT NULL
+        AND zzz.filingdate &lt;> ''
+        <if test="zllxId != null and zllxId != ''">
+            AND zzz.zllxId = #{zllxId}
+        </if>
+        <if test="month != null and month != ''">
+            AND MONTH(zzz.filingdate) = #{month}
+        </if>
+        <if test="year != null and year != ''">
+            AND YEAR(zzz.filingdate) = #{year}
+        </if>
+        <if test="list != null and list.size > 0">
+            AND zzz.gnztId in
+            <foreach collection="list" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+
+    <!--中国发明专利申请量 pie-->
+    <select id="queryInventApplyPieChart" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zzz.zgzlId,
+        zzz.serialNumber,
+        zzz.departmentId,
+        zzz.billNo,
+        zzz.reportName,
+        zzz.patentName,
+        zzz.zllxId,
+        zzz.applicationNumber,
+        zzz.theInventors,
+        zzz.thepatentee,
+        zzz.examinationApproval,
+        zzz.byCase,
+        zzz.filingdate,
+        zzz.authorizationDate,
+        zzz.authionization,
+        zzz.specifyCountry,
+        zzz.permissionOthers,
+        zzz.personPermitted,
+        zzz.whetherPledge,
+        zzz.transferredCompany,
+        zzz.claimsNumber,
+        zzz.gnztId,
+        zzz.patentDate,
+        zzz.expiryDate,
+        zzz.failureReason,
+        zzz.agencyName,
+        zzz.agentThe,
+        YEAR(DATE_ADD(zzz.filingdate, INTERVAL 8 HOUR)) as `year`,
+        MONTH(DATE_ADD(zzz.filingdate, INTERVAL 8 HOUR)) as `month`
+        FROM
+        zltz_zhongguozhuanli zzz
+        LEFT JOIN zltz_enumtable ze ON ze.id = zzz.gnztId
+        WHERE
+        1 = 1
+        AND zzz.filingdate IS NOT NULL
+        AND zzz.filingdate &lt;> ''
+        AND zzz.zllxId = '001'
+        <if test="startTime != null and startTime != ''">
+            AND zzz.filingdate &gt;= #{startTime}
+        </if>
+        <if test="sqDate != null and sqDate != ''">
+            AND (zzz.authionization is not null  and zzz.authionization !='')
+        </if>
+        <if test="sqfwDate != null and sqfwDate != ''">
+            AND (zzz.authorizationDate is not null  and zzz.authorizationDate !='')
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND zzz.filingdate &lt;= #{endTime}
+        </if>
+        <if test="list != null and list.size > 0">
+            AND zzz.gnztId in
+            <foreach collection="list" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+</mapper>

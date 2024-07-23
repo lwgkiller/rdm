@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitIndexDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.NAME_ AS deptName
+        FROM
+        portrait_index A
+        LEFT JOIN os_group B ON A.deptId = B.GROUP_ID_
+        where
+        A.deptId in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="deptName != null and deptName != ''">
+            and B.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="indexName != null and indexName != ''">
+            and A.indexName like CONCAT('%',#{indexName},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO portrait_index (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            deptId,
+            indexName,
+            indexValue,
+            indexScore,
+            scoreRule,
+            indexRate,
+            year
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{deptId,jdbcType=VARCHAR},
+            #{indexName,jdbcType=VARCHAR},
+            #{indexValue,jdbcType=VARCHAR},
+            #{indexScore,jdbcType=VARCHAR},
+            #{scoreRule,jdbcType=VARCHAR},
+            #{indexRate,jdbcType=VARCHAR},
+            #{year,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="batchInsertIndex" parameterType="java.util.List">
+        INSERT INTO portrait_index (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        deptId,
+        indexName,
+        indexValue,
+        indexScore,
+        scoreRule,
+        indexRate,
+        year
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.deptId,jdbcType=VARCHAR},
+            #{item.indexName,jdbcType=VARCHAR},
+            #{item.indexValue,jdbcType=VARCHAR},
+            #{item.indexScore,jdbcType=VARCHAR},
+            #{item.scoreRule,jdbcType=VARCHAR},
+            #{item.indexRate,jdbcType=VARCHAR},
+            #{item.year,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update portrait_index
+        <set>
+            <if test="deptId != null and deptId != ''">
+                deptId=#{deptId,jdbcType=VARCHAR},
+            </if>
+            <if test="indexName != null and indexName != ''">
+                indexName=#{indexName,jdbcType=VARCHAR},
+            </if>
+            <if test="indexValue != null and indexValue != ''">
+                indexValue=#{indexValue,jdbcType=VARCHAR},
+            </if>
+            <if test="indexScore != null and indexScore != ''">
+                indexScore=#{indexScore,jdbcType=VARCHAR},
+            </if>
+            <if test="scoreRule != null and scoreRule != ''">
+                scoreRule=#{scoreRule,jdbcType=VARCHAR},
+            </if>
+            <if test="indexRate != null and indexRate != ''">
+                indexRate=#{indexRate,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+            <if test="year != null and year != ''">
+                year=#{year,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      select A.*,
+        B.NAME_ AS deptName
+      from portrait_index A
+       LEFT JOIN os_group B ON A.deptId = B.GROUP_ID_
+        where A.id = #{id}
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from  portrait_index
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getIndexDic" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.indexName AS text,
+            A.id as value,
+            A.indexValue,
+            A.indexScore,
+            A.scoreRule,
+            A.year
+            FROM
+	        portrait_index A
+	        where 1=1
+	        <if test="deptId != null and deptId != ''">
+                and A.deptId = #{deptId}
+            </if>
+    </select>
+    <select id="getIndexInfo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            portrait_index A
+        WHERE
+            A.deptId = #{deptId}
+            AND A.indexName = #{indexName}
+    </select>
+</mapper>

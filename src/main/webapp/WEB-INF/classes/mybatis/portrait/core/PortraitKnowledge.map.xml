@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitKnowledgeDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ AS userName,
+        G.NAME_ as deptName
+        FROM
+        portrait_knowledge A
+        LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        LEFT JOIN os_rel_inst C  ON A.userId = C.PARTY2_
+        LEFT JOIN os_dimension D  ON C.DIM1_ = D.DIM_ID_
+        left join os_group G on C.PARTY1_ = G.GROUP_ID_
+        where
+        C.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND D.DIM_KEY_ = '_ADMIN'
+        AND C.PARTY1_ in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="userId != null and userId != ''">
+            AND A.userId = #{userId}
+        </if>
+        <if test="knowledgeType != null and knowledgeType != ''">
+            AND A.knowledgeType = #{knowledgeType}
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and G.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="knowledgeName != null and knowledgeName != ''">
+            and A.knowledgeName like CONCAT('%',#{knowledgeName},'%')
+        </if>
+        <if test="knowledgeCode != null and knowledgeCode != ''">
+            and A.knowledgeCode like CONCAT('%',#{knowledgeCode},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO portrait_knowledge (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            userId,
+            knowledgeCode,
+            knowledgeName,
+            knowledgeType,
+            applyDate,
+            knowledgeStatus,
+            authorizeDate,
+            ranking,
+            score,
+            orgId
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{userId,jdbcType=VARCHAR},
+            #{knowledgeCode,jdbcType=VARCHAR},
+            #{knowledgeName,jdbcType=VARCHAR},
+            #{knowledgeType,jdbcType=VARCHAR},
+            #{applyDate,jdbcType=TIMESTAMP},
+            #{knowledgeStatus,jdbcType=VARCHAR},
+            #{authorizeDate,jdbcType=TIMESTAMP},
+            #{ranking,jdbcType=VARCHAR},
+            #{score,jdbcType=FLOAT},
+            #{orgId,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="batchInsertKnowledge" parameterType="java.util.List">
+        INSERT INTO portrait_knowledge (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            userId,
+            knowledgeCode,
+            knowledgeName,
+            knowledgeType,
+            applyDate,
+            knowledgeStatus,
+            authorizeDate,
+            ranking,
+            score,
+            orgId
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.userId,jdbcType=VARCHAR},
+            #{item.knowledgeCode,jdbcType=VARCHAR},
+            #{item.knowledgeName,jdbcType=VARCHAR},
+            #{item.knowledgeType,jdbcType=VARCHAR},
+            #{item.applyDate,jdbcType=TIMESTAMP},
+            #{item.knowledgeStatus,jdbcType=VARCHAR},
+            #{item.authorizeDate,jdbcType=TIMESTAMP},
+            #{item.ranking,jdbcType=TIMESTAMP},
+            #{item.score,jdbcType=FLOAT},
+            #{item.knowledgeStatus,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateObject" parameterType="java.util.Map">
+        update portrait_knowledge
+        <set>
+            <if test="userId != null and userId != ''">
+                userId=#{userId,jdbcType=VARCHAR},
+            </if>
+            <if test="knowledgeCode != null and knowledgeCode != ''">
+                knowledgeCode=#{knowledgeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="knowledgeName != null and knowledgeName != ''">
+                knowledgeName=#{knowledgeName,jdbcType=VARCHAR},
+            </if>
+            <if test="knowledgeType != null and knowledgeType != ''">
+                knowledgeType=#{knowledgeType,jdbcType=VARCHAR},
+            </if>
+            <if test="applyDate != null and applyDate != ''">
+                applyDate=#{applyDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="knowledgeStatus != null and knowledgeStatus != ''">
+                knowledgeStatus=#{knowledgeStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="authorizeDate != null and authorizeDate != ''">
+                authorizeDate=#{authorizeDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="ranking != null and ranking != ''">
+                ranking=#{ranking,jdbcType=VARCHAR},
+            </if>
+            <if test="score != null and score != ''">
+                score=#{score,jdbcType=FLOAT},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      select A.*,
+        B.FULLNAME_ AS userName
+      from portrait_knowledge A
+        LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        where A.id = #{id}
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from  portrait_knowledge
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!--获取个人参与标准信息-->
+    <select id="getPersonKnowledgeList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.util.Map">
+        SELECT
+            A.id,
+            A.knowledgeCode,
+            A.knowledgeName,
+            A.knowledgeType,
+            A.applyDate,
+            A.knowledgeStatus,
+            A.authorizeDate,
+            A.ranking,
+            A.score
+            FROM
+            portrait_knowledge A
+            where A.userId = #{userId}
+            <if test="reportYear != null and reportYear != ''">
+                and YEAR(A.authorizeDate) = #{reportYear}
+            </if>
+    </select>
+    <!--查询编号是否已经存在-->
+    <select id="getObjectByCode" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from portrait_knowledge where knowledgeCode = #{knowledgeCode}
+    </select>
+
+    <select id="getPaperList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            kjlw_baseinfo A
+            LEFT JOIN bpm_inst B ON A.kjlwId = B.BUS_KEY_
+        WHERE
+            A.async = '0'
+            AND B.STATUS_ = 'SUCCESS_END'
+    </select>
+    <update id="updatePaperStatus" parameterType="java.lang.String">
+        update kjlw_baseinfo
+        set async = '1'
+        WHERE
+        kjlwId=#{id}
+    </update>
+    <select id="getSoftList" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+            *
+        FROM
+            rjzz_baseinfo A
+        WHERE
+            A.async = '0'
+            and A.zsNum is not null
+			and A.zsNum != ''
+    </select>
+    <update id="updateSoftStatus" parameterType="java.lang.String">
+        update rjzz_baseinfo
+        set async = '1'
+        WHERE
+        rjzzId=#{id}
+    </update>
+    <select id="getAuthorizePatentList" resultType="com.alibaba.fastjson.JSONObject">
+         SELECT
+            A.*,
+            C.enumName as patentType
+        FROM
+            zltz_zhongguozhuanli A
+            LEFT JOIN zltz_enumtable B ON A.gnztId = B.id
+            left join zltz_enumtable C on A.zllxId = C.id
+            where  A.authorizeAsync = '0'
+				and A.authionization is not null
+				and A.authionization != ''
+    </select>
+    <update id="updateAuthorizePatent" parameterType="java.lang.String">
+        update zltz_zhongguozhuanli
+        set authorizeAsync = '1'
+        WHERE
+        zgzlId=#{id}
+    </update>
+    <delete id="delPatentByOrgId" parameterType="java.lang.String">
+        delete from portrait_knowledge where orgId = #{orgId}
+    </delete>
+
+
+</mapper>

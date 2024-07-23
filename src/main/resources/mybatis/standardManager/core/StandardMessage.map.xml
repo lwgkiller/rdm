@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardMessageDao">
+    <select id="queryStandardMsgList" parameterType="java.util.Map" resultType="java.util.Map">
+        select t.* from(
+        SELECT
+        standard_message.*,
+        os_user.FULLNAME_ as creator,
+        standard_system.systemCategoryId,
+        '' as isRead,
+        standard_source.standardName
+        FROM
+        standard_message
+        left join os_user on standard_message.CREATE_BY_=os_user.USER_ID_
+        left join standard_source on standard_message.relatedStandardId=standard_source.id
+        left join standard_system on standard_source.systemId=standard_system.id
+        where
+        standard_message.isSelf = '0'
+        <if test="id != null and id != ''">
+            AND standard_message.id=#{id}
+        </if>
+        <if test="systemCategoryId != null and systemCategoryId != ''">
+            AND standard_system.systemCategoryId = #{systemCategoryId}
+        </if>
+        <if test="standardName != null and standardName != ''">
+            AND standard_source.standardName like CONCAT('%',#{standardName},'%')
+        </if>
+        union all
+        SELECT
+        standard_message.*,
+        os_user.FULLNAME_ as creator,
+        standard_system.systemCategoryId,
+        (select isRead from standard_message_sendlist A where A.messageId = standard_message.id and A.recId = #{userId})
+        as isRead,
+        standard_source.standardName
+        FROM
+        standard_message
+        left join os_user on standard_message.CREATE_BY_=os_user.USER_ID_
+        left join standard_source on standard_message.relatedStandardId=standard_source.id
+        left join standard_system on standard_source.systemId=standard_system.id
+        where
+        standard_message.isSelf = '1'
+        and (
+        standard_message.CREATE_BY_ = #{userId} or
+        #{userId} in (
+        select standard_message_sendlist.recId
+        from standard_message_sendlist
+        where standard_message_sendlist.messageId = standard_message.id
+        )
+        )
+        <if test="id != null and id != ''">
+            AND standard_message.id=#{id}
+        </if>
+        <if test="systemCategoryId != null and systemCategoryId != ''">
+            AND standard_system.systemCategoryId = #{systemCategoryId}
+        </if>
+        <if test="standardName != null and standardName != ''">
+            AND standard_source.standardName like CONCAT('%',#{standardName},'%')
+        </if>
+        )t
+        order by t.CREATE_TIME_ desc
+        <if test='startIndex != null and startIndex != "" and pageSize != null and pageSize != ""'>
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+    <!--改良后排除消息重复错误-->
+    <select id="queryStandardMsgListWithJoin" parameterType="java.util.Map" resultType="java.util.Map">
+        select t.* from(
+        SELECT
+        standard_message.*,
+        os_user.FULLNAME_ as creator,
+        standard_system.systemCategoryId,
+        '' as isRead,
+        standard_source.standardName
+        FROM
+        standard_message
+        left join os_user on standard_message.CREATE_BY_=os_user.USER_ID_
+        left join standard_source on standard_message.relatedStandardId=standard_source.id
+        left join standard_system on standard_source.systemId=standard_system.id
+        where
+        standard_message.isSelf = '0'
+        <if test="id != null and id != ''">
+            AND standard_message.id=#{id}
+        </if>
+        <if test="systemCategoryId != null and systemCategoryId != ''">
+            AND standard_system.systemCategoryId = #{systemCategoryId}
+        </if>
+        <if test="standardName != null and standardName != ''">
+            AND standard_source.standardName like CONCAT('%',#{standardName},'%')
+        </if>
+        union all
+        SELECT
+        DISTINCT standard_message.*,
+        os_user.FULLNAME_ as creator,
+        standard_system.systemCategoryId,
+        standard_message_sendlist.isRead,
+        standard_source.standardName
+        FROM
+        standard_message
+        left join os_user on standard_message.CREATE_BY_=os_user.USER_ID_
+        left join standard_source on standard_message.relatedStandardId=standard_source.id
+        left join standard_system on standard_source.systemId=standard_system.id
+        inner join standard_message_sendlist on standard_message.id = standard_message_sendlist.messageId
+        where
+        standard_message.isSelf = '1'
+        and standard_message_sendlist.recId= #{userId}
+        <if test="id != null and id != ''">
+            AND standard_message.id=#{id}
+        </if>
+        <if test="systemCategoryId != null and systemCategoryId != ''">
+            AND standard_system.systemCategoryId = #{systemCategoryId}
+        </if>
+        <if test="standardName != null and standardName != ''">
+            AND standard_source.standardName like CONCAT('%',#{standardName},'%')
+        </if>
+        )t
+        order by t.CREATE_TIME_ desc
+        <if test='startIndex != null and startIndex != "" and pageSize != null and pageSize != ""'>
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <insert id="insertStandardMsg" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO standard_message (
+        id,
+        standardMsgTitle,
+        standardMsgContent,
+        relatedStandardId,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_,
+        isSelf,
+        receiveDeptIds,
+        receiveDeptNames,
+        isPublicScene
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{standardMsgTitle,jdbcType=VARCHAR},
+        #{standardMsgContent,jdbcType=VARCHAR},
+        #{relatedStandardId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR},
+        #{isSelf,jdbcType=VARCHAR},
+        #{receiveDeptIds,jdbcType=VARCHAR},
+        #{receiveDeptNames,jdbcType=VARCHAR},
+        #{isPublicScene,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateStandardMsg" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_message
+        set
+        standardMsgTitle=#{standardMsgTitle,jdbcType=VARCHAR},
+        standardMsgContent=#{standardMsgContent,jdbcType=VARCHAR},
+        relatedStandardId=#{relatedStandardId,jdbcType=VARCHAR},
+        CREATE_BY_=#{CREATE_BY_,jdbcType=VARCHAR},
+        CREATE_TIME_=#{CREATE_TIME_,jdbcType=TIMESTAMP},
+        TENANT_ID_=#{TENANT_ID_,jdbcType=VARCHAR},
+        isSelf=#{isSelf,jdbcType=VARCHAR},
+        receiveDeptIds=#{receiveDeptIds,jdbcType=VARCHAR},
+        receiveDeptNames=#{receiveDeptNames,jdbcType=VARCHAR},
+        isPublicScene=#{isPublicScene,jdbcType=VARCHAR}
+        where id =#{id}
+    </update>
+
+    <delete id="deleteStandardMsg" parameterType="java.util.List">
+        delete from standard_message
+        where
+        id in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteSendList" parameterType="java.util.List">
+        delete from standard_message_sendlist
+        where
+        messageId in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="getStandardMsgByUserId" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT
+            B.standardMsgTitle   AS title,
+            B.standardMsgContent AS content,
+            B.relatedStandardId,
+            B.CREATE_TIME_,
+            A.id,
+            A.messageId,
+            D.systemCategoryId
+        FROM
+            standard_message_sendlist A
+            LEFT JOIN standard_message B ON A.messageId = B.id
+            LEFT JOIN standard_source C ON B.relatedStandardId = C.id
+            LEFT JOIN standard_system D ON C.systemId = D.id
+        WHERE
+            B.isSelf = 1
+            AND A.isRead = 0
+            AND A.recId = #{userId}
+        UNION ALL
+        SELECT
+            A.standardMsgTitle   AS title,
+            A.standardMsgContent AS content,
+            A.relatedStandardId,
+            A.CREATE_TIME_,
+            ''                   AS id,
+            A.id                 AS messageId,
+            D.systemCategoryId
+        FROM standard_message A
+            LEFT JOIN standard_source C ON A.relatedStandardId = C.id
+            LEFT JOIN standard_system D ON C.systemId = D.id
+        WHERE A.isSelf = 0
+              AND #{userId} NOT IN (
+            SELECT standard_message_sendlist.recId
+            FROM standard_message_sendlist
+            WHERE standard_message_sendlist.messageId = A.id
+        )
+    </select>
+    <!--根据部门id查找所属人员id-->
+    <select id="getUserIdsByDeptId" parameterType="java.util.Map" resultType="java.lang.String">
+        SELECT
+        A.PARTY2_ as userId
+        FROM
+        os_rel_inst A
+        left join os_user B on A.PARTY2_ = B.USER_ID_
+        WHERE
+        A.REL_TYPE_ID_ = 1
+        and A.DIM1_ = '1'
+        and A.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        and B.STATUS_ = 'IN_JOB'
+        and PARTY1_ in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <!---->
+    <!--排错-->
+    <select id="whatTheHellItIs" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_message.*,
+            os_user.FULLNAME_ AS creator,
+            standard_system.systemCategoryId,
+            (SELECT isRead
+             FROM standard_message_sendlist A
+             WHERE A.messageId = standard_message.id AND A.recId = #{userid})
+                              AS isRead,
+            standard_source.standardName
+        FROM
+            standard_message
+            LEFT JOIN os_user ON standard_message.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN standard_source ON standard_message.relatedStandardId = standard_source.id
+            LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        WHERE
+            standard_message.isSelf = '1'
+            AND (
+                standard_message.CREATE_BY_ = #{userid} OR
+                #{userid} IN (
+                    SELECT standard_message_sendlist.recId
+                    FROM standard_message_sendlist
+                    WHERE standard_message_sendlist.messageId = standard_message.id
+                )
+            );
+    </select>
+    <!--改良后测试没问题-->
+    <select id="whatTheHellItIsWithJoin" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_message.*,
+            os_user.FULLNAME_ AS creator,
+            standard_system.systemCategoryId,
+            standard_message_sendlist.isRead,
+            standard_source.standardName
+        FROM
+            standard_message
+            LEFT JOIN os_user ON standard_message.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN standard_source ON standard_message.relatedStandardId = standard_source.id
+            LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+            INNER JOIN standard_message_sendlist ON standard_message.id = standard_message_sendlist.messageId
+        WHERE
+            standard_message.isSelf = '1'
+            AND (
+                standard_message.CREATE_BY_ = #{userid} OR
+                standard_message_sendlist.recId = #{userid}
+            );
+    </select>
+    <select id="queryWhatTheHellItIsUser" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT DISTINCT recId
+        FROM standard_message_sendlist
+    </select>
+</mapper>

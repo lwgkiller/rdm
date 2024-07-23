@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.JpzlDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertJpzl" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO service_engineering_jpzl (
+        id,
+        dirName,
+        dirDesc,
+        respUser,
+        dirLink,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{dirName,jdbcType=VARCHAR},
+        #{dirDesc,jdbcType=VARCHAR},
+        #{respUser,jdbcType=VARCHAR},
+        #{dirLink,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateJpzl" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_jpzl
+        <set>
+        <if test="dirName != null and dirName != ''">
+            dirName=#{dirName,jdbcType=VARCHAR},
+        </if>
+        <if test="dirDesc != null and dirDesc != ''">
+            dirDesc=#{dirDesc,jdbcType=VARCHAR},
+        </if>
+        <if test="respUser != null and respUser != ''">
+            respUser=#{respUser,jdbcType=VARCHAR},
+        </if>
+        <if test="dirLink != null and dirLink != ''">
+            dirLink=#{dirLink,jdbcType=VARCHAR},
+        </if>
+        </set>
+        where
+        id=#{id}
+    </update>
+    <select id="queryJpzlById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select service_engineering_jpzl.*
+        from service_engineering_jpzl
+        where
+        id=#{id}
+    </select>
+    <select id="queryJpzl" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        from
+        service_engineering_jpzl
+        <where>
+            <if test="dirName != null and dirName != ''">
+                dirName like CONCAT('%',#{dirName},'%')
+            </if>
+        </where>
+    </select>
+    <delete id="deleteJpzl" parameterType="java.util.Map">
+        delete from service_engineering_jpzl
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+</mapper>

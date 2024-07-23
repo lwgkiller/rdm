@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.strategicPlanning.core.dao.CpxpghDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="cpxpghListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT zlgh_cpxpgh.*,
+        bpm_inst.STATUS_ as taskStatus,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_,
+        os_user.FULLNAME_ creator
+        FROM
+        zlgh_cpxpgh
+        left join bpm_inst on zlgh_cpxpgh.id=bpm_inst.BUS_KEY_
+        left join os_user on zlgh_cpxpgh.CREATE_BY_=os_user.USER_ID_
+        <where>
+            bpm_inst.STATUS_ is not null
+            <if test="department !=null and department !=''">
+                AND department like concat('%',#{department},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND salesModel like concat('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND designModel like concat('%',#{designModel},'%')
+            </if>
+            <if test="productStatus !=null and productStatus !=''">
+                AND productStatus = #{productStatus}
+            </if>
+            <if test="salsesYear !=null and salsesYear !=''">
+                AND salsesYear like concat('%',#{salsesYear},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+            <if test="finalId !=null and finalId !=''">
+                AND finalId = #{finalId}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR zlgh_cpxpgh.CREATE_BY_ = #{currentUserId})
+                </if>
+            </if>
+        </where>
+        order by CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countCpxpghQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        zlgh_cpxpgh
+        left join bpm_inst on zlgh_cpxpgh.id=bpm_inst.BUS_KEY_
+        <where>
+            bpm_inst.STATUS_ is not null
+            <if test="department !=null and department !=''">
+                AND department like concat('%',#{department},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND salesModel like concat('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND designModel like concat('%',#{designModel},'%')
+            </if>
+            <if test="productStatus !=null and productStatus !=''">
+                AND productStatus = #{productStatus}
+            </if>
+            <if test="salsesYear !=null and salsesYear !=''">
+                AND salsesYear like concat('%',#{salsesYear},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+            <if test="finalId !=null and finalId !=''">
+                AND finalId = #{finalId}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR zlgh_cpxpgh.CREATE_BY_ = #{currentUserId})
+                </if>
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertCpxpgh" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zlgh_cpxpgh(
+          id,
+          finalId,
+          department,
+          departmentId,
+          salesModel,
+          designModel,
+          productStatus,
+          salsesYear,
+          zjwsCost,
+          zjSalePrice,
+          zjbjgxRate,
+          archivedFile,
+          hbxxgk,
+          cpxssyzt,
+          cpckrzzt,
+          cbsc,
+          cptszt,
+          cpcskhzt,
+          changeStatus,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id},
+          #{finalId},
+          #{department},
+          #{departmentId},
+          #{salesModel},
+          #{designModel},
+          #{productStatus},
+          #{salsesYear},
+          #{zjwsCost},
+          #{zjSalePrice},
+          #{zjbjgxRate},
+          #{archivedFile},
+          #{hbxxgk},
+          #{cpxssyzt},
+          #{cpckrzzt},
+          #{cbsc},
+          #{cptszt},
+          #{cpcskhzt},
+          #{changeStatus},
+          #{CREATE_BY_},
+          #{CREATE_TIME_}
+        )
+    </insert>
+
+    <update id="updateCpxpgh" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgh_cpxpgh set
+          finalId = #{finalId},
+          department = #{department},
+          departmentId = #{departmentId},
+          salesModel = #{salesModel},
+          designModel = #{designModel},
+          productStatus = #{productStatus},
+          salsesYear = #{salsesYear},
+          zjwsCost = #{zjwsCost},
+          zjSalePrice = #{zjSalePrice},
+          zjbjgxRate = #{zjbjgxRate},
+          archivedFile = #{archivedFile},
+          hbxxgk = #{hbxxgk},
+          cpxssyzt = #{cpxssyzt},
+          cpckrzzt = #{cpckrzzt},
+          cbsc = #{cbsc},
+          cptszt = #{cptszt},
+          cpcskhzt = #{cpcskhzt},
+          changeStatus = #{changeStatus},
+          UPDATE_BY_=#{UPDATE_BY_},
+          UPDATE_TIME_=#{UPDATE_TIME_}
+        where  id = #{id}
+    </update>
+    <!---->
+    <delete id="deleteCpxpgh" parameterType="java.util.Map">
+        delete from zlgh_cpxpgh
+        where id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="getCpxpghDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        zlgh_cpxpgh.*,os_user.FULLNAME_ creator,bpm_inst.INST_ID_ as instId,bpm_inst.STATUS_ as taskStatus
+        from zlgh_cpxpgh
+        left join os_user on zlgh_cpxpgh.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on zlgh_cpxpgh.id=bpm_inst.BUS_KEY_
+        where zlgh_cpxpgh.id=#{id}
+    </select>
+
+    <select id="getDepRespMans" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_rel_inst.*,
+        os_user.FULLNAME_,
+        os_group.NAME_ as groupName
+        FROM
+        os_rel_inst
+        LEFT JOIN os_user ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        left join os_group on os_rel_inst.PARTY1_=os_group.GROUP_ID_
+        where REL_TYPE_KEY_='GROUP-USER-LEADER' and os_user.STATUS_ = 'IN_JOB'
+        <if test="GROUP_ID_ != null and GROUP_ID_ != ''">
+            and os_rel_inst.PARTY1_=#{GROUP_ID_}
+        </if>
+        <if test="groupNames != null and groupNames != ''">
+            and os_group.NAME_ in
+            <foreach collection="groupNames" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="USER_ID_ != null and USER_ID_ != ''">
+            and os_rel_inst.PARTY2_=#{USER_ID_}
+        </if>
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            and os_rel_inst.TENANT_ID_=#{TENANT_ID_}
+        </if>
+    </select>
+
+
+    <select id="queryChilds" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from zlgh_cpxpgh_childs where cpxpghId = #{cpxpghId} and childType = #{childType}
+    </select>
+
+    <insert id="insertChilds" parameterType="java.util.Map">
+        insert into zlgh_cpxpgh_childs (id, childType, childName, childValue, cpxpghId, CREATE_BY_, CREATE_TIME_) values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.id}, #{item.childType}, #{item.childName}, #{item.childValue}, #{item.cpxpghId}, #{item.CREATE_BY_}, #{item.CREATE_TIME_})
+        </foreach>
+    </insert>
+
+    <update id="updateChilds" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgh_cpxpgh_childs set
+        childName = #{childName}, childValue = #{childValue}, UPDATE_BY_ = #{UPDATE_BY_}, UPDATE_TIME_ = #{UPDATE_TIME_}
+        where id = #{id}
+    </update>
+
+    <delete id="delChildsById" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from zlgh_cpxpgh_childs where id = #{id}
+    </delete>
+
+    <delete id="delChildsByCpxpghId" parameterType="java.util.Map">
+        delete from zlgh_cpxpgh_childs where cpxpghId in
+        <foreach collection="cpxpghIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zlgh_cpxpgh_fileinfos(
+          id,
+          fileName,
+          fileSize,
+          cpxpghId,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) values(
+          #{id},
+          #{fileName},
+          #{fileSize},
+          #{cpxpghId},
+          #{CREATE_BY_},
+          #{CREATE_TIME_}
+        )
+    </insert>
+
+    <select id="queryCpxpghFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        zlgh_cpxpgh_fileinfos.* ,u.FULLNAME_ creator
+        from zlgh_cpxpgh_fileinfos
+        left join os_user u on u.USER_ID_ = zlgh_cpxpgh_fileinfos.CREATE_BY_
+        where cpxpghId  in
+        <foreach collection="cpxpghIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <delete id="delCpxpghFiles" parameterType="java.lang.String">
+        delete from zlgh_cpxpgh_fileinfos
+        where id =#{id}
+    </delete>
+
+    <delete id="delFileByCpxpghId" parameterType="java.util.Map">
+        delete from zlgh_cpxpgh_fileinfos
+        where cpxpghId IN
+        <foreach collection="cpxpghIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="cpxpghFinalListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT zlgh_cpxpgh.*,
+        os_user.FULLNAME_ creator
+        FROM
+        zlgh_cpxpgh
+        left join os_user on zlgh_cpxpgh.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on zlgh_cpxpgh.id=bpm_inst.BUS_KEY_
+        <where>
+            bpm_inst.STATUS_ is null
+            <if test="department !=null and department !=''">
+                AND department like concat('%',#{department},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND salesModel like concat('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND designModel like concat('%',#{designModel},'%')
+            </if>
+            <if test="productStatus !=null and productStatus !=''">
+                AND productStatus = #{productStatus}
+            </if>
+            <if test="salsesYear !=null and salsesYear !=''">
+                AND salsesYear like concat('%',#{salsesYear},'%')
+            </if>
+            <if test="changeStatus !=null and changeStatus !=''">
+                AND changeStatus = #{changeStatus}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countCpxpghFinalQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        zlgh_cpxpgh
+        left join bpm_inst on zlgh_cpxpgh.id=bpm_inst.BUS_KEY_
+        <where>
+            bpm_inst.STATUS_ is null
+            <if test="department !=null and department !=''">
+                AND department like concat('%',#{department},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND salesModel like concat('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND designModel like concat('%',#{designModel},'%')
+            </if>
+            <if test="productStatus !=null and productStatus !=''">
+                AND productStatus = #{productStatus}
+            </if>
+            <if test="salsesYear !=null and salsesYear !=''">
+                AND salsesYear like concat('%',#{salsesYear},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="queryChildsBycpxpghId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from zlgh_cpxpgh_childs where cpxpghId= #{cpxpghId}
+    </select>
+
+    <select id="wheterRunning" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT count(*) FROM
+        zlgh_cpxpgh
+        left join bpm_inst on zlgh_cpxpgh.id=bpm_inst.BUS_KEY_ where finalId = #{finalId} and bpm_inst.STATUS_ = 'RUNNING'
+    </select>
+
+</mapper>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.embedsoft.core.dao.DmgzDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryGzdmMsg" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        dmgz_msg.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        dmgz_msg
+        LEFT JOIN os_user ON os_user.USER_ID_ = dmgz_msg.CREATE_BY_
+        <where>
+            <if test=" applyTime!= null and applyTime != ''">
+                AND dmgz_msg.CREATE_TIME_ like CONCAT (#{applyTime},'%')
+            </if>
+            <if test=" recId!= null and recId != ''">
+                AND dmgz_msg.recId=#{recId}
+            </if>
+        </where>
+    </select>
+
+    <select id="getDmgzMsgByUserId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      SELECT
+            dmgz_msg.content,
+            dmgz_msg.CREATE_TIME_,
+            dmgz_msg.dmgzId,
+            dmgz_msg.msgId
+        FROM
+            dmgz_msg
+             LEFT JOIN dmgz_info ON dmgz_info.dmgzId = dmgz_msg.dmgzId
+        WHERE
+            dmgz_msg.isRead = 0
+            AND dmgz_msg.recId = #{userId}
+    </select>
+</mapper>

@@ -1,0 +1,41 @@
+<%@ page import="org.springframework.web.servlet.i18n.SessionLocaleResolver" %>
+<%@ page import="java.util.Locale" %>
+<%@ page import="org.apache.commons.lang.StringUtils" %>
+<%@ page import="org.springframework.context.i18n.LocaleContextHolder" %>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@taglib  prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@taglib  prefix="spring" uri="http://www.springframework.org/tags" %>
+<c:set var="ctxPath" value="${pageContext.request.contextPath}"/>
+<%
+String version=com.redxun.sys.core.util.SysPropertiesUtil.getGlobalProperty("static_res_ver","1");
+request.setAttribute("static_res_version", version);
+String theme=com.redxun.core.util.CookieUtil.getValueByName("index", request);
+request.setAttribute("index",theme);
+String language="zh_CN";
+//session中的
+Locale locale=(Locale) (request.getSession().getAttribute(SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME));
+if(StringUtils.isNotBlank(request.getParameter("locale"))) {
+//    取指定的
+        language= request.getParameter("locale");
+    } else if(locale!=null) {
+//    取session中的
+    language=locale.getLanguage()+"_"+locale.getCountry();
+} else if(request.getLocale()!=null){
+//    取浏览器语言
+    Locale defaultLocale=request.getLocale();
+    if(defaultLocale.getLanguage().contains("en")) {
+        language="en_US";
+    }
+
+}
+
+//用于前端js内容的国际化
+request.setAttribute("localeLanguage", language);
+%>
+
+<script type="text/javascript">
+	var __rootPath='${ctxPath}';
+	var __status_tips='${__status_}';
+	var __version='${static_res_version}';
+    var subsys_soft_key = "KZRJGL";
+</script>

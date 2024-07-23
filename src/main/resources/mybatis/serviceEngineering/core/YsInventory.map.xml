@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.YsInventoryDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryYsInventory" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        ysInventory_baseinfo.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS creator,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        ysInventory_baseinfo
+        LEFT JOIN os_rel_inst ON ysInventory_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = ysInventory_baseinfo.CREATE_BY_
+        left join bpm_inst on ysInventory_baseinfo.id=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (ysInventory_baseinfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="applyName != null and applyName != ''">
+            and ysInventory_baseinfo.applyName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and ysInventory_baseinfo.saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+        <if test="designModelName != null and designModelName != ''">
+            and ysInventory_baseinfo.designModelName like CONCAT('%',#{designModelName},'%')
+        </if>
+        <if test="materielCode != null and materielCode != ''">
+            and ysInventory_baseinfo.materielCode like CONCAT('%',#{materielCode},'%')
+        </if>
+        <if test="status != null and status != ''">
+            and bpm_inst.STATUS_ = #{status}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countYsInventory" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        ysInventory_baseinfo
+        LEFT JOIN os_rel_inst ON ysInventory_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = ysInventory_baseinfo.CREATE_BY_
+        left join bpm_inst on ysInventory_baseinfo.id=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (ysInventory_baseinfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="applyName != null and applyName != ''">
+            and ysInventory_baseinfo.applyName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and ysInventory_baseinfo.saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+        <if test="designModelName != null and designModelName != ''">
+            and ysInventory_baseinfo.designModelName like CONCAT('%',#{designModelName},'%')
+        </if>
+        <if test="materielCode != null and materielCode != ''">
+            and ysInventory_baseinfo.materielCode like CONCAT('%',#{materielCode},'%')
+        </if>
+        <if test="status != null and status != ''">
+            and bpm_inst.STATUS_ = #{status}
+        </if>
+    </select>
+
+    <insert id="createYsInventory" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ysInventory_baseinfo (id,
+                                          processNum,
+                                          materielCode,
+                                          saleModel,
+                                          designModelId,
+                                          designModelName,
+                                          cpzgId,
+                                          cpzgName,
+                                          fwEditId,
+                                          fwEditName,
+                                          applyId,
+                                          applyName,
+                                          CREATE_BY_,
+                                          CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{processNum,jdbcType=VARCHAR},
+                #{materielCode,jdbcType=VARCHAR},
+                #{saleModel,jdbcType=VARCHAR},
+                #{designModelId,jdbcType=VARCHAR},
+                #{designModelName,jdbcType=VARCHAR},
+                #{cpzgId,jdbcType=VARCHAR},
+                #{cpzgName,jdbcType=VARCHAR},
+                #{fwEditId,jdbcType=VARCHAR},
+                #{fwEditName,jdbcType=VARCHAR},
+                #{applyId,jdbcType=VARCHAR},
+                #{applyName,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateYsInventory" parameterType="com.alibaba.fastjson.JSONObject">
+        update ysInventory_baseinfo
+        <set>
+            processNum=#{processNum,jdbcType=VARCHAR},
+            materielCode=#{materielCode,jdbcType=VARCHAR},
+            saleModel=#{saleModel,jdbcType=VARCHAR},
+            designModelId=#{designModelId,jdbcType=VARCHAR},
+            designModelName=#{designModelName,jdbcType=VARCHAR},
+            cpzgId=#{cpzgId,jdbcType=VARCHAR},
+            cpzgName=#{cpzgName,jdbcType=VARCHAR},
+            fwEditId=#{fwEditId,jdbcType=VARCHAR},
+            fwEditName=#{fwEditName,jdbcType=VARCHAR},
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <select id="queryDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT ysInventory_detailinfo.*
+        FROM ysInventory_detailinfo
+        where belongId = #{belongId}
+
+    </select>
+
+    <insert id="createDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ysInventory_detailinfo (id,
+                                            zcPart,
+                                            materiel,
+                                            zcMaterielCode,
+                                            zcMaterielContent,
+                                            materielCode,
+                                            materielContent,
+                                            num,
+                                            note,
+                                            belongId,
+                                            CREATE_BY_,
+                                            CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{zcPart,jdbcType=VARCHAR},
+                #{materiel,jdbcType=VARCHAR},
+                #{zcMaterielCode,jdbcType=VARCHAR},
+                #{zcMaterielContent,jdbcType=VARCHAR},
+                #{materielCode,jdbcType=VARCHAR},
+                #{materielContent,jdbcType=VARCHAR},
+                #{num,jdbcType=VARCHAR},
+                #{note,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update ysInventory_detailinfo
+        <set>
+            zcPart=#{zcPart,jdbcType=VARCHAR},
+            materiel=#{materiel,jdbcType=VARCHAR},
+            zcMaterielCode=#{zcMaterielCode,jdbcType=VARCHAR},
+            zcMaterielContent=#{zcMaterielContent,jdbcType=VARCHAR},
+            materielCode=#{materielCode,jdbcType=VARCHAR},
+            materielContent=#{materielContent,jdbcType=VARCHAR},
+            num=#{num,jdbcType=VARCHAR},
+            note=#{note,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <insert id="batchInsertDetail" parameterType="java.util.List">
+        insert into ysInventory_detailinfo (
+        id,
+        zcPart,
+        materiel,
+        zcMaterielCode,
+        zcMaterielContent,
+        materielCode,
+        materielContent,
+        num,
+        note,
+        belongId,
+        CREATE_BY_,
+        CREATE_TIME_)
+        values
+        <foreach collection="list" separator="," index="index" item="obj" open="" close="">
+            (
+            #{obj.id,jdbcType=VARCHAR},
+            #{obj.zcPart,jdbcType=VARCHAR},
+            #{obj.materiel,jdbcType=VARCHAR},
+            #{obj.zcMaterielCode,jdbcType=VARCHAR},
+            #{obj.zcMaterielContent,jdbcType=VARCHAR},
+            #{obj.materielCode,jdbcType=VARCHAR},
+            #{obj.materielContent,jdbcType=VARCHAR},
+            #{obj.num,jdbcType=VARCHAR},
+            #{obj.note,jdbcType=VARCHAR},
+            #{obj.belongId,jdbcType=VARCHAR},
+            #{obj.CREATE_BY_,jdbcType=VARCHAR},
+            #{obj.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteDetail" parameterType="java.util.Map">
+        delete from ysInventory_detailinfo
+        where
+                id=#{id}
+    </delete>
+
+    <delete id="deleteAllDetail" parameterType="java.util.Map">
+        delete from ysInventory_detailinfo
+        where
+            belongId IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+    </delete>
+
+    <select id="queryYsInventoryById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select ysInventory_baseinfo.*,
+               os_user.FULLNAME_ as creator,
+               bpm_inst.INST_ID_ as instId
+        from ysInventory_baseinfo
+                 left join os_user on ysInventory_baseinfo.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on ysInventory_baseinfo.id = bpm_inst.BUS_KEY_
+        where ysInventory_baseinfo.id = #{id}
+    </select>
+
+    <delete id="deleteYsInventory" parameterType="java.util.Map">
+        delete from ysInventory_baseinfo
+        where
+            id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+    </delete>
+    <update id="updateYsInventoryNumber" parameterType="java.util.Map">
+        update ysInventory_baseinfo
+        set processNum = #{processNum}
+        where id = #{id}
+    </update>
+    <select id="queryMaxYsInventoryNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT processNum
+        FROM ysInventory_baseinfo
+        WHERE processNum like CONCAT('%', #{applyTimeStart}, '%')
+        ORDER BY processNum DESC
+        LIMIT 1
+    </select>
+</mapper>

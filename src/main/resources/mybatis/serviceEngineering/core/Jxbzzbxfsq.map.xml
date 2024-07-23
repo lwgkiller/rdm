@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.JxbzzbxfsqDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="jxbzzbxfsqListQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT service_enginineering_jxbzzbxfsq.*,
+        bpm_inst.STATUS_ as taskStatus,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        service_enginineering_jxbzzbxfsq
+        left join bpm_inst on service_enginineering_jxbzzbxfsq.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="materialCode !=null and materialCode !=''">
+                AND materialCode like concat('%',#{materialCode},'%')
+            </if>
+            <if test="creator !=null and creator !=''">
+                AND creator like concat('%',#{creator},'%')
+            </if>
+            <if test="applyDept !=null and applyDept !=''">
+                AND applyDept like concat('%',#{applyDept},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR service_enginineering_jxbzzbxfsq.CREATE_BY_ = #{currentUserId} or  bpm_inst.STATUS_ is null)
+                </if>
+            </if>
+        </where>
+        order by CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countJxbzzbxfsqQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        service_enginineering_jxbzzbxfsq
+        left join bpm_inst on service_enginineering_jxbzzbxfsq.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="materialCode !=null and materialCode !=''">
+                AND materialCode like concat('%',#{materialCode},'%')
+            </if>
+            <if test="creator !=null and creator !=''">
+                AND creator like concat('%',#{creator},'%')
+            </if>
+            <if test="applyDept !=null and applyDept !=''">
+                AND applyDept like concat('%',#{applyDept},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR service_enginineering_jxbzzbxfsq.CREATE_BY_ = #{currentUserId} or  bpm_inst.STATUS_ is null)
+                </if>
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertJxbzzbxfsq" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_enginineering_jxbzzbxfsq(
+          id,
+          jxbzzbshId,
+          materialCode,
+          applyDeptId,
+          applyDept,
+          CREATE_BY_,
+          creator,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id},
+          #{jxbzzbshId},
+          #{materialCode},
+          #{applyDeptId},
+          #{applyDept},
+          #{CREATE_BY_},
+          #{creator},
+          #{CREATE_TIME_}
+        )
+    </insert>
+
+    <update id="updateJxbzzbxfsq" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_enginineering_jxbzzbxfsq set
+          jxbzzbshId = #{jxbzzbshId},
+          materialCode = #{materialCode},
+          applyDeptId = #{applyDeptId},
+          applyDept = #{applyDept},
+          UPDATE_BY_=#{UPDATE_BY_},
+          UPDATE_TIME_=#{UPDATE_TIME_}
+        where  id = #{id}
+    </update>
+    <!---->
+    <delete id="deleteJxbzzbxfsq" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_enginineering_jxbzzbxfsq
+        where id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="getJxbzzbxfsqDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        service_enginineering_jxbzzbxfsq.*,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.STATUS_ as taskStatus
+        from service_enginineering_jxbzzbxfsq
+        left join bpm_inst on service_enginineering_jxbzzbxfsq.id=bpm_inst.BUS_KEY_
+        where service_enginineering_jxbzzbxfsq.id=#{id}
+    </select>
+
+    <select id="getDepRespMan" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_rel_inst.*,
+        os_user.FULLNAME_,
+        os_group.NAME_ as groupName
+        FROM
+        os_rel_inst
+        LEFT JOIN os_user ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        left join os_group on os_rel_inst.PARTY1_=os_group.GROUP_ID_
+        where REL_TYPE_KEY_='GROUP-USER-LEADER' and os_user.STATUS_ = 'IN_JOB'
+        <if test="GROUP_ID_ != null and GROUP_ID_ != ''">
+            and os_rel_inst.PARTY1_=#{GROUP_ID_}
+        </if>
+        <if test="groupNames != null and groupNames != ''">
+            and os_group.NAME_ in
+            <foreach collection="groupNames" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="USER_ID_ != null and USER_ID_ != ''">
+            and os_rel_inst.PARTY2_=#{USER_ID_}
+        </if>
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            and os_rel_inst.TENANT_ID_=#{TENANT_ID_}
+        </if>
+    </select>
+
+
+</mapper>

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.OilDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertOil" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO environmental_oil (
+        oilId,
+        oilNation,
+        oilType,
+        oilDate,
+        oilTest,
+        testStandard,
+        oilCompliance,
+        auditStatus,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{oilId,jdbcType=VARCHAR},
+        #{oilNation,jdbcType=VARCHAR},
+        #{oilType,jdbcType=VARCHAR},
+        #{oilDate,jdbcType=TIMESTAMP},
+        #{oilTest,jdbcType=VARCHAR},
+        #{testStandard,jdbcType=VARCHAR},
+        #{oilCompliance,jdbcType=VARCHAR},
+        #{auditStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateOil" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_oil
+        <set>
+            <if test="oilNation != null and oilNation != ''">
+                oilNation=#{oilNation,jdbcType=VARCHAR},
+            </if>
+            <if test="oilType != null and oilType != ''">
+                oilType=#{oilType,jdbcType=VARCHAR},
+            </if>
+            <if test="oilDate != null and oilDate != ''">
+                oilDate=#{oilDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="oilTest != null and oilTest != ''">
+                oilTest=#{oilTest,jdbcType=VARCHAR},
+            </if>
+            <if test="testStandard != null and testStandard != ''">
+                testStandard=#{testStandard,jdbcType=VARCHAR},
+            </if>
+            <if test="oilCompliance != null and oilCompliance != ''">
+                oilCompliance=#{oilCompliance,jdbcType=VARCHAR},
+            </if>
+            <if test="auditStatus != null and auditStatus != ''">
+                auditStatus=#{auditStatus,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where
+        oilId=#{oilId}
+    </update>
+    <select id="queryOilById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select environmental_oil.*
+        from environmental_oil
+        where
+        oilId=#{oilId}
+    </select>
+    <select id="queryOilFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        fileId,
+        fileName,
+        belongId as oilId,
+        fileSize
+        FROM
+        environmental_oilfile
+        WHERE
+        <if test="oilIds != null and oilIds !=''">
+            belongId IN
+            <foreach collection="oilIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_oilfile(
+          fileId,
+          fileName,
+          fileSize,
+          belongId,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) values(
+          #{fileId,jdbcType=VARCHAR},
+          #{fileName,jdbcType=VARCHAR},
+          #{fileSize,jdbcType=VARCHAR},
+          #{belongId,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="queryOil" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environmental_oil.*,
+        os_user.FULLNAME_ AS userName
+        from
+        environmental_oil
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_oil.CREATE_BY_
+        <where>
+            <if test="oilNation != null and oilNation != ''">
+                oilNation like CONCAT('%',#{oilNation},'%')
+            </if>
+            <if test="oilType != null and oilType != ''">
+                and oilType like CONCAT('%',#{oilType},'%')
+            </if>
+            <if test="oilTest != null and oilTest != ''">
+                and oilTest like CONCAT('%',#{oilTest},'%')
+            </if>
+            <if test="createtime1!=null">
+                and oilDate &gt;= #{createtime1}
+            </if>
+            <if test="createtime2!=null">
+                and oilDate &lt;= #{createtime2}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='YYLR'">
+                        AND (environmental_oil.CREATE_BY_ = #{currentUserId}
+                        OR environmental_oil.auditStatus!='待提交'
+                        OR environmental_oil.auditStatus!='驳回待提交')
+                    </when>
+                    <when test="roleName =='YYSH'">
+                        AND (environmental_oil.CREATE_BY_ = #{currentUserId}
+                        OR environmental_oil.auditStatus!='待提交'
+                        OR environmental_oil.auditStatus!='驳回待提交')
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND (environmental_oil.CREATE_BY_ = #{currentUserId}
+                        OR environmental_oil.auditStatus!='待提交'
+                        OR environmental_oil.auditStatus!='驳回待提交')
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countOilList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        environmental_oil
+        <where>
+            <if test="oilName != null and oilName != ''">
+                oilName like CONCAT('%',#{oilName},'%')
+            </if>
+            <if test="oilArea != null and oilArea != ''">
+                and oilArea like CONCAT('%',#{oilArea},'%')
+            </if>
+            <if test="oilStatus != null and oilStatus != ''">
+                and oilStatus =#{oilStatus}
+            </if>
+            <if test="createtime1!=null">
+                and oilDate &gt;= #{createtime1}
+            </if>
+            <if test="createtime2!=null">
+                and oilDate &lt;= #{createtime2}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='YYLR'">
+                        AND (environmental_oil.CREATE_BY_ = #{currentUserId}
+                        OR environmental_oil.auditStatus!='待提交'
+                        OR environmental_oil.auditStatus!='驳回待提交')
+                    </when>
+                    <when test="roleName =='YYSH'">
+                        AND (environmental_oil.CREATE_BY_ = #{currentUserId}
+                        OR environmental_oil.auditStatus!='待提交'
+                        OR environmental_oil.auditStatus!='驳回待提交')
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND (environmental_oil.CREATE_BY_ = #{currentUserId}
+                        OR environmental_oil.auditStatus!='待提交'
+                        OR environmental_oil.auditStatus!='驳回待提交')
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+    <delete id="deleteOilFile" parameterType="java.util.Map">
+        delete from environmental_oilfile
+        <where>
+            <if test="id != null and id != ''">
+                fileId=#{id}
+            </if>
+            <if test="oilIds != null and oilIds !=''">
+                AND belongId IN
+                <foreach collection="oilIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteOil" parameterType="java.util.Map">
+        delete from environmental_oil
+        <where>
+            <if test="oilIds != null and oilIds !=''">
+                AND oilId IN
+                <foreach collection="oilIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+</mapper>

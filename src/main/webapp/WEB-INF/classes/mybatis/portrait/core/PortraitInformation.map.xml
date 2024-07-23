@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitInformationDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ AS userName,
+        G.NAME_ as deptName,
+        F.companyName,
+        F.projectName,
+        F.qbgzType,
+        F.qbName
+        FROM
+        portrait_information A
+        LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        LEFT JOIN os_rel_inst C  ON A.userId = C.PARTY2_
+        LEFT JOIN os_dimension D  ON C.DIM1_ = D.DIM_ID_
+        left join os_group G on C.PARTY1_ = G.GROUP_ID_
+        left join qbgz_baseinfo F on A.mainId = F.qbgzId
+        where
+        C.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND D.DIM_KEY_ = '_ADMIN'
+        AND C.PARTY1_ in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="userId != null and userId != ''">
+            AND A.userId = #{userId}
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and G.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="qbName != null and qbName != ''">
+            and F.qbName like CONCAT('%',#{qbName},'%')
+        </if>
+        order by A.applyYear desc,A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO portrait_information (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            userId,
+            mainId,
+            applyYear,
+            score
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+                #{item.id,jdbcType=VARCHAR},
+                #{item.CREATE_BY_,jdbcType=VARCHAR},
+                #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+                #{item.UPDATE_BY_,jdbcType=VARCHAR},
+                #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{item.userId,jdbcType=VARCHAR},
+                #{item.mainId,jdbcType=VARCHAR},
+                #{item.applyYear,jdbcType=VARCHAR},
+                #{item.score,jdbcType=FLOAT}
+            )
+        </foreach>
+    </insert>
+    <select id="getInformationList" resultType="com.alibaba.fastjson.JSONObject">
+            SELECT
+            A.*,
+            left(A.CREATE_TIME_,4) as applyYear
+        FROM
+            qbgz_baseinfo A
+            left join bpm_inst B on A.qbgzId = B.BUS_KEY_
+            where A.async = '0'
+            and B.STATUS_ = 'SUCCESS_END'
+    </select>
+    <update id="updateInformationStatus" parameterType="java.lang.String">
+        update qbgz_baseinfo
+        set async = '1'
+        WHERE
+        qbgzId=#{id}
+    </update>
+    <select id="getPersonInformationList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        F.companyName,
+        F.projectName,
+        F.qbgzType,
+        F.qbName
+        FROM
+        portrait_information A
+        left join qbgz_baseinfo F on A.mainId = F.qbgzId
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and A.applyYear = #{reportYear}
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.SaleFileOMAApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--项目流程查询-->
+    <select id="queryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        salefileoma_apply.*,
+        salefileoma_apply.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        os_rel_inst.PARTY1_ as applyUserDepId,
+        directorUser.FULLNAME_ AS directorName
+        FROM
+        salefileoma_apply
+        LEFT JOIN os_user ON salefileoma_apply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON salefileoma_apply.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON salefileoma_apply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        left join os_user directorUser on salefileoma_apply.director = directorUser.USER_ID_
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND salefileoma_apply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="designModel != null and designModel != ''">
+                AND salefileoma_apply.designModel like CONCAT ('%',#{designModel},'%')
+            </if>
+            <if test="saleModel != null and saleModel != ''">
+                AND salefileoma_apply.saleModel like CONCAT ('%',#{saleModel},'%')
+            </if>
+            <if test="fileType != null and fileType != ''">
+                AND salefileoma_apply.fileType=#{fileType}
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND salefileoma_apply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND salefileoma_apply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="applyType != null and applyType != ''">
+                AND salefileoma_apply.applyType=#{applyType}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND salefileoma_apply.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+    <select id="saleFilequeryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        salefileoma_apply.*,
+        salefileoma_apply.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        os_rel_inst.PARTY1_ as applyUserDepId,
+        directorUser.FULLNAME_ AS directorName,
+        salefileoma_applyfiles.id AS salefileId,
+        salefileoma_applyfiles.fileName AS fileName
+        FROM
+        salefileoma_apply
+        LEFT JOIN os_user ON salefileoma_apply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON salefileoma_apply.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON salefileoma_apply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        left join os_user directorUser on salefileoma_apply.director = directorUser.USER_ID_
+        left join salefileoma_applyfiles on salefileoma_apply.id = salefileoma_applyfiles.applyId
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND salefileoma_apply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="designModel != null and designModel != ''">
+                AND salefileoma_apply.designModel like CONCAT ('%',#{designModel},'%')
+            </if>
+            <if test="saleModel != null and saleModel != ''">
+                AND salefileoma_apply.saleModel like CONCAT ('%',#{saleModel},'%')
+            </if>
+            <if test="materialCode != null and materialCode != ''">
+                AND salefileoma_apply.materialCode like CONCAT ('%',#{materialCode},'%')
+            </if>
+            <if test="language != null and language != ''">
+                AND salefileoma_apply.language like CONCAT ('%',#{language},'%')
+            </if>
+            <if test="fileType != null and fileType != ''">
+                AND salefileoma_apply.fileType=#{fileType}
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND salefileoma_apply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND salefileoma_apply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+
+            <if test="fileName != null and fileName != ''">
+                AND salefileoma_applyfiles.fileName=#{fileName}
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+    <select id="getObjectById" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.INST_ID_ AS instId,
+            C.FULLNAME_ as editorUserName,
+            D.NAME_ as editorUserDeptName,
+            E.FULLNAME_ as directorName
+        FROM
+            salefileoma_apply A
+            LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+            LEFT JOIN os_user C ON A.editorUserId = C.USER_ID_
+            left join os_group D on A.editorUserDeptId = D.GROUP_ID_
+            left join os_user E on A.director = E.USER_ID_
+        where  A.id = #{id}
+    </select>
+
+    <select id="getJsonObject" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT  A.*,B.INST_ID_ as instId
+        FROM salefileoma_apply A
+        left join bpm_inst B on A.id=B.BUS_KEY_
+        where  A.id = #{id}
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+        INSERT INTO salefileoma_apply (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            TENANT_ID_,
+            fileType,
+            systemType,
+            materialCode,
+            designModel,
+            saleModel,
+            director,
+            applyType,
+            applicabilityDoc,
+            remark,
+            note,
+            editorUserId,
+            editorUserDeptId,
+            language,
+            version,
+            region,
+            yjUserIds,
+            yjUserNames,
+            fileStatus
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{TENANT_ID_,jdbcType=VARCHAR},
+            #{fileType,jdbcType=VARCHAR},
+            #{systemType,jdbcType=VARCHAR},
+            #{materialCode,jdbcType=VARCHAR},
+            #{designModel,jdbcType=VARCHAR},
+            #{saleModel,jdbcType=VARCHAR},
+            #{director,jdbcType=VARCHAR},
+            #{applyType,jdbcType=VARCHAR},
+            #{applicabilityDoc,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{note,jdbcType=VARCHAR},
+            #{editorUserId,jdbcType=VARCHAR},
+            #{editorUserDeptId,jdbcType=VARCHAR},
+            #{language,jdbcType=VARCHAR},
+            #{version,jdbcType=VARCHAR},
+            #{region,jdbcType=VARCHAR},
+            #{yjUserIds,jdbcType=VARCHAR},
+            #{yjUserNames,jdbcType=VARCHAR},
+            #{fileStatus,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="update" parameterType="java.util.Map">
+        UPDATE salefileoma_apply SET
+        <if test="fileType != null and fileType != ''">
+            fileType=#{fileType,jdbcType=VARCHAR},
+        </if>
+        <if test="systemType != null and systemType != ''">
+            systemType=#{systemType,jdbcType=VARCHAR},
+        </if>
+
+            materialCode=#{materialCode,jdbcType=VARCHAR},
+            designModel=#{designModel,jdbcType=VARCHAR},
+            saleModel=#{saleModel,jdbcType=VARCHAR},
+
+        <if test="applyType != null and applyType != ''">
+            applyType=#{applyType,jdbcType=VARCHAR},
+        </if>
+        <if test="version != null and version != ''">
+            version=#{version,jdbcType=VARCHAR},
+        </if>
+        <if test="language != null and language != ''">
+            language=#{language,jdbcType=VARCHAR},
+        </if>
+        <if test="fileStatus != null and fileStatus != ''">
+            fileStatus=#{fileStatus,jdbcType=VARCHAR},
+        </if>
+        director=#{director,jdbcType=VARCHAR},
+        region=#{region,jdbcType=VARCHAR},
+        applicabilityDoc =#{applicabilityDoc,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        note=#{note,jdbcType=VARCHAR},
+        yjUserIds=#{yjUserIds,jdbcType=VARCHAR},
+        yjUserNames=#{yjUserNames,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        fileStatus = #{fileStatus,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </insert>
+    <delete id="delete" parameterType="java.lang.String">
+        delete from salefileoma_apply
+        where salefileoma_apply.id=#{id}
+    </delete>
+
+    <select id="queryApplyInfo" parameterType="java.util.Map" resultType="java.util.Map">
+        select B.STATUS_ as status,A.USED as used,B.inst_id_,A.id
+        from salefileoma_apply A
+        left join bpm_inst B on A.id = B.BUS_KEY_
+        where 1=1
+        <if test="taskId_ != null and taskId_ != ''">
+            and A.TASKID_ = #{taskId_}
+        </if>
+        order by A.CREATE_TIME_ desc
+    </select>
+    <insert id="addSaleFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into salefileoma_applyfiles(
+            id,
+            fileName,
+            fileSize,
+            fileDesc,
+            applyId,
+            fileModel,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{fileSize,jdbcType=VARCHAR},
+            #{fileDesc,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{fileModel,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="getSaleFiles" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select salefileoma_applyfiles.* ,
+        os_user.FULLNAME_ as userName,
+        bpm_inst.STATUS_ AS status,
+        salefileoma_apply.version
+        from salefileoma_applyfiles
+        LEFT JOIN os_user ON salefileoma_applyfiles.CREATE_BY_ = os_user.USER_ID_
+        left join salefileoma_apply on salefileoma_apply.id=salefileoma_applyfiles.applyId
+        LEFT JOIN bpm_inst ON salefileoma_apply.id = bpm_inst.BUS_KEY_
+        where
+        applyId = #{applyId}
+        <if test="fileType != null and fileType != ''">
+            and fileType = #{fileType}
+        </if>
+        <if test="designModel != null and designModel != ''">
+            and designModel = #{designModel}
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and saleModel = #{saleModel}
+        </if>
+        <if test="language != null and language != ''">
+            and language = #{language}
+        </if>
+
+
+
+    </select>
+    <delete id="delSaleFile" parameterType="java.util.Map">
+        delete from salefileoma_applyfiles
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="applyId != null and applyId !=''">
+                AND applyId = #{applyId}
+            </if>
+        </where>
+    </delete>
+    <delete id="delSaleFileByApplyId" parameterType="java.lang.String">
+        delete from salefileoma_applyfiles
+        where applyId = #{applyId}
+    </delete>
+    <select id="getSaleFileList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT distinct
+        fileType,
+        designModel,
+        saleModel,
+        language
+        FROM
+        salefileoma_apply
+        where 1=1
+        <if test="fileType != null and fileType != ''">
+            and fileType = #{fileType}
+        </if>
+        <if test="designModel != null and designModel != ''">
+            and designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+        <if test="applyType != null and applyType != ''">
+            and applyType like CONCAT('%',#{applyType},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="checkApplyPermition" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            salefileoma_apply
+            LEFT JOIN bpm_inst ON salefileoma_apply.id = bpm_inst.BUS_KEY_
+        WHERE
+        salefileoma_apply.designModel = #{designModel}
+            AND salefileoma_apply.saleModel = #{saleModel}
+            AND salefileoma_apply.language = #{language}
+            AND salefileoma_apply.fileType = #{fileType}
+            AND salefileoma_apply.systemType = #{systemType}
+            AND bpm_inst.STATUS_ != "DISCARD_END"
+            <if test="id != null and id != ''">
+                AND id != #{id}
+            </if>
+        LIMIT 1
+    </select>
+    <select id="queryRegionFromSpectrum" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        designModel,
+        region
+        FROM
+        product_spectrum
+        <where>
+            1=1
+            <if test="designModel != null and designModel != ''">
+                AND designModel = #{designModel}
+            </if>
+            <if test="designModels != null and designModels != ''">
+                AND designModel in
+                <foreach collection="designModels" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+</mapper>

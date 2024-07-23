@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.digitization.core.dao.DatamigrationTotalprogressDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        digitization_datamigration_totalprogress as business
+        <where>
+            <if test="productInstitute !=null and productInstitute !=''">
+                AND business.productInstitute like CONCAT('%',#{productInstitute},'%')
+            </if>
+            <if test="tonnageRange !=null and tonnageRange !=''">
+                AND business.tonnageRange like CONCAT('%',#{tonnageRange},'%')
+            </if>
+            <if test="transferTime != null and transferTime != ''">
+                AND business.transferTime like CONCAT('%',#{transferTime},'%')
+            </if>
+            <if test="scheduleEvaluation !=null and scheduleEvaluation !=''">
+                AND business.scheduleEvaluation like CONCAT('%',#{scheduleEvaluation},'%')
+            </if>
+            <if test="chronologicalEvaluation !=null and chronologicalEvaluation !=''">
+                AND business.chronologicalEvaluation like CONCAT('%',#{chronologicalEvaluation},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(*) FROM
+        digitization_datamigration_totalprogress as business
+        <where>
+            <if test="productInstitute !=null and productInstitute !=''">
+                AND business.productInstitute like CONCAT('%',#{productInstitute},'%')
+            </if>
+            <if test="tonnageRange !=null and tonnageRange !=''">
+                AND business.tonnageRange like CONCAT('%',#{tonnageRange},'%')
+            </if>
+            <if test="transferTime != null and transferTime != ''">
+                AND business.transferTime like CONCAT('%',#{transferTime},'%')
+            </if>
+            <if test="scheduleEvaluation !=null and scheduleEvaluation !=''">
+                AND business.scheduleEvaluation like CONCAT('%',#{scheduleEvaluation},'%')
+            </if>
+            <if test="chronologicalEvaluation !=null and chronologicalEvaluation !=''">
+                AND business.chronologicalEvaluation like CONCAT('%',#{chronologicalEvaluation},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertData" parameterType="java.util.Map">
+        insert into digitization_datamigration_totalprogress(
+          id,
+          orderNum,
+          productInstitute,
+          tonnageRange,
+          transferTime,
+          productsNumber,
+          totalWorkload,
+          plannedWorkload,
+          actualWorkload,
+          actualProgress,
+          scheduleEvaluation,
+          chronologicalProgress,
+          chronologicalActualProgress,
+          chronologicalEvaluation,
+          remark,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{orderNum,jdbcType=INTEGER},
+          #{productInstitute,jdbcType=VARCHAR},
+          #{tonnageRange,jdbcType=VARCHAR},
+          #{transferTime,jdbcType=VARCHAR},
+          #{productsNumber,jdbcType=VARCHAR},
+          #{totalWorkload,jdbcType=VARCHAR},
+          #{plannedWorkload,jdbcType=VARCHAR},
+          #{actualWorkload,jdbcType=VARCHAR},
+          #{actualProgress,jdbcType=VARCHAR},
+          #{scheduleEvaluation,jdbcType=VARCHAR},
+          #{chronologicalProgress,jdbcType=VARCHAR},
+          #{chronologicalActualProgress,jdbcType=VARCHAR},
+          #{chronologicalEvaluation,jdbcType=VARCHAR},
+          #{remark,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateData" parameterType="java.util.Map">
+        update digitization_datamigration_totalprogress
+        set
+        orderNum=#{orderNum,jdbcType=INTEGER},
+        productInstitute=#{productInstitute,jdbcType=VARCHAR},
+        tonnageRange=#{tonnageRange,jdbcType=VARCHAR},
+        transferTime=#{transferTime,jdbcType=VARCHAR},
+        productsNumber=#{productsNumber,jdbcType=VARCHAR},
+        totalWorkload=#{totalWorkload,jdbcType=VARCHAR},
+        plannedWorkload=#{plannedWorkload,jdbcType=VARCHAR},
+        actualWorkload=#{actualWorkload,jdbcType=VARCHAR},
+        actualProgress=#{actualProgress,jdbcType=VARCHAR},
+        scheduleEvaluation=#{scheduleEvaluation,jdbcType=VARCHAR},
+        chronologicalProgress=#{chronologicalProgress,jdbcType=VARCHAR},
+        chronologicalActualProgress=#{chronologicalActualProgress,jdbcType=VARCHAR},
+        chronologicalEvaluation=#{chronologicalEvaluation,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteData" parameterType="java.util.Map">
+        delete from digitization_datamigration_totalprogress
+        where id in
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="getTotalprogressList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        digitization_datamigration_totalprogress as business
+        <where>
+            <if test="action !=null and action !='' and action == 'productInstitute'">
+                AND business.productInstitute != ''
+            </if>
+            <if test="action !=null and action !='' and action == 'tonnageRange'">
+                AND business.tonnageRange != ''
+            </if>
+        </where>
+        ORDER BY orderNum
+    </select>
+</mapper>

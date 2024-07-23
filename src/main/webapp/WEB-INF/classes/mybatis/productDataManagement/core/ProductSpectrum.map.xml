@@ -1,0 +1,913 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.productDataManagement.core.dao.ProductSpectrumDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+
+        <if test="materialCode !=null and materialCode !=''">
+            AND ps.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="saleModel !=null and saleModel !=''">
+            AND ps.saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+        <if test="designModel !=null and designModel !=''">
+            AND ps.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="departName !=null and departName !=''">
+            AND ps.departName like CONCAT('%',#{departName},'%')
+        </if>
+        <if test="productManagerName !=null and productManagerName !=''">
+            AND ps.productManagerName like CONCAT('%',#{productManagerName},'%')
+        </if>
+        <if test="rdStatus !=null and rdStatus !=''">
+            AND ps.rdStatus like CONCAT('%',#{rdStatus},'%')
+        </if>
+        <if test="manuStatus !=null and manuStatus !=''">
+            AND ps.manuStatus like CONCAT('%',#{manuStatus},'%')
+        </if>
+        <if test="saleStatus !=null and saleStatus !=''">
+            AND ps.saleStatus like CONCAT('%',#{saleStatus},'%')
+        </if>
+        <if test="abroad !=null and abroad !=''">
+            AND ps.abroad like CONCAT('%',#{abroad},'%')
+        </if>
+        <if test="productNotes !=null and productNotes !=''">
+            AND ps.productNotes like CONCAT('%',#{productNotes},'%')
+        </if>
+        <if test="tagIds !=null and tagIds !=''">
+            <foreach collection="tagIds" index="index" item="item">
+                AND tagIds REGEXP #{item}
+            </foreach>
+        </if>
+        <if test="region !=null and region !=''">
+            AND ps.region like CONCAT('%',#{region},'%')
+        </if>
+        <if test="dischargeStage !=null and dischargeStage !=''">
+            AND ps.dischargeStage like CONCAT('%',#{dischargeStage},'%')
+        </if>
+        <if test="supplyName != null and supplyName != ''">
+            AND ps.id IN (
+            SELECT
+            applyId
+            FROM
+            product_spectrum_main_setting
+            WHERE
+            supplyName like CONCAT('%',#{supplyName},'%'))
+        </if>
+        <if test="settingMaterialCode != null and settingMaterialCode != ''">
+            AND ps.id IN (
+            SELECT
+            applyId
+            FROM
+            product_spectrum_main_setting
+            WHERE
+            settingMaterialCode like CONCAT('%',#{settingMaterialCode},'%'))
+        </if>
+        <if test="settingModel != null and settingModel != ''">
+            AND ps.id IN (
+            SELECT
+            applyId
+            FROM
+            product_spectrum_main_setting
+            WHERE
+            settingModel like CONCAT('%',#{settingModel},'%'))
+        </if>
+
+        <if test="startTime != null and startTime != ''">
+            AND ps.id IN (
+            SELECT
+            applyId
+            FROM
+            product_spectrum_month_status
+            WHERE
+            monthTime &gt;= #{startTime})
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND ps.id IN (
+            SELECT
+            applyId
+            FROM
+            product_spectrum_month_status
+            WHERE
+            monthTime &lt;= #{endTime} )
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='other'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR
+                    ps.CREATE_BY_ = #{currentUserId} OR
+                    ps.productManagerName = #{currentUserName}
+                    )
+                </when>
+            </choose>
+        </if>
+        <if test="selectModel != null and selectModel != ''">
+            AND ps.designModel in
+            <foreach collection="selectModel" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="instStatus !=null and instStatus !=''">
+            AND bpm_inst.STATUS_ = #{instStatus}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT ps.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        product_spectrum AS ps
+        left join
+        bpm_inst on ps.id=bpm_inst.BUS_KEY_
+        <where>
+            1=1
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="dataListExport" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT ps.*,
+        ms.monthTime,
+        ms.monthStatus,
+        ms.remark as monthRemark
+        FROM
+        product_spectrum AS ps
+        left join product_spectrum_month_status ms on ps.id = ms.applyid
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+    </select>
+
+
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM
+        product_spectrum AS ps
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+
+    <!--标签数据查询-->
+
+    <select id="tagListQuery" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        d.DIC_ID_ AS id,
+        d.KEY_ AS key_,
+        d.NAME_ AS text,
+        d.VALUE_ AS value
+        FROM sys_dic d LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{type}
+        AND t.cat_key_ = 'CAT_DIM'
+        <if test="tagName !=null and tagName !=''">
+            AND d.NAME_ like CONCAT('%',#{tagName},'%')
+        </if>
+        <if test="tagStatus !=null and tagStatus !=''">
+            AND d.VALUE_ like CONCAT('%',#{tagStatus},'%')
+        </if>
+        <if test="tagIds != null and tagIds != ''">
+            AND d.DIC_ID_ in
+            <foreach collection="tagIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="countTagListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM
+        FROM sys_dic d LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{type}
+        AND t.cat_key_ = 'CAT_DIM'
+        <if test="tagName !=null and tagName !=''">
+            AND d.NAME_ like CONCAT('%',#{tagName},'%')
+        </if>
+        <if test="tagStatus !=null and tagStatus !=''">
+            AND d.VALUE_ like CONCAT('%',#{tagStatus},'%')
+        </if>
+        <if test="tagIds != null and tagIds != ''">
+            AND d.DIC_ID_ in
+            <foreach collection="tagIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT product_spectrum.*
+             , bpm_inst.INST_ID_ as instId
+        from product_spectrum
+                 left join bpm_inst on product_spectrum.id = bpm_inst.BUS_KEY_
+        WHERE id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.lang.String">
+        delete
+        from product_spectrum
+        where id = #{id}
+    </delete>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into product_spectrum(id,
+                                     saleModel,
+                                     designModel,
+                                     materialCode,
+                                     departId,
+                                     departName,
+                                     productManagerId,
+                                     productManagerName,
+                                     region,
+                                     dischargeStage,
+                                     abroad,
+                                     jsggType,
+                                     lxsj,
+                                     yfztqr,
+                                     zzztqr,
+                                     xsztqr,
+                                     projectName,
+                                     xsrz,
+                                     tagIds,
+                                     tagNames,
+                                     rdStatus,
+                                     CREATE_BY_,
+                                     CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{saleModel,jdbcType=VARCHAR},
+                #{designModel,jdbcType=VARCHAR},
+                #{materialCode,jdbcType=VARCHAR},
+                #{departId,jdbcType=VARCHAR},
+                #{departName,jdbcType=VARCHAR},
+                #{productManagerId,jdbcType=VARCHAR},
+                #{productManagerName,jdbcType=VARCHAR},
+                #{region,jdbcType=VARCHAR},
+                #{dischargeStage,jdbcType=VARCHAR},
+                #{abroad,jdbcType=VARCHAR},
+                #{jsggType,jdbcType=VARCHAR},
+                #{lxsj,jdbcType=VARCHAR},
+                #{yfztqr,jdbcType=VARCHAR},
+                #{zzztqr,jdbcType=VARCHAR},
+                #{xsztqr,jdbcType=VARCHAR},
+                #{projectName,jdbcType=VARCHAR},
+                #{xsrz,jdbcType=VARCHAR},
+                #{tagIds,jdbcType=VARCHAR},
+                #{tagNames,jdbcType=VARCHAR},
+                #{rdStatus,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update product_spectrum
+        set
+        saleModel=#{saleModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        departId=#{departId,jdbcType=VARCHAR},
+        departName=#{departName,jdbcType=VARCHAR},
+        productManagerId=#{productManagerId,jdbcType=VARCHAR},
+        productManagerName=#{productManagerName,jdbcType=VARCHAR},
+        dischargeStage=#{dischargeStage,jdbcType=VARCHAR},
+        rdStatus=#{rdStatus,jdbcType=VARCHAR},
+        productNotes=#{productNotes,jdbcType=VARCHAR},
+        manuStatus=#{manuStatus,jdbcType=VARCHAR},
+        saleStatus=#{saleStatus,jdbcType=VARCHAR},
+        abroad=#{abroad,jdbcType=VARCHAR},
+        region=#{region,jdbcType=VARCHAR},
+        pin4=#{pin4,jdbcType=VARCHAR},
+        pin8=#{pin8,jdbcType=VARCHAR},
+        tagIds=#{tagIds,jdbcType=VARCHAR},
+        tagNames=#{tagNames,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        lxsj=#{lxsj,jdbcType=VARCHAR},
+        yfztqr=#{yfztqr,jdbcType=VARCHAR},
+        zzztqr=#{zzztqr,jdbcType=VARCHAR},
+        xsztqr=#{xsztqr,jdbcType=VARCHAR},
+        projectName=#{projectName,jdbcType=VARCHAR},
+        xsrz=#{xsrz,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        1=1
+        <if test="id !=null and id !=''">
+            AND id=#{id}
+        </if>
+
+    </update>
+
+
+    <select id="queryMonthStatusList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT a.*
+        FROM product_spectrum_month_status a
+        WHERE a.applyId = #{applyId}
+    </select>
+
+
+    <insert id="insertMonthStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into product_spectrum_month_status( id
+                                                 , applyId
+                                                 , monthTime
+                                                 , changeNumber
+                                                 , changeTarget
+                                                 , changeDesc
+                                                 , changePersonName
+                                                 , remark
+                                                 , CREATE_BY_
+                                                 , CREATE_TIME_)
+        values ( #{id,jdbcType=VARCHAR}
+               , #{applyId,jdbcType=VARCHAR}
+               , #{monthTime,jdbcType=VARCHAR}
+               , #{changeNumber,jdbcType=VARCHAR}
+               , #{changeTarget,jdbcType=VARCHAR}
+               , #{changeDesc,jdbcType=VARCHAR}
+               , #{changePersonName,jdbcType=VARCHAR}
+               , #{remark,jdbcType=VARCHAR}
+               , #{CREATE_BY_,jdbcType=VARCHAR}
+               , #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateMonthStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update product_spectrum_month_status
+        set monthTime=#{monthTime,jdbcType=VARCHAR},
+            changeNumber=#{changeNumber,jdbcType=VARCHAR},
+            changeTarget=#{changeTarget,jdbcType=VARCHAR},
+            changeDesc=#{changeDesc,jdbcType=VARCHAR},
+            changePersonName=#{changePersonName,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteMonthStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from product_spectrum_month_status
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryMainSettingList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT a.*
+        FROM product_spectrum_main_setting a
+        WHERE a.applyId = #{applyId}
+    </select>
+
+
+    <insert id="insertMainSetting" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into product_spectrum_main_setting( id
+                                                 , applyId
+                                                 , settingType
+                                                 , settingTypeClass
+                                                 , settingMaterialCode
+                                                 , settingModel
+                                                 , supplyName
+                                                 , settingRemark
+                                                 , sfxp
+                                                 , CREATE_BY_
+                                                 , CREATE_TIME_)
+        values ( #{id,jdbcType=VARCHAR}
+               , #{applyId,jdbcType=VARCHAR}
+               , #{settingType,jdbcType=VARCHAR}
+               , #{settingTypeClass,jdbcType=VARCHAR}
+               , #{settingMaterialCode,jdbcType=VARCHAR}
+               , #{settingModel,jdbcType=VARCHAR}
+               , #{supplyName,jdbcType=VARCHAR}
+               , #{settingRemark,jdbcType=VARCHAR}
+               , #{sfxp,jdbcType=VARCHAR}
+               , #{CREATE_BY_,jdbcType=VARCHAR}
+               , #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateMainSetting" parameterType="com.alibaba.fastjson.JSONObject">
+        update product_spectrum_main_setting
+        set settingType=#{settingType,jdbcType=VARCHAR},
+            settingTypeClass=#{settingTypeClass,jdbcType=VARCHAR},
+            settingMaterialCode=#{settingMaterialCode,jdbcType=VARCHAR},
+            settingModel=#{settingModel,jdbcType=VARCHAR},
+            supplyName=#{supplyName,jdbcType=VARCHAR},
+            settingRemark=#{settingRemark,jdbcType=VARCHAR},
+            sfxp=#{sfxp,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteMainSetting" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from product_spectrum_main_setting
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryTagType" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT DISTINCT d.KEY_ AS tagType
+        FROM sys_dic d
+                 LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{key}
+          AND t.cat_key_ = 'CAT_DIM'
+    </select>
+
+    <select id="queryTagName" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT d.DIC_ID_ as tagId,
+               d.NAME_   AS tagName
+        FROM sys_dic d
+                 LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{key}
+          AND t.cat_key_ = 'CAT_DIM'
+          AND d.key_ = #{tagType}
+    </select>
+
+    <select id="queryMainParamList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT a.*
+        FROM product_spectrum_main_param a
+        WHERE a.applyId = #{applyId}
+    </select>
+
+
+    <insert id="insertMainParam" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into product_spectrum_main_param( id
+                                               , applyId
+                                               , paramType
+                                               , paramTypeClass
+                                               , paramValue
+                                               , paramUnit
+                                               , remark
+                                               , CREATE_BY_
+                                               , CREATE_TIME_)
+        values ( #{id,jdbcType=VARCHAR}
+               , #{applyId,jdbcType=VARCHAR}
+               , #{paramType,jdbcType=VARCHAR}
+               , #{paramTypeClass,jdbcType=VARCHAR}
+               , #{paramValue,jdbcType=VARCHAR}
+               , #{paramUnit,jdbcType=VARCHAR}
+               , #{remark,jdbcType=VARCHAR}
+               , #{CREATE_BY_,jdbcType=VARCHAR}
+               , #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateMainParam" parameterType="com.alibaba.fastjson.JSONObject">
+        update product_spectrum_main_param
+        set paramType=#{paramType,jdbcType=VARCHAR},
+            paramTypeClass=#{paramTypeClass,jdbcType=VARCHAR},
+            paramValue=#{paramValue,jdbcType=VARCHAR},
+            paramUnit=#{paramUnit,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteMainParam" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from product_spectrum_main_param
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteMainParamWhenImport" parameterType="com.alibaba.fastjson.JSONObject">
+        delete
+        from product_spectrum_main_param
+        where applyId = #{applyId}
+    </delete>
+
+    <delete id="deleteMainSettingWhenImport" parameterType="com.alibaba.fastjson.JSONObject">
+        delete
+        from product_spectrum_main_Setting
+        where applyId = #{applyId}
+    </delete>
+
+
+    <select id="queryManualChangeList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT a.*
+        FROM product_spectrum_manual_change a
+        WHERE a.applyId = #{applyId}
+    </select>
+
+    <select id="queryWorkDeviceList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT a.*
+        FROM product_spectrum_work_device a
+        WHERE a.applyId = #{applyId}
+        ORDER BY saleModel, designModel, basket, openSize
+    </select>
+
+
+    <insert id="insertManualChange" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into product_spectrum_manual_change( id
+                                                  , applyId
+                                                  , changeName
+                                                  , changeDesc
+                                                  , creatorName
+                                                  , createTime
+                                                  , remark
+                                                  , CREATE_BY_
+                                                  , CREATE_TIME_)
+        values ( #{id,jdbcType=VARCHAR}
+               , #{applyId,jdbcType=VARCHAR}
+               , #{changeName,jdbcType=VARCHAR}
+               , #{changeDesc,jdbcType=VARCHAR}
+               , #{creatorName,jdbcType=VARCHAR}
+               , #{createTime,jdbcType=VARCHAR}
+               , #{remark,jdbcType=VARCHAR}
+               , #{CREATE_BY_,jdbcType=VARCHAR}
+               , #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateManualChange" parameterType="com.alibaba.fastjson.JSONObject">
+        update product_spectrum_manual_change
+        set changeName=#{changeName,jdbcType=VARCHAR},
+            changeDesc=#{changeDesc,jdbcType=VARCHAR},
+            createTime=#{createTime,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteManualChange" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from product_spectrum_manual_change
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <insert id="insertWorkDevice" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into product_spectrum_work_device( id
+                                                , applyId
+                                                , saleModel
+                                                , designModel
+                                                , boom
+                                                , boomLength
+                                                , boomMaterial
+                                                , boomAsse
+                                                , boomFrontAsse
+                                                , boomWeigth
+                                                , boomRemark
+                                                , stick
+                                                , stickLength
+                                                , stickMaterial
+                                                , stickAsse
+                                                , stickFrontAsse
+                                                , stickWeigth
+                                                , stickRemark
+                                                , `pipe`
+                                                , pipeMaterial
+                                                , pipeSize
+                                                , pipeConnect
+                                                , pipeVehicle
+                                                , pipeRemark
+                                                , basket
+                                                , basketMaterial
+                                                , basketCap
+                                                , basketType
+                                                , basketWidth
+                                                , basketHeight
+                                                , basketWeigth
+                                                , basketRemark
+                                                , openSize
+                                                , breaker
+                                                , others
+                                                , remark
+                                                , CREATE_BY_
+                                                , CREATE_TIME_)
+        values ( #{id,jdbcType=VARCHAR}
+               , #{applyId,jdbcType=VARCHAR}
+               , #{saleModel,jdbcType=VARCHAR}
+               , #{designModel,jdbcType=VARCHAR}
+               , #{boom,jdbcType=VARCHAR}
+               , #{boomLength,jdbcType=VARCHAR}
+               , #{boomMaterial,jdbcType=VARCHAR}
+               , #{boomAsse,jdbcType=VARCHAR}
+               , #{boomFrontAsse,jdbcType=VARCHAR}
+               , #{boomWeigth,jdbcType=VARCHAR}
+               , #{boomRemark,jdbcType=VARCHAR}
+               , #{stick,jdbcType=VARCHAR}
+               , #{stickLength,jdbcType=VARCHAR}
+               , #{stickMaterial,jdbcType=VARCHAR}
+               , #{stickAsse,jdbcType=VARCHAR}
+               , #{stickFrontAsse,jdbcType=VARCHAR}
+               , #{stickWeigth,jdbcType=VARCHAR}
+               , #{stickRemark,jdbcType=VARCHAR}
+               , #{pipe,jdbcType=VARCHAR}
+               , #{pipeMaterial,jdbcType=VARCHAR}
+               , #{pipeSize,jdbcType=VARCHAR}
+               , #{pipeConnect,jdbcType=VARCHAR}
+               , #{pipeVehicle,jdbcType=VARCHAR}
+               , #{pipeRemark,jdbcType=VARCHAR}
+               , #{basket,jdbcType=VARCHAR}
+               , #{basketMaterial,jdbcType=VARCHAR}
+               , #{basketCap,jdbcType=VARCHAR}
+               , #{basketType,jdbcType=VARCHAR}
+               , #{basketWidth,jdbcType=VARCHAR}
+               , #{basketHeight,jdbcType=VARCHAR}
+               , #{basketWeigth,jdbcType=VARCHAR}
+               , #{basketRemark,jdbcType=VARCHAR}
+               , #{openSize,jdbcType=VARCHAR}
+               , #{breaker,jdbcType=VARCHAR}
+               , #{others,jdbcType=VARCHAR}
+               , #{remark,jdbcType=VARCHAR}
+               , #{CREATE_BY_,jdbcType=VARCHAR}
+               , #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateWorkDevice" parameterType="com.alibaba.fastjson.JSONObject">
+        update product_spectrum_work_device
+        set applyId=#{applyId,jdbcType=VARCHAR}
+          , saleModel=#{saleModel,jdbcType=VARCHAR}
+          , designModel=#{designModel,jdbcType=VARCHAR}
+          , boom=#{boom,jdbcType=VARCHAR}
+          , boomLength=#{boomLength,jdbcType=VARCHAR}
+          , boomMaterial=#{boomMaterial,jdbcType=VARCHAR}
+          , boomAsse=#{boomAsse,jdbcType=VARCHAR}
+          , boomFrontAsse=#{boomFrontAsse,jdbcType=VARCHAR}
+          , boomWeigth=#{boomWeigth,jdbcType=VARCHAR}
+          , boomRemark=#{boomRemark,jdbcType=VARCHAR}
+          , stick=#{stick,jdbcType=VARCHAR}
+          , stickLength=#{stickLength,jdbcType=VARCHAR}
+          , stickMaterial=#{stickMaterial,jdbcType=VARCHAR}
+          , stickAsse=#{stickAsse,jdbcType=VARCHAR}
+          , stickFrontAsse=#{stickFrontAsse,jdbcType=VARCHAR}
+          , stickWeigth=#{stickWeigth,jdbcType=VARCHAR}
+          , stickRemark=#{stickRemark,jdbcType=VARCHAR}
+          , `pipe`=#{`pipe`,jdbcType=VARCHAR}
+          , pipeMaterial=#{pipeMaterial,jdbcType=VARCHAR}
+          , pipeSize=#{pipeSize,jdbcType=VARCHAR}
+          , pipeConnect=#{pipeConnect,jdbcType=VARCHAR}
+          , pipeVehicle=#{pipeVehicle,jdbcType=VARCHAR}
+          , pipeRemark=#{pipeRemark,jdbcType=VARCHAR}
+          , basket=#{basket,jdbcType=VARCHAR}
+          , basketMaterial=#{basketMaterial,jdbcType=VARCHAR}
+          , basketCap=#{basketCap,jdbcType=VARCHAR}
+          , basketType=#{basketType,jdbcType=VARCHAR}
+          , basketWidth=#{basketWidth,jdbcType=VARCHAR}
+          , basketHeight=#{basketHeight,jdbcType=VARCHAR}
+          , basketWeigth=#{basketWeigth,jdbcType=VARCHAR}
+          , basketRemark=#{basketRemark,jdbcType=VARCHAR}
+          , openSize=#{openSize,jdbcType=VARCHAR}
+          , breaker=#{breaker,jdbcType=VARCHAR}
+          , others=#{others,jdbcType=VARCHAR}
+          , remark=#{remark,jdbcType=VARCHAR}
+          , UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+          , UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteWorkDevice" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from product_spectrum_work_device
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteSpectrum" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from product_spectrum
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="settingListQuery" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT d.DIC_ID_ AS id,
+               d.KEY_    AS settingTypeClass,
+               d.NAME_   AS settingType,
+               d.VALUE_ AS value
+        FROM sys_dic d LEFT JOIN sys_tree t
+        ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{type}
+          AND t.cat_key_ = 'CAT_DIM'
+    </select>
+
+    <select id="paramListQuery" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT d.DIC_ID_ AS id,
+               d.KEY_    AS paramTypeClass,
+               d.NAME_   AS paramType,
+               d.VALUE_  AS paramUnit
+        FROM sys_dic d
+                 LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{type}
+          AND t.cat_key_ = 'CAT_DIM'
+    </select>
+
+    <select id="checkEditPermition" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM product_spectrum_change_apply_base
+                 LEFT JOIN bpm_inst ON product_spectrum_change_apply_base.id = bpm_inst.BUS_KEY_
+        WHERE product_spectrum_change_apply_base.CREATE_BY_ = #{modifyId}
+          AND product_spectrum_change_apply_base.designModel = #{designModel}
+          AND product_spectrum_change_apply_base.aimType = #{aimType}
+          AND bpm_inst.STATUS_ = "RUNNING" LIMIT 1
+    </select>
+
+
+    <select id="checkDesignModelExist" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        id
+        FROM
+        product_spectrum
+        <where>
+            <choose>
+                <when test="flag == 'designModel'">
+                    designModel = #{designModel}
+                </when>
+                <when test="flag == 'materialCode'">
+                    materialCode = #{materialCode}
+                </when>
+                <when test="flag == 'designModel_materialCode'">
+                    (designModel = #{designModel} OR materialCode = #{materialCode})
+                </when>
+            </choose>
+            <if test="id != null and id != ''">
+                AND product_spectrum.id != #{id}
+            </if>
+        </where>
+    </select>
+    <select id="queryDesignSpectrumForApi" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from product_spectrum
+        <where>
+            <if test="materialCode != null and materialCode != ''">
+                materialCode like CONCAT('%',#{materialCode},'%')
+            </if>
+            <if test="designModel != null and designModel != ''">
+                AND designModel like CONCAT('%',#{designModel},'%')
+            </if>
+            <if test="productManagerName != null and productManagerName != ''">
+                AND productManagerName like CONCAT('%',#{productManagerName},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countDesignSpectrumForApi" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(*)
+        from product_spectrum
+        <where>
+            <if test="materialCode != null and materialCode != ''">
+                materialCode like CONCAT('%',#{materialCode},'%')
+            </if>
+            <if test="designModel != null and designModel != ''">
+                AND designModel like CONCAT('%',#{designModel},'%')
+            </if>
+            <if test="productManagerName != null and productManagerName != ''">
+                AND productManagerName like CONCAT('%',#{productManagerName},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="batchInsertMainParam" parameterType="java.util.List">
+        insert into product_spectrum_main_param(
+        id
+        ,applyId
+        ,paramType
+        ,paramTypeClass
+        ,paramValue
+        ,paramUnit
+        ,remark
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values
+        <foreach collection="list" separator="," index="index" item="obj" open="" close="">
+            (
+            #{obj.id,jdbcType=VARCHAR}
+            ,#{obj.applyId,jdbcType=VARCHAR}
+            ,#{obj.paramType,jdbcType=VARCHAR}
+            ,#{obj.paramTypeClass,jdbcType=VARCHAR}
+            ,#{obj.paramValue,jdbcType=VARCHAR}
+            ,#{obj.paramUnit,jdbcType=VARCHAR}
+            ,#{obj.remark,jdbcType=VARCHAR}
+            ,#{obj.CREATE_BY_,jdbcType=VARCHAR}
+            ,#{obj.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+
+    <insert id="batchInsertMainSetting" parameterType="java.util.List">
+        insert into product_spectrum_main_setting(
+        id
+        ,applyId
+        ,settingType
+        ,settingMaterialCode
+        ,settingModel
+        ,settingRemark
+        ,supplyName
+        ,settingTypeClass
+        ,sfxp
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values
+        <foreach collection="list" separator="," index="index" item="obj" open="" close="">
+            (
+            #{obj.id,jdbcType=VARCHAR}
+            ,#{obj.applyId,jdbcType=VARCHAR}
+            ,#{obj.settingType,jdbcType=VARCHAR}
+            ,#{obj.settingMaterialCode,jdbcType=VARCHAR}
+            ,#{obj.settingModel,jdbcType=VARCHAR}
+            ,#{obj.settingRemark,jdbcType=VARCHAR}
+            ,#{obj.supplyName,jdbcType=VARCHAR}
+            ,#{obj.settingTypeClass,jdbcType=VARCHAR}
+            ,#{obj.sfxp,jdbcType=VARCHAR}
+            ,#{obj.CREATE_BY_,jdbcType=VARCHAR}
+            ,#{obj.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+
+</mapper>

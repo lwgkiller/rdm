@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.powerApplicationTechnology.core.dao.PartsResearchDirectionDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        pat_parts_researchdirection.*
+        FROM
+        pat_parts_researchdirection
+        <where>
+            <if test="partsDescription !=null and partsDescription !=''">
+                AND pat_parts_researchdirection.partsDescription like CONCAT('%',#{partsDescription},'%')
+            </if>
+            <if test="researchDirection !=null and researchDirection !=''">
+                AND pat_parts_researchdirection.researchDirection like CONCAT('%',#{researchDirection},'%')
+            </if>
+            <if test="model !=null and model !=''">
+                AND pat_parts_researchdirection.model like CONCAT('%',#{model},'%')
+            </if>
+            <if test="researchDirectionSource !=null and researchDirectionSource !=''">
+                AND pat_parts_researchdirection.researchDirectionSource like CONCAT('%',#{researchDirectionSource},'%')
+            </if>
+            <if test="researchObjective !=null and researchObjective !=''">
+                AND pat_parts_researchdirection.researchObjective like CONCAT('%',#{researchObjective},'%')
+            </if>
+            <if test="completionTime !=null and completionTime !=''">
+                AND pat_parts_researchdirection.completionTime=#{completionTime}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM
+        pat_parts_researchdirection
+        <where>
+            <if test="partsDescription !=null and partsDescription !=''">
+                AND pat_parts_researchdirection.partsDescription like CONCAT('%',#{partsDescription},'%')
+            </if>
+            <if test="researchDirection !=null and researchDirection !=''">
+                AND pat_parts_researchdirection.researchDirection like CONCAT('%',#{researchDirection},'%')
+            </if>
+            <if test="model !=null and model !=''">
+                AND pat_parts_researchdirection.model like CONCAT('%',#{model},'%')
+            </if>
+            <if test="researchDirectionSource !=null and researchDirectionSource !=''">
+                AND pat_parts_researchdirection.researchDirectionSource like CONCAT('%',#{researchDirectionSource},'%')
+            </if>
+            <if test="researchObjective !=null and researchObjective !=''">
+                AND pat_parts_researchdirection.researchObjective like CONCAT('%',#{researchObjective},'%')
+            </if>
+            <if test="completionTime !=null and completionTime !=''">
+                AND pat_parts_researchdirection.completionTime=#{completionTime}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into pat_parts_researchdirection(
+          id,
+          partsDescription,
+          researchDirection,
+          model,
+          researchDirectionSource,
+          researchObjective,
+          completionTime,
+          completedByIds,
+          completedBy,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{partsDescription,jdbcType=VARCHAR},
+          #{researchDirection,jdbcType=VARCHAR},
+          #{model,jdbcType=VARCHAR},
+          #{researchDirectionSource,jdbcType=VARCHAR},
+          #{researchObjective,jdbcType=VARCHAR},
+          #{completionTime,jdbcType=VARCHAR},
+          #{completedByIds,jdbcType=VARCHAR},
+          #{completedBy,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateData" parameterType="com.alibaba.fastjson.JSONObject">
+        update pat_parts_researchdirection
+        set
+        partsDescription=#{partsDescription,jdbcType=VARCHAR},
+        researchDirection=#{researchDirection,jdbcType=VARCHAR},
+        model=#{model,jdbcType=VARCHAR},
+        researchDirectionSource=#{researchDirectionSource,jdbcType=VARCHAR},
+        researchObjective=#{researchObjective,jdbcType=VARCHAR},
+        completionTime=#{completionTime,jdbcType=VARCHAR},
+        completedByIds=#{completedByIds,jdbcType=VARCHAR},
+        completedBy=#{completedBy,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteData" parameterType="java.util.Map">
+        delete from pat_parts_researchdirection
+        where id in
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT pat_parts_researchdirection.*
+        FROM
+            pat_parts_researchdirection
+        WHERE
+            pat_parts_researchdirection.id = #{_parameter,jdbcType=VARCHAR}
+    </select>
+    <!---->
+    <select id="queryFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from pat_parts_researchdirection_fileinfo
+        where businessId IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <select id="queryItemList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM pat_parts_researchdirection_items
+        <where>
+            <if test="_parameter !=null and _parameter !=''">
+                businessId = #{_parameter,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <delete id="deleteFileInfos" parameterType="java.util.Map">
+        delete from pat_parts_researchdirection_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND businessId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="insertItemData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into pat_parts_researchdirection_items(
+          id,
+          businessId,
+          timeSlot,
+          taskContent,
+          outputName,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{businessId,jdbcType=VARCHAR},
+          #{timeSlot,jdbcType=VARCHAR},
+          #{taskContent,jdbcType=VARCHAR},
+          #{outputName,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateItemData" parameterType="com.alibaba.fastjson.JSONObject">
+        update pat_parts_researchdirection_items
+        set
+        businessId=#{businessId,jdbcType=VARCHAR},
+        timeSlot=#{timeSlot,jdbcType=VARCHAR},
+        taskContent=#{taskContent,jdbcType=VARCHAR},
+        outputName=#{outputName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteItem" parameterType="java.lang.String">
+        delete from pat_parts_researchdirection_items where id = #{id}
+    </delete>
+    <!---->
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into pat_parts_researchdirection_fileinfo(
+        id,
+        fileName,
+        fileSize,
+        fileDesc,
+        businessId,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{businessId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <delete id="deleteItemsByBusinessId" parameterType="java.lang.String">
+        delete from pat_parts_researchdirection_items where businessId = #{businessId}
+    </delete>
+</mapper>

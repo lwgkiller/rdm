@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.XppqDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryZlgjList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        xppq_baseInfo.*,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId
+        FROM
+        xppq_baseInfo
+        LEFT JOIN os_user ON os_user.USER_ID_ = xppq_baseInfo.CREATE_BY_
+        left join bpm_inst on xppq_baseInfo.wtId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        <where>
+            <if test="sjth != null and sjth != ''">
+                xppq_baseInfo.sjth like CONCAT('%',#{sjth},'%')
+            </if>
+            <if test="pqfs != null and pqfs != ''">
+                AND xppq_baseInfo.pqfs = #{pqfs}
+            </if>
+            <if test="gygcsName != null and gygcsName != ''">
+                AND xppq_baseInfo.gygcsName like CONCAT('%',#{gygcsName},'%')
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR xppq_baseInfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countZlgjList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        xppq_baseInfo
+        left join bpm_inst on xppq_baseInfo.wtId=bpm_inst.BUS_KEY_
+        <where>
+            <if test="sjth != null and sjth != ''">
+                xppq_baseInfo.sjth like CONCAT('%',#{sjth},'%')
+            </if>
+            <if test="pqfs != null and pqfs != ''">
+                AND xppq_baseInfo.pqfs = #{pqfs}
+            </if>
+            <if test="gygcsName != null and gygcsName != ''">
+                AND xppq_baseInfo.gygcsName like CONCAT('%',#{gygcsName},'%')
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR xppq_baseInfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertZlgj" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into xppq_baseInfo(
+            wtId
+            ,sjth
+            ,pqfs
+            ,pqjhwcTime
+            ,gygcsId
+            ,gygcsName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{wtId,jdbcType=VARCHAR},
+            #{sjth,jdbcType=VARCHAR},
+            #{pqfs,jdbcType=VARCHAR},
+            #{pqjhwcTime,jdbcType=TIMESTAMP},
+            #{gygcsId,jdbcType=VARCHAR},
+            #{gygcsName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateZlgj" parameterType="com.alibaba.fastjson.JSONObject">
+        update xppq_baseInfo
+        set
+            sjth=#{sjth,jdbcType=VARCHAR},
+            pqfs=#{pqfs,jdbcType=VARCHAR},
+            pqjhwcTime=#{pqjhwcTime,jdbcType=TIMESTAMP},
+            gygcsId=#{gygcsId,jdbcType=VARCHAR},
+            gygcsName=#{gygcsName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            wtId=#{wtId}
+    </update>
+
+    <insert id="addFileInfos" parameterType="java.util.Map">
+		INSERT INTO xppq_fileInfo
+		(
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            fileName,
+            fileSize,
+            fileType,
+            wtId,
+            zxId
+		)
+		VALUES
+		(
+			#{id,jdbcType=VARCHAR},
+			#{CREATE_BY_,jdbcType=VARCHAR},
+			#{CREATE_TIME_,jdbcType=TIMESTAMP},
+			#{fileName,jdbcType=VARCHAR},
+			#{fileSize,jdbcType=VARCHAR},
+			#{fileType,jdbcType=VARCHAR},
+			#{wtId,jdbcType=VARCHAR},
+			#{zxId,jdbcType=VARCHAR}
+		)
+	</insert>
+    <select id="getFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+        xppq_fileInfo.*,
+        DATE_FORMAT(xppq_fileInfo.CREATE_TIME_,'%Y-%m-%d')  CREATE_TIME_,
+		os_user.FULLNAME_ AS creator
+		FROM
+        xppq_fileInfo
+		LEFT JOIN os_user ON xppq_fileInfo.CREATE_BY_ = os_user.USER_ID_
+		WHERE
+          wtId = #{wtId}
+          AND zxId = #{zxId}
+          <if test="fileType !=null and fileType !=''">
+              AND fileType = #{fileType}
+          </if>
+	</select>
+
+    <select id="queryZlgjById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+          xppq_baseInfo.*,
+          bpm_inst.INST_ID_ as instId,
+          os_user.FULLNAME_ AS creator
+        from xppq_baseInfo
+        left join bpm_inst on xppq_baseInfo.wtId=bpm_inst.BUS_KEY_
+        LEFT JOIN os_user ON os_user.USER_ID_ = xppq_baseInfo.CREATE_BY_
+        where
+        xppq_baseInfo.wtId=#{wtId}
+    </select>
+
+    <select id="queryZlgjFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+        xppq_fileInfo
+        WHERE
+            wtId IN
+        <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <delete id="deleteFileByIds" parameterType="java.util.Map">
+        delete from xppq_fileInfo
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteZlgjFile" parameterType="java.util.Map">
+        delete from xppq_fileInfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="wtIds != null and wtIds !=''">
+                AND wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="zxIds != null and zxIds !=''">
+                AND zxId IN
+                <foreach collection="zxIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteZlgj" parameterType="java.util.Map">
+        delete from xppq_baseInfo
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <insert id="addWtyy" parameterType="java.util.Map">
+         INSERT INTO xppq_process (
+            zxId,
+            wtId,
+            pqfcId,
+            pqfcName,
+            yjscTime,
+            pqjhTime,
+            hjwcTime,
+            jyjg,
+            pqwcTime,
+            psjgDesc,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{zxId,jdbcType=VARCHAR},
+            #{wtId,jdbcType=VARCHAR},
+            #{pqfcId,jdbcType=VARCHAR},
+            #{pqfcName,jdbcType=VARCHAR},
+            #{yjscTime,jdbcType=TIMESTAMP},
+            #{pqjhTime,jdbcType=TIMESTAMP},
+            #{hjwcTime,jdbcType=TIMESTAMP},
+            #{jyjg,jdbcType=VARCHAR},
+            #{pqwcTime,jdbcType=TIMESTAMP},
+            #{psjgDesc,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updatWtyy" parameterType="java.util.Map">
+        update xppq_process
+        <set>
+            pqfcId=#{pqfcId,jdbcType=VARCHAR},
+            pqfcName=#{pqfcName,jdbcType=VARCHAR},
+            yjscTime=#{yjscTime,jdbcType=TIMESTAMP},
+            pqjhTime=#{pqjhTime,jdbcType=TIMESTAMP},
+            hjwcTime=#{hjwcTime,jdbcType=TIMESTAMP},
+            jyjg=#{jyjg,jdbcType=VARCHAR},
+            pqwcTime=#{pqwcTime,jdbcType=TIMESTAMP},
+            psjgDesc=#{psjgDesc,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        WHERE
+        zxId=#{zxId}
+    </update>
+    <delete id="delWtyy" parameterType="java.lang.String">
+        delete from xppq_process where zxId = #{zxId}
+    </delete>
+
+    <delete id="deleteWtyy" parameterType="java.util.Map">
+        delete from xppq_process
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getProcessList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        xppq_process
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                wtId = #{wtId}
+            </if>
+        </where>
+        order by CREATE_TIME_ desc
+    </select>
+
+    <update id="updateProcessStatus" parameterType="java.util.Map">
+        update xppq_process
+        set ifGd='yes'
+        where
+        wtId = #{wtId}
+    </update>
+
+    <select id="queryUserByRoleName" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_user.USER_ID_,
+        os_user.FULLNAME_
+        FROM
+        os_user
+        LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_='2'
+        AND os_group.NAME_ = #{groupName}
+    </select>
+</mapper>

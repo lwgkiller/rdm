@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.fzsj.core.dao.SdmDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="getSdmProject" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.questName,
+            B.fzNumber
+        FROM
+          fzsj_sdm_project A
+        LEFT JOIN fzsj_apply B on A.applyId = B.id
+        where 1=1
+        <if test="fzNumber != null and fzNumber != ''">
+            and B.fzNumber like CONCAT('%',#{fzNumber},'%')
+        </if>
+        order by A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addSdmProject" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO fzsj_sdm_project (
+            id,
+            CREATE_TIME_,
+            UPDATE_TIME_,
+            oid,
+            entrust,
+            projectCode,
+            projectName,
+            projectStageInfo,
+            projectType,
+            projectProductRelation,
+            projectCreator,
+            projectCreatorName,
+            projectDesc,
+            analysisList,
+            resultCode,
+            resultMessage,
+            applyId
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{oid,jdbcType=VARCHAR},
+            #{entrust,jdbcType=VARCHAR},
+            #{projectCode,jdbcType=VARCHAR},
+            #{projectName,jdbcType=VARCHAR},
+            #{projectStageInfo,jdbcType=VARCHAR},
+            #{projectType,jdbcType=VARCHAR},
+            #{projectProductRelation,jdbcType=VARCHAR},
+            #{projectCreator,jdbcType=VARCHAR},
+            #{projectCreatorName,jdbcType=VARCHAR},
+            #{projectDesc,jdbcType=VARCHAR},
+            #{analysisList,jdbcType=VARCHAR},
+            #{resultCode,jdbcType=VARCHAR},
+            #{resultMessage,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateSdmProject" parameterType="java.util.Map">
+        update fzsj_sdm_project
+        <set>
+            resultCode=#{resultCode,jdbcType=VARCHAR},
+            resultMessage=#{resultMessage,jdbcType=VARCHAR},
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getSdmProjectObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_sdm_project where applyId = #{applyId} limit 1
+    </select>
+    <select id="getSdmAssignment" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.questName,
+        B.fzNumber
+        FROM
+        fzsj_sdm_assignment A
+        LEFT JOIN fzsj_apply B on A.applyId = B.id
+        where 1=1
+        <if test="fzNumber != null and fzNumber != ''">
+            and B.fzNumber like CONCAT('%',#{fzNumber},'%')
+        </if>
+        order by A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addSdmAssignment" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO fzsj_sdm_assignment (
+            id,
+            CREATE_TIME_,
+            UPDATE_TIME_,
+            applyId,
+            resultCode,
+            resultMessage,
+            assignmentName,
+            assignmentCode,
+            assignmentVersion,
+            simulationCompany,
+            comefrom,
+            projectName,
+            projectCode,
+            simulationType,
+            simulationCategory,
+            assignmentNumber,
+            assignmentObject,
+            completionDate,
+            ratedHours,
+            planHours,
+            assignmentCost,
+            productStage,
+            projectProductRelation,
+            client,
+            centerPerson,
+            simulationPerson,
+            technologyPresident,
+            simulationCenter,
+            simulationDate,
+            analysisList
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{applyId,jdbcType=VARCHAR},
+            #{resultCode,jdbcType=VARCHAR},
+            #{resultMessage,jdbcType=VARCHAR},
+            #{assignmentName,jdbcType=VARCHAR},
+            #{assignmentCode,jdbcType=VARCHAR},
+            #{assignmentVersion,jdbcType=VARCHAR},
+            #{simulationCompany,jdbcType=VARCHAR},
+            #{from,jdbcType=VARCHAR},
+            #{projectName,jdbcType=VARCHAR},
+            #{projectCode,jdbcType=VARCHAR},
+            #{simulationType,jdbcType=VARCHAR},
+            #{simulationCategory,jdbcType=VARCHAR},
+            #{assignmentNumber,jdbcType=VARCHAR},
+            #{assignmentObject,jdbcType=VARCHAR},
+            #{completionDate,jdbcType=VARCHAR},
+            #{ratedHours,jdbcType=VARCHAR},
+            #{planHours,jdbcType=VARCHAR},
+            #{assignmentCost,jdbcType=VARCHAR},
+            #{productStage,jdbcType=VARCHAR},
+            #{projectProductRelation,jdbcType=VARCHAR},
+            #{client,jdbcType=VARCHAR},
+            #{centerPerson,jdbcType=VARCHAR},
+            #{simulationPerson,jdbcType=VARCHAR},
+            #{technologyPresident,jdbcType=VARCHAR},
+            #{simulationCenter,jdbcType=VARCHAR},
+            #{simulationDate,jdbcType=VARCHAR},
+            #{analysisList,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateSdmAssignment" parameterType="java.util.Map">
+        update fzsj_sdm_assignment
+        <set>
+            resultCode=#{resultCode,jdbcType=VARCHAR},
+            resultMessage=#{resultMessage,jdbcType=VARCHAR},
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getSdmAssignmentObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_sdm_assignment where applyId = #{applyId} limit 1
+    </select>
+
+    <select id="getSdmTaskList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.questName,
+        B.fzNumber
+        FROM
+        fzsj_sdm_task A
+        LEFT JOIN fzsj_apply B on A.applyId = B.id
+        where 1=1
+        <if test="fzNumber != null and fzNumber != ''">
+            and B.fzNumber like CONCAT('%',#{fzNumber},'%')
+        </if>
+        order by A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addSdmTask" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO fzsj_sdm_task (
+            id,
+            CREATE_TIME_,
+            UPDATE_TIME_,
+            applyId,
+            resultCode,
+            resultMessage,
+            simuTaskId,
+            simuTaskIdRelative,
+            analysisId,
+            assignmentId,
+            assignmentName,
+            simuTaskStatus,
+            projectProductRelation,
+            projectCode,
+            contract,
+            contractName,
+            comFrom,
+            testInfoList,
+            excelFile,
+            modelFile,
+            submitor,
+            submitorDept,
+            email,
+            submitorInfo,
+            company,
+            taskType,
+            taskCategory,
+            taskStartDate,
+            taskEndDate,
+            taskBackgroud,
+            taskTarget,
+            taskDetail,
+            receiveUserName,
+            remark,
+            taskId
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{applyId,jdbcType=VARCHAR},
+            #{resultCode,jdbcType=VARCHAR},
+            #{resultMessage,jdbcType=VARCHAR},
+            #{simuTaskId,jdbcType=VARCHAR},
+            #{simuTaskIdRelative,jdbcType=VARCHAR},
+            #{analysisId,jdbcType=VARCHAR},
+            #{assignmentId,jdbcType=VARCHAR},
+            #{assignmentName,jdbcType=VARCHAR},
+            #{simuTaskStatus,jdbcType=VARCHAR},
+            #{projectProductRelation,jdbcType=VARCHAR},
+            #{projectCode,jdbcType=VARCHAR},
+            #{contract,jdbcType=VARCHAR},
+            #{contractName,jdbcType=VARCHAR},
+            #{comFrom,jdbcType=VARCHAR},
+            #{testInfoList,jdbcType=VARCHAR},
+            #{excelFile,jdbcType=VARCHAR},
+            #{modelFile,jdbcType=VARCHAR},
+            #{submitor,jdbcType=VARCHAR},
+            #{submitorDept,jdbcType=VARCHAR},
+            #{email,jdbcType=VARCHAR},
+            #{submitorInfo,jdbcType=VARCHAR},
+            #{company,jdbcType=VARCHAR},
+            #{taskType,jdbcType=VARCHAR},
+            #{taskCategory,jdbcType=VARCHAR},
+            #{taskStartDate,jdbcType=VARCHAR},
+            #{taskEndDate,jdbcType=VARCHAR},
+            #{taskBackgroud,jdbcType=VARCHAR},
+            #{taskTarget,jdbcType=VARCHAR},
+            #{taskDetail,jdbcType=VARCHAR},
+            #{receiveUserName,jdbcType=VARCHAR},
+            #{desc,jdbcType=VARCHAR},
+            #{taskId,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateSdmTask" parameterType="java.util.Map">
+        update fzsj_sdm_task
+        <set>
+            resultCode=#{resultCode,jdbcType=VARCHAR},
+            resultMessage=#{resultMessage,jdbcType=VARCHAR},
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getSdmTaskObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_sdm_task where applyId = #{applyId} limit 1
+    </select>
+
+    <insert id="addSdmScore" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO fzsj_sdm_score (
+            id,
+            CREATE_TIME_,
+            UPDATE_TIME_,
+            applyId,
+            resultCode,
+            resultMessage,
+            simuTaskId,
+            creator,
+            star,
+            comment
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{applyId,jdbcType=VARCHAR},
+            #{resultCode,jdbcType=VARCHAR},
+            #{resultMessage,jdbcType=VARCHAR},
+            #{simuTaskId,jdbcType=VARCHAR},
+            #{creator,jdbcType=VARCHAR},
+            #{star,jdbcType=VARCHAR},
+            #{comment,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateSdmScore" parameterType="java.util.Map">
+        update fzsj_sdm_score
+        <set>
+            resultCode=#{resultCode,jdbcType=VARCHAR},
+            resultMessage=#{resultMessage,jdbcType=VARCHAR},
+            star=#{star,jdbcType=VARCHAR},
+            comment=#{comment,jdbcType=VARCHAR},
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getSdmScoreObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_sdm_score where applyId = #{applyId} limit 1
+    </select>
+
+    <insert id="addSdmAdopt" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO fzsj_sdm_adopt (
+            id,
+            CREATE_TIME_,
+            UPDATE_TIME_,
+            applyId,
+            resultCode,
+            resultMessage,
+            simuTaskId,
+            adoptResult,
+            adoptDescription
+
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{applyId,jdbcType=VARCHAR},
+            #{resultCode,jdbcType=VARCHAR},
+            #{resultMessage,jdbcType=VARCHAR},
+            #{simuTaskId,jdbcType=VARCHAR},
+            #{adoptResult,jdbcType=VARCHAR},
+            #{adoptDescription,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateSdmAdopt" parameterType="java.util.Map">
+        update fzsj_sdm_adopt
+        <set>
+            resultCode=#{resultCode,jdbcType=VARCHAR},
+            resultMessage=#{resultMessage,jdbcType=VARCHAR},
+            adoptResult=#{adoptResult,jdbcType=VARCHAR},
+            adoptDescription=#{adoptDescription,jdbcType=VARCHAR},
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getSdmAdoptObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_sdm_adopt where applyId = #{applyId} limit 1
+    </select>
+
+    <insert id="addSdmImplement" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO fzsj_sdm_implement (
+            id,
+            CREATE_TIME_,
+            UPDATE_TIME_,
+            applyId,
+            resultCode,
+            resultMessage,
+            simuTaskId,
+            implementation,
+            url
+
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{applyId,jdbcType=VARCHAR},
+            #{resultCode,jdbcType=VARCHAR},
+            #{resultMessage,jdbcType=VARCHAR},
+            #{simuTaskId,jdbcType=VARCHAR},
+            #{implementation,jdbcType=VARCHAR},
+            #{url,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateSdmImplement" parameterType="java.util.Map">
+        update fzsj_sdm_implement
+        <set>
+            resultCode=#{resultCode,jdbcType=VARCHAR},
+            resultMessage=#{resultMessage,jdbcType=VARCHAR},
+            implementation=#{implementation,jdbcType=VARCHAR},
+            url=#{url,jdbcType=VARCHAR},
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getSdmImplementObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_sdm_implement where applyId = #{applyId} limit 1
+    </select>
+
+    <insert id="addSdmReport" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO fzsj_sdm_report (
+            id,
+            CREATE_TIME_,
+            UPDATE_TIME_,
+            applyId,
+            resultCode,
+            resultMessage,
+            simuTaskId,
+            creator,
+            filename,
+            download_url
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{applyId,jdbcType=VARCHAR},
+            #{resultCode,jdbcType=VARCHAR},
+            #{resultMessage,jdbcType=VARCHAR},
+            #{simuTaskId,jdbcType=VARCHAR},
+            #{creator,jdbcType=VARCHAR},
+            #{filename,jdbcType=VARCHAR},
+            #{download_url,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateSdmReport" parameterType="java.util.Map">
+        update fzsj_sdm_report
+        <set>
+            resultCode=#{resultCode,jdbcType=VARCHAR},
+            resultMessage=#{resultMessage,jdbcType=VARCHAR},
+            creator=#{creator,jdbcType=VARCHAR},
+            filename=#{filename,jdbcType=VARCHAR},
+            download_url=#{download_url,jdbcType=VARCHAR},
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getSdmReportObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_sdm_report where applyId = #{applyId} limit 1
+    </select>
+
+    <select id="getSdmReport" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.questName,
+        B.fzNumber
+        FROM
+        fzsj_sdm_report A
+        LEFT JOIN fzsj_apply B on A.applyId = B.id
+        where 1=1
+        <if test="fzNumber != null and fzNumber != ''">
+            and B.fzNumber like CONCAT('%',#{fzNumber},'%')
+        </if>
+        order by A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="getSdmScore" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.questName,
+        B.fzNumber
+        FROM
+        fzsj_sdm_score A
+        LEFT JOIN fzsj_apply B on A.applyId = B.id
+        where 1=1
+        <if test="fzNumber != null and fzNumber != ''">
+            and B.fzNumber like CONCAT('%',#{fzNumber},'%')
+        </if>
+        order by A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <select id="getSdmAdopt" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.questName,
+        B.fzNumber
+        FROM
+        fzsj_sdm_adopt A
+        LEFT JOIN fzsj_apply B on A.applyId = B.id
+        where 1=1
+        <if test="fzNumber != null and fzNumber != ''">
+            and B.fzNumber like CONCAT('%',#{fzNumber},'%')
+        </if>
+        order by A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <select id="getSdmImplement" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.questName,
+        B.fzNumber
+        FROM
+        fzsj_sdm_implement A
+        LEFT JOIN fzsj_apply B on A.applyId = B.id
+        where 1=1
+        <if test="fzNumber != null and fzNumber != ''">
+            and B.fzNumber like CONCAT('%',#{fzNumber},'%')
+        </if>
+        order by A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+
+    <insert id="addSdmReceiveReport" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO fzsj_sdm_receivereport (
+            id,
+            CREATE_TIME_,
+            UPDATE_TIME_,
+            simuTaskId,
+            filename,
+            creator,
+            download_url
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{simuTaskId,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{creator,jdbcType=VARCHAR},
+            #{fileFtpUrl,jdbcType=VARCHAR}
+        )
+    </insert>
+    <select id="getSdmReceiveReportObj" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_sdm_receivereport where simuTaskId = #{simuTaskId} and filename = #{filename} limit 1
+    </select>
+    <select id="getSdmReceiveReportList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*
+        FROM
+        fzsj_sdm_receivereport A
+        where 1=1
+        <if test="fzNumber != null and fzNumber != ''">
+            and B.fzNumber like CONCAT('%',#{fzNumber},'%')
+        </if>
+        order by A.CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+</mapper>

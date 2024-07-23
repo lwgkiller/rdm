@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.componentTest.core.dao.ComponentTestApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        bpm_inst.INST_ID_ IS NOT NULL
+        <if test="testNo !=null and testNo !=''">
+            AND business.testNo like CONCAT('%',#{testNo},'%')
+        </if>
+        <if test="componentCategory !=null and componentCategory !=''">
+            AND business.componentCategory = #{componentCategory}
+        </if>
+        <if test="componentName !=null and componentName !=''">
+            AND business.componentName like CONCAT('%',#{componentName},'%')
+        </if>
+        <if test="componentModel !=null and componentModel !=''">
+            AND business.componentModel like CONCAT('%',#{componentModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND business.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="sampleType !=null and sampleType !=''">
+            AND business.sampleType = #{sampleType}
+        </if>
+        <if test="machineModel !=null and machineModel !=''">
+            AND business.machineModel like CONCAT('%',#{machineModel},'%')
+        </if>
+        <if test="machineName !=null and machineName !=''">
+            AND business.machineName like CONCAT('%',#{machineName},'%')
+        </if>
+        <if test="supplierName !=null and supplierName !=''">
+            AND business.supplierName like CONCAT('%',#{supplierName},'%')
+        </if>
+        <if test="laboratory !=null and laboratory !=''">
+            AND business.laboratory like CONCAT('%',#{laboratory},'%')
+        </if>
+        <if test="testType !=null and testType !=''">
+            AND business.testType = #{testType}
+        </if>
+        <if test="businessStatus !=null and businessStatus !=''">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+        <if test="applyUser !=null and applyUser !=''">
+            AND business.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="applyDep !=null and applyDep !=''">
+            AND business.applyDep like CONCAT('%',#{applyDep},'%')
+        </if>
+        <if test="testMajorLeader !=null and testMajorLeader !=''">
+            AND business.testMajorLeader like CONCAT('%',#{testMajorLeader},'%')
+        </if>
+        <if test="testLeader !=null and testLeader !=''">
+            AND business.testLeader like CONCAT('%',#{testLeader},'%')
+        </if>
+        <if test="testCategory !=null and testCategory !=''">
+            AND business.testCategory = #{testCategory}
+        </if>
+        <if test="testStatus !=null and testStatus !=''">
+            AND business.testStatus = #{testStatus}
+        </if>
+        <if test="testContractStatus !=null and testContractStatus !=''">
+            AND business.testContractStatus = #{testContractStatus}
+        </if>
+        <if test="testResult !=null and testResult !=''">
+            AND business.testResult = #{testResult}
+        </if>
+        <if test="plannedTestMonthBegin != null and plannedTestMonthBegin != ''">
+            AND SUBSTRING(business.plannedTestMonth, 1, 7) &gt;= #{plannedTestMonthBegin}
+        </if>
+        <if test="plannedTestMonthEnd != null and plannedTestMonthEnd != ''">
+            AND SUBSTRING(business.plannedTestMonth, 1, 7) &lt;= #{plannedTestMonthEnd}
+        </if>
+        <if test="actualTestMonthBegin != null and actualTestMonthBegin != ''">
+            AND SUBSTRING(business.actualTestMonth, 1, 7) &gt;= #{actualTestMonthBegin}
+        </if>
+        <if test="actualTestMonthEnd != null and actualTestMonthEnd != ''">
+            AND SUBSTRING(business.actualTestMonth, 1, 7) &lt;= #{actualTestMonthEnd}
+        </if>
+        <if test="completeTestMonthBegin != null and completeTestMonthBegin != ''">
+            AND SUBSTRING(business.completeTestMonth, 1, 7) &gt;= #{completeTestMonthBegin}
+        </if>
+        <if test="completeTestMonthEnd != null and completeTestMonthEnd != ''">
+            AND SUBSTRING(business.completeTestMonth, 1, 7) &lt;= #{completeTestMonthEnd}
+        </if>
+        <if test="signYear != null and signYear != ''">
+            AND SUBSTRING(business.plannedTestMonth, 1, 7) &gt;= CONCAT(#{signYear}, '-01')
+            AND SUBSTRING(business.plannedTestMonth, 1, 7) &lt;= CONCAT(#{signYear}, '-12')
+        </if>
+        <if test="sampleSource !=null and sampleSource !=''">
+            AND business.sampleSource = #{sampleSource}
+        </if>
+        <if test="sampleProcessingMethod !=null and sampleProcessingMethod !=''">
+            AND business.sampleProcessingMethod = #{sampleProcessingMethod}
+        </if>
+        <if test="sampleStatus !=null and sampleStatus !=''">
+            AND business.sampleStatus = #{sampleStatus}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgld'">
+                </when>
+                <when test="roleName =='fgzr'">
+                    AND business.applyDepId IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND (business.applyUserId = #{currentUserId} OR
+                    business.testLeaderId = #{currentUserId} OR
+                    business.testMajorLeaderId = #{currentUserId})
+                </when>
+            </choose>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        component_test_kanban AS business
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <if test="projectId !=null and projectId !=''">
+            INNER JOIN project_baseinfo ON business.projectId = project_baseinfo.projectId
+            AND project_baseinfo.projectId = #{projectId}
+        </if>
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM
+        component_test_kanban AS business
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <if test="projectId !=null and projectId !=''">
+            INNER JOIN project_baseinfo ON business.projectId = project_baseinfo.projectId
+            AND project_baseinfo.projectId = #{projectId}
+        </if>
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            bpm_inst.INST_ID_       AS instId,
+            project_baseinfo.projectName,
+            project_baseinfo.number AS projectNo
+        FROM component_test_kanban AS business
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+            LEFT JOIN project_baseinfo ON business.projectId = project_baseinfo.projectId
+        WHERE business.id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into component_test_kanban(
+        id,
+        businessStatus,
+        testNo,
+        componentCategory,
+        componentName,
+        componentModel,
+        materialCode,
+        sampleType,
+        machineModel,
+        machineName,
+        machineCompany,
+        supplierName,
+        testType,
+        applyUserId,
+        applyUser,
+        applyDepId,
+        applyDep,
+        applyTime,
+        testCategory,
+        testMajorLeaderId,
+        testMajorLeader,
+        isJiangBen,
+        testPurpose,
+        testItemsJson,
+        testItemsNonStandardJson,
+        laboratory,
+        hopeTestMonth,
+        plannedTestMonth,
+        testLeaderId,
+        testLeader,
+        testContractStatus,
+        testReportStatus,
+        testCost,
+        testRounds,
+        testStatus,
+        testProgress,
+        actualTestMonth,
+        completeTestMonth,
+        testResult,
+        nonconformingDescription,
+        samplePlanTime,
+        sampleSource,
+        sampleProcessingMethod,
+        sampleStatus,
+        receiverId,
+        receiver,
+        projectId,
+        relDepId,
+        relDep,
+        technicalRequirement,
+        sampleCount,
+        sampleParameters,
+        testConclusion,
+        improvementSuggestions,
+        remark,
+        componentTestAbnormalTag,
+        unqualifiedStatus,
+        testReport,
+        testContract,
+        marketPerformanceTracking,
+        INST_ID_,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{testNo,jdbcType=VARCHAR},
+        #{componentCategory,jdbcType=VARCHAR},
+        #{componentName,jdbcType=VARCHAR},
+        #{componentModel,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{sampleType,jdbcType=VARCHAR},
+        #{machineModel,jdbcType=VARCHAR},
+        #{machineName,jdbcType=VARCHAR},
+        #{machineCompany,jdbcType=VARCHAR},
+        #{supplierName,jdbcType=VARCHAR},
+        #{testType,jdbcType=VARCHAR},
+        #{applyUserId,jdbcType=VARCHAR},
+        #{applyUser,jdbcType=VARCHAR},
+        #{applyDepId,jdbcType=VARCHAR},
+        #{applyDep,jdbcType=VARCHAR},
+        #{applyTime,jdbcType=VARCHAR},
+        #{testCategory,jdbcType=VARCHAR},
+        #{testMajorLeaderId,jdbcType=VARCHAR},
+        #{testMajorLeader,jdbcType=VARCHAR},
+        #{isJiangBen,jdbcType=VARCHAR},
+        #{testPurpose,jdbcType=VARCHAR},
+        #{testItemsJson,jdbcType=VARCHAR},
+        #{testItemsNonStandardJson,jdbcType=VARCHAR},
+        #{laboratory,jdbcType=VARCHAR},
+        #{hopeTestMonth,jdbcType=VARCHAR},
+        #{plannedTestMonth,jdbcType=VARCHAR},
+        #{testLeaderId,jdbcType=VARCHAR},
+        #{testLeader,jdbcType=VARCHAR},
+        #{testContractStatus,jdbcType=VARCHAR},
+        #{testReportStatus,jdbcType=VARCHAR},
+        #{testCost,jdbcType=VARCHAR},
+        #{testRounds,jdbcType=VARCHAR},
+        #{testStatus,jdbcType=VARCHAR},
+        #{testProgress,jdbcType=VARCHAR},
+        #{actualTestMonth,jdbcType=VARCHAR},
+        #{completeTestMonth,jdbcType=VARCHAR},
+        #{testResult,jdbcType=VARCHAR},
+        #{nonconformingDescription,jdbcType=VARCHAR},
+        #{samplePlanTime,jdbcType=VARCHAR},
+        #{sampleSource,jdbcType=VARCHAR},
+        #{sampleProcessingMethod,jdbcType=VARCHAR},
+        #{sampleStatus,jdbcType=VARCHAR},
+        #{receiverId,jdbcType=VARCHAR},
+        #{receiver,jdbcType=VARCHAR},
+        #{projectId,jdbcType=VARCHAR},
+        #{relDepId,jdbcType=VARCHAR},
+        #{relDep,jdbcType=VARCHAR},
+        #{technicalRequirement,jdbcType=VARCHAR},
+        #{sampleCount,jdbcType=VARCHAR},
+        #{sampleParameters,jdbcType=VARCHAR},
+        #{testConclusion,jdbcType=VARCHAR},
+        #{improvementSuggestions,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{componentTestAbnormalTag,jdbcType=VARCHAR},
+        #{unqualifiedStatus,jdbcType=VARCHAR},
+        #{testReport,jdbcType=VARCHAR},
+        #{testContract,jdbcType=VARCHAR},
+        #{marketPerformanceTracking,jdbcType=VARCHAR},
+        #{INST_ID_,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <insert id="updateBusiness" parameterType="java.util.Map">
+        UPDATE component_test_kanban
+        SET
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        testNo=#{testNo,jdbcType=VARCHAR},
+        componentCategory=#{componentCategory,jdbcType=VARCHAR},
+        componentName=#{componentName,jdbcType=VARCHAR},
+        componentModel=#{componentModel,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        sampleType=#{sampleType,jdbcType=VARCHAR},
+        machineModel=#{machineModel,jdbcType=VARCHAR},
+        machineName=#{machineName,jdbcType=VARCHAR},
+        machineCompany=#{machineCompany,jdbcType=VARCHAR},
+        supplierName=#{supplierName,jdbcType=VARCHAR},
+        testType=#{testType,jdbcType=VARCHAR},
+        applyUserId=#{applyUserId,jdbcType=VARCHAR},
+        applyUser=#{applyUser,jdbcType=VARCHAR},
+        applyDepId=#{applyDepId,jdbcType=VARCHAR},
+        applyDep=#{applyDep,jdbcType=VARCHAR},
+        applyTime=#{applyTime,jdbcType=VARCHAR},
+        testCategory=#{testCategory,jdbcType=VARCHAR},
+        testMajorLeaderId=#{testMajorLeaderId,jdbcType=VARCHAR},
+        testMajorLeader=#{testMajorLeader,jdbcType=VARCHAR},
+        isJiangBen=#{isJiangBen,jdbcType=VARCHAR},
+        testPurpose=#{testPurpose,jdbcType=VARCHAR},
+        testItemsJson=#{testItemsJson,jdbcType=VARCHAR},
+        testItemsNonStandardJson=#{testItemsNonStandardJson,jdbcType=VARCHAR},
+        laboratory=#{laboratory,jdbcType=VARCHAR},
+        hopeTestMonth=#{hopeTestMonth,jdbcType=VARCHAR},
+        plannedTestMonth=#{plannedTestMonth,jdbcType=VARCHAR},
+        testLeaderId=#{testLeaderId,jdbcType=VARCHAR},
+        testLeader=#{testLeader,jdbcType=VARCHAR},
+        testContractStatus=#{testContractStatus,jdbcType=VARCHAR},
+        testReportStatus=#{testReportStatus,jdbcType=VARCHAR},
+        testCost=#{testCost,jdbcType=VARCHAR},
+        testRounds=#{testRounds,jdbcType=VARCHAR},
+        testStatus=#{testStatus,jdbcType=VARCHAR},
+        testProgress=#{testProgress,jdbcType=VARCHAR},
+        actualTestMonth=#{actualTestMonth,jdbcType=VARCHAR},
+        completeTestMonth=#{completeTestMonth,jdbcType=VARCHAR},
+        testResult=#{testResult,jdbcType=VARCHAR},
+        nonconformingDescription=#{nonconformingDescription,jdbcType=VARCHAR},
+        samplePlanTime=#{samplePlanTime,jdbcType=VARCHAR},
+        sampleSource=#{sampleSource,jdbcType=VARCHAR},
+        sampleProcessingMethod=#{sampleProcessingMethod,jdbcType=VARCHAR},
+        sampleStatus=#{sampleStatus,jdbcType=VARCHAR},
+        receiverId=#{receiverId,jdbcType=VARCHAR},
+        receiver=#{receiver,jdbcType=VARCHAR},
+        projectId=#{projectId,jdbcType=VARCHAR},
+        relDepId=#{relDepId,jdbcType=VARCHAR},
+        relDep=#{relDep,jdbcType=VARCHAR},
+        technicalRequirement=#{technicalRequirement,jdbcType=VARCHAR},
+        sampleCount=#{sampleCount,jdbcType=VARCHAR},
+        sampleParameters=#{sampleParameters,jdbcType=VARCHAR},
+        testConclusion=#{testConclusion,jdbcType=VARCHAR},
+        improvementSuggestions=#{improvementSuggestions,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        componentTestAbnormalTag=#{componentTestAbnormalTag,jdbcType=VARCHAR},
+        unqualifiedStatus=#{unqualifiedStatus,jdbcType=VARCHAR},
+        testReport=#{testReport,jdbcType=VARCHAR},
+        testContract=#{testContract,jdbcType=VARCHAR},
+        marketPerformanceTracking=#{marketPerformanceTracking,jdbcType=VARCHAR},
+        INST_ID_=#{INST_ID_,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+</mapper>

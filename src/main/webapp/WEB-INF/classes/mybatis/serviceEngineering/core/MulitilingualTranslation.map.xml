@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.MulitilingualTranslationDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--零件图册-->
+    <select id="queryLjtcList" parameterType="java.util.Map" resultType="java.util.Map">
+        select *
+        from
+        service_engineering_yy_ljtc
+        WHERE
+        1=1
+        <if test="materialName != null and materialName != ''">
+            AND chineseName like CONCAT('%',#{materialName},'%')
+        </if>
+        <if test="materialCode != null and materialCode != ''">
+            AND materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="originChinese != null and originChinese != ''">
+            AND originChinese like CONCAT('%',#{originChinese},'%')
+        </if>
+        order by CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countLjtcList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        service_engineering_yy_ljtc
+        <where>
+            1=1
+            <if test="materialName != null and materialName != ''">
+                AND chineseName like CONCAT('%',#{materialName},'%')
+            </if>
+            <if test="materialCode != null and materialCode != ''">
+                AND materialCode like CONCAT('%',#{materialCode},'%')
+            </if>
+            <if test="originChinese != null and originChinese != ''">
+                AND originChinese like CONCAT('%',#{originChinese},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="queryLjtcById" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        *
+        from
+        service_engineering_yy_ljtc
+        <where>
+            <if test="chineseId != null and chineseId != ''">
+                chineseId =#{chineseId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="addLjtc" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_yy_ljtc (
+        chineseId
+        ,chineseName
+        ,englishName
+        ,russianName
+        ,portugueseName
+        ,germanyName
+        ,spanishName
+        ,frenchName
+        ,italianName
+        ,polishName
+        ,turkishName
+        ,swedishName
+        ,danishName
+        ,dutchName
+        ,sloveniaName
+        ,romaniaName
+        ,chineseTName
+        ,materialCode
+        ,originChinese
+        ,thaiName
+        ,hungarianName
+        ,norwegianName
+        ,koreanName
+        ,indoneName
+        ,arabicName
+        ,japaneseName
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{chineseId,jdbcType=VARCHAR},
+        #{chineseName,jdbcType=VARCHAR},
+        #{englishName,jdbcType=VARCHAR},
+        #{russianName,jdbcType=VARCHAR},
+        #{portugueseName,jdbcType=VARCHAR},
+        #{germanyName,jdbcType=VARCHAR},
+        #{spanishName,jdbcType=VARCHAR},
+        #{frenchName,jdbcType=VARCHAR},
+        #{italianName,jdbcType=VARCHAR},
+        #{polishName,jdbcType=VARCHAR},
+        #{turkishName,jdbcType=VARCHAR},
+        #{swedishName,jdbcType=VARCHAR},
+        #{danishName,jdbcType=VARCHAR},
+        #{dutchName,jdbcType=VARCHAR},
+        #{sloveniaName,jdbcType=VARCHAR},
+        #{romaniaName,jdbcType=VARCHAR},
+        #{chineseTName,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{originChinese,jdbcType=VARCHAR},
+        #{thaiName,jdbcType=VARCHAR},
+        #{hungarianName,jdbcType=VARCHAR},
+        #{norwegianName,jdbcType=VARCHAR},
+        #{koreanName,jdbcType=VARCHAR},
+        #{indoneName,jdbcType=VARCHAR},
+        #{arabicName,jdbcType=VARCHAR},
+        #{japaneseName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateLjtc" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_yy_ljtc
+        set
+        chineseName=#{chineseName,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        originChinese=#{originChinese,jdbcType=VARCHAR},
+        englishName=#{englishName,jdbcType=VARCHAR},
+        russianName=#{russianName,jdbcType=VARCHAR},
+        portugueseName=#{portugueseName,jdbcType=VARCHAR},
+        germanyName=#{germanyName,jdbcType=VARCHAR},
+        spanishName=#{spanishName,jdbcType=VARCHAR},
+        frenchName=#{frenchName,jdbcType=VARCHAR},
+        italianName=#{italianName,jdbcType=VARCHAR},
+        polishName=#{polishName,jdbcType=VARCHAR},
+        turkishName=#{turkishName,jdbcType=VARCHAR},
+        swedishName=#{swedishName,jdbcType=VARCHAR},
+        danishName=#{danishName,jdbcType=VARCHAR},
+        dutchName=#{dutchName,jdbcType=VARCHAR},
+        sloveniaName=#{sloveniaName,jdbcType=VARCHAR},
+        romaniaName=#{romaniaName,jdbcType=VARCHAR},
+        chineseTName=#{chineseTName,jdbcType=VARCHAR},
+        thaiName=#{thaiName,jdbcType=VARCHAR},
+        hungarianName=#{hungarianName,jdbcType=VARCHAR},
+        norwegianName=#{norwegianName,jdbcType=VARCHAR},
+        koreanName=#{koreanName,jdbcType=VARCHAR},
+        indoneName=#{indoneName,jdbcType=VARCHAR},
+        arabicName=#{arabicName,jdbcType=VARCHAR},
+        japaneseName=#{japaneseName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        1=1
+        <if test="chineseId != null and chineseId != ''">
+            and chineseId=#{chineseId}
+        </if>
+        <if test="materialCode != null and materialCode != ''">
+            and materialCode =#{materialCode}
+        </if>
+    </update>
+    <update id="updateLjtcByCode" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_yy_ljtc
+        set
+        <if test="chineseName != null and chineseName != ''">
+            chineseName=#{chineseName,jdbcType=VARCHAR},
+        </if>
+        <if test="originChinese != null and originChinese != ''">
+            originChinese=#{originChinese,jdbcType=VARCHAR},
+        </if>
+        <if test="englishName != null and englishName != ''">
+            englishName=#{englishName,jdbcType=VARCHAR},
+        </if>
+        <if test="russianName != null and russianName != ''">
+            russianName=#{russianName,jdbcType=VARCHAR},
+        </if>
+        <if test="portugueseName != null and portugueseName != ''">
+            portugueseName=#{portugueseName,jdbcType=VARCHAR},
+        </if>
+        <if test="germanyName != null and germanyName != ''">
+            germanyName=#{germanyName,jdbcType=VARCHAR},
+        </if>
+        <if test="spanishName != null and spanishName != ''">
+            spanishName=#{spanishName,jdbcType=VARCHAR},
+        </if>
+        <if test="frenchName != null and frenchName != ''">
+            frenchName=#{frenchName,jdbcType=VARCHAR},
+        </if>
+        <if test="italianName != null and italianName != ''">
+            italianName=#{italianName,jdbcType=VARCHAR},
+        </if>
+        <if test="polishName != null and polishName != ''">
+            polishName=#{polishName,jdbcType=VARCHAR},
+        </if>
+        <if test="turkishName != null and turkishName != ''">
+            turkishName=#{turkishName,jdbcType=VARCHAR},
+        </if>
+        <if test="swedishName != null and swedishName != ''">
+            swedishName=#{swedishName,jdbcType=VARCHAR},
+        </if>
+        <if test="danishName != null and danishName != ''">
+            danishName=#{danishName,jdbcType=VARCHAR},
+        </if>
+        <if test="dutchName != null and dutchName != ''">
+            dutchName=#{dutchName,jdbcType=VARCHAR},
+        </if>
+        <if test="sloveniaName != null and sloveniaName != ''">
+            sloveniaName=#{sloveniaName,jdbcType=VARCHAR},
+        </if>
+        <if test="romaniaName != null and romaniaName != ''">
+            romaniaName=#{romaniaName,jdbcType=VARCHAR},
+        </if>
+        <if test="chineseTName != null and chineseTName != ''">
+            chineseTName=#{chineseTName,jdbcType=VARCHAR},
+        </if>
+        <if test="thaiName != null and thaiName != ''">
+            thaiName=#{thaiName,jdbcType=VARCHAR},
+        </if>
+        <if test="hungarianName != null and hungarianName != ''">
+            hungarianName=#{hungarianName,jdbcType=VARCHAR},
+        </if>
+        <if test="norwegianName != null and norwegianName != ''">
+            norwegianName=#{norwegianName,jdbcType=VARCHAR},
+        </if>
+        <if test="koreanName != null and koreanName != ''">
+            koreanName=#{koreanName,jdbcType=VARCHAR},
+        </if>
+        <if test="indoneName != null and indoneName != ''">
+            indoneName=#{indoneName,jdbcType=VARCHAR},
+        </if>
+        <if test="arabicName != null and arabicName != ''">
+            arabicName=#{arabicName,jdbcType=VARCHAR},
+        </if>
+        <if test="japaneseName != null and japaneseName != ''">
+            japaneseName=#{japaneseName,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+           materialCode =#{materialCode}
+    </update>
+    <delete id="deleteLjtc" parameterType="java.util.Map">
+        delete from service_engineering_yy_ljtc
+        where
+        chineseId IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <select id="getLjtcExist" parameterType="String" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        service_engineering_yy_ljtc
+        where
+        1=1
+        <if test="materialCode != null and materialCode != ''">
+            and materialCode = #{materialCode}
+        </if>
+        <if test="chineseId != null and chineseId != ''">
+            and chineseId != #{chineseId}
+        </if>
+
+    </select>
+    <!--仪表-->
+    <select id="queryYbList" parameterType="java.util.Map" resultType="java.util.Map">
+        select *
+
+        from
+        service_engineering_yy_yb
+        WHERE
+        1=1
+        <if test="materialName != null and materialName != ''">
+            AND originChinese like CONCAT('%',#{materialName},'%')
+        </if>
+        <if test="filterBlank != null and filterBlank != ''">
+            AND ${filterBlank} is not null and ${filterBlank} !=""
+        </if>
+        order by CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countYbList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        service_engineering_yy_yb
+        <where>
+            1=1
+            <if test="materialName != null and materialName != ''">
+                AND originChinese like CONCAT('%',#{materialName},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="queryYbById" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        *
+        from
+        service_engineering_yy_yb
+        <where>
+            <if test="chineseId != null and chineseId != ''">
+                chineseId =#{chineseId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="addYb" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_yy_yb (
+        chineseId
+        ,englishName
+        ,russianName
+        ,portugueseName
+        ,germanyName
+        ,spanishName
+        ,frenchName
+        ,italianName
+        ,polishName
+        ,turkishName
+        ,swedishName
+        ,danishName
+        ,dutchName
+        ,sloveniaName
+        ,romaniaName
+        ,chineseTName
+        ,originChinese
+        ,thaiName
+        ,hungarianName
+        ,norwegianName
+        ,koreanName
+        ,indoneName
+        ,arabicName
+        ,japaneseName
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{chineseId,jdbcType=VARCHAR},
+        #{englishName,jdbcType=VARCHAR},
+        #{russianName,jdbcType=VARCHAR},
+        #{portugueseName,jdbcType=VARCHAR},
+        #{germanyName,jdbcType=VARCHAR},
+        #{spanishName,jdbcType=VARCHAR},
+        #{frenchName,jdbcType=VARCHAR},
+        #{italianName,jdbcType=VARCHAR},
+        #{polishName,jdbcType=VARCHAR},
+        #{turkishName,jdbcType=VARCHAR},
+        #{swedishName,jdbcType=VARCHAR},
+        #{danishName,jdbcType=VARCHAR},
+        #{dutchName,jdbcType=VARCHAR},
+        #{sloveniaName,jdbcType=VARCHAR},
+        #{romaniaName,jdbcType=VARCHAR},
+        #{chineseTName,jdbcType=VARCHAR},
+        #{originChinese,jdbcType=VARCHAR},
+        #{thaiName,jdbcType=VARCHAR},
+        #{hungarianName,jdbcType=VARCHAR},
+        #{norwegianName,jdbcType=VARCHAR},
+        #{koreanName,jdbcType=VARCHAR},
+        #{indoneName,jdbcType=VARCHAR},
+        #{arabicName,jdbcType=VARCHAR},
+        #{japaneseName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateYb" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_yy_yb
+        set
+        <if test="originChinese != null and originChinese != ''">
+        originChinese=#{originChinese,jdbcType=VARCHAR},
+        </if>
+        <if test="englishName != null and englishName != ''">
+        englishName=#{englishName,jdbcType=VARCHAR},
+        </if>
+        <if test="russianName != null and russianName != ''">
+        russianName=#{russianName,jdbcType=VARCHAR},
+        </if>
+        <if test="portugueseName != null and portugueseName != ''">
+        portugueseName=#{portugueseName,jdbcType=VARCHAR},
+        </if>
+        <if test="germanyName != null and germanyName != ''">
+        germanyName=#{germanyName,jdbcType=VARCHAR},
+        </if>
+        <if test="spanishName != null and spanishName != ''">
+        spanishName=#{spanishName,jdbcType=VARCHAR},
+        </if>
+        <if test="frenchName != null and frenchName != ''">
+        frenchName=#{frenchName,jdbcType=VARCHAR},
+        </if>
+        <if test="italianName != null and italianName != ''">
+        italianName=#{italianName,jdbcType=VARCHAR},
+        </if>
+        <if test="polishName != null and polishName != ''">
+        polishName=#{polishName,jdbcType=VARCHAR},
+        </if>
+        <if test="turkishName != null and turkishName != ''">
+        turkishName=#{turkishName,jdbcType=VARCHAR},
+        </if>
+        <if test="swedishName != null and swedishName != ''">
+        swedishName=#{swedishName,jdbcType=VARCHAR},
+        </if>
+        <if test="danishName != null and danishName != ''">
+        danishName=#{danishName,jdbcType=VARCHAR},
+        </if>
+        <if test="dutchName != null and dutchName != ''">
+        dutchName=#{dutchName,jdbcType=VARCHAR},
+        </if>
+        <if test="sloveniaName != null and sloveniaName != ''">
+        sloveniaName=#{sloveniaName,jdbcType=VARCHAR},
+        </if>
+        <if test="romaniaName != null and romaniaName != ''">
+        romaniaName=#{romaniaName,jdbcType=VARCHAR},
+        </if>
+        <if test="chineseTName != null and chineseTName != ''">
+        chineseTName=#{chineseTName,jdbcType=VARCHAR},
+        </if>
+        <if test="thaiName != null and thaiName != ''">
+            thaiName=#{thaiName,jdbcType=VARCHAR},
+        </if>
+        <if test="hungarianName != null and hungarianName != ''">
+            hungarianName=#{hungarianName,jdbcType=VARCHAR},
+        </if>
+        <if test="norwegianName != null and norwegianName != ''">
+            norwegianName=#{norwegianName,jdbcType=VARCHAR},
+        </if>
+        <if test="koreanName != null and koreanName != ''">
+            koreanName=#{koreanName,jdbcType=VARCHAR},
+        </if>
+        <if test="indoneName != null and indoneName != ''">
+            indoneName=#{indoneName,jdbcType=VARCHAR},
+        </if>
+        <if test="arabicName != null and arabicName != ''">
+            arabicName=#{arabicName,jdbcType=VARCHAR},
+        </if>
+        <if test="japaneseName != null and japaneseName != ''">
+            japaneseName=#{japaneseName,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        1=1
+        <if test="chineseId != null and chineseId != ''">
+            and chineseId=#{chineseId}
+        </if>
+        <if test="originChinese != null and originChinese != ''">
+            and originChinese =#{originChinese}
+        </if>
+    </update>
+    <delete id="deleteYb" parameterType="java.util.Map">
+        delete from service_engineering_yy_yb
+        where
+        chineseId IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="getYbExist" parameterType="String" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        service_engineering_yy_yb
+        where
+        1=1
+        <if test="originChinese != null and originChinese != ''">
+            and originChinese = #{originChinese}
+        </if>
+        <if test="chineseId != null and chineseId != ''">
+            and chineseId != #{chineseId}
+        </if>
+
+    </select>
+
+    <select id="getRecommend" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        <if test="multiName != null and multiName != ''">
+            ${multiName} as multiName,
+        </if>
+        englishName
+        FROM
+        service_engineering_yy_ljtc
+        WHERE
+        chineseName = #{chineseName}
+        LIMIT 1
+    </select>
+
+</mapper>

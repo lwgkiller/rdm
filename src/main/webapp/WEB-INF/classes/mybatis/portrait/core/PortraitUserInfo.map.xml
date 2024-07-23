@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitUserInfoDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!--获取个人基本信息-->
+    <select id="getUserInfoById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+     SELECT
+        ou.USER_ID_ as userId,
+        ou.FULLNAME_ as userName,
+        (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+        od on od.DIM_ID_ = oi.DIM1_
+        where od.DIM_KEY_ = 'ZJ' and oi.PARTY2_ = ou.USER_ID_ limit 1) duty,
+        (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+        od on od.DIM_ID_ = oi.DIM1_
+        where od.DIM_KEY_ = 'GW' and oi.PARTY2_ = ou.USER_ID_ limit 1) post,
+        (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+        od on od.DIM_ID_ = oi.DIM1_
+        where od.DIM_KEY_ = '_ADMIN' and oi.PARTY2_ = ou.USER_ID_ limit 1) deptName,
+          B.id,B.education,B.expert,B.major,B.qualification
+        FROM
+        OS_USER ou  left join portrait_userinfo B on ou.USER_ID_ = B.userId,
+        OS_REL_INST oi,
+        os_inst_users iu
+        WHERE
+        ou.USER_ID_ = oi.PARTY2_
+        AND oi.REL_TYPE_ID_ = 1
+        AND ou.USER_ID_ = iu.USER_ID_
+        and ou.USER_ID_ = #{userId}
+        limit 1
+    </select>
+    <!--查询人员信息-->
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        select T.* from (
+        SELECT
+            ou.USER_ID_ as userId,
+            ou.FULLNAME_ as userName,
+            (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+            od on od.DIM_ID_ = oi.DIM1_
+            where od.DIM_KEY_ = 'ZJ' and oi.PARTY2_ = ou.USER_ID_ limit 1) duty,
+            (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+            od on od.DIM_ID_ = oi.DIM1_
+            where od.DIM_KEY_ = 'GW' and oi.PARTY2_ = ou.USER_ID_ limit 1) post,
+            (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+            od on od.DIM_ID_ = oi.DIM1_
+            where od.DIM_KEY_ = '_ADMIN' and oi.PARTY2_ = ou.USER_ID_ limit 1) deptName,
+            B.id,B.education,B.expert,B.major,B.qualification
+        FROM
+            OS_USER ou left join portrait_userinfo B on ou.USER_ID_ = B.userId,
+            OS_REL_INST oi,
+            os_inst_users iu
+        WHERE
+            ou.STATUS_ = 'IN_JOB'
+            and ou.USER_ID_ = oi.PARTY2_
+            AND oi.REL_TYPE_ID_ = 1
+            AND ou.USER_ID_ = iu.USER_ID_
+            AND oi.PARTY1_ in
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+            <if test="userId != null and userId != ''">
+                AND ou.USER_ID_ = #{userId}
+            </if>
+            )T
+        where 1=1
+        <if test="userName != null and userName != ''">
+            and T.userName like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and T.deptName like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="duty != null and duty != ''">
+            and T.duty like CONCAT('%',#{duty},'%')
+        </if>
+        <if test="post != null and post != ''">
+            and T.post like CONCAT('%',#{post},'%')
+        </if>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO portrait_userinfo (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            userId,
+            education,
+            major,
+            expert,
+            qualification
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{userId,jdbcType=VARCHAR},
+            #{education,jdbcType=VARCHAR},
+            #{major,jdbcType=VARCHAR},
+            #{expert,jdbcType=VARCHAR},
+            #{qualification,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update portrait_userinfo
+        <set>
+            <if test="education != null and education != ''">
+                education=#{education,jdbcType=VARCHAR},
+            </if>
+            <if test="major != null and major != ''">
+                major=#{major,jdbcType=VARCHAR},
+            </if>
+            <if test="expert != null and expert != ''">
+                expert=#{expert,jdbcType=VARCHAR},
+            </if>
+            <if test="qualification != null and qualification != ''">
+                qualification=#{qualification,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+</mapper>

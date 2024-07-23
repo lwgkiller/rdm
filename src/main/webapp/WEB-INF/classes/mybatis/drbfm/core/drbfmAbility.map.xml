@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.drbfm.core.dao.DrbfmAbilityDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryAbilityList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_verifyAbilityList.*,
+        createUser.FULLNAME_ AS creator,
+        updateUser.FULLNAME_ AS updator
+        FROM
+        drbfm_verifyAbilityList
+        LEFT JOIN os_user createUser ON drbfm_verifyAbilityList.CREATE_BY_ = createUser.USER_ID_
+        LEFT JOIN os_user updateUser ON drbfm_verifyAbilityList.UPDATE_BY_ = updateUser.USER_ID_
+        <where>
+            <if test="abilityName != null and abilityName !=''">
+                abilityName LIKE concat( '%', #{abilityName}, '%' )
+            </if>
+            <if test="currentOk != null and currentOk !=''">
+                AND currentOk = #{currentOk}
+            </if>
+            <if test="respDeptId != null and respDeptId !=''">
+                AND respDeptId = #{respDeptId}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countAbilityList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(*)
+        FROM
+        drbfm_verifyAbilityList
+        <where>
+            <if test="abilityName != null and abilityName !=''">
+                abilityName LIKE concat( '%', #{abilityName}, '%' )
+            </if>
+            <if test="currentOk != null and currentOk !=''">
+                AND currentOk = #{currentOk}
+            </if>
+            <if test="respDeptId != null and respDeptId !=''">
+                AND respDeptId = #{respDeptId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="createAbility" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_verifyAbilityList(
+            id
+            ,abilityName
+            ,currentOk
+            ,respDeptId
+            ,respDeptName
+            ,remark
+            ,standardIds
+            ,standardNames
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values
+        (
+             #{id,jdbcType=VARCHAR}
+            ,#{abilityName,jdbcType=VARCHAR}
+            ,#{currentOk,jdbcType=VARCHAR}
+            ,#{respDeptId,jdbcType=VARCHAR}
+            ,#{respDeptName,jdbcType=VARCHAR}
+            ,#{remark,jdbcType=VARCHAR}
+            ,#{standardIds,jdbcType=VARCHAR}
+            ,#{standardNames,jdbcType=VARCHAR}
+            ,#{CREATE_BY_,jdbcType=VARCHAR}
+            ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateAbility" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_verifyAbilityList
+        set
+        abilityName = #{abilityName,jdbcType=VARCHAR},
+        currentOk=#{currentOk,jdbcType=VARCHAR},
+        respDeptId=#{respDeptId,jdbcType=VARCHAR},
+        respDeptName=#{respDeptName,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        standardIds=#{standardIds,jdbcType=VARCHAR},
+        standardNames=#{standardNames,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteAbility" parameterType="java.util.Map">
+        delete from drbfm_verifyAbilityList
+        where
+        id in
+        <foreach collection="verifyAbilityIds" item="item" index="index" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+</mapper>

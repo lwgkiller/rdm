@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.materielextend.core.dao.MaterielDao">
+    <select id="queryMaterielDic" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT materiel_dic.*
+        FROM materiel_dic
+        ORDER BY type, propertyKey
+    </select>
+
+    <insert id="batchAddMateriels" parameterType="java.util.List">
+        INSERT INTO materiel_detailinfo (
+        id,
+        applyNo,
+        wlhm,
+        wllx,
+        gc,
+        xszz,
+        fxqd,
+        wlms,
+        dw,
+        wlz,
+        jkgc,
+        cpz,
+        jhgc,
+        kmszz,
+        cgz,
+        mrplx,
+        mrpkzz,
+        kyxjc,
+        pldx,
+        jclx,
+        cglx,
+        tscgl,
+        fc,
+        scccdd,
+        kcdd1,
+        kcdd2,
+        kcdd3,
+        pslx,
+        zzscsj,
+        jhjhsj,
+        cgccdd,
+        dljz,
+        xlhcswj,
+        lrzx,
+        pgl,
+        jg,
+        jgdw,
+        zl,
+        gys,
+        bzcz,
+        wlzt,
+        markError,
+        markErrorReason,
+        markErrorUserId,
+        markErrorTime,
+        codeId,
+        codeName,
+        sfwg
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" open="" close="" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR}
+            ,#{item.applyNo,jdbcType=VARCHAR}
+            ,#{item.wlhm,jdbcType=VARCHAR}
+            ,#{item.wllx,jdbcType=VARCHAR}
+            ,#{item.gc,jdbcType=VARCHAR}
+            ,#{item.xszz,jdbcType=VARCHAR}
+            ,#{item.fxqd,jdbcType=VARCHAR}
+            ,#{item.wlms,jdbcType=VARCHAR}
+            ,#{item.dw,jdbcType=VARCHAR}
+            ,#{item.wlz,jdbcType=VARCHAR}
+            ,#{item.jkgc,jdbcType=VARCHAR}
+            ,#{item.cpz,jdbcType=VARCHAR}
+            ,#{item.jhgc,jdbcType=VARCHAR}
+            ,#{item.kmszz,jdbcType=VARCHAR}
+            ,#{item.cgz,jdbcType=VARCHAR}
+            ,#{item.mrplx,jdbcType=VARCHAR}
+            ,#{item.mrpkzz,jdbcType=VARCHAR}
+            ,#{item.kyxjc,jdbcType=VARCHAR}
+            ,#{item.pldx,jdbcType=VARCHAR}
+            ,#{item.jclx,jdbcType=VARCHAR}
+            ,#{item.cglx,jdbcType=VARCHAR}
+            ,#{item.tscgl,jdbcType=VARCHAR}
+            ,#{item.fc,jdbcType=VARCHAR}
+            ,#{item.scccdd,jdbcType=VARCHAR}
+            ,#{item.kcdd1,jdbcType=VARCHAR}
+            ,#{item.kcdd2,jdbcType=VARCHAR}
+            ,#{item.kcdd3,jdbcType=VARCHAR}
+            ,#{item.pslx,jdbcType=VARCHAR}
+            ,#{item.zzscsj,jdbcType=VARCHAR}
+            ,#{item.jhjhsj,jdbcType=VARCHAR}
+            ,#{item.cgccdd,jdbcType=VARCHAR}
+            ,#{item.dljz,jdbcType=VARCHAR}
+            ,#{item.xlhcswj,jdbcType=VARCHAR}
+            ,#{item.lrzx,jdbcType=VARCHAR}
+            ,#{item.pgl,jdbcType=VARCHAR}
+            ,#{item.jg,jdbcType=VARCHAR}
+            ,#{item.jgdw,jdbcType=VARCHAR}
+            ,#{item.zl,jdbcType=VARCHAR}
+            ,#{item.gys,jdbcType=VARCHAR}
+            ,#{item.bzcz,jdbcType=VARCHAR}
+            ,#{item.wlzt,jdbcType=VARCHAR}
+            ,#{item.markError,jdbcType=VARCHAR}
+            ,#{item.markErrorReason,jdbcType=VARCHAR}
+            ,#{item.markErrorUserId,jdbcType=VARCHAR}
+            ,#{item.markErrorTime,jdbcType=VARCHAR}
+            ,#{item.codeId,jdbcType=VARCHAR}
+            ,#{item.codeName,jdbcType=VARCHAR}
+            ,#{item.sfwg,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateOneMateriel" parameterType="com.alibaba.fastjson.JSONObject">
+        update materiel_detailinfo
+        <set>
+            <if test="applyNo !=null and applyNo !=''">
+                applyNo         = #{applyNo,jdbcType=VARCHAR},
+            </if>
+            <if test="wlhm !=null and wlhm !=''">
+                wlhm            = #{wlhm,jdbcType=VARCHAR},
+            </if>
+            <if test="wllx !=null and wllx !=''">
+                wllx            = #{wllx,jdbcType=VARCHAR},
+            </if>
+            <if test="gc !=null and gc !=''">
+                gc              = #{gc,jdbcType=VARCHAR},
+            </if>
+            <if test="xszz !=null and xszz !=''">
+                xszz            = #{xszz,jdbcType=VARCHAR},
+            </if>
+            <if test="fxqd !=null and fxqd !=''">
+                fxqd            = #{fxqd,jdbcType=VARCHAR},
+            </if>
+            <if test="wlms !=null and wlms !=''">
+                wlms            = #{wlms,jdbcType=VARCHAR},
+            </if>
+            <if test="dw !=null and dw !=''">
+                dw              = #{dw,jdbcType=VARCHAR},
+            </if>
+            <if test="wlz !=null and wlz !=''">
+                wlz             = #{wlz,jdbcType=VARCHAR},
+            </if>
+            <if test="jkgc !=null and jkgc !=''">
+                jkgc            = #{jkgc,jdbcType=VARCHAR},
+            </if>
+            <if test="cpz !=null and cpz !=''">
+                cpz             = #{cpz,jdbcType=VARCHAR},
+            </if>
+            <if test="jhgc !=null and jhgc !=''">
+                jhgc            = #{jhgc,jdbcType=VARCHAR},
+            </if>
+            <if test="kmszz !=null and kmszz !=''">
+                kmszz           = #{kmszz,jdbcType=VARCHAR},
+            </if>
+            <if test="cgz !=null and cgz !=''">
+                cgz             = #{cgz,jdbcType=VARCHAR},
+            </if>
+            <if test="mrplx !=null and mrplx !=''">
+                mrplx           = #{mrplx,jdbcType=VARCHAR},
+            </if>
+            <if test="mrpkzz !=null and mrpkzz !=''">
+                mrpkzz          = #{mrpkzz,jdbcType=VARCHAR},
+            </if>
+            <if test="kyxjc !=null and kyxjc !=''">
+                kyxjc           = #{kyxjc,jdbcType=VARCHAR},
+            </if>
+            <if test="pldx !=null and pldx !=''">
+                pldx            = #{pldx,jdbcType=VARCHAR},
+            </if>
+            <if test="jclx !=null and jclx !=''">
+                jclx            = #{jclx,jdbcType=VARCHAR},
+            </if>
+            <if test="cglx !=null and cglx !=''">
+                cglx            = #{cglx,jdbcType=VARCHAR},
+            </if>
+            <if test="tscgl !=null and tscgl !=''">
+                tscgl           = #{tscgl,jdbcType=VARCHAR},
+            </if>
+            <if test="fc !=null and fc !=''">
+                fc              = #{fc,jdbcType=VARCHAR},
+            </if>
+            <if test="scccdd !=null and scccdd !=''">
+                scccdd          = #{scccdd,jdbcType=VARCHAR},
+            </if>
+            <if test="kcdd1 !=null and kcdd1 !=''">
+                kcdd1           = #{kcdd1,jdbcType=VARCHAR},
+            </if>
+            <if test="kcdd2 !=null and kcdd2 !=''">
+                kcdd2           = #{kcdd2,jdbcType=VARCHAR},
+            </if>
+            <if test="kcdd3 !=null and kcdd3 !=''">
+                kcdd3           = #{kcdd3,jdbcType=VARCHAR},
+            </if>
+            <if test="pslx !=null and pslx !=''">
+                pslx            = #{pslx,jdbcType=VARCHAR},
+            </if>
+            <if test="zzscsj !=null and zzscsj !=''">
+                zzscsj          = #{zzscsj,jdbcType=VARCHAR},
+            </if>
+            <if test="jhjhsj !=null and jhjhsj !=''">
+                jhjhsj          = #{jhjhsj,jdbcType=VARCHAR},
+            </if>
+            <if test="cgccdd !=null and cgccdd !=''">
+                cgccdd          = #{cgccdd,jdbcType=VARCHAR},
+            </if>
+            <if test="dljz !=null and dljz !=''">
+                dljz            = #{dljz,jdbcType=VARCHAR},
+            </if>
+            <if test="xlhcswj !=null and xlhcswj !=''">
+                xlhcswj         = #{xlhcswj,jdbcType=VARCHAR},
+            </if>
+            <if test="lrzx !=null and lrzx !=''">
+                lrzx            = #{lrzx,jdbcType=VARCHAR},
+            </if>
+            <if test="pgl !=null and pgl !=''">
+                pgl             = #{pgl,jdbcType=VARCHAR},
+            </if>
+            <if test="jg !=null and jg !=''">
+                jg              = #{jg,jdbcType=VARCHAR},
+            </if>
+            <if test="jgdw !=null and jgdw !=''">
+                jgdw            = #{jgdw,jdbcType=VARCHAR},
+            </if>
+            <if test="zl !=null and zl !=''">
+                zl              = #{zl,jdbcType=VARCHAR},
+            </if>
+            <if test="gys !=null and gys !=''">
+                gys             = #{gys,jdbcType=VARCHAR},
+            </if>
+            <if test="bzcz !=null and bzcz !=''">
+                bzcz            = #{bzcz,jdbcType=VARCHAR},
+            </if>
+            <if test="wlzt !=null and wlzt !=''">
+                wlzt            = #{wlzt,jdbcType=VARCHAR},
+            </if>
+            <if test="markError !=null and markError !=''">
+                markError       = #{markError,jdbcType=VARCHAR},
+            </if>
+            <if test="markErrorReason !=null and markErrorReason !=''">
+                markErrorReason = #{markErrorReason,jdbcType=VARCHAR},
+            </if>
+            <if test="markErrorUserId !=null and markErrorUserId !=''">
+                markErrorUserId = #{markErrorUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="markErrorTime !=null and markErrorTime !=''">
+                markErrorTime   = #{markErrorTime,jdbcType=VARCHAR},
+            </if>
+            <if test="codeId !=null and codeId !=''">
+                codeId          = #{codeId,jdbcType=VARCHAR},
+            </if>
+            <if test="codeName !=null and codeName !=''">
+                codeName        = #{codeName,jdbcType=VARCHAR},
+            </if>
+            <if test="sfwg !=null and sfwg !=''">
+                sfwg            = #{sfwg,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where materiel_detailinfo.id = #{id}
+    </update>
+    <!--通过applyNo查找申请单关联的物料明细-->
+    <select id="queryMaterielsByApplyNo" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        materiel_detailinfo.*,
+        os_user.FULLNAME_ AS markErrorUserName,
+        userDeptTemp.userName AS sqUserName,
+        userDeptTemp.deptName AS sqDeptName
+        FROM
+        materiel_detailinfo
+        LEFT JOIN os_user ON materiel_detailinfo.markErrorUserId = os_user.USER_ID_
+        LEFT JOIN materiel_apply ON materiel_detailinfo.applyNo = materiel_apply.applyNo
+        LEFT JOIN (
+        SELECT
+        os_group.NAME_ AS deptName,
+        userId2DeptId.userId,
+        os_user.FULLNAME_ AS userName,
+        userId2DeptId.deptId
+        FROM ( SELECT PARTY1_ AS deptId, PARTY2_ AS userId FROM os_rel_inst WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND
+        os_rel_inst.DIM1_ = '1' ) AS userId2DeptId
+        LEFT JOIN os_group ON userId2DeptId.deptId = os_group.GROUP_ID_
+        LEFT JOIN os_user ON userId2DeptId.userId = os_user.USER_ID_
+        ) AS userDeptTemp ON materiel_apply.sqUserId = userDeptTemp.userId
+        <where>
+            <if test="applyNos != null and applyNos != ''">
+                materiel_detailinfo.applyNo IN
+                <foreach collection="applyNos" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="scene != null and scene != ''">
+                <choose>
+                    <when test="scene=='right'">
+                        AND (materiel_detailinfo.markError='no' OR materiel_detailinfo.markError='' OR
+                        materiel_detailinfo.markError is null)
+                    </when>
+                    <when test="scene=='fail'">
+                        AND materiel_detailinfo.markError='yes'
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryMaterielById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            materiel_detailinfo.*,
+            os_user.FULLNAME_ AS markErrorUserName
+        FROM materiel_detailinfo
+            LEFT JOIN os_user ON materiel_detailinfo.markErrorUserId = os_user.USER_ID_
+        WHERE materiel_detailinfo.id = #{materielId}
+    </select>
+    <!--查询物料字段属性-->
+    <select id="queryMaterielProperties" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        materiel_property
+        <where>
+            <if test='respRoleKey != null and respRoleKey != ""'>
+                materiel_property.respRoleKey=#{respRoleKey}
+            </if>
+            <if test='propertyName != null and propertyName !=""'>
+                AND materiel_property.propertyName like CONCAT('%',#{propertyName},'%')
+            </if>
+        </where>
+        ORDER BY materiel_property.respRoleKey
+    </select>
+
+    <delete id="batchDeleteMaterielsByApplyNos" parameterType="java.util.List">
+        DELETE
+        FROM
+        materiel_detailInfo
+        WHERE
+        materiel_detailInfo.applyNo IN
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="batchDeleteMaterielsByIds" parameterType="java.util.List">
+        DELETE
+        FROM
+        materiel_detailInfo
+        WHERE
+        materiel_detailInfo.id IN
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <update id="updateMateriel2Error" parameterType="com.alibaba.fastjson.JSONObject">
+        update materiel_detailInfo
+        set markError       = #{markError,jdbcType=VARCHAR},
+            markErrorReason = #{markErrorReason,jdbcType=VARCHAR},
+            markErrorUserId = #{markErrorUserId,jdbcType=VARCHAR},
+            markErrorTime   = #{markErrorTime,jdbcType=VARCHAR}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateMaterielExtendResult" parameterType="com.alibaba.fastjson.JSONObject">
+        update materiel_detailInfo
+        set extendResult = #{extendResult,jdbcType=VARCHAR}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateMaterielBatch" parameterType="java.util.Map">
+        <foreach collection="list" index="index" item="item" separator=";" close="" open="">
+            update materiel_detailInfo SET
+            <foreach collection="item.entrySet()" separator="," item="value" index="key">
+                <if test="key!='id'">
+                    <![CDATA[${key}=#{value}]]>
+                </if>
+            </foreach>
+            <![CDATA[WHERE id=#{item.id}]]>
+        </foreach>
+    </update>
+
+    <select id="queryOkOrDoingMatByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select wlhm,extendResult
+        from materiel_detailInfo
+        where
+        materiel_detailInfo.wlhm in
+        <foreach collection="wlhmList" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        AND (materiel_detailInfo.extendResult = 'success' or materiel_detailInfo.extendResult is null or
+        materiel_detailInfo.extendResult ='')
+    </select>
+</mapper>

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.keyDesign.core.dao.JscsDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryJscs" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        keydesign_jscsbase.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        keydesign_jscsbase
+        LEFT JOIN os_user ON os_user.USER_ID_ = keydesign_jscsbase.CREATE_BY_
+        WHERE
+        belongbj=#{belongbj}
+        <if test="code != null and code != ''">
+            AND keydesign_jscsbase.code like CONCAT('%',#{code},'%')
+        </if>
+        <if test="numb != null and numb != ''">
+            and keydesign_jscsbase.numb like CONCAT('%',#{numb},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countJscsList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        keydesign_jscsbase
+        WHERE
+        belongbj=#{belongbj}
+        <if test="code != null and code != ''">
+            and keydesign_jscsbase.code like CONCAT('%',#{code},'%')
+        </if>
+        <if test="numb != null and numb != ''">
+            and keydesign_jscsbase.numb like CONCAT('%',#{numb},'%')
+        </if>
+
+    </select>
+    <insert id="createJscs" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_jscsbase(
+            jsId
+            ,code
+            ,model
+            ,numb
+            ,belongbj
+            ,oldjsId
+            ,jstype
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{jsId,jdbcType=VARCHAR},
+            #{code,jdbcType=VARCHAR},
+            #{model,jdbcType=VARCHAR},
+            #{numb,jdbcType=VARCHAR},
+            #{belongbj,jdbcType=VARCHAR},
+            #{oldjsId,jdbcType=VARCHAR},
+            #{jstype,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateJscs" parameterType="com.alibaba.fastjson.JSONObject">
+        update keydesign_jscsbase
+        <set>
+            code=#{code,jdbcType=VARCHAR},
+            model=#{model,jdbcType=VARCHAR},
+            numb=#{numb,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        jsId=#{jsId}
+    </update>
+    <select id="queryJscsById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        keydesign_jscsbase.*
+        from keydesign_jscsbase
+        where keydesign_jscsbase.jsId=#{jsId}
+    </select>
+    <select id="queryJscsDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            keydesign_jscsdetail.*
+        FROM
+            keydesign_jscsdetail
+        where
+        keydesign_jscsdetail.belongJs = #{belongJs}
+        order by keydesign_jscsdetail.type
+    </select>
+    <select id="queryJscsDetailById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            keydesign_jscsdetail.*
+        FROM
+            keydesign_jscsdetail
+        where
+        keydesign_jscsdetail.csId = #{csId}
+    </select>
+
+    <select id="queryJscsDetailFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        keydesign_jscsfile
+        WHERE
+        keydesign_jscsfile.belongCs= #{belongCs}
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_jscsfile(
+        fileId
+        ,fileName
+        ,fileSize
+        ,belongCs
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{belongCs,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteJscsDetailFile" parameterType="java.util.Map">
+        delete from keydesign_jscsfile
+        <where>
+            <if test="fileId != null and fileId != ''">
+                fileId=#{fileId}
+            </if>
+            <if test="belongCs != null and belongCs != ''">
+                And belongCs=#{belongCs}
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteJscsDetail" parameterType="java.util.Map">
+        delete from keydesign_jscsdetail
+        where
+        csId=#{csId}
+    </delete>
+    <delete id="deleteJscs" parameterType="java.util.Map">
+        delete from keydesign_jscsbase
+        where
+        jsId=#{jsId}
+    </delete>
+
+    <insert id="createJscsDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_jscsdetail(
+            csId
+            ,name
+            ,number
+            ,type
+            ,weight
+            ,note
+            ,belongJs
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{csId,jdbcType=VARCHAR},
+            #{name,jdbcType=VARCHAR},
+            #{number,jdbcType=VARCHAR},
+            #{type,jdbcType=VARCHAR},
+            #{weight,jdbcType=VARCHAR},
+            #{note,jdbcType=VARCHAR},
+            #{belongJs,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateJscsDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update keydesign_jscsdetail
+        <set>
+            name=#{name,jdbcType=VARCHAR},
+            number=#{number,jdbcType=VARCHAR},
+            type=#{type,jdbcType=VARCHAR},
+            weight=#{weight,jdbcType=VARCHAR},
+            note=#{note,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        csId=#{csId}
+    </update>
+</mapper>

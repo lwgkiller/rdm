@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.ManualFileDownloadApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryApplyList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_maintenance_downloadApply.*,
+        os_group.NAME_ AS applyUserDeptName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        service_engineering_maintenance_downloadApply
+        LEFT JOIN os_group ON service_engineering_maintenance_downloadApply.creatorDeptId = os_group.GROUP_ID_
+        left join bpm_inst on service_engineering_maintenance_downloadApply.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="applyNumber != null and applyNumber != ''">
+                service_engineering_maintenance_downloadApply.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND service_engineering_maintenance_downloadApply.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="creatorDeptId != null and creatorDeptId != ''">
+                AND service_engineering_maintenance_downloadApply.creatorDeptId = #{creatorDeptId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="salesModel != null and salesModel != ''">
+                AND service_engineering_maintenance_downloadApply.id IN (
+                SELECT
+                applyId
+                FROM
+                service_engineering_maintenance_downloadapplydetail
+                LEFT JOIN service_engineering_maintenance_manualfile
+                ON service_engineering_maintenance_downloadapplydetail.manualFileId = service_engineering_maintenance_manualfile.id
+                WHERE
+                service_engineering_maintenance_manualfile.salesModel like CONCAT('%',#{salesModel},'%')
+                )
+            </if>
+            <if test="designModel != null and designModel != ''">
+                AND service_engineering_maintenance_downloadApply.id IN (
+                SELECT
+                applyId
+                FROM
+                service_engineering_maintenance_downloadapplydetail
+                LEFT JOIN service_engineering_maintenance_manualfile
+                ON service_engineering_maintenance_downloadapplydetail.manualFileId = service_engineering_maintenance_manualfile.id
+                WHERE
+                service_engineering_maintenance_manualfile.designModel like CONCAT('%',#{designModel},'%')
+                )
+            </if>
+            <if test="materialCode != null and materialCode != ''">
+                AND service_engineering_maintenance_downloadApply.id IN (
+                SELECT
+                applyId
+                FROM
+                service_engineering_maintenance_downloadapplydetail
+                LEFT JOIN service_engineering_maintenance_manualfile
+                ON service_engineering_maintenance_downloadapplydetail.manualFileId = service_engineering_maintenance_manualfile.id
+                WHERE
+                service_engineering_maintenance_manualfile.materialCode like CONCAT('%',#{materialCode},'%')
+                )
+            </if>
+            <if test="manualLanguage != null and manualLanguage != ''">
+                AND service_engineering_maintenance_downloadApply.id IN (
+                SELECT
+                applyId
+                FROM
+                service_engineering_maintenance_downloadapplydetail
+                LEFT JOIN service_engineering_maintenance_manualfile
+                ON service_engineering_maintenance_downloadapplydetail.manualFileId = service_engineering_maintenance_manualfile.id
+                WHERE
+                service_engineering_maintenance_manualfile.manualLanguage like CONCAT('%',#{manualLanguage},'%')
+                )
+            </if>
+            <if test="manualCode != null and manualCode != ''">
+                AND service_engineering_maintenance_downloadApply.id IN (
+                SELECT
+                applyId
+                FROM
+                service_engineering_maintenance_downloadapplydetail
+                LEFT JOIN service_engineering_maintenance_manualfile
+                ON service_engineering_maintenance_downloadapplydetail.manualFileId = service_engineering_maintenance_manualfile.id
+                WHERE
+                service_engineering_maintenance_manualfile.manualCode like CONCAT('%',#{manualCode},'%')
+                )
+            </if>
+            <if test="manualVersion != null and manualVersion != ''">
+                AND service_engineering_maintenance_downloadApply.id IN (
+                SELECT
+                applyId
+                FROM
+                service_engineering_maintenance_downloadapplydetail
+                LEFT JOIN service_engineering_maintenance_manualfile
+                ON service_engineering_maintenance_downloadapplydetail.manualFileId = service_engineering_maintenance_manualfile.id
+                WHERE
+                service_engineering_maintenance_manualfile.manualVersion like CONCAT('%',#{manualVersion},'%')
+                )
+            </if>
+
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR service_engineering_maintenance_downloadApply.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countApplyList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        service_engineering_maintenance_downloadApply
+        left join bpm_inst on service_engineering_maintenance_downloadApply.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="applyNumber != null and applyNumber != ''">
+                service_engineering_maintenance_downloadApply.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND service_engineering_maintenance_downloadApply.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="creatorDeptId != null and creatorDeptId != ''">
+                AND service_engineering_maintenance_downloadApply.creatorDeptId = #{creatorDeptId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR service_engineering_maintenance_downloadApply.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+
+    </select>
+
+    <select id="getApplyFiles" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+         select
+        service_engineering_maintenance_downloadApplyFileInfo.*,
+         os_user.FULLNAME_ as creator
+        FROM
+        service_engineering_maintenance_downloadApplyFileInfo
+        left join os_user on service_engineering_maintenance_downloadApplyFileInfo.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="id !=null and id !=''">
+                service_engineering_maintenance_downloadApplyFileInfo.id = #{id}
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND service_engineering_maintenance_downloadApplyFileInfo.applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryDemandList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_maintenance_downloadapplydetail.id,
+        service_engineering_maintenance_downloadapplydetail.manualFileId,
+        service_engineering_maintenance_manualfile.salesModel,
+        service_engineering_maintenance_manualfile.designModel,
+        service_engineering_maintenance_manualfile.materialCode,
+        service_engineering_maintenance_manualfile.manualDescription,
+        service_engineering_maintenance_manualfile.cpzgId,
+        service_engineering_maintenance_manualfile.cpzgName,
+        service_engineering_maintenance_manualfile.manualLanguage,
+        service_engineering_maintenance_manualfile.manualCode,
+        service_engineering_maintenance_manualfile.manualVersion,
+        service_engineering_maintenance_manualfile.isCE,
+        service_engineering_maintenance_manualfile.keyUserId,
+        service_engineering_maintenance_manualfile.keyUser,
+        service_engineering_maintenance_manualfile.publishTime,
+        service_engineering_maintenance_manualfile.manualStatus
+        FROM
+        service_engineering_maintenance_downloadapplydetail
+        LEFT JOIN service_engineering_maintenance_manualfile
+        ON service_engineering_maintenance_downloadapplydetail.manualFileId = service_engineering_maintenance_manualfile.id
+        where
+        service_engineering_maintenance_downloadapplydetail.applyId = #{applyId}
+    </select>
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+          service_engineering_maintenance_downloadApply.*,
+          os_group.NAME_ as creatorDeptName,
+          bpm_inst.INST_ID_ as instId
+        from
+        service_engineering_maintenance_downloadApply
+        left join bpm_inst
+        on service_engineering_maintenance_downloadApply.id=bpm_inst.BUS_KEY_
+        left join os_group on service_engineering_maintenance_downloadApply.creatorDeptId = os_group.GROUP_ID_
+        where
+        id =#{id}
+    </select>
+
+    <insert id="insertApply" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_maintenance_downloadApply(
+        id
+        ,applyNumber
+        ,creatorName
+        ,creatorDeptId
+        ,useDesc
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR}
+        ,#{applyNumber,jdbcType=VARCHAR}
+        ,#{creatorName,jdbcType=VARCHAR}
+        ,#{creatorDeptId,jdbcType=VARCHAR}
+        ,#{useDesc,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <insert id="insertFile" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_maintenance_downloadApplyFileInfo(
+        id
+        ,applyId
+        ,fileName
+        ,fileSize
+        ,fileDesc
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{applyId,jdbcType=VARCHAR}
+        ,#{fileName,jdbcType=VARCHAR}
+        ,#{fileSize,jdbcType=VARCHAR}
+        ,#{fileDesc,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <insert id="insertDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_maintenance_downloadApplyDetail(
+        id
+        ,applyId
+        ,manualFileId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{applyId,jdbcType=VARCHAR}
+        ,#{manualFileId,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateApply" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_maintenance_downloadApply
+        set
+        useDesc=#{useDesc,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <update id="updateApplyNumber" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_maintenance_downloadApply
+        set
+        applyNumber=#{applyNumber,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+
+
+    <delete id="deleteApply" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_maintenance_downloadApply
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteFile" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_maintenance_downloadApplyFileInfo
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_maintenance_downloadApplyDetail
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+</mapper>

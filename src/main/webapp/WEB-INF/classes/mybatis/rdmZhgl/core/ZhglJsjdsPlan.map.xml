@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.ZhglJsjdsPlanDao">
+
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="selectJsjdsPlanList" resultType="com.redxun.rdmZhgl.core.domain.ZhglJsjdsPlan">
+        SELECT
+        jp.id,
+        jp.deptId,
+        og.NAME_ AS deptName,
+        jp.`year`,
+        jp.`month`,
+        jp.total,
+        jp.inventTotal,
+        jp.CREATE_BY_ AS createBy,
+        jp.CREATE_TIME_ AS createTime,
+        jp.TENANT_ID_ AS tenantId,
+        jp.UPDATE_BY_ AS updateBy,
+        jp.UPDATE_TIME_ AS updateYime,
+        ouc.FULLNAME_ AS creator,
+        ouu.FULLNAME_ AS updator
+        FROM jsjds_plan jp
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = jp.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = jp.UPDATE_BY_
+        LEFT JOIN os_group og ON og.GROUP_ID_ = jp.deptId
+        WHERE 1=1
+        <if test="year != null and year != ''"> AND jp.`year` = #{year} </if>
+        <if test="deptId != null and deptId != ''">AND jp.deptId=#{deptId}</if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="queryJsjdsPlan" resultType="com.redxun.rdmZhgl.core.domain.ZhglJsjdsPlan">
+        SELECT
+        jp.id,
+        jp.deptId,
+        jp.`year`,
+        jp.`month`,
+        jp.total,
+        jp.inventTotal,
+        jp.CREATE_BY_ AS createBy,
+        jp.CREATE_TIME_ AS createTime,
+        jp.TENANT_ID_ AS tenantId,
+        jp.UPDATE_BY_ AS updateBy,
+        jp.UPDATE_TIME_ AS updateYime,
+        ouc.FULLNAME_ AS creator,
+        ouu.FULLNAME_ AS updator
+        FROM jsjds_plan jp
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = jp.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = jp.UPDATE_BY_
+        LEFT JOIN os_group og ON og.GROUP_ID_ = jp.deptId
+        WHERE 1=1
+        AND jp.id =#{id};
+    </select>
+
+    <select id="selectJsjdsPlanCount" parameterType="java.util.Map"
+            resultType="integer">
+        SELECT
+        count(1)
+        FROM jsjds_plan jp
+        WHERE 1=1
+        <if test="year != null and year != ''"> AND jp.`year` = #{year} </if>
+        <if test="deptId != null and deptId != ''">AND jp.deptId=#{deptId}</if>
+    </select>
+
+    <insert id="batchInsertJsjdsPlan" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO jsjds_plan (id,deptId,`year`,`month`,total,inventTotal,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.deptId},#{item.year},#{item.month},#{item.total},#{item.inventTotal},#{item.createBy}, SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+
+    <update id="batchUpdateJsjdsPlan" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update jsjds_plan
+                <set>
+                    <if test="item.deptId != null and item.deptId != ''">deptId=#{item.deptId},</if>
+                    <if test="item.year != null and item.year != ''">`year`=#{item.year},</if>
+                    <if test="item.month != null and item.month != ''">`month`=#{item.month},</if>
+                    <if test="item.total != null and item.total != ''">total=#{item.total},</if>
+                    <if test="item.inventTotal != null and item.inventTotal != ''">inventTotal=#{item.inventTotal},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+</mapper>

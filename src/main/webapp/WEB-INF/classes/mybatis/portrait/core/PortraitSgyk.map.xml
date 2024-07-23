@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitSGYKDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ AS userName,
+        G.NAME_ as deptName,
+        P.indexName
+        FROM
+        portrait_sgyk A
+        LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        LEFT JOIN os_rel_inst C  ON A.userId = C.PARTY2_
+        LEFT JOIN os_dimension D  ON C.DIM1_ = D.DIM_ID_
+        left join os_group G on C.PARTY1_ = G.GROUP_ID_
+        left join portrait_index P on A.indexId = P.id
+        where
+        C.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND D.DIM_KEY_ = '_ADMIN'
+        AND C.PARTY1_ in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="userId != null and userId != ''">
+            AND A.userId = #{userId}
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and G.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="indexName != null and indexName != ''">
+            and P.indexName like CONCAT('%',#{indexName},'%')
+        </if>
+        <if test="yearMonth != null and yearMonth != ''">
+            and A.yearMonth = #{yearMonth}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO portrait_sgyk (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            userId,
+            indexId,
+            yearMonth,
+            finishRate,
+            weight,
+            score
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{userId,jdbcType=VARCHAR},
+            #{indexId,jdbcType=VARCHAR},
+            #{yearMonth,jdbcType=VARCHAR},
+            #{finishRate,jdbcType=VARCHAR},
+            #{weight,jdbcType=VARCHAR},
+            #{score,jdbcType=FLOAT}
+        )
+    </insert>
+    <insert id="batchInsertSgyk" parameterType="java.util.List">
+        INSERT INTO portrait_sgyk (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        userId,
+        indexId,
+        yearMonth,
+        finishRate,
+        weight,
+        score
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.userId,jdbcType=VARCHAR},
+            #{item.indexId,jdbcType=VARCHAR},
+            #{item.yearMonth,jdbcType=VARCHAR},
+            #{item.finishRate,jdbcType=VARCHAR},
+            #{item.weight,jdbcType=VARCHAR},
+            #{item.score,jdbcType=FLOAT}
+            )
+        </foreach>
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update portrait_sgyk
+        <set>
+            <if test="userId != null and userId != ''">
+                userId=#{userId,jdbcType=VARCHAR},
+            </if>
+            <if test="indexId != null and indexId != ''">
+                indexId=#{indexId,jdbcType=VARCHAR},
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                yearMonth=#{yearMonth,jdbcType=VARCHAR},
+            </if>
+            <if test="finishRate != null and finishRate != ''">
+                finishRate=#{finishRate,jdbcType=FLOAT},
+            </if>
+            <if test="weight != null and weight != ''">
+                weight=#{weight,jdbcType=FLOAT},
+            </if>
+            <if test="score != null and score != ''">
+                score=#{score,jdbcType=FLOAT},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      select A.*,
+        B.FULLNAME_ AS userName,
+	    P.indexName,
+		P.indexValue,
+		P.indexScore,
+		P.scoreRule
+      from portrait_sgyk A
+        LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        left join portrait_index P on A.indexId = P.id
+        where A.id = #{id}
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from  portrait_sgyk
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!--根据人员id 年份获取三高一可数据-->
+    <select id="getSgykByUserId" parameterType="com.alibaba.fastjson.JSONObject"  resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.id,
+            B.indexName,
+            B.indexValue,
+            A.finishRate,
+            B.indexScore,
+            A.weight,
+            A.yearMonth,
+            A.score
+        FROM
+            portrait_sgyk A
+            LEFT JOIN portrait_index B ON A.indexId = B.id
+        WHERE
+            A.userId = #{userId}
+            <if test="reportYear != null and reportYear != ''">
+               AND substring( A.yearMonth, 1, 4 ) = #{reportYear}
+            </if>
+    </select>
+    <select id="getIndexIdByName" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            portrait_index A
+        WHERE
+            deptId = #{deptId}
+            and indexName = #{indexName}
+    </select>
+</mapper>

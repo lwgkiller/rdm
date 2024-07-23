@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.newProductAssembly.core.dao.NewproductAssemblyMaterialDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="model_where">
+        <if test="@Ognl@isNotEmpty(salesModel)">
+            AND business.salesModel like CONCAT('%',#{salesModel},'%')
+        </if>
+    </sql>
+    <sql id="material_where">
+        mainId = #{mainId}
+        <if test="@Ognl@isNotEmpty(wbs)">
+            AND business.wbs = #{wbs}
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCode)">
+            AND business.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(shortDescription)">
+            AND business.shortDescription = #{shortDescription}
+        </if>
+        <if test="@Ognl@isNotEmpty(materialDescription)">
+            AND business.materialDescription like CONCAT('%',#{materialDescription},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(procurementGroup)">
+            AND business.procurementGroup like CONCAT('%',#{procurementGroup},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(supplier)">
+            AND business.supplier like CONCAT('%',#{supplier},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(all)">
+            AND business.exceptionQuantity = 0
+        </if>
+        <if test="@Ognl@isNotEmpty(nothing)">
+            AND business.receivedQuantity = 0
+        </if>
+        <if test="@Ognl@isNotEmpty(parts)">
+            AND business.receivedQuantity != 0
+            AND business.exceptionQuantity != 0
+        </if>
+        <if test="@Ognl@isNotEmpty(ids)">
+            AND business.id IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+    <sql id="materialSub_where">
+        mainId = #{mainId}
+        <if test="@Ognl@isNotEmpty(subNo)">
+            AND business.subNo = #{subNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(orderNo)">
+            AND business.orderNo = #{orderNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(wbs)">
+            AND business.wbs = #{wbs}
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCode)">
+            AND business.materialCode = #{materialCode}
+        </if>
+        <if test="@Ognl@isNotEmpty(shortDescription)">
+            AND business.shortDescription = #{shortDescription}
+        </if>
+        <if test="@Ognl@isNotEmpty(materialDescription)">
+            AND business.materialDescription like CONCAT('%',#{materialDescription},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(handwrittenSign)">
+            AND business.handwrittenSign = #{handwrittenSign}
+        </if>
+    </sql>
+    <!---->
+    <select id="modelListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        newProduct_assembly_model as business
+        <where>
+            <include refid="model_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countModelListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        newProduct_assembly_model as business
+        <where>
+            <include refid="model_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="materialListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        newProduct_assembly_model_material as business
+        <where>
+            <include refid="material_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countMaterialListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        newProduct_assembly_model_material as business
+        <where>
+            <include refid="material_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="materialSubListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        newProduct_assembly_model_submaterial as business
+        <where>
+            <include refid="materialSub_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countMaterialSubListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        newProduct_assembly_model_submaterial as business
+        <where>
+            <include refid="materialSub_where"/>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertModel" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into newProduct_assembly_model(
+          id,
+          salesModel,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{salesModel,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateModel" parameterType="com.alibaba.fastjson.JSONObject">
+        update newProduct_assembly_model
+        set
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        progress=#{progress,jdbcType=VARCHAR},
+        lastTime=#{lastTime,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <insert id="insertMaterial" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into newProduct_assembly_model_material(
+          id,
+          mainId,
+          wbs,
+          materialCode,
+          materialDescription,
+          deliveryQuantity,
+          receivedQuantity,
+          exceptionQuantity,
+          shortDescription,
+          lastTime,
+          procurementGroup,
+          supplier,
+          remark,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{mainId,jdbcType=VARCHAR},
+          #{wbs,jdbcType=VARCHAR},
+          #{materialCode,jdbcType=VARCHAR},
+          #{materialDescription,jdbcType=VARCHAR},
+          #{deliveryQuantity,jdbcType=VARCHAR},
+          #{receivedQuantity,jdbcType=VARCHAR},
+          #{exceptionQuantity,jdbcType=VARCHAR},
+          #{shortDescription,jdbcType=VARCHAR},
+          #{lastTime,jdbcType=VARCHAR},
+          #{procurementGroup,jdbcType=VARCHAR},
+          #{supplier,jdbcType=VARCHAR},
+          #{remark,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateMaterial" parameterType="com.alibaba.fastjson.JSONObject">
+        update newProduct_assembly_model_material
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        wbs=#{wbs,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        materialDescription=#{materialDescription,jdbcType=VARCHAR},
+        deliveryQuantity=#{deliveryQuantity,jdbcType=VARCHAR},
+        receivedQuantity=#{receivedQuantity,jdbcType=VARCHAR},
+        exceptionQuantity=#{exceptionQuantity,jdbcType=VARCHAR},
+        shortDescription=#{shortDescription,jdbcType=VARCHAR},
+        lastTime=#{lastTime,jdbcType=VARCHAR},
+        procurementGroup=#{procurementGroup,jdbcType=VARCHAR},
+        supplier=#{supplier,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <insert id="insertSubMaterial" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into newProduct_assembly_model_submaterial(
+          id,
+          mainId,
+          subNo,
+          orderNo,
+          wbs,
+          materialCode,
+          materialDescription,
+          deliveryQuantity,
+          shortDescription,
+          handwrittenSign,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{mainId,jdbcType=VARCHAR},
+          #{subNo,jdbcType=VARCHAR},
+          #{orderNo,jdbcType=VARCHAR},
+          #{wbs,jdbcType=VARCHAR},
+          #{materialCode,jdbcType=VARCHAR},
+          #{materialDescription,jdbcType=VARCHAR},
+          #{deliveryQuantity,jdbcType=VARCHAR},
+          #{shortDescription,jdbcType=VARCHAR},
+          #{handwrittenSign,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateSubMaterial" parameterType="com.alibaba.fastjson.JSONObject">
+        update newProduct_assembly_model_submaterial
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        subNo=#{subNo,jdbcType=VARCHAR},
+        orderNo=#{orderNo,jdbcType=VARCHAR},
+        wbs=#{wbs,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        materialDescription=#{materialDescription,jdbcType=VARCHAR},
+        deliveryQuantity=#{deliveryQuantity,jdbcType=VARCHAR},
+        shortDescription=#{shortDescription,jdbcType=VARCHAR},
+        handwrittenSign=#{handwrittenSign,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteModel" parameterType="java.util.Map">
+        delete from newProduct_assembly_model
+        where id IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <delete id="deleteMaterial" parameterType="java.util.Map">
+        delete from newProduct_assembly_model_material
+        <where>
+            <if test="@Ognl@isEmpty(businessIds) and @Ognl@isEmpty(mainIds)">
+                1 = 2
+            </if>
+            <if test="@Ognl@isNotEmpty(businessIds) and @Ognl@isEmpty(mainIds)">
+                AND id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(mainIds) and @Ognl@isEmpty(businessIds)">
+                AND mainId IN
+                <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteSubMaterial" parameterType="java.util.Map">
+        delete from newProduct_assembly_model_submaterial
+        <where>
+            <if test="@Ognl@isEmpty(mainIds)">
+                1 = 2
+            </if>
+            <if test="@Ognl@isNotEmpty(mainIds)">
+                AND mainId IN
+                <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteSubMaterialBy3" parameterType="java.util.Map">
+        delete from newProduct_assembly_model_submaterial
+        where wbs = #{wbs}
+        and materialCode = #{materialCode}
+        and shortDescription = #{shortDescription}
+    </delete>
+    <!---->
+    <select id="getModelDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM newProduct_assembly_model AS business
+        WHERE business.id = #{businessId}
+    </select>
+    <!---->
+    <select id="getMaterialDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM newProduct_assembly_model_material AS business
+        WHERE business.id = #{businessId}
+    </select>
+</mapper>

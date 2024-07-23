@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.digitization.core.dao.RdmDevTaskDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="createRdmDevTask" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into devTaskApply(
+            applyId
+            ,devType
+            ,applyName
+            ,applyReason
+            ,applyValue
+            ,creatorRespOpinion
+            ,xxbTechOpinion
+            ,xxbTechOpinionReason
+            ,planStartTime
+            ,planEndTime
+            ,xxbRespOpinion
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )values(
+             #{applyId,jdbcType=VARCHAR}
+            ,#{devType,jdbcType=VARCHAR}
+            ,#{applyName,jdbcType=VARCHAR}
+            ,#{applyReason,jdbcType=VARCHAR}
+            ,#{applyValue,jdbcType=VARCHAR}
+            ,#{creatorRespOpinion,jdbcType=VARCHAR}
+            ,#{xxbTechOpinion,jdbcType=VARCHAR}
+            ,#{xxbTechOpinionReason,jdbcType=VARCHAR}
+            ,#{planStartTime,jdbcType=VARCHAR}
+            ,#{planEndTime,jdbcType=VARCHAR}
+            ,#{xxbRespOpinion,jdbcType=VARCHAR}
+            ,#{CREATE_BY_,jdbcType=VARCHAR}
+            ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateRdmDevTask" parameterType="com.alibaba.fastjson.JSONObject">
+        update devTaskApply
+        set
+        devType =#{devType,jdbcType=VARCHAR},
+        applyName =#{applyName,jdbcType=VARCHAR},
+        applyReason    =#{applyReason,jdbcType=VARCHAR},
+        applyValue  =#{applyValue,jdbcType=VARCHAR},
+        creatorRespOpinion  =#{creatorRespOpinion,jdbcType=VARCHAR},
+        xxbTechOpinion    =#{xxbTechOpinion,jdbcType=VARCHAR},
+        xxbTechOpinionReason=#{xxbTechOpinionReason,jdbcType=VARCHAR},
+        xxbRespOpinion    =#{xxbRespOpinion,jdbcType=VARCHAR},
+        planStartTime    =#{planStartTime,jdbcType=VARCHAR},
+        planEndTime    =#{planEndTime,jdbcType=VARCHAR},
+        gzlEvaluate    =#{gzlEvaluate,jdbcType=VARCHAR},
+        flowChange    =#{flowChange,jdbcType=VARCHAR},
+        devRespUserId    =#{devRespUserId,jdbcType=VARCHAR},
+        devRespUserName    =#{devRespUserName,jdbcType=VARCHAR},
+        finishDesc =#{finishDesc,jdbcType=VARCHAR},
+        UPDATE_BY_    =#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_    =#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        applyId = #{applyId}
+    </update>
+
+    <select id="queryDevTaskFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select devTaskApplyFile.*,
+        os_user.FULLNAME_ as creator
+        from
+        devTaskApplyFile
+        left join os_user on devTaskApplyFile.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="applyId !=null and applyId !=''">
+                applyId = #{applyId}
+            </if>
+            <if test="applyIds !=null and applyIds !=''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="getDevInfoById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            devTaskApply.*,
+            bpm_inst.INST_ID_ AS instId,
+            os_group.NAME_    AS applyUserDeptName,
+            os_user.FULLNAME_ AS applyUserName
+        FROM devTaskApply
+            LEFT JOIN bpm_inst ON devTaskApply.applyId = bpm_inst.BUS_KEY_
+            LEFT JOIN os_user ON devtaskapply.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN os_rel_inst ON devtaskapply.CREATE_BY_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+            devTaskApply.applyId = #{applyId}
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+    </select>
+
+    <insert id="addDevTaskFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into devTaskApplyFile(
+        id
+        ,applyId
+        ,fileName
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{applyId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteDevTaskFile" parameterType="java.util.Map">
+        delete from devtaskapplyfile
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="applyIds != null and applyIds !=''">
+                AND applyId IN
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteDevTask" parameterType="java.util.Map">
+        delete from devTaskApply
+        <where>
+            <if test="applyIds != null and applyIds !=''">
+                applyId IN
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryDevTaskList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        devtaskapply.*,
+        os_group.NAME_ AS applyUserDeptName,
+        os_user.FULLNAME_ AS applyUserName,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ as instId,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId
+        FROM
+        devtaskapply
+        LEFT JOIN os_user ON devtaskapply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN os_rel_inst ON devtaskapply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN bpm_inst ON devtaskapply.applyId = bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND ( bpm_inst.STATUS_ != 'DRAFTED' || ( devtaskapply.CREATE_BY_ = #{currentUserId} ) )
+        <if test="devType != null and devType != ''">
+            AND devtaskapply.devType=#{devType}
+        </if>
+        <if test="applyName != null and applyName != ''">
+            AND devtaskapply.applyName like concat('%',#{applyName},'%')
+        </if>
+        <if test="applyUserName != null and applyUserName != ''">
+            AND os_user.FULLNAME_ like concat('%',#{applyUserName},'%')
+        </if>
+        <if test="applyDeptId != null and applyDeptId != ''">
+            AND os_rel_inst.PARTY1_=#{applyDeptId}
+        </if>
+        <if test="instStatus != null and instStatus != ''">
+            AND bpm_inst.STATUS_=#{instStatus}
+        </if>
+        <if test="currentProcessTask != null and currentProcessTask != ''">
+            AND act_ru_task.NAME_ like concat('%',#{currentProcessTask},'%')
+        </if>
+        <if test="applyNum != null and applyNum != ''">
+            AND devtaskapply.applyNum like concat('%',#{applyNum},'%')
+        </if>
+        <if test="devRespUserName != null and devRespUserName != ''">
+            AND devtaskapply.devRespUserName like concat('%',#{devRespUserName},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(applyTimeBegin)">
+            AND LEFT(devtaskapply.CREATE_TIME_, 10) &gt;= #{applyTimeBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(applyTimeEnd)">
+            AND LEFT(devtaskapply.CREATE_TIME_, 10) &lt;= #{applyTimeEnd}
+        </if>
+        <if test="@Ognl@isNotEmpty(planEndTimeBegin)">
+            AND LEFT(devtaskapply.planEndTime, 10) &gt;= #{planEndTimeBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(planEndTimeEnd)">
+            AND LEFT(devtaskapply.planEndTime, 10) &lt;= #{planEndTimeEnd}
+        </if>
+
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countDevTaskFileList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        devtaskapply
+        LEFT JOIN os_user ON devtaskapply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN os_rel_inst ON devtaskapply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN bpm_inst ON devtaskapply.applyId = bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND ( bpm_inst.STATUS_ != 'DRAFTED' || ( devtaskapply.CREATE_BY_ = #{currentUserId} ) )
+        <if test="devType != null and devType != ''">
+            AND devtaskapply.devType=#{devType}
+        </if>
+        <if test="applyName != null and applyName != ''">
+            AND devtaskapply.applyName like concat('%',#{applyName},'%')
+        </if>
+        <if test="applyUserName != null and applyUserName != ''">
+            AND os_user.FULLNAME_ like concat('%',#{applyUserName},'%')
+        </if>
+        <if test="applyDeptId != null and applyDeptId != ''">
+            AND os_rel_inst.PARTY1_=#{applyDeptId}
+        </if>
+        <if test="instStatus != null and instStatus != ''">
+            AND bpm_inst.STATUS_=#{instStatus}
+        </if>
+        <if test="currentProcessTask != null and currentProcessTask != ''">
+            AND act_ru_task.NAME_ like concat('%',#{currentProcessTask},'%')
+        </if>
+        <if test="applyNum != null and applyNum != ''">
+            AND devtaskapply.applyNum like concat('%',#{applyNum},'%')
+        </if>
+        <if test="devRespUserName != null and devRespUserName != ''">
+            AND devtaskapply.devRespUserName like concat('%',#{devRespUserName},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(applyTimeBegin)">
+            AND LEFT(devtaskapply.CREATE_TIME_, 10) &gt;= #{applyTimeBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(applyTimeEnd)">
+            AND LEFT(devtaskapply.CREATE_TIME_, 10) &lt;= #{applyTimeEnd}
+        </if>
+        <if test="@Ognl@isNotEmpty(planEndTimeBegin)">
+            AND LEFT(devtaskapply.planEndTime, 10) &gt;= #{planEndTimeBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(planEndTimeEnd)">
+            AND LEFT(devtaskapply.planEndTime, 10) &lt;= #{planEndTimeEnd}
+        </if>
+    </select>
+
+    <update id="updateRdmDevApplyNum" parameterType="java.util.Map">
+        update devTaskApply
+        set
+        applyNum =#{applyNum,jdbcType=VARCHAR}
+        where
+        applyId = #{applyId}
+    </update>
+</mapper>

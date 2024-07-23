@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.CqbgDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="queryCqbg" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zltz_change.*,
+        jsjds_baseinfo.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        zltz_change
+        LEFT JOIN jsjds_baseinfo on jsjds_baseinfo.jsjdsId = zltz_change.jsjdsId
+        LEFT JOIN os_rel_inst ON zltz_change.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = zltz_change.CREATE_BY_
+        left join bpm_inst on zltz_change.cqbgId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            and (zltz_change.CREATE_BY_ = #{currentUserId}
+            or bpm_inst.STATUS_ != 'DRAFTED')
+            <if test="zlName !=null and zlName !=''">
+                and jsjds_baseinfo.zlName like CONCAT('%',#{zlName},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="queryCqbgById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select zltz_change.*,
+               jsjds_baseinfo.*,
+               os_user.FULLNAME_,
+               cqbgInst.INST_ID_ as instId
+        from zltz_change
+                 left join os_user on zltz_change.CREATE_BY_ = os_user.USER_ID_
+                 LEFT JOIN jsjds_baseinfo on jsjds_baseinfo.jsjdsId = zltz_change.jsjdsId
+                 left join bpm_inst cqbgInst on zltz_change.cqbgId = cqbgInst.BUS_KEY_
+        where zltz_change.cqbgId = #{cqbgId}
+    </select>
+    <select id="queryCqbgProjectStage" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select project_stageDivide.stageName as currentStageName
+        from project_stageDivide
+                 left join project_baseinfo on project_baseinfo.currentStageId = project_stagedivide.stageId
+        where project_baseinfo.projectId = #{projectId}
+    </select>
+    <insert id="insertCqbg" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO zltz_change (cqbgId,
+                                 jsjdsId,
+                                 reason,
+                                 fmsjr,
+                                 myfmsjId,
+                                 myfmsjName,
+                                 zlsqr,
+                                 nfmsjr,
+                                 nmyfmsjId,
+                                 nmyfmsjName,
+                                 nzlsqr,
+                                 projectId,
+                                 projectName,
+                                 planId,
+                                 planName,
+                                 projectLinkReason,
+                                 flowType,
+                                 CREATE_BY_,
+                                 CREATE_TIME_,
+                                 TENANT_ID_)
+        values (#{cqbgId,jdbcType=VARCHAR},
+                #{jsjdsId,jdbcType=VARCHAR},
+                #{reason,jdbcType=VARCHAR},
+                #{fmsjr,jdbcType=VARCHAR},
+                #{myfmsjId,jdbcType=VARCHAR},
+                #{myfmsjName,jdbcType=VARCHAR},
+                #{zlsqr,jdbcType=VARCHAR},
+                #{nfmsjr,jdbcType=VARCHAR},
+                #{nmyfmsjId,jdbcType=VARCHAR},
+                #{nmyfmsjName,jdbcType=VARCHAR},
+                #{nzlsqr,jdbcType=VARCHAR},
+                #{projectId,jdbcType=VARCHAR},
+                #{projectName,jdbcType=VARCHAR},
+                #{planId,jdbcType=VARCHAR},
+                #{planName,jdbcType=VARCHAR},
+                #{projectLinkReason,jdbcType=VARCHAR},
+                #{flowType,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=TIMESTAMP},
+                #{CREATE_TIME_,jdbcType=VARCHAR},
+                #{TENANT_ID_,jdbcType=VARCHAR})
+    </insert>
+    <update id="updateCqbg" parameterType="com.alibaba.fastjson.JSONObject">
+        update zltz_change
+        set jsjdsId           = #{jsjdsId,jdbcType=VARCHAR},
+            reason            = #{reason,jdbcType=VARCHAR},
+            fmsjr             = #{fmsjr,jdbcType=VARCHAR},
+            myfmsjId          = #{myfmsjId,jdbcType=VARCHAR},
+            myfmsjName        = #{myfmsjName,jdbcType=VARCHAR},
+            zlsqr             = #{zlsqr,jdbcType=VARCHAR},
+            nfmsjr            = #{nfmsjr,jdbcType=VARCHAR},
+            nmyfmsjId         = #{nmyfmsjId,jdbcType=VARCHAR},
+            nmyfmsjName       = #{nmyfmsjName,jdbcType=VARCHAR},
+            nzlsqr            = #{nzlsqr,jdbcType=VARCHAR},
+            projectId         = #{projectId,jdbcType=VARCHAR},
+            projectName       = #{projectName,jdbcType=VARCHAR},
+            planId            = #{planId,jdbcType=VARCHAR},
+            planName          = #{planName,jdbcType=VARCHAR},
+            projectLinkReason = #{projectLinkReason,jdbcType=VARCHAR},
+            flowType          = #{flowType,jdbcType=VARCHAR},
+            UPDATE_BY_        = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_      = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where cqbgId = #{cqbgId}
+    </update>
+
+    <delete id="deleteCqbg" parameterType="java.util.Map">
+        delete from zltz_change
+        where
+        <if test="cqbgIds != null and cqbgIds !=''">
+            cqbgId IN
+            <foreach collection="cqbgIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </delete>
+    <update id="updateJsjds" parameterType="com.alibaba.fastjson.JSONObject">
+        update jsjds_baseinfo
+        set fmsjr        = #{fmsjr,jdbcType=VARCHAR},
+            myfmsjId     = #{myfmsjId,jdbcType=VARCHAR},
+            myfmsjName   = #{myfmsjName,jdbcType=VARCHAR},
+            zlsqr        = #{zlsqr,jdbcType=VARCHAR},
+            UPDATE_BY_   = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = now()
+        where jsjdsId = #{jsjdsId}
+    </update>
+    <update id="updateZgzl" parameterType="com.alibaba.fastjson.JSONObject">
+        update zltz_zhongguozhuanli
+        set projectId    = #{projectId,jdbcType=VARCHAR},
+            projectName  = #{projectName,jdbcType=VARCHAR},
+            planId       = #{planId,jdbcType=VARCHAR},
+            planName     = #{planName,jdbcType=VARCHAR},
+            UPDATE_BY_   = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = now()
+        where jsjdsId = #{jsjdsId}
+    </update>
+    <select id="queryCqbgByJds" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from zltz_zhongguozhuanli
+        where jsjdsId = #{jsjdsId}
+    </select>
+</mapper>

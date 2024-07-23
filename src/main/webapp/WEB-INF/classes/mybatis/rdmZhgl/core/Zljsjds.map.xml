@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.ZljsjdsDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryJsjdsTasks" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jsjds_baseinfo.*,
+        os_user.FULLNAME_ AS creator,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.ACT_INST_ID_,
+        os_group.NAME_ as creatorDeptName
+        FROM
+        jsjds_baseinfo
+        LEFT JOIN os_user ON jsjds_baseinfo.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON jsjds_baseinfo.jsjdsId = bpm_inst.BUS_KEY_
+        left join os_rel_inst on jsjds_baseinfo.CREATE_BY_=os_rel_inst.PARTY2_
+        LEFT JOIN os_group on os_rel_inst.PARTY1_=os_group.GROUP_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+            and os_rel_inst.DIM1_='1'
+            <if test="zlName != null and zlName != ''">
+                AND jsjds_baseinfo.zlName LIKE CONCAT( '%', #{zlName}, '%' )
+            </if>
+            <if test="applyUserId != null and applyUserId != ''">
+                AND jsjds_baseinfo.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="checkProject != null and checkProject != ''">
+                AND (jsjds_baseinfo.projectId is null or jsjds_baseinfo.projectId='')
+                AND (jsjds_baseinfo.bmscwcTime is not null and jsjds_baseinfo.bmscwcTime!='')
+            </if>
+            <if test="applyUserDeptId != null and applyUserDeptId != ''">
+                AND os_group.GROUP_ID_ = #{applyUserDeptId}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                <choose>
+                    <when test="instStatus == 'SUCCESS_END'">
+                        AND (bpm_inst.STATUS_ = #{instStatus} OR bpm_inst.STATUS_ is NULL OR bpm_inst.STATUS_ = '')
+                    </when>
+                    <otherwise>
+                        AND bpm_inst.STATUS_ = #{instStatus}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="zllx != null and zllx != ''">
+                AND jsjds_baseinfo.zllx = #{zllx}
+            </if>
+            <if test="bmscwcTimeStart !=null and bmscwcTimeStart !=''">
+                AND jsjds_baseinfo.bmscwcTime &gt;= #{bmscwcTimeStart}
+            </if>
+            <if test="bmscwcTimeEnd !=null and bmscwcTimeEnd !=''">
+                AND jsjds_baseinfo.bmscwcTime &lt;= #{bmscwcTimeEnd}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <insert id="insertJsjds" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jsjds_baseinfo (jsjdsId,
+                                    zlName,
+                                    zllx,
+                                    ifgj,
+                                    sqgj,
+                                    sqgjyy,
+                                    fmsjr,
+                                    myfmsjId,
+                                    myfmsjName,
+                                    zlsqr,
+                                    zlyyxm,
+                                    jswt,
+                                    jjwt,
+                                    jsxg,
+                                    zlbhd,
+				    jsfz,
+                                    hqrId,
+                                    hqrName,
+                                    xycz,
+                                    zlzyd,
+                                    jsyj,
+                                    jsbyj,
+                                    zyType,
+                                    projectId,
+                                    projectName,
+                                    planId,
+                                    planName,
+                                    sflx,
+                                    CREATE_BY_,
+                                    CREATE_TIME_)
+        values (#{jsjdsId,jdbcType=VARCHAR},
+                #{zlName,jdbcType=VARCHAR},
+                #{zllx,jdbcType=VARCHAR},
+                #{ifgj,jdbcType=VARCHAR},
+                #{sqgj,jdbcType=VARCHAR},
+                #{sqgjyy,jdbcType=VARCHAR},
+                #{fmsjr,jdbcType=VARCHAR},
+                #{myfmsjId,jdbcType=VARCHAR},
+                #{myfmsjName,jdbcType=VARCHAR},
+                #{zlsqr,jdbcType=VARCHAR},
+                #{zlyyxm,jdbcType=VARCHAR},
+                #{jswt,jdbcType=VARCHAR},
+                #{jjwt,jdbcType=VARCHAR},
+                #{jsxg,jdbcType=VARCHAR},
+                #{zlbhd,jdbcType=VARCHAR},
+		#{jsfz,jdbcType=VARCHAR},
+                #{hqrId,jdbcType=VARCHAR},
+                #{hqrName,jdbcType=VARCHAR},
+                #{xycz,jdbcType=VARCHAR},
+                #{zlzyd,jdbcType=VARCHAR},
+                #{jsyj,jdbcType=VARCHAR},
+                #{jsbyj,jdbcType=VARCHAR},
+                #{zyType,jdbcType=VARCHAR},
+                #{projectId,jdbcType=VARCHAR},
+                #{projectName,jdbcType=VARCHAR},
+                #{planId,jdbcType=VARCHAR},
+                #{planName,jdbcType=VARCHAR},
+                #{sflx,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now())
+    </insert>
+
+    <update id="updateJsjds" parameterType="com.alibaba.fastjson.JSONObject">
+        update jsjds_baseinfo
+        set zlName       = #{zlName,jdbcType=VARCHAR},
+            zllx         = #{zllx,jdbcType=VARCHAR},
+            ifgj         = #{ifgj,jdbcType=VARCHAR},
+            sqgj         = #{sqgj,jdbcType=VARCHAR},
+            sqgjyy       = #{sqgjyy,jdbcType=VARCHAR},
+            fmsjr        = #{fmsjr,jdbcType=VARCHAR},
+            myfmsjId     = #{myfmsjId,jdbcType=VARCHAR},
+            myfmsjName   = #{myfmsjName,jdbcType=VARCHAR},
+            zlsqr        = #{zlsqr,jdbcType=VARCHAR},
+            zlyyxm       = #{zlyyxm,jdbcType=VARCHAR},
+            jswt         = #{jswt,jdbcType=VARCHAR},
+            jjwt         = #{jjwt,jdbcType=VARCHAR},
+            jsxg         = #{jsxg,jdbcType=VARCHAR},
+            zlbhd        = #{zlbhd,jdbcType=VARCHAR},
+	    jsfz=#{jsfz,jdbcType=VARCHAR},
+            hqrId        = #{hqrId,jdbcType=VARCHAR},
+            hqrName      = #{hqrName,jdbcType=VARCHAR},
+            xycz         = #{xycz,jdbcType=VARCHAR},
+            zlzyd        = #{zlzyd,jdbcType=VARCHAR},
+            jsyj         = #{jsyj,jdbcType=VARCHAR},
+            jsbyj        = #{jsbyj,jdbcType=VARCHAR},
+            zyType       = #{zyType,jdbcType=VARCHAR},
+            projectId    = #{projectId,jdbcType=VARCHAR},
+            projectName  = #{projectName,jdbcType=VARCHAR},
+            planId    = #{planId,jdbcType=VARCHAR},
+            planName  = #{planName,jdbcType=VARCHAR},
+            sflx         = #{sflx,jdbcType=VARCHAR},
+            UPDATE_BY_   = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = now()
+        where jsjdsId = #{jsjdsId}
+    </update>
+
+
+    <update id="updateRjzzNum" parameterType="java.util.Map">
+        update rjzz_baseinfo
+        set rjzzNum = #{rjzzNum,jdbcType=VARCHAR}
+        where rjzzId = #{rjzzId}
+    </update>
+
+    <select id="queryJsjdsById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select jsjds_baseinfo.*, os_user.FULLNAME_, bpm_inst.INST_ID_ as instId,bpm_inst.STATUS_ AS instStatus
+        from jsjds_baseinfo
+                 left join os_user on jsjds_baseinfo.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on jsjds_baseinfo.jsjdsId = bpm_inst.BUS_KEY_
+        where jsjds_baseinfo.jsjdsId = #{jsjdsId}
+    </select>
+
+    <select id="queryJsjdsFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jsjds_fileinfo.*
+        FROM
+        jsjds_fileinfo
+        WHERE
+        jsjds_fileinfo.jsjdsId IN
+        <foreach collection="jsjdsIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <insert id="addJsjdsFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jsjds_fileinfo (id, jsjdsId, fileName, fileSize,fileType, CREATE_BY_, CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{jsjdsId,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{fileType,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now())
+    </insert>
+
+    <delete id="deleteJsjdsFile" parameterType="java.util.Map">
+        delete from jsjds_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="jsjdsIds != null and jsjdsIds !=''">
+                AND jsjdsId IN
+                <foreach collection="jsjdsIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteJsjds" parameterType="java.util.Map">
+        delete from jsjds_baseinfo
+        <where>
+            <if test="jsjdsIds != null and jsjdsIds !=''">
+                jsjdsId IN
+                <foreach collection="jsjdsIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <update id="updateBmscwcTime" parameterType="java.util.Map">
+        update jsjds_baseinfo
+        set bmscwcTime = now()
+        where jsjdsId = #{jsjdsId}
+    </update>
+
+    <update id="resetBmscwcTime" parameterType="java.util.Map">
+        update jsjds_baseinfo
+        set bmscwcTime = null
+        where jsjdsId = #{jsjdsId}
+    </update>
+
+    <select id="queryAllUsers" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from os_user
+    </select>
+    <update id="updateTest" parameterType="com.alibaba.fastjson.JSONObject">
+        update jsjds_baseinfo
+        set myfmsjId   = #{myfmsjId,jdbcType=VARCHAR},
+            CREATE_BY_ = #{CREATE_BY_,jdbcType=VARCHAR}
+        where jsjdsId = #{jsjdsId}
+    </update>
+
+    <select id="queryMaxJdsNumber" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jdsNum
+        FROM
+        jsjds_baseinfo
+        <where>
+            <if test="countnumInfo !=null and countnumInfo !=''">
+                jdsNum is not null and jdsNum !=''
+            </if>
+            <if test="applyTimeStart !=null and applyTimeStart !=''">
+                AND CREATE_TIME_ &gt;= #{applyTimeStart}
+            </if>
+        </where>
+        ORDER BY
+        jdsNum DESC
+        LIMIT 1
+    </select>
+
+    <update id="updateJdsNum" parameterType="java.util.Map">
+        UPDATE jsjds_baseinfo
+        SET jdsNum = #{jdsNum,jdbcType=VARCHAR}
+        WHERE jsjdsId = #{jsjdsId}
+    </update>
+
+    <select id="selectJsjdsPlan" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT jsjds_plan.deptId,
+               os_group.NAME_              AS deptName,
+               jsjds_plan.year,
+               sum(jsjds_plan.total)       as totalSum,
+               sum(jsjds_plan.inventTotal) as inventSum
+        FROM jsjds_plan
+                 LEFT JOIN os_user ON os_user.USER_ID_ = jsjds_plan.CREATE_BY_
+                 LEFT JOIN os_group ON os_group.GROUP_ID_ = jsjds_plan.deptId
+        where jsjds_plan.YEAR = #{year}
+          AND SUBSTRING_INDEX(jsjds_plan.month, '月', 1) &lt;= ${month}
+        GROUP BY deptId
+    </select>
+
+    <select id="selectJsjdsFinish" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_group.GROUP_ID_ AS deptId,
+        os_group.NAME_ AS deptName,
+        count( 1 ) AS count
+        FROM
+        jsjds_baseinfo
+        LEFT JOIN os_rel_inst ON os_rel_inst.PARTY2_ = jsjds_baseinfo.CREATE_BY_
+        LEFT JOIN os_group ON os_group.GROUP_ID_ = os_rel_inst.PARTY1_
+        left join bpm_inst on jsjds_baseinfo.jsjdsId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ ='GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_='1'
+        AND jsjds_baseinfo.bmscwcTime IS NOT NULL
+        AND jsjds_baseinfo.bmscwcTime != ''
+        AND (bpm_inst.STATUS_ != 'DISCARD_END' or bpm_inst.STATUS_ is null or bpm_inst.STATUS_='')
+        <if test="zllx != null and zllx != ''">
+            AND jsjds_baseinfo.zllx = #{zllx}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND jsjds_baseinfo.bmscwcTime &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND jsjds_baseinfo.bmscwcTime &lt;= #{endTime}
+        </if>
+        GROUP BY
+        os_group.GROUP_ID_
+    </select>
+
+    <select id="selectProjectPlan" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+               A.*,
+               B.NAME_ as deptName,
+               C.catagoryName as typeName
+        FROM project_achievement A
+                 left join os_group B on A.deptId = B.GROUP_ID_
+                 left join project_achievement_type C on A.typeId = C.id
+        WHERE A.projectId=#{projectId}
+        <if test="zllx != null and zllx != ''">
+            AND C.catagoryName like CONCAT('%',#{zllx},'%')
+        </if>
+    </select>
+
+    <select id="selectZgzlByJdsId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+               *
+        FROM zltz_zhongguozhuanli
+        WHERE jsjdsId=#{jsjdsId}
+    </select>
+
+    <update id="updateZgzlProject" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE zltz_zhongguozhuanli
+        SET  projectId    = #{projectId,jdbcType=VARCHAR},
+             projectName  = #{projectName,jdbcType=VARCHAR},
+             planId    = #{planId,jdbcType=VARCHAR},
+             planName    = #{planName,jdbcType=VARCHAR}
+        WHERE jsjdsId = #{jsjdsId}
+    </update>
+</mapper>

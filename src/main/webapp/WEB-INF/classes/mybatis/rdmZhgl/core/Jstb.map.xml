@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.JstbDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="queryJstb" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jsgl_baseinfo.id as jstbId,
+        jsgl_baseinfo.numInfo,
+        jsgl_baseinfo.jstbTitle,
+        jsgl_baseinfo.jstbContent,
+        jsgl_baseinfo.relatedDeptIds,
+        jsgl_baseinfo.relatedDeptNames,
+        jsgl_baseinfo.status,
+        jsgl_baseinfo.isdelete,
+        jsgl_baseinfo.CREATE_BY_,
+        jsgl_baseinfo.CREATE_TIME_,
+        jsgl_baseinfo.TENANT_ID_,
+        jsgl_baseinfo.UPDATE_BY_,
+        jsgl_baseinfo.UPDATE_TIME_,
+        os_group.GROUP_ID_ AS creatorDepId,
+        os_user.FULLNAME_ AS creator,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        jsgl_baseinfo
+        LEFT JOIN os_rel_inst ON jsgl_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = jsgl_baseinfo.CREATE_BY_
+        left join bpm_inst on jsgl_baseinfo.id=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="jstbTitle !=null and jstbTitle !=''">
+                and jsgl_baseinfo.jstbTitle like CONCAT('%',#{jstbTitle},'%')
+            </if>
+            <if test="jstbContent !=null and jstbContent !=''">
+                and jsgl_baseinfo.jstbContent like CONCAT('%',#{jstbContent},'%')
+            </if>
+            <if test="jstbId != null and jstbId != ''">
+                and jsgl_baseinfo.id=#{jstbId}
+            </if>
+            <if test="status != null and status != ''">
+                and jsgl_baseinfo.status=#{status}
+            </if>
+            <if test="publishTimeStart !=null and publishTimeStart !=''">
+                AND jsgl_baseinfo.CREATE_TIME_ &gt;= #{publishTimeStart}
+            </if>
+            <if test="publishTimeEnd !=null and publishTimeEnd !=''">
+                AND jsgl_baseinfo.CREATE_TIME_ &lt;= #{publishTimeEnd}
+            </if>
+            and (jsgl_baseinfo.isdelete!='yes' or jsgl_baseinfo.isdelete is null)
+        </where>
+        <include refid="orderBy"/>
+    </select>
+    <select id="queryJstbById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select jsgl_baseInfo.*,
+        jsgl_baseInfo.id as jstbId,
+        os_user.FULLNAME_,
+        bpm_inst.INST_ID_ as instId
+        from jsgl_baseInfo
+        left join os_user on jsgl_baseInfo.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on jsgl_baseInfo.id=bpm_inst.BUS_KEY_
+        where jsgl_baseInfo.id=#{jstbId}
+    </select>
+    <insert id="insertJstb" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO jsgl_baseinfo (
+        id,
+        numInfo,
+        jstbTitle,
+        jstbContent,
+        relatedDeptIds,
+        relatedDeptNames,
+        status,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{jstbId,jdbcType=VARCHAR},
+        #{numInfo,jdbcType=VARCHAR},
+        #{jstbTitle,jdbcType=VARCHAR},
+        #{jstbContent,jdbcType=VARCHAR},
+        #{relatedDeptIds,jdbcType=VARCHAR},
+        #{relatedDeptNames,jdbcType=VARCHAR},
+        #{status,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=TIMESTAMP},
+        #{CREATE_TIME_,jdbcType=VARCHAR},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateJstb" parameterType="com.alibaba.fastjson.JSONObject">
+        update jsgl_baseinfo
+        set
+        <if test="jstbTitle != null and jstbTitle != ''">
+            jstbTitle=#{jstbTitle,jdbcType=VARCHAR},
+        </if>
+        <if test="jstbTitle != null and jstbTitle != ''">
+            jstbContent=#{jstbContent,jdbcType=VARCHAR},
+        </if>
+        <if test="relatedDeptIds != null and relatedDeptIds != ''">
+            relatedDeptIds=#{relatedDeptIds,jdbcType=VARCHAR},
+        </if>
+        <if test="relatedDeptNames != null and relatedDeptNames != ''">
+            relatedDeptNames=#{relatedDeptNames,jdbcType=VARCHAR},
+        </if>
+        <if test="status != null and status != ''">
+            status=#{status,jdbcType=VARCHAR},
+        </if>
+        <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        </if>
+        <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </if>
+        where
+        id=#{jstbId}
+    </update>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jsgl_fileinfo(
+          id,
+          fileName,
+          fileSize,
+          belongTbId,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) values(
+          #{id,jdbcType=VARCHAR},
+          #{fileName,jdbcType=VARCHAR},
+          #{fileSize,jdbcType=VARCHAR},
+          #{belongTbId,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="countJsglList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        jsgl_baseinfo
+        LEFT JOIN os_rel_inst ON jsgl_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on jsgl_baseinfo.id=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="jstbTitle !=null and jstbTitle !=''">
+                and jsgl_baseinfo.jstbTitle=#{jstbTitle}
+            </if>
+            <if test="jstbId != null and jstbId != ''">
+                and jsgl_baseinfo.id=#{jstbId}
+            </if>
+            <if test="status != null and status != ''">
+                and jsgl_baseinfo.status=#{status}
+            </if>
+        </where>
+    </select>
+    <select id="countJsglNumber" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        jsgl_baseinfo
+        <where>
+            <if test="countnumInfo !=null and countnumInfo !=''">
+                numInfo is not null and numInfo !=''
+            </if>
+            <if test="applyTimeStart !=null and applyTimeStart !=''">
+                AND CREATE_TIME_ &gt;= #{applyTimeStart}
+            </if>
+        </where>
+    </select>
+    <select id="queryJstbFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        id as fileId,
+        fileName,
+        belongTbId as jstbId,
+        fileSize
+        FROM
+        jsgl_fileinfo
+        WHERE
+        <if test="jstbIds != null and jstbIds !=''">
+        belongTbId IN
+        <foreach collection="jstbIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+    </select>
+    <delete id="deleteJstbFile" parameterType="java.util.Map">
+        delete from jsgl_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="jstbIds != null and jstbIds !=''">
+                AND belongTbId IN
+                <foreach collection="jstbIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <update id="deleteJstb" parameterType="java.util.Map">
+        update jsgl_baseinfo
+        set isdelete = 'yes'
+        <where>
+            <if test="jstbIds != null and jstbIds !=''">
+                id IN
+                <foreach collection="jstbIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </update>
+    <update id="cancelJstb" parameterType="java.util.Map">
+        update jsgl_baseinfo
+        set status = '作废'
+        <where>
+            <if test="jstbIds != null and jstbIds !=''">
+                id IN
+                <foreach collection="jstbIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </update>
+
+    <insert id="addFileReaders" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jsgl_readinfo(
+          id,
+          belongTbId,
+          readUserId,
+          firstReadTime
+        ) values(
+          #{id,jdbcType=VARCHAR},
+          #{jstbId,jdbcType=VARCHAR},
+          #{readUserId,jdbcType=VARCHAR},
+          #{firstReadTime,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="queryReaders" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        jsgl_readinfo.*,
+        os_group.NAME_ as deptname,
+        os_user.FULLNAME_ AS readers
+        from jsgl_readinfo
+        LEFT JOIN os_user ON os_user.USER_ID_ = jsgl_readinfo.readUserId
+        LEFT JOIN os_rel_inst ON jsgl_readinfo.readUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        where
+        os_rel_inst.DIM1_ = '1'
+        and os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+        <if test="jstbIds != null and jstbIds != ''">
+            AND jsgl_readinfo.belongTbId IN
+            <foreach collection="jstbIds" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="readUserId != null and readUserId != ''">
+          and jsgl_readinfo.readUserId=#{readUserId}
+        </if>
+    </select>
+    <select id="jSXZtoDep" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        GROUP_ID_
+        from os_group
+        where DIM_ID_ = '1'
+        <if test="jszxDeptId != null and jszxDeptId != ''">
+            and PARENT_ID_=#{jszxDeptId}
+        </if>
+    </select>
+    <select id="isJSGLB" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        os_group.NAME_ as deptname
+        from os_group
+        LEFT JOIN os_rel_inst ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        where os_group.DIM_ID_ = '1'
+        and os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+        <if test="currentUserId != null and currentUserId != ''">
+            and os_user.USER_ID_=#{currentUserId}
+        </if>
+    </select>
+    <select id="queryJstbStatus" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        status
+        from jsgl_baseinfo
+        where
+        <if test="jstbId != null and jstbId != ''">
+            jsgl_baseinfo.id=#{jstbId}
+        </if>
+    </select>
+    <select id="queryTaskAll" parameterType="java.util.Map" resultType="java.util.Map">
+        select ID_ as taskId,
+        PROC_INST_ID_,
+        NAME_,
+        CREATE_TIME_
+        from act_ru_task
+        <where>
+            <if test="actInstIds != null and actInstIds != ''">
+                act_ru_task.PROC_INST_ID_ IN
+                <foreach collection="actInstIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+</mapper>

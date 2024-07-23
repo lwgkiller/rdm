@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.JsmmDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <update id="updateRDTime" parameterType="java.util.Map">
+        update jsmm_baseInfo
+        set
+            rdTime=#{rdTime,jdbcType=TIMESTAMP}
+        where
+            jsmmId=#{jsmmId}
+    </update>
+
+
+    <select id="queryJsmmList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            jsmm_baseinfo.*,
+            os_group.NAME_ AS applyUserDeptName,
+            os_user.FULLNAME_ AS applyUserName,
+            act_ru_task.NAME_ as currentProcessTask,
+            act_ru_task.ID_ as taskId,
+            bpm_inst.STATUS_ as status,
+            bpm_inst.INST_ID_ as instId
+        FROM
+            jsmm_baseinfo
+            LEFT JOIN os_rel_inst ON jsmm_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN os_user ON os_user.USER_ID_ = jsmm_baseinfo.CREATE_BY_
+            left join bpm_inst on jsmm_baseinfo.jsmmId=bpm_inst.BUS_KEY_
+            left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="jsmmNumber != null and jsmmNumber != ''">
+                AND jsmm_baseinfo.jsmmNumber like CONCAT('%',#{jsmmNumber},'%')
+            </if>
+            <if test="jsmmName != null and jsmmName != ''">
+                AND jsmm_baseinfo.jsmmName like CONCAT('%',#{jsmmName},'%')
+            </if>
+            <if test="applyUserId != null and applyUserId != ''">
+                AND jsmm_baseinfo.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="applyDepId != null and applyDepId != ''">
+                AND os_group.GROUP_ID_ = #{applyDepId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="whetherJL != null and whetherJL != ''">
+                AND jsmm_baseinfo.whetherJL = #{whetherJL}
+            </if>
+            <if test="rdTimeStart !=null and rdTimeStart !=''">
+                AND jsmm_baseinfo.rdTime &gt;= #{rdTimeStart}
+            </if>
+            <if test="rdTimeEnd !=null and rdTimeEnd !=''">
+                AND jsmm_baseinfo.rdTime &lt;= #{rdTimeEnd}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='fgld' or roleName =='zlgcs' or roleName =='jsglbRespUser'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR jsmm_baseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                    <when test="roleName =='deptRespUser'">
+                        AND (
+                        (bpm_inst.STATUS_ != 'DRAFTED'  AND os_group.GROUP_ID_ = #{deptId})
+                        OR
+                        (bpm_inst.STATUS_ = 'SUCCESS_END' AND FIND_IN_SET(#{currentUserId},jsmm_baseinfo.readUserIds))
+                        OR
+                        jsmm_baseinfo.CREATE_BY_ = #{currentUserId}
+                        )
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND (
+                        (bpm_inst.STATUS_ = 'SUCCESS_END' AND FIND_IN_SET(#{currentUserId},jsmm_baseinfo.readUserIds))
+                        OR
+                        jsmm_baseinfo.CREATE_BY_ = #{currentUserId}
+                        )
+                    </when>
+                </choose>
+            </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countJsmmList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+            count( * )
+        FROM
+        jsmm_baseinfo
+        LEFT JOIN os_rel_inst ON jsmm_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on jsmm_baseinfo.jsmmId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="countJsmmNumber !=null and countJsmmNumber !=''">
+                AND jsmmNumber is not null and jsmmNumber !=''
+            </if>
+            <if test="applyTimeStart !=null and applyTimeStart !=''">
+                AND jsmm_baseinfo.CREATE_TIME_ &gt;= #{applyTimeStart}
+            </if>
+            <if test="applyTimeEnd !=null and applyTimeEnd !=''">
+                AND jsmm_baseinfo.CREATE_TIME_ &lt;= #{applyTimeEnd}
+            </if>
+            <if test="jsmmNumber != null and jsmmNumber != ''">
+                AND jsmm_baseinfo.jsmmNumber like CONCAT('%',#{jsmmNumber},'%')
+            </if>
+            <if test="jsmmName != null and jsmmName != ''">
+                AND jsmm_baseinfo.jsmmName like CONCAT('%',#{jsmmName},'%')
+            </if>
+            <if test="applyUserId != null and applyUserId != ''">
+                AND jsmm_baseinfo.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="applyDepId != null and applyDepId != ''">
+                AND os_group.GROUP_ID_ = #{applyDepId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="whetherJL != null and whetherJL != ''">
+                AND jsmm_baseinfo.whetherJL = #{whetherJL}
+            </if>
+            <if test="rdTimeStart !=null and rdTimeStart !=''">
+                AND jsmm_baseinfo.rdTime &gt;= #{rdTimeStart}
+            </if>
+            <if test="rdTimeEnd !=null and rdTimeEnd !=''">
+                AND jsmm_baseinfo.rdTime &lt;= #{rdTimeEnd}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='fgld' or roleName =='zlgcs' or roleName =='jsglbRespUser'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR jsmm_baseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                    <when test="roleName =='deptRespUser'">
+                        AND (
+                        (bpm_inst.STATUS_ != 'DRAFTED'  AND os_group.GROUP_ID_ = #{deptId})
+                        OR
+                        (bpm_inst.STATUS_ = 'SUCCESS_END' AND FIND_IN_SET(#{currentUserId},jsmm_baseinfo.readUserIds))
+                        OR
+                        jsmm_baseinfo.CREATE_BY_ = #{currentUserId}
+                        )
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND (
+                        (bpm_inst.STATUS_ = 'SUCCESS_END' AND FIND_IN_SET(#{currentUserId},jsmm_baseinfo.readUserIds))
+                        OR
+                        jsmm_baseinfo.CREATE_BY_ = #{currentUserId}
+                        )
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryMaxJsmmNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            jsmm_baseinfo
+        WHERE
+            jsmm_baseinfo.CREATE_TIME_ &gt;= #{applyTimeStart}
+            AND jsmmNumber IS NOT NULL
+            AND jsmmNumber != ''
+        ORDER BY
+            SUBSTR( jsmmNumber, 11 ) + '' DESC
+            LIMIT 1
+    </select>
+
+    <insert id="insertJsmm" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jsmm_baseInfo(
+            jsmmId
+            ,jsmmName
+            ,jsmmNumber
+            ,projectNameNumber
+            ,jsfx
+            ,projectInfo
+            ,jscb
+            ,jsxjx
+            ,mmx
+            ,cygx
+            ,other
+            ,whetherJL
+            ,readUserIds
+            ,readUserNames
+            ,finishUserIds
+            ,finishUserNames
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{jsmmId,jdbcType=VARCHAR},
+            #{jsmmName,jdbcType=VARCHAR},
+            #{jsmmNumber,jdbcType=VARCHAR},
+            #{projectNameNumber,jdbcType=VARCHAR},
+            #{jsfx,jdbcType=VARCHAR},
+            #{projectInfo,jdbcType=VARCHAR},
+            #{jscb,jdbcType=VARCHAR},
+            #{jsxjx,jdbcType=VARCHAR},
+            #{mmx,jdbcType=VARCHAR},
+            #{cygx,jdbcType=VARCHAR},
+            #{other,jdbcType=VARCHAR},
+            #{whetherJL,jdbcType=VARCHAR},
+            #{readUserIds,jdbcType=VARCHAR},
+            #{readUserNames,jdbcType=VARCHAR},
+            #{finishUserIds,jdbcType=VARCHAR},
+            #{finishUserNames,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateJsmm" parameterType="com.alibaba.fastjson.JSONObject">
+        update jsmm_baseInfo
+        set
+            jsmmName=#{jsmmName,jdbcType=VARCHAR},
+            jsmmNumber=#{jsmmNumber,jdbcType=VARCHAR},
+            projectNameNumber=#{projectNameNumber,jdbcType=VARCHAR},
+            jsfx=#{jsfx,jdbcType=VARCHAR},
+            projectInfo=#{projectInfo,jdbcType=VARCHAR},
+            jscb=#{jscb,jdbcType=VARCHAR},
+            jsxjx=#{jsxjx,jdbcType=VARCHAR},
+            mmx=#{mmx,jdbcType=VARCHAR},
+            cygx=#{cygx,jdbcType=VARCHAR},
+            other=#{other,jdbcType=VARCHAR},
+            readUserIds=#{readUserIds,jdbcType=VARCHAR},
+            readUserNames=#{readUserNames,jdbcType=VARCHAR},
+            finishUserIds=#{finishUserIds,jdbcType=VARCHAR},
+            finishUserNames=#{finishUserNames,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=VARCHAR}
+        where
+            jsmmId=#{jsmmId}
+    </update>
+
+    <update id="updateJlInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        update jsmm_baseInfo
+        set
+          whetherJL=#{whetherJL,jdbcType=VARCHAR},
+          jlTime=#{jlTime,jdbcType=TIMESTAMP}
+        where
+          jsmmId=#{jsmmId}
+    </update>
+
+    <update id="updateNumber" parameterType="java.util.Map">
+        update jsmm_baseInfo
+        set
+          jsmmNumber=#{jsmmNumber,jdbcType=VARCHAR}
+        where
+          jsmmId=#{jsmmId}
+    </update>
+
+    <select id="queryJsmmById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select jsmm_baseInfo.*,os_user.FULLNAME_,bpm_inst.INST_ID_ as instId
+        from jsmm_baseInfo
+        left join os_user on jsmm_baseInfo.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on jsmm_baseinfo.jsmmId=bpm_inst.BUS_KEY_
+        where jsmm_baseInfo.jsmmId=#{jsmmId}
+    </select>
+
+    <select id="queryJsmmFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            jsmm_fileinfo.*,
+            jsmm_filetype.typeName
+        FROM
+            jsmm_fileinfo
+            LEFT JOIN jsmm_filetype ON jsmm_fileinfo.typeId = jsmm_filetype.typeId
+        WHERE
+            jsmm_fileinfo.jsmmId IN
+        <foreach collection="jsmmIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="queryJsmmFileTypes" resultType="com.alibaba.fastjson.JSONObject">
+      SELECT
+            *
+        FROM
+            jsmm_filetype
+    </select>
+
+    <insert id="addJsmmFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jsmm_fileInfo(
+        id
+        ,jsmmId
+        ,fileName
+        ,fileSize
+        ,typeId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{jsmmId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{typeId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteJsmmFile" parameterType="java.util.Map">
+        delete from jsmm_fileInfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="jsmmIds != null and jsmmIds !=''">
+                AND jsmmId IN
+                <foreach collection="jsmmIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteJsmm" parameterType="java.util.Map">
+        delete from jsmm_baseinfo
+        <where>
+            <if test="jsmmIds != null and jsmmIds !=''">
+                jsmmId IN
+                <foreach collection="jsmmIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+</mapper>

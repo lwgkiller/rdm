@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.info.core.dao.InfoUrlConfigDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.infoTypeName,
+        C.busTypeName
+        FROM
+        info_urlconfig A
+        LEFT JOIN info_typeconfig B ON A.infoTypeId = B.id
+        LEFT JOIN info_bustypeconfig C ON A.busTypeId = C.id
+        where
+        1=1
+        <if test="infoTypeId != null and infoTypeId != ''">
+            and B.id = #{infoTypeId}
+        </if>
+        <if test="busTypeId != null and busTypeId != ''">
+            and C.id = #{busTypeId}
+        </if>
+        <if test="infoChildType != null and infoChildType != ''">
+            and A.infoChildType like CONCAT('%',#{infoChildType},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO info_urlconfig (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            url,
+            infoTypeId,
+            busTypeId,
+            processClass,
+            infoChildType
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{url,jdbcType=VARCHAR},
+            #{infoTypeId,jdbcType=VARCHAR},
+            #{busTypeId,jdbcType=VARCHAR},
+            #{processClass,jdbcType=VARCHAR},
+            #{infoChildType,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update info_urlconfig
+        <set>
+            <if test="url != null and url != ''">
+                url=#{url,jdbcType=VARCHAR},
+            </if>
+            <if test="infoTypeId != null and infoTypeId != ''">
+                infoTypeId=#{infoTypeId,jdbcType=VARCHAR},
+            </if>
+            <if test="busTypeId != null and busTypeId != ''">
+                busTypeId=#{busTypeId,jdbcType=VARCHAR},
+            </if>
+            <if test="processClass != null and processClass != ''">
+                processClass=#{processClass,jdbcType=VARCHAR},
+            </if>
+            <if test="infoChildType != null and infoChildType != ''">
+                infoChildType=#{infoChildType,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+            <if test="asyncDate != null and asyncDate != ''">
+                asyncDate=#{asyncDate,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      select A.*,
+            B.infoTypeName,
+            C.busTypeName
+        FROM
+            info_urlconfig A
+            LEFT JOIN info_typeconfig B ON A.infoTypeId = B.id
+            LEFT JOIN info_bustypeconfig C ON A.busTypeId = C.id
+        where A.id = #{id}
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from info_urlconfig
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

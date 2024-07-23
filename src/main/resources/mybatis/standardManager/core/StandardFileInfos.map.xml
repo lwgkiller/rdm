@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardFileInfosDao">
+	<sql id="pageSql">
+		<if test="pageSize != null and pageSize != '' ">
+			<if test="currentIndex != null and currentIndex != '' ">
+				limit ${currentIndex}, ${pageSize}
+			</if>
+			<if test="currentIndex == null or currentIndex == '' ">
+				limit ${pageSize}
+			</if>
+		</if>
+	</sql>
+	<sql id="orderBy">
+		<if test="sortField != null and sortField != '' ">
+			<if test="sortOrder != null and sortOrder !='' ">
+				order by ${sortField} ${sortOrder}
+			</if>
+			<if test="sortOrder == null or sortOrder =='' ">
+				order by ${sortField}
+			</if>
+		</if>
+	</sql>
+	<update id="updateFileInfos" parameterType="java.util.Map">
+		update standard_fileinfos
+		<set>
+			<if test="processType != null and processType != ''">
+				status = #{processType}
+			</if>
+		</set>
+		<where>
+			<if test="ids != null and ids != ''">
+		    id IN
+				<foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</if>
+		</where>
+	</update>
+
+	<select id="getFiles" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+		standard_fileinfos.*,
+		standard_source.standardName,
+		standard_source.id as standardId,
+		os_user.FULLNAME_ AS creator,
+		standard_belongDep.belongDepName as standardBelongDeptName
+		FROM
+		standard_fileinfos
+		LEFT JOIN os_user ON standard_fileinfos.CREATE_BY_ = os_user.USER_ID_
+		left join standard_source on standard_fileinfos.standardId=standard_source.id
+		left join standard_system on standard_source.systemId=standard_system.id
+		left join standard_belongDep on standard_source.belongDepId=standard_belongDep.id
+		<where>
+			<if test="standardId != null and standardId != ''">
+				standard_fileinfos.standardId = #{standardId}
+			</if>
+			<if test="fileName != null and fileName != ''">
+				AND standard_fileinfos.fileName like concat('%', #{fileName},'%')
+			</if>
+			<if test="standardName != null and standardName != ''">
+				AND standard_source.standardName like concat('%', #{standardName},'%')
+			</if>
+			<if test="systemCategoryId != null and systemCategoryId != ''">
+				AND standard_system.systemCategoryId = #{systemCategoryId}
+			</if>
+			<if test="status != null and status != ''">
+				AND standard_fileinfos.status = #{status}
+			</if>
+			<if test="processId != null and processId != ''">
+				AND standard_fileinfos.id = #{processId}
+			</if>
+			<if test="currentUserId != null and currentUserId != ''">
+				AND (
+				standard_fileinfos.STATUS = 'reviewed'
+				OR ( standard_fileinfos.STATUS != 'reviewed' AND standard_fileinfos.CREATE_BY_ = #{currentUserId}))
+			</if>
+		</where>
+		order by CONVERT(standard_source.standardName using GBK),CONVERT(standard_fileinfos.fileName using GBK)
+		<if test='startIndex != null and startIndex != "" and pageSize != null and pageSize != ""'>
+			LIMIT ${startIndex}, ${pageSize}
+		</if>
+	</select>
+
+	<select id="countAttachFileNum" parameterType="java.util.Map" resultType="java.lang.Integer">
+		SELECT
+		count(*)
+		FROM
+		standard_fileinfos
+		left join standard_source on standard_fileinfos.standardId=standard_source.id
+		left join standard_system on standard_source.systemId=standard_system.id
+		<where>
+			<if test="standardId != null and standardId != ''">
+				standard_fileinfos.standardId = #{standardId}
+			</if>
+			<if test="fileName != null and fileName != ''">
+				AND standard_fileinfos.fileName like concat('%', #{fileName},'%')
+			</if>
+			<if test="systemCategoryId != null and systemCategoryId != ''">
+				AND standard_system.systemCategoryId = #{systemCategoryId}
+			</if>
+		</where>
+	</select>
+
+	<insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO standard_fileinfos
+		(
+		id,
+		fileName,
+		fileSize,
+		standardId,
+		fileDesc,
+		CREATE_BY_,
+		CREATE_TIME_,
+		UPDATE_BY_,
+		UPDATE_TIME_,
+		status,
+		processerId,
+		processer
+		)
+		VALUES
+		(
+			#{id,jdbcType=VARCHAR},
+			#{fileName,jdbcType=VARCHAR},
+			#{fileSize,jdbcType=VARCHAR},
+			#{standardId,jdbcType=VARCHAR},
+			#{fileDesc,jdbcType=VARCHAR},
+			#{CREATE_BY_,jdbcType=VARCHAR},
+			#{CREATE_TIME_,jdbcType=TIMESTAMP},
+			#{UPDATE_BY_,jdbcType=VARCHAR},
+			#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+			#{status,jdbcType=VARCHAR},
+			#{processerId,jdbcType=VARCHAR},
+			#{processer,jdbcType=VARCHAR}
+		)
+	</insert>
+
+	<delete id="deleteFileByIds" parameterType="java.util.Map">
+		delete from standard_fileinfos
+		where
+		id IN
+		<foreach collection="fileIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="deleteFileByStandardIds" parameterType="java.util.Map">
+		delete from standard_fileinfos
+		where
+		standardId IN
+		<foreach collection="standardIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+</mapper>

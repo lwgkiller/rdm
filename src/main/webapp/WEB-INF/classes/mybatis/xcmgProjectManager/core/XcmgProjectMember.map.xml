@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectMemberDao">
+	<insert id="createProjectMember" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO project_memberInfo
+		(
+			CREATE_BY_,
+			CREATE_TIME_,
+			id,
+			projectId,
+			projectTask,
+			workHour,
+			roleId,
+			roleRatio,
+			userId,
+			userValid,
+			memberDeptId,
+			memberDeptName,
+			respDeliveryIds,
+			respDeliveryNames
+		)
+		VALUES
+		(
+			#{createBy,jdbcType=VARCHAR},
+			#{createTime,jdbcType=TIMESTAMP},
+			#{id,jdbcType=VARCHAR},
+			#{projectId,jdbcType=VARCHAR},
+			#{projectTask,jdbcType=CLOB},
+			#{workHour,jdbcType=VARCHAR},
+			#{roleId,jdbcType=VARCHAR},
+			#{roleRatio,jdbcType=NUMERIC},
+			#{userId,jdbcType=VARCHAR},
+			#{userValid,jdbcType=VARCHAR},
+			#{memberDeptId,jdbcType=VARCHAR},
+			#{memberDeptName,jdbcType=VARCHAR},
+			#{respDeliveryIds,jdbcType=VARCHAR},
+			#{respDeliveryNames,jdbcType=VARCHAR}
+		)
+	</insert>
+
+	<update id="updateMember" parameterType="com.alibaba.fastjson.JSONObject">
+		UPDATE project_memberInfo
+		SET
+		userId=#{userId,jdbcType=VARCHAR},
+		roleId=#{roleId,jdbcType=VARCHAR},
+		projectTask=#{projectTask,jdbcType=CLOB},
+		roleRatio=#{roleRatio,jdbcType=NUMERIC},
+		finalRoleRatio=#{finalRoleRatio,jdbcType=NUMERIC},
+		userValid=#{userValid,jdbcType=VARCHAR},
+		memberDeptId=#{memberDeptId,jdbcType=VARCHAR},
+		memberDeptName=#{memberDeptName,jdbcType=VARCHAR},
+		respDeliveryIds=#{respDeliveryIds,jdbcType=VARCHAR},
+		respDeliveryNames=#{respDeliveryNames,jdbcType=VARCHAR},
+		workHour=#{workHour,jdbcType=VARCHAR},
+		UPDATE_BY_=#{updateBy,jdbcType=VARCHAR},
+		UPDATE_TIME_=#{updateTime,jdbcType=TIMESTAMP}
+		WHERE
+		id=#{id}
+	</update>
+
+	<delete id="removeMemberByIds" parameterType="com.alibaba.fastjson.JSONObject">
+		DELETE FROM project_memberInfo
+		WHERE
+		id in
+		<foreach collection="ids" open="(" close=")" separator="," item="item" index="index">
+            #{item}
+        </foreach>
+	</delete>
+
+	<delete id="delMemberByProjectId" parameterType="java.lang.String">
+	    DELETE FROM project_memberInfo
+	    WHERE
+	    projectId=#{projectId}
+	</delete>
+
+	<select id="getMemberByProjectId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+			project_memberInfo.*,
+			os_user.FULLNAME_ AS userName,
+			project_member_role.roleName
+		FROM
+			project_memberInfo
+		LEFT JOIN os_user ON project_memberinfo.userId = os_user.USER_ID_
+		LEFT JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+	    WHERE projectId=#{projectId}
+	    order by project_memberInfo.userValid,project_memberInfo.roleId
+	</select>
+
+</mapper>

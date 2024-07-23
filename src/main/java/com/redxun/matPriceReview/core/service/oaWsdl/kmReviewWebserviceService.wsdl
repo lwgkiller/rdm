@@ -1,0 +1,227 @@
+<?xml version='1.0' encoding='UTF-8'?><wsdl:definitions name="IKmReviewWebserviceServiceService" targetNamespace="http://webservice.review.km.kmss.landray.com/" xmlns:ns1="http://schemas.xmlsoap.org/soap/http" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://webservice.review.km.kmss.landray.com/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <wsdl:types>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://webservice.review.km.kmss.landray.com/" xmlns:tns="http://webservice.review.km.kmss.landray.com/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:complexType name="kmReviewResubmitParamterForm">
+<xs:sequence>
+<xs:element maxOccurs="unbounded" minOccurs="0" name="attachmentForms" nillable="true" type="tns:attachmentForm"/>
+<xs:element minOccurs="0" name="auditNote" type="xs:string"/>
+<xs:element minOccurs="0" name="docContent" type="xs:string"/>
+<xs:element minOccurs="0" name="docCreator" type="xs:string"/>
+<xs:element minOccurs="0" name="docSubject" type="xs:string"/>
+<xs:element minOccurs="0" name="fdId" type="xs:string"/>
+<xs:element minOccurs="0" name="flowParam" type="xs:string"/>
+<xs:element minOccurs="0" name="formValues" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+<xs:complexType name="attachmentForm">
+<xs:sequence>
+<xs:element minOccurs="0" name="fdKey" type="xs:string"/>
+<xs:element minOccurs="0" name="fdFileName" type="xs:string"/>
+<xs:element minOccurs="0" name="fdAttachment" ns1:expectedContentTypes="application/octet-stream" type="xs:base64Binary"/>
+</xs:sequence>
+</xs:complexType>
+<xs:complexType name="kmReviewParamterForm">
+<xs:sequence>
+<xs:element maxOccurs="unbounded" minOccurs="0" name="attachmentForms" nillable="true" type="tns:attachmentForm"/>
+<xs:element minOccurs="0" name="docContent" type="xs:string"/>
+<xs:element minOccurs="0" name="docCreator" type="xs:string"/>
+<xs:element minOccurs="0" name="docProperty" type="xs:string"/>
+<xs:element minOccurs="0" name="docStatus" type="xs:string"/>
+<xs:element minOccurs="0" name="docSubject" type="xs:string"/>
+<xs:element minOccurs="0" name="fdKeyword" type="xs:string"/>
+<xs:element minOccurs="0" name="fdTemplateId" type="xs:string"/>
+<xs:element minOccurs="0" name="flowParam" type="xs:string"/>
+<xs:element minOccurs="0" name="formValues" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+<xs:complexType name="kmReviewUpdateParamterForm">
+<xs:sequence>
+<xs:element maxOccurs="unbounded" minOccurs="0" name="attachmentForms" nillable="true" type="tns:attachmentForm"/>
+<xs:element minOccurs="0" name="fdId" type="xs:string"/>
+<xs:element minOccurs="0" name="formValues" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+<xs:complexType name="Exception">
+<xs:sequence>
+<xs:element minOccurs="0" name="message" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+<xs:element name="Exception" type="tns:Exception"/>
+<xs:element name="resubmitProcess" type="tns:resubmitProcess"/>
+<xs:complexType name="resubmitProcess">
+<xs:sequence>
+<xs:element minOccurs="0" name="arg0" type="tns:kmReviewResubmitParamterForm"/>
+</xs:sequence>
+</xs:complexType>
+<xs:element name="resubmitProcessResponse" type="tns:resubmitProcessResponse"/>
+<xs:complexType name="resubmitProcessResponse">
+<xs:sequence>
+<xs:element minOccurs="0" name="return" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+<xs:element name="addReview" type="tns:addReview"/>
+<xs:complexType name="addReview">
+<xs:sequence>
+<xs:element minOccurs="0" name="arg0" type="tns:kmReviewParamterForm"/>
+</xs:sequence>
+</xs:complexType>
+<xs:element name="addReviewResponse" type="tns:addReviewResponse"/>
+<xs:complexType name="addReviewResponse">
+<xs:sequence>
+<xs:element minOccurs="0" name="return" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+<xs:element name="updateReview" type="tns:updateReview"/>
+<xs:complexType name="updateReview">
+<xs:sequence>
+<xs:element minOccurs="0" name="arg0" type="tns:kmReviewUpdateParamterForm"/>
+</xs:sequence>
+</xs:complexType>
+<xs:element name="updateReviewResponse" type="tns:updateReviewResponse"/>
+<xs:complexType name="updateReviewResponse">
+<xs:sequence>
+<xs:element minOccurs="0" name="return" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+<xs:element name="findOpinion" type="tns:findOpinion"/>
+<xs:complexType name="findOpinion">
+<xs:sequence>
+<xs:element minOccurs="0" name="arg0" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+<xs:element name="findOpinionResponse" type="tns:findOpinionResponse"/>
+<xs:complexType name="findOpinionResponse">
+<xs:sequence>
+<xs:element minOccurs="0" name="return" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+</xs:schema>
+
+  </wsdl:types>
+  <wsdl:message name="addReview">
+    <wsdl:part element="tns:addReview" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="resubmitProcessResponse">
+    <wsdl:part element="tns:resubmitProcessResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="addReviewResponse">
+    <wsdl:part element="tns:addReviewResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="Exception">
+    <wsdl:part element="tns:Exception" name="Exception">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="resubmitProcess">
+    <wsdl:part element="tns:resubmitProcess" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="findOpinionResponse">
+    <wsdl:part element="tns:findOpinionResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="findOpinion">
+    <wsdl:part element="tns:findOpinion" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="updateReviewResponse">
+    <wsdl:part element="tns:updateReviewResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="updateReview">
+    <wsdl:part element="tns:updateReview" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="IKmReviewWebserviceService">
+    <wsdl:operation name="resubmitProcess">
+      <wsdl:input message="tns:resubmitProcess" name="resubmitProcess">
+    </wsdl:input>
+      <wsdl:output message="tns:resubmitProcessResponse" name="resubmitProcessResponse">
+    </wsdl:output>
+      <wsdl:fault message="tns:Exception" name="Exception">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="addReview">
+      <wsdl:input message="tns:addReview" name="addReview">
+    </wsdl:input>
+      <wsdl:output message="tns:addReviewResponse" name="addReviewResponse">
+    </wsdl:output>
+      <wsdl:fault message="tns:Exception" name="Exception">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="updateReview">
+      <wsdl:input message="tns:updateReview" name="updateReview">
+    </wsdl:input>
+      <wsdl:output message="tns:updateReviewResponse" name="updateReviewResponse">
+    </wsdl:output>
+      <wsdl:fault message="tns:Exception" name="Exception">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="findOpinion">
+      <wsdl:input message="tns:findOpinion" name="findOpinion">
+    </wsdl:input>
+      <wsdl:output message="tns:findOpinionResponse" name="findOpinionResponse">
+    </wsdl:output>
+      <wsdl:fault message="tns:Exception" name="Exception">
+    </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="IKmReviewWebserviceServiceServiceSoapBinding" type="tns:IKmReviewWebserviceService">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="resubmitProcess">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="resubmitProcess">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="resubmitProcessResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="Exception">
+        <soap:fault name="Exception" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="addReview">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="addReview">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="addReviewResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="Exception">
+        <soap:fault name="Exception" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="updateReview">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="updateReview">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="updateReviewResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="Exception">
+        <soap:fault name="Exception" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="findOpinion">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="findOpinion">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="findOpinionResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="Exception">
+        <soap:fault name="Exception" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="IKmReviewWebserviceServiceService">
+    <wsdl:port binding="tns:IKmReviewWebserviceServiceServiceSoapBinding" name="IKmReviewWebserviceServicePort">
+      <soap:address location="https://10.1.1.157/sys/webservice/kmReviewWebserviceService"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

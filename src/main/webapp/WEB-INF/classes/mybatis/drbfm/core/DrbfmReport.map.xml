@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.drbfm.core.dao.DrbfmReportDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryQuotaReportList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_total_baseinfo.jixing,
+            drbfm_total_struct.structNumber,
+            drbfm_total_struct.structName,
+            drbfm_single_quota.quotaName,
+            drbfm_single_quota.sjStandardValue,
+            drbfm_single_quota.validStatus,
+            drbfm_single_quota.sjStandardIds,
+            drbfm_single_quota.testStandardIds,
+            drbfm_single_quota.evaluateStandardIds,
+            os_user.FULLNAME_ AS creator,
+            drbfm_single_quota.CREATE_TIME_,
+            T.maxlv
+        FROM
+            drbfm_single_quota
+            LEFT JOIN drbfm_single_baseinfo ON drbfm_single_quota.belongSingleId = drbfm_single_baseinfo.id
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+            LEFT JOIN drbfm_total_baseinfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+            LEFT JOIN os_user on drbfm_single_quota.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN (
+            SELECT
+            sxyyId,
+            max( txlevel ) maxlv
+            FROM
+            (
+            SELECT
+            drbfm_single_fxpg.sxyyId,
+            drbfm_single_fxpg.fsd,
+            drbfm_single_fxpg.partId,
+            pg1.yzd,
+            CASE
+            WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 8 THEN "4"
+            WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 6 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 9 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &gt;= 4 THEN "3"
+            WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 6 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 9 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &lt; 4 THEN "1"
+            WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 4 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 7 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &gt;= 5 THEN "3"
+            WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 4 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 7 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &lt; 5 THEN "1"
+            WHEN pg1.yzd IS NULL OR drbfm_single_fxpg.fsd IS NULL THEN "0" ELSE "2"
+            END AS txlevel
+            FROM
+            drbfm_single_fxpg
+            LEFT JOIN drbfm_single_fxpg pg1 ON drbfm_single_fxpg.sxmsId = pg1.sxmsId
+            WHERE
+            drbfm_single_fxpg.sxyyId IS NOT NULL
+            AND pg1.sxyyId IS NULL
+            ) r
+            GROUP BY
+            sxyyId
+            ) T ON drbfm_single_quota.relSxmsId = T.sxyyId
+        <where>
+            <if test="jixing != null and jixing !=''">
+                drbfm_total_baseinfo.jixing like concat('%',#{jixing},'%')
+            </if>
+            <if test="structName != null and structName !=''">
+                AND drbfm_total_struct.structName like concat('%',#{structName},'%')
+            </if>
+            <if test="quotaName != null and quotaName !=''">
+                AND drbfm_single_quota.quotaName like concat('%',#{quotaName},'%')
+            </if>
+            <if test="validStatus != null and validStatus !=''">
+                AND drbfm_single_quota.validStatus = #{validStatus}
+            </if>
+            <if test="sjStandardId != null and sjStandardId !=''">
+                AND FIND_IN_SET(#{sjStandardId},drbfm_single_quota.sjStandardIds)
+            </if>
+            <if test="testStandardId != null and testStandardId !=''">
+                AND FIND_IN_SET(#{testStandardId},drbfm_single_quota.testStandardIds)
+            </if>
+            <if test="evaluateStandardId != null and evaluateStandardId !=''">
+                AND FIND_IN_SET(#{evaluateStandardId},drbfm_single_quota.evaluateStandardIds)
+            </if>
+            <if test="maxlv != null and maxlv !=''">
+                AND maxlv=#{maxlv}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countQuotaReport" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        drbfm_single_quota
+        LEFT JOIN drbfm_single_baseinfo ON drbfm_single_quota.belongSingleId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseinfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN os_user on drbfm_single_quota.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN (
+        SELECT
+        sxyyId,
+        max( txlevel ) maxlv
+        FROM
+        (
+        SELECT
+        drbfm_single_fxpg.sxyyId,
+        drbfm_single_fxpg.fsd,
+        drbfm_single_fxpg.partId,
+        pg1.yzd,
+        CASE
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 8 THEN "4"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 6 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 9 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &gt;= 4 THEN "3"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 6 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 9 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &lt; 4 THEN "1"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 4 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 7 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &gt;= 5 THEN "3"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 4 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 7 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &lt; 5 THEN "1"
+        WHEN pg1.yzd IS NULL OR drbfm_single_fxpg.fsd IS NULL THEN "0" ELSE "2"
+        END AS txlevel
+        FROM
+        drbfm_single_fxpg
+        LEFT JOIN drbfm_single_fxpg pg1 ON drbfm_single_fxpg.sxmsId = pg1.sxmsId
+        WHERE
+        drbfm_single_fxpg.sxyyId IS NOT NULL
+        AND pg1.sxyyId IS NULL
+        ) r
+        GROUP BY
+        sxyyId
+        ) T ON drbfm_single_quota.relSxmsId = T.sxyyId
+        <where>
+            <if test="jixing != null and jixing !=''">
+                drbfm_total_baseinfo.jixing like concat('%',#{jixing},'%')
+            </if>
+            <if test="structName != null and structName !=''">
+                AND drbfm_total_struct.structName like concat('%',#{structName},'%')
+            </if>
+            <if test="quotaName != null and quotaName !=''">
+                AND drbfm_single_quota.quotaName like concat('%',#{quotaName},'%')
+            </if>
+            <if test="validStatus != null and validStatus !=''">
+                AND drbfm_single_quota.validStatus = #{validStatus}
+            </if>
+            <if test="sjStandardId != null and sjStandardId !=''">
+                AND FIND_IN_SET(#{sjStandardId},drbfm_single_quota.sjStandardIds)
+            </if>
+            <if test="testStandardId != null and testStandardId !=''">
+                AND FIND_IN_SET(#{testStandardId},drbfm_single_quota.testStandardIds)
+            </if>
+            <if test="evaluateStandardId != null and evaluateStandardId !=''">
+                AND FIND_IN_SET(#{evaluateStandardId},drbfm_single_quota.evaluateStandardIds)
+            </if>
+            <if test="maxlv != null and maxlv !=''">
+                AND maxlv=#{maxlv}
+            </if>
+        </where>
+    </select>
+
+</mapper>

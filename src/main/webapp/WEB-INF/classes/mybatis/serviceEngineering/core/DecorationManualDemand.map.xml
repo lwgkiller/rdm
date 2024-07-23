@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.DecorationManualDemandDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="busunessNo !=null and busunessNo !=''">
+            AND business.busunessNo like CONCAT('%',#{busunessNo},'%')
+        </if>
+        <if test="salesModel !=null and salesModel !=''">
+            AND business.salesModel like CONCAT('%',#{salesModel},'%')
+        </if>
+        <if test="designModel !=null and designModel !=''">
+            AND business.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND business.materialCode = #{materialCode}
+        </if>
+        <if test="salesArea !=null and salesArea !=''">
+            AND business.salesArea like CONCAT('%',#{salesArea},'%')
+        </if>
+        <if test="salesCountry !=null and salesCountry !=''">
+            AND business.salesCountry like CONCAT('%',#{salesCountry},'%')
+        </if>
+        <if test="applyUser !=null and applyUser !=''">
+            AND business.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="applyDep !=null and applyDep !=''">
+            AND business.applyDep like CONCAT('%',#{applyDep},'%')
+        </if>
+        <if test="businessStatus !=null and businessStatus !=''">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <!--特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst.INST_ID_ AS instId。其实现在没必要了，可以用business.INST_ID_取代-->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        service_engineering_decoration_manualdemand AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_decoration_manualdemand AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from service_engineering_decoration_manualdemandfileinfo
+        where mainId IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <delete id="deleteBusinessFile" parameterType="java.util.Map">
+        delete from service_engineering_decoration_manualdemandfileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from service_engineering_decoration_manualdemand
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteItem" parameterType="java.util.Map">
+        delete from service_engineering_decoration_manualdemand_item
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <update id="updateItem" parameterType="java.util.Map">
+        update service_engineering_decoration_manualdemand_item
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        manualLanguage=#{manualLanguage,jdbcType=VARCHAR},
+        manualCode=#{manualCode,jdbcType=VARCHAR},
+        manualType=#{manualType,jdbcType=VARCHAR},
+        repUserId=#{repUserId,jdbcType=VARCHAR},
+        repUser=#{repUser,jdbcType=VARCHAR},
+        accomplishTime=#{accomplishTime,jdbcType=VARCHAR},
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <insert id="insertItem" parameterType="java.util.Map">
+        insert into service_engineering_decoration_manualdemand_item(
+        id,
+        mainId,
+        manualLanguage,
+        manualCode,
+        manualType,
+        repUserId,
+        repUser,
+        accomplishTime,
+        businessStatus,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{manualLanguage,jdbcType=VARCHAR},
+        #{manualCode,jdbcType=VARCHAR},
+        #{manualType,jdbcType=VARCHAR},
+        #{repUserId,jdbcType=VARCHAR},
+        #{repUser,jdbcType=VARCHAR},
+        #{accomplishTime,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!--和组织，用户，bpm_inst的关联没啥用了。业务表冗余存储了，此处还保留，供以后其他的参考。特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst-->
+    <select id="queryDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM service_engineering_decoration_manualdemand AS business
+            LEFT JOIN os_user ON business.applyUserId = os_user.USER_ID_
+            LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+              AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+              AND os_rel_inst.DIM1_ = '1'
+    </select>
+    <!---->
+    <select id="queryItemDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_decoration_manualdemand_item
+        WHERE id = #{businessId}
+    </select>
+    <!---->
+    <select id="queryItemList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT service_engineering_decoration_manualdemand_item.*,
+        service_engineering_decoration_manualdemand.busunessNo,
+        service_engineering_decoration_manualdemand.salesModel,
+        service_engineering_decoration_manualdemand.designModel,
+        service_engineering_decoration_manualdemand.materialCode
+        FROM service_engineering_decoration_manualdemand_item
+        INNER JOIN  service_engineering_decoration_manualdemand
+        ON service_engineering_decoration_manualdemand_item.mainId=service_engineering_decoration_manualdemand.id
+        <where>
+            <if test="@Ognl@isNotEmpty(mainId)">
+                AND mainId = #{mainId,jdbcType=VARCHAR}
+            </if>
+            <if test="@Ognl@isNotEmpty(repUserId)">
+                AND repUserId = #{repUserId,jdbcType=VARCHAR}
+            </if>
+            <if test="@Ognl@isNotEmpty(mainIds)">
+                AND mainId IN
+                <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(all)">
+                AND 1=1
+            </if>
+            <if test="@Ognl@isEmpty(mainId) and @Ognl@isEmpty(repUserId) and @Ognl@isEmpty(mainIds) and @Ognl@isEmpty(all)">
+                AND 1=2
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_decoration_manualdemand(
+            id,
+            busunessNo,
+            salesModel,
+            designModel,
+            materialCode,
+            salesArea,
+            salesCountry,
+            configurationDescription,
+            applyTime,
+            publishTime,
+            cpzgId,
+            cpzgName,
+            applyUserId,
+            applyUser,
+            applyDepId,
+            applyDep,
+            businessStatus,
+            remark,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{busunessNo,jdbcType=VARCHAR},
+            #{salesModel,jdbcType=VARCHAR},
+            #{designModel,jdbcType=VARCHAR},
+            #{materialCode,jdbcType=VARCHAR},
+            #{salesArea,jdbcType=VARCHAR},
+            #{salesCountry,jdbcType=VARCHAR},
+            #{configurationDescription,jdbcType=VARCHAR},
+            #{applyTime,jdbcType=VARCHAR},
+            #{publishTime,jdbcType=VARCHAR},
+            #{cpzgId,jdbcType=VARCHAR},
+            #{cpzgName,jdbcType=VARCHAR},
+            #{applyUserId,jdbcType=VARCHAR},
+            #{applyUser,jdbcType=VARCHAR},
+            #{applyDepId,jdbcType=VARCHAR},
+            #{applyDep,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_decoration_manualdemand
+        set
+            busunessNo=#{busunessNo,jdbcType=VARCHAR},
+            salesModel=#{salesModel,jdbcType=VARCHAR},
+            designModel=#{designModel,jdbcType=VARCHAR},
+            materialCode=#{materialCode,jdbcType=VARCHAR},
+            salesArea=#{salesArea,jdbcType=VARCHAR},
+            salesCountry=#{salesCountry,jdbcType=VARCHAR},
+            configurationDescription=#{configurationDescription,jdbcType=VARCHAR},
+            applyTime=#{applyTime,jdbcType=VARCHAR},
+            publishTime=#{publishTime,jdbcType=VARCHAR},
+            cpzgId=#{cpzgId,jdbcType=VARCHAR},
+            cpzgName=#{cpzgName,jdbcType=VARCHAR},
+            applyUserId=#{applyUserId,jdbcType=VARCHAR},
+            applyUser=#{applyUser,jdbcType=VARCHAR},
+            applyDepId=#{applyDepId,jdbcType=VARCHAR},
+            applyDep=#{applyDep,jdbcType=VARCHAR},
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=VARCHAR},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_decoration_manualdemandfileinfo(
+        id,
+        fileName,
+        fileSize,
+        fileDesc,
+        mainId,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+</mapper>

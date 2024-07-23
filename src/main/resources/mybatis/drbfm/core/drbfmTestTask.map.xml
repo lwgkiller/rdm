@@ -1,0 +1,543 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.drbfm.core.dao.DrbfmTestTaskDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryTestTaskList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+    SELECT
+        drbfm_single_testTask.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        drbfm_total_struct.structName,
+        drbfm_total_baseInfo.analyseName,
+        drbfm_total_baseInfo.jixing,
+        drbfm_total_struct.analyseUserName,
+        drbfm_verifyAbilityList.abilityName
+        FROM
+        drbfm_single_testTask
+        LEFT JOIN drbfm_verifyAbilityList ON drbfm_single_testTask.verifyAbilityId = drbfm_verifyAbilityList.id
+        left join bpm_inst on drbfm_single_testTask.id=bpm_inst.BUS_KEY_
+        left join drbfm_single_baseinfo on drbfm_single_testTask.belongSingleId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            1=1
+            <if test="verifyAbilityIds != null and verifyAbilityIds != ''">
+                AND drbfm_single_testTask.verifyAbilityId IN
+                <foreach collection="verifyAbilityIds" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="testNumber != null and testNumber != ''">
+                AND drbfm_single_testTask.testNumber like CONCAT('%',#{testNumber},'%')
+            </if>
+            <if test="structType != null and structType != ''">
+                AND drbfm_single_baseinfo.structType = #{structType}
+            </if>
+            <if test="jixing != null and jixing != ''">
+                AND drbfm_total_baseInfo.jixing like CONCAT('%',#{jixing},'%')
+            </if>
+            <if test="analyseName != null and analyseName != ''">
+                and drbfm_total_baseInfo.analyseName like CONCAT('%',#{analyseName},'%')
+            </if>
+            <if test="structName != null and structName != ''">
+                and drbfm_total_struct.structName like CONCAT('%',#{structName},'%')
+            </if>
+            <if test="analyseUserName != null and analyseUserName != ''">
+                and drbfm_total_struct.analyseUserName like CONCAT('%',#{analyseUserName},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND drbfm_single_testTask.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="respDeptName != null and respDeptName != ''">
+                AND drbfm_single_testTask.respDeptName like CONCAT('%',#{respDeptName},'%')
+            </if>
+            <if test="testRespUserName != null and testRespUserName != ''">
+                AND drbfm_single_testTask.testRespUserName like CONCAT('%',#{testRespUserName},'%')
+            </if>
+            <if test="belongSingleId != null and belongSingleId != ''">
+                AND drbfm_single_testTask.belongSingleId = #{belongSingleId}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_ = #{instStatus}
+            </if>
+            <if test="instStatuses != null and instStatuses != ''">
+                AND bpm_inst.STATUS_ IN
+                <foreach collection="instStatuses" index="index" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR
+                        drbfm_single_testTask.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+            <if test="abilityName != null and abilityName != ''">
+                AND drbfm_verifyAbilityList.abilityName like CONCAT('%',#{abilityName},'%')
+            </if>
+            <if test="testType != null and testType != ''">
+                AND drbfm_single_testTask.testType = #{testType}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countTestTaskList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM
+        drbfm_single_testTask
+        LEFT JOIN drbfm_verifyAbilityList ON drbfm_single_testTask.verifyAbilityId = drbfm_verifyAbilityList.id
+        left join bpm_inst on drbfm_single_testTask.id=bpm_inst.BUS_KEY_
+        left join drbfm_single_baseinfo on drbfm_single_testTask.belongSingleId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        <where>
+            <if test="verifyAbilityIds != null and verifyAbilityIds != ''">
+                drbfm_single_testTask.verifyAbilityId IN
+                <foreach collection="verifyAbilityIds" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="testNumber != null and testNumber != ''">
+                AND drbfm_single_testTask.testNumber like CONCAT('%',#{testNumber},'%')
+            </if>
+            <if test="structType != null and structType != ''">
+                AND drbfm_single_baseinfo.structType like CONCAT('%',#{structType},'%')
+            </if>
+            <if test="jixing != null and jixing != ''">
+                AND drbfm_total_baseInfo.jixing like CONCAT('%',#{jixing},'%')
+            </if>
+            <if test="analyseName != null and analyseName != ''">
+                and drbfm_total_baseInfo.analyseName like CONCAT('%',#{analyseName},'%')
+            </if>
+            <if test="structName != null and structName != ''">
+                and drbfm_total_struct.structName like CONCAT('%',#{structName},'%')
+            </if>
+            <if test="analyseUserName != null and analyseUserName != ''">
+                and drbfm_total_struct.analyseUserName like CONCAT('%',#{analyseUserName},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND drbfm_single_testTask.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="respDeptName != null and respDeptName != ''">
+                AND drbfm_single_testTask.respDeptName like CONCAT('%',#{respDeptName},'%')
+            </if>
+            <if test="testRespUserName != null and testRespUserName != ''">
+                AND drbfm_single_testTask.testRespUserName like CONCAT('%',#{testRespUserName},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_ = #{instStatus}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR
+                        drbfm_single_testTask.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+            <if test="abilityName != null and abilityName != ''">
+                AND drbfm_verifyAbilityList.abilityName like CONCAT('%',#{abilityName},'%')
+            </if>
+            <if test="testType != null and testType != ''">
+                AND drbfm_single_testTask.testType = #{testType}
+            </if>
+        </where>
+
+    </select>
+
+
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        drbfm_single_testTask.*,
+        bpm_inst.INST_ID_ as instId,
+        drbfm_verifyAbilityList.abilityName
+        from
+        drbfm_single_testTask left join bpm_inst on drbfm_single_testTask.id=bpm_inst.BUS_KEY_
+        left join drbfm_verifyAbilityList on drbfm_verifyAbilityList.id = drbfm_single_testTask.verifyAbilityId
+        where
+        drbfm_single_testTask.id =#{id}
+    </select>
+
+
+    <insert id="insertTestTask" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_testTask(
+        id
+        ,testType
+        ,testNumber
+        ,belongSingleId
+        ,verifyAbilityId
+        ,verifyTypeNo
+        ,suggestAddVerifyType
+        ,respDeptId
+        ,respDeptName
+        ,testRespSZRId
+        ,testRespSZRName
+        ,testRespUserId
+        ,testRespUserName
+        ,testPlanStartTime
+        ,testPlanEndTime
+        ,testContent
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR}
+        ,#{testType,jdbcType=VARCHAR}
+        ,#{testNumber,jdbcType=VARCHAR}
+        ,#{belongSingleId,jdbcType=VARCHAR}
+        ,#{verifyAbilityId,jdbcType=VARCHAR}
+        ,#{verifyTypeNo,jdbcType=VARCHAR}
+        ,#{suggestAddVerifyType,jdbcType=VARCHAR}
+        ,#{respDeptId,jdbcType=VARCHAR}
+        ,#{respDeptName,jdbcType=VARCHAR}
+        ,#{testRespSZRId,jdbcType=VARCHAR}
+        ,#{testRespSZRName,jdbcType=VARCHAR}
+        ,#{testRespUserId,jdbcType=VARCHAR}
+        ,#{testRespUserName,jdbcType=VARCHAR}
+        ,#{testPlanStartTime,jdbcType=VARCHAR}
+        ,#{testPlanEndTime,jdbcType=VARCHAR}
+        ,#{testContent,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <update id="updateTestTask" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_testTask
+        set
+        testType=#{testType,jdbcType=VARCHAR},
+        testNumber=#{testNumber,jdbcType=VARCHAR},
+        verifyAbilityId=#{verifyAbilityId,jdbcType=VARCHAR},
+        verifyTypeNo=#{verifyTypeNo,jdbcType=VARCHAR},
+        suggestAddVerifyType=#{suggestAddVerifyType,jdbcType=VARCHAR},
+        respDeptId=#{respDeptId,jdbcType=VARCHAR},
+        respDeptName=#{respDeptName,jdbcType=VARCHAR},
+        testRespUserId=#{testRespUserId,jdbcType=VARCHAR},
+        testRespUserName=#{testRespUserName,jdbcType=VARCHAR},
+        testPlanStartTime=#{testPlanStartTime,jdbcType=VARCHAR},
+        testPlanEndTime=#{testPlanEndTime,jdbcType=VARCHAR},
+        testContent=#{testContent,jdbcType=VARCHAR},
+        testRespSZRId = #{testRespSZRId,jdbcType=VARCHAR},
+        testRespSZRName = #{testRespSZRName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteTestTask" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_testTask
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+    <insert id="insertDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_testFile(
+        id
+        ,belongSingleId
+        ,relTestTaskId
+        ,fileType
+        ,fileName
+        ,fileSize
+        ,fileDesc
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        ,relQuotaId
+        ,relDemandId
+        ,requestId
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{belongSingleId,jdbcType=VARCHAR}
+        ,#{relTestTaskId,jdbcType=VARCHAR}
+        ,#{fileType,jdbcType=VARCHAR}
+        ,#{fileName,jdbcType=VARCHAR}
+        ,#{fileSize,jdbcType=VARCHAR}
+        ,#{fileDesc,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        ,#{relQuotaId,jdbcType=VARCHAR}
+        ,#{relDemandId,jdbcType=VARCHAR}
+        ,#{requestId,jdbcType=VARCHAR}
+        )
+    </insert>
+
+
+    <delete id="deleteDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_testFile
+        <where>
+            <if test="id != null and id != ''">
+                id = #{id}
+            </if>
+            <if test="belongSingleIds != null and belongSingleIds != ''">
+                AND belongSingleId in
+                <foreach collection="belongSingleIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND relTestTaskId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="relQuotaIds != null and relQuotaIds != ''">
+                AND relQuotaId in
+                <foreach collection="relQuotaIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="requestIds != null and requestIds != ''">
+                AND requestId in
+                <foreach collection="requestIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+    <select id="queryDemandList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        drbfm_single_testFile.*,
+        os_user.FULLNAME_ AS creator
+        from drbfm_single_testFile
+        left join os_user on drbfm_single_testFile.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="applyId !=null and applyId !=''">
+                relTestTaskId = #{applyId}
+            </if>
+            <if test="id !=null and id !=''">
+                AND id = #{id}
+            </if>
+            <if test="fileType !=null and fileType !=''">
+                AND fileType = #{fileType}
+            </if>
+            <if test="relQuotaId !=null and relQuotaId !=''">
+                AND relQuotaId = #{relQuotaId}
+            </if>
+            <if test="relDemandId !=null and relDemandId !=''">
+                AND relDemandId = #{relDemandId}
+            </if>
+            <if test="requestId !=null and requestId !=''">
+                AND requestId = #{requestId}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryExpFileList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        drbfm_single_testFile.*,
+        os_user.FULLNAME_ AS creator
+        from drbfm_single_testFile
+        left join os_user on drbfm_single_testFile.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="belongSingleId !=null and belongSingleId !=''">
+                belongSingleId = #{belongSingleId}
+                AND ( requestId IS NULL OR requestId = "" )
+                AND ( relQuotaId IS NULL OR relQuotaId = "" )
+                AND ( relDemandId IS NULL OR relDemandId = "" )
+                AND ( relTestTaskId IS NULL OR relTestTaskId = "")
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertTestTaskDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_testData(
+        id
+        ,belongSingleId
+        ,relTestTaskId
+        ,relQuotaId
+        ,quotaTestValue
+        ,testResult
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{belongSingleId,jdbcType=VARCHAR}
+        ,#{relTestTaskId,jdbcType=VARCHAR}
+        ,#{relQuotaId,jdbcType=VARCHAR}
+        ,#{quotaTestValue,jdbcType=VARCHAR}
+        ,#{testResult,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <delete id="deleteTestTaskDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_testData
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND relTestTaskId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+    <select id="queryTestTaskDemandList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        drbfm_single_testData.*
+        ,drbfm_single_quota.*
+        from drbfm_single_testData
+        left join drbfm_single_quota on drbfm_single_quota.id = drbfm_single_testData.relQuotaId
+        <where>
+            <if test="applyId !=null and applyId !=''">
+                relTestTaskId = #{applyId}
+            </if>
+        </where>
+    </select>
+
+
+
+    <update id="updateTestTaskDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_testData
+        set
+        relQuotaId=#{relQuotaId,jdbcType=VARCHAR},
+        quotaTestValue=#{quotaTestValue,jdbcType=VARCHAR},
+        testResult=#{testResult,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+
+    <select id="queryStandardIds" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        id,
+        standardName,
+        standardNumber
+        FROM
+        standard_source
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryQuotaTestData" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_testdata.*,
+            drbfm_single_testtask.testNumber,
+            drbfm_single_testtask.testRespUserName,
+            drbfm_single_testtask.testActualEndTime,
+            drbfm_single_testtask.testType,
+            bpm_inst.STATUS_ as status
+        FROM
+            drbfm_single_testdata
+            LEFT JOIN drbfm_single_testtask ON drbfm_single_testdata.relTestTaskId = drbfm_single_testtask.id
+            left join bpm_inst on drbfm_single_testtask.id = bpm_inst.BUS_KEY_
+        <where>
+            <if test="belongSingleId != null and belongSingleId !=''">
+                drbfm_single_testdata.belongSingleId = #{belongSingleId}
+            </if>
+            <if test="relQuotaId != null and relQuotaId !=''">
+                AND drbfm_single_testdata.relQuotaId = #{relQuotaId}
+            </if>
+            <if test="instStatuses != null and instStatuses != ''">
+                AND bpm_inst.STATUS_ IN
+                <foreach collection="instStatuses" index="index" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <update id="updateTestTaskNumber" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_testTask
+        set
+        testNumber=#{applyNumber,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+    <update id="updateTestActualEndTime" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_testTask
+        set
+        testActualEndTime=#{testActualEndTime,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+
+    <select id="queryTestInfoForQuotaExport" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_testdata.relQuotaId,
+        drbfm_verifyabilitylist.abilityName,
+        drbfm_single_testtask.testContent,
+        drbfm_single_testdata.quotaTestValue,
+        drbfm_single_testdata.testResult,
+        tmp.nextWorkContentConcat
+        FROM
+        `drbfm_single_testdata`
+        LEFT JOIN drbfm_single_testtask ON drbfm_single_testdata.relTestTaskId = drbfm_single_testtask.id
+        LEFT JOIN drbfm_verifyabilitylist ON drbfm_single_testtask.verifyAbilityId = drbfm_verifyabilitylist.id
+        left join
+        (
+            select relTestTaskId,GROUP_CONCAT(nextWorkContent SEPARATOR '；') as nextWorkContentConcat
+            from drbfm_single_nextwork
+            where relTestTaskId is not null and relTestTaskId !=''
+            GROUP BY  relTestTaskId
+        )tmp on drbfm_single_testtask.id = tmp.relTestTaskId
+        where
+        drbfm_single_testdata.relQuotaId IN
+        <foreach collection="quotaIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+</mapper>

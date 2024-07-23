@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectAPIDao">
+    <select id="xcmghrGetProjects" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_user.FULLNAME_ AS userName,
+        project_member_role.roleName,
+        '1' as projectLevel,
+        (case project_member_role.roleId when '2' then '主持人' else '参与人' end) as projectPost,
+        project_baseinfo.number as projectNumber,
+        project_baseinfo.projectName,
+        project_baseinfo.CREATE_TIME_ as projectStarttime,
+        project_baseinfo.knotTime as projectEndtime,
+        project_extensioninfo.projectBuildReason as projectIntroduce,
+        project_extensioninfo.describeTarget as projectAchievement,
+        project_extensioninfo.mainTask as mainTask,
+        project_category.categoryName,
+        project_level.levelName,
+        project_baseinfo.projectId
+        FROM
+        os_user
+        LEFT JOIN project_memberinfo ON os_user.USER_ID_ = project_memberinfo.userId
+        LEFT JOIN project_baseinfo ON project_memberinfo.projectId = project_baseinfo.projectId
+        LEFT JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+        left join project_extensioninfo on project_baseinfo.projectId = project_extensioninfo.projectId
+        left join bpm_inst on bpm_inst.BUS_KEY_ = project_baseinfo.projectId
+        left join project_category on project_baseinfo.categoryId = project_category.categoryId
+        left join project_level on project_level.levelId = project_baseinfo.levelId
+        WHERE
+        bpm_inst.STATUS_ != 'DRAFTED'
+        and bpm_inst.STATUS_ != 'DISCARD_END'
+        <if test="certNo != null and certNo != ''">
+            AND os_user.CERT_NO_=#{certNo}
+        </if>
+        <if test="projectName != null and projectName != ''">
+            AND project_baseinfo.projectName like CONCAT('%',#{projectName},'%')
+        </if>
+        <if test="projectId != null and projectId != ''">
+            AND project_baseinfo.projectId=#{projectId}
+        </if>
+    </select>
+
+    <select id="queryApiList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+			project_baseinfo.projectId,
+			project_baseinfo.projectName,
+			project_baseinfo.number,
+			project_baseinfo.cwddh,
+			project_baseinfo.gbcwddh,
+			project_stageDivide.stageName AS currentStageName,
+			project_source.sourceName as sourceName,
+			project_category.categoryName
+		FROM
+			project_baseinfo
+			LEFT JOIN project_stageDivide ON project_baseinfo.currentStageId = project_stagedivide.stageId
+			left join project_source on project_baseinfo.sourceId=project_source.sourceId
+			left join project_category on project_baseinfo.categoryId=project_category.categoryId
+		WHERE
+            projectName like CONCAT('%',#{searchValue},'%')
+            OR    cwddh like CONCAT('%',#{searchValue},'%')
+            OR    gbcwddh like CONCAT('%',#{searchValue},'%')
+
+    </select>
+
+    <select id="queryCpxhApiList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+            id,
+            designModel as productName
+        FROM
+            product_spectrum
+		WHERE
+            designModel like CONCAT('%',#{searchValue},'%')
+        LIMIT 20
+    </select>
+
+    <select id="queryProductApiList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+       SELECT ps.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        product_spectrum AS ps
+        left join bpm_inst on ps.id=bpm_inst.BUS_KEY_
+		where 1=1
+        <if test="applyStatus != null and applyStatus != ''">
+            and bpm_inst.STATUS_ = #{applyStatus}
+        </if>
+    </select>
+</mapper>

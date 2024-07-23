@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.report.dao.XcmgProjectParticipateDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <select id="countParticipateList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+            count(*)
+        FROM
+        (
+            SELECT
+                project_memberinfo.projectId,
+                project_memberinfo.userId,
+                os_user.FULLNAME_ AS userName,
+                dep_filter.deptId
+            FROM
+                project_memberinfo
+                JOIN os_user ON project_memberinfo.userId = os_user.USER_ID_
+                JOIN (
+                    SELECT
+                        os_rel_inst.PARTY2_ AS userId,
+                        os_rel_inst.PARTY1_ AS deptId
+                    FROM
+                        os_rel_inst
+                    WHERE
+                        REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                        AND DIM1_ = '1'
+                    <if test="userDepId != null and userDepId != ''">
+                        AND PARTY1_ = #{userDepId}
+                    </if>
+                    <if test="deptIds !=null and deptIds != ''">
+                        AND PARTY1_ IN
+                        <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>
+                    </if>
+                ) AS dep_filter ON project_memberinfo.userId = dep_filter.userId
+            <where>
+                <if test="userName != null and userName != ''">
+                    os_user.FULLNAME_ LIKE CONCAT( '%', #{userName}, '%' )
+                </if>
+                <if test='roleId != null and roleId != ""'>
+                    AND project_memberinfo.roleId = #{roleId}
+                </if>
+                <choose>
+                    <when test="userRoleStr == 'self'">
+                        AND project_memberinfo.userId=#{currentUserId}
+                    </when>
+                    <when test="userRoleStr == 'department'">
+                        AND dep_filter.deptId=#{currentDepId}
+                    </when>
+                </choose>
+            </where>
+        ) AS memberInfo
+        LEFT JOIN project_baseinfo ON memberInfo.projectId = project_baseinfo.projectId
+        LEFT JOIN bpm_inst ON bpm_inst.BUS_KEY_ = memberInfo.projectId
+        <where>
+            bpm_inst.STATUS_ != 'DRAFTED'
+            <if test="levelId != null and levelId != ''">
+                AND project_baseinfo.levelId = #{levelId}
+            </if>
+            <if test="projectName != null and projectName != ''">
+                and project_baseinfo.projectName like CONCAT('%',#{projectName},'%')
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                and project_baseinfo.categoryId = #{categoryId}
+            </if>
+            <choose>
+                <when test='startTime !=null and startTime !="" and (endTime == null or endTime == "")'>
+                    and (project_baseinfo.knotTime is null or project_baseinfo.knotTime ='' or project_baseinfo.knotTime &gt; #{startTime})
+                </when>
+                <when test='endTime !=null and endTime !="" and (startTime == null or startTime == "")'>
+                    and (project_baseinfo.CREATE_TIME_ &lt; #{endTime})
+                </when>
+                <when test='startTime !=null and startTime !="" and endTime != null and endTime != ""'>
+                    and (project_baseinfo.CREATE_TIME_ &lt; #{endTime} and (project_baseinfo.knotTime is null or project_baseinfo.knotTime ='' or project_baseinfo.knotTime &gt; #{startTime}))
+                </when>
+            </choose>
+        </where>
+    </select>
+
+    <select id="queryParticipateList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        memberInfo.*,
+        project_baseinfo.projectName,
+        project_baseinfo.CREATE_TIME_ as createTime,
+        project_baseinfo.knotTime,
+        project_level.levelName,
+        project_category.categoryName,
+        os_group.NAME_ AS mainDepName,
+        bpm_inst.STATUS_ AS projectStatus
+        FROM
+        (
+            SELECT
+            project_memberinfo.projectId,
+            project_memberinfo.userId,
+            os_user.FULLNAME_ AS userName,
+            project_member_role.roleName,
+            dep_filter.deptName,
+            dep_filter.deptId
+            FROM
+            project_memberinfo
+            JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+            JOIN os_user ON project_memberinfo.userId = os_user.USER_ID_
+            JOIN (
+                SELECT
+                os_rel_inst.PARTY2_ AS userId,
+                os_rel_inst.PARTY1_ AS deptId,
+                os_group.NAME_ AS deptName
+                FROM
+                os_rel_inst
+                LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+                WHERE
+                REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                AND DIM1_ = '1'
+                <if test="userDepId != null and userDepId != ''">
+                    AND PARTY1_ = #{userDepId}           
+                </if>
+                <if test="deptIds !=null and deptIds != ''">
+                    AND PARTY1_ IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+            ) AS dep_filter ON project_memberinfo.userId = dep_filter.userId
+            <where>
+                <if test="userName != null and userName != ''">
+                    os_user.FULLNAME_ LIKE CONCAT( '%', #{userName}, '%' )
+                </if>
+                <if test='roleId != null and roleId != ""'>
+                    AND project_memberinfo.roleId = #{roleId}
+                </if>
+                <choose>
+                    <when test="userRoleStr == 'self'">
+                        AND project_memberinfo.userId=#{currentUserId}
+                    </when>
+                    <when test="userRoleStr == 'department'">
+                        AND dep_filter.deptId=#{currentDepId}
+                    </when>
+                </choose>
+            </where>
+        ) AS memberInfo
+        LEFT JOIN project_baseinfo ON memberInfo.projectId = project_baseinfo.projectId
+        LEFT JOIN project_level ON project_baseinfo.levelId = project_level.levelId
+        LEFT JOIN project_category ON project_category.categoryId = project_baseinfo.categoryId
+        LEFT JOIN os_group ON project_baseinfo.mainDepId = os_group.GROUP_ID_
+        LEFT JOIN bpm_inst ON bpm_inst.BUS_KEY_ = memberInfo.projectId
+        <where>
+            bpm_inst.STATUS_ != 'DRAFTED'
+            <if test="levelId != null and levelId != ''">
+                and project_baseinfo.levelId = #{levelId}
+            </if>
+            <if test="projectName != null and projectName != ''">
+                and project_baseinfo.projectName like CONCAT('%',#{projectName},'%')
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                and project_baseinfo.categoryId = #{categoryId}
+            </if>
+            <choose>
+                <when test='startTime !=null and startTime !="" and (endTime == null or endTime == "")'>
+                    and (project_baseinfo.knotTime is null or project_baseinfo.knotTime ='' or project_baseinfo.knotTime &gt; #{startTime})
+                </when>
+                <when test='endTime !=null and endTime !="" and (startTime == null or startTime == "")'>
+                    and (project_baseinfo.CREATE_TIME_ &lt; #{endTime})
+                </when>
+                <when test='startTime !=null and startTime !="" and endTime != null and endTime != ""'>
+                    and (project_baseinfo.CREATE_TIME_ &lt; #{endTime} and (project_baseinfo.knotTime is null or project_baseinfo.knotTime ='' or project_baseinfo.knotTime &gt; #{startTime}))
+                </when>
+            </choose>
+        </where>
+        ORDER BY ${sortField} ${sortOrder}
+        <include refid="pageSql"/>
+    </select>
+
+</mapper>

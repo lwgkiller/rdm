@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.matPriceReview.core.dao.MatPriceReviewDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField}
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryMatPriceReviewList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            matpricereviewbaseinfo.*,
+            os_user.MOBILE_ AS applyUserMobile
+        FROM
+            matpricereviewbaseinfo
+            LEFT JOIN os_user ON matpricereviewbaseinfo.applyUserId = os_user.USER_ID_
+        <where>
+            <if test='applyNo != null and applyNo !=""'>
+                matpricereviewbaseinfo.applyNo like CONCAT('%',#{applyNo},'%')
+            </if>
+            <if test='applyUserName != null and applyUserName !=""'>
+                AND matpricereviewbaseinfo.applyUserName like CONCAT('%',#{applyUserName},'%')
+            </if>
+            <if test="applyStatus != null and applyStatus != ''">
+                <choose>
+                    <when test="applyStatus == 'no'">
+                        AND (matpricereviewbaseinfo.oaFormId is null or matpricereviewbaseinfo.oaFormId = '')
+                    </when>
+                    <when test="applyStatus == 'yes'">
+                        AND (matpricereviewbaseinfo.oaFormId is not null AND matpricereviewbaseinfo.oaFormId != '')
+                    </when>
+                </choose>
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND matpricereviewbaseinfo.CREATE_TIME_ &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND matpricereviewbaseinfo.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+            <if test='reviewCategory != null and reviewCategory !=""'>
+                matpricereviewbaseinfo.reviewCategory = #{reviewCategory}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countMatPriceReviewList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        matpricereviewbaseinfo
+        <where>
+            <if test='applyNo != null and applyNo !=""'>
+                matpricereviewbaseinfo.applyNo like CONCAT('%',#{applyNo},'%')
+            </if>
+            <if test='applyUserName != null and applyUserName !=""'>
+                AND matpricereviewbaseinfo.applyUserName like CONCAT('%',#{applyUserName},'%')
+            </if>
+            <if test="applyStatus != null and applyStatus != ''">
+                <choose>
+                    <when test="applyStatus == 'no'">
+                        AND (matpricereviewbaseinfo.oaFormId is null or matpricereviewbaseinfo.oaFormId = '')
+                    </when>
+                    <when test="applyStatus == 'yes'">
+                        AND (matpricereviewbaseinfo.oaFormId is not null AND matpricereviewbaseinfo.oaFormId != '')
+                    </when>
+                </choose>
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND matpricereviewbaseinfo.CREATE_TIME_ &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND matpricereviewbaseinfo.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryMatPriceReviewById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        matpricereviewbaseinfo.*,
+        os_user.USER_NO_ as applyUserNo,
+        os_user.MOBILE_ AS applyUserMobile
+        FROM
+        matpricereviewbaseinfo
+        LEFT JOIN os_user ON matpricereviewbaseinfo.applyUserId = os_user.USER_ID_
+        where
+          matpricereviewbaseinfo.id = #{id}
+    </select>
+
+    <insert id="addMatPriceReviewApply" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO matPriceReviewBaseInfo (
+            id,
+            reviewCategory,
+            oaFormId,
+            applyNo,
+            applyDeptId,
+            applyDeptName,
+            applyUserId,
+            applyUserName,
+            applyCategory,
+            matCategory,
+            applierCode,
+            applierName,
+            ptProduct,
+            cgUser,
+            zxRate,
+            jgExcuteStart,
+            jgExcuteEnd,
+            priceDesc,
+            address,
+            zlFeature,
+            moneyCategory,
+            sfft,
+            jsxyNumber,
+            cgApplyNo,
+            cgOrderNo,
+            requireArrivalTime,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        VALUES(
+            #{id,jdbcType=VARCHAR},
+            #{reviewCategory,jdbcType=VARCHAR},
+            #{oaFormId,jdbcType=VARCHAR},
+            #{applyNo,jdbcType=VARCHAR},
+            #{applyDeptId,jdbcType=VARCHAR},
+            #{applyDeptName,jdbcType=VARCHAR},
+            #{applyUserId,jdbcType=VARCHAR},
+            #{applyUserName,jdbcType=VARCHAR},
+            #{applyCategory,jdbcType=VARCHAR},
+            #{matCategory,jdbcType=VARCHAR},
+            #{applierCode,jdbcType=VARCHAR},
+            #{applierName,jdbcType=VARCHAR},
+            #{ptProduct,jdbcType=VARCHAR},
+            #{cgUser,jdbcType=VARCHAR},
+            #{zxRate,jdbcType=VARCHAR},
+            #{jgExcuteStart,jdbcType=VARCHAR},
+            #{jgExcuteEnd,jdbcType=VARCHAR},
+            #{priceDesc,jdbcType=VARCHAR},
+            #{address,jdbcType=VARCHAR},
+            #{zlFeature,jdbcType=VARCHAR},
+            #{moneyCategory,jdbcType=VARCHAR},
+            #{sfft,jdbcType=VARCHAR},
+            #{jsxyNumber,jdbcType=VARCHAR},
+            #{cgApplyNo,jdbcType=VARCHAR},
+            #{cgOrderNo,jdbcType=VARCHAR},
+            #{requireArrivalTime,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateMatPriceReviewApply" parameterType="com.alibaba.fastjson.JSONObject">
+        update matPriceReviewBaseInfo
+        set
+            oaFormId=#{oaFormId,jdbcType=VARCHAR},
+            applyNo=#{applyNo,jdbcType=VARCHAR},
+            applyDeptId=#{applyDeptId,jdbcType=VARCHAR},
+            applyDeptName=#{applyDeptName,jdbcType=VARCHAR},
+            applyUserId=#{applyUserId,jdbcType=VARCHAR},
+            applyUserName=#{applyUserName,jdbcType=VARCHAR},
+            applyCategory=#{applyCategory,jdbcType=VARCHAR},
+            matCategory=#{matCategory,jdbcType=VARCHAR},
+            applierCode=#{applierCode,jdbcType=VARCHAR},
+            applierName=#{applierName,jdbcType=VARCHAR},
+            ptProduct=#{ptProduct,jdbcType=VARCHAR},
+            cgUser=#{cgUser,jdbcType=VARCHAR},
+            zxRate=#{zxRate,jdbcType=VARCHAR},
+            jgExcuteStart=#{jgExcuteStart,jdbcType=VARCHAR},
+            jgExcuteEnd=#{jgExcuteEnd,jdbcType=VARCHAR},
+            priceDesc=#{priceDesc,jdbcType=VARCHAR},
+            address=#{address,jdbcType=VARCHAR},
+            zlFeature=#{zlFeature,jdbcType=VARCHAR},
+            moneyCategory=#{moneyCategory,jdbcType=VARCHAR},
+            sfft=#{sfft,jdbcType=VARCHAR},
+            jsxyNumber=#{jsxyNumber,jdbcType=VARCHAR},
+            cgApplyNo=#{cgApplyNo,jdbcType=VARCHAR},
+            cgOrderNo=#{cgOrderNo,jdbcType=VARCHAR},
+            requireArrivalTime=#{requireArrivalTime,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id= #{id}
+    </update>
+
+    <delete id="deleteApplyBaseInfos" parameterType="java.util.Map">
+        delete from matPriceReviewBaseInfo
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteFiles" parameterType="java.util.Map">
+        delete from matPriceReviewFile
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="reviewIds != null and reviewIds !=''">
+                AND reviewId IN
+                <foreach collection="reviewIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="getFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            matPriceReviewFile.*,
+            os_user.FULLNAME_ AS creator
+        FROM
+            matPriceReviewFile
+            LEFT JOIN os_user ON matPriceReviewFile.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="reviewId != null and reviewId != ''">
+                reviewId = #{reviewId}
+            </if>
+            <if test="reviewIds != null and reviewIds !=''">
+                AND reviewId IN
+                <foreach collection="reviewIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <insert id="addFileInfos" parameterType="java.util.Map">
+        INSERT INTO matPriceReviewFile
+        (
+            id,
+            reviewId,
+            fileName,
+            fileSize,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        VALUES
+        (
+            #{id,jdbcType=VARCHAR},
+            #{reviewId,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{fileSize,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <insert id="addMatDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO matPriceReviewMatDetail (
+            id,
+            reviewId,
+            matCode,
+            matName,
+            jclx,
+            tuhao,
+            zjxh,
+            jldw,
+            cgsl,
+            sbjg,
+            pzjghs,
+            pzjgbhs,
+            yfcdf,
+            jzdsjgbhs,
+            zjf,
+            remark,
+            jghs,
+            jgbhs,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        VALUE(
+            #{id,jdbcType=VARCHAR},
+            #{reviewId,jdbcType=VARCHAR},
+            #{matCode,jdbcType=VARCHAR},
+            #{matName,jdbcType=VARCHAR},
+            #{jclx,jdbcType=VARCHAR},
+            #{tuhao,jdbcType=VARCHAR},
+            #{zjxh,jdbcType=VARCHAR},
+            #{jldw,jdbcType=VARCHAR},
+            #{cgsl,jdbcType=VARCHAR},
+            #{sbjg,jdbcType=VARCHAR},
+            #{pzjghs,jdbcType=VARCHAR},
+            #{pzjgbhs,jdbcType=VARCHAR},
+            #{yfcdf,jdbcType=VARCHAR},
+            #{jzdsjgbhs,jdbcType=VARCHAR},
+            #{zjf,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{jghs,jdbcType=VARCHAR},
+            #{jgbhs,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+	    )
+    </insert>
+
+    <update id="updateMatDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE matPriceReviewMatDetail
+        SET
+            matCode = #{matCode,jdbcType=VARCHAR},
+            matName = #{matName,jdbcType=VARCHAR},
+            jclx = #{jclx,jdbcType=VARCHAR},
+            tuhao = #{tuhao,jdbcType=VARCHAR},
+            zjxh = #{zjxh,jdbcType=VARCHAR},
+            jldw = #{jldw,jdbcType=VARCHAR},
+            cgsl = #{cgsl,jdbcType=VARCHAR},
+            sbjg = #{sbjg,jdbcType=VARCHAR},
+            pzjghs = #{pzjghs,jdbcType=VARCHAR},
+            pzjgbhs = #{pzjgbhs,jdbcType=VARCHAR},
+            yfcdf = #{yfcdf,jdbcType=VARCHAR},
+            jzdsjgbhs = #{jzdsjgbhs,jdbcType=VARCHAR},
+            zjf = #{zjf,jdbcType=VARCHAR},
+            remark = #{remark,jdbcType=VARCHAR},
+            jghs = #{jghs,jdbcType=VARCHAR},
+            jgbhs = #{ jgbhs,jdbcType=VARCHAR},
+            UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+            id = #{id}
+    </update>
+
+    <select id="queryMatDetailList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            matPriceReviewMatDetail
+        <where>
+            <if test="reviewId != null and reviewId !=''">
+                reviewId = #{reviewId}
+            </if>
+            <if test="matCode != null and matCode !=''">
+                AND matCode = #{matCode}
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteMatDetails" parameterType="java.util.Map">
+        DELETE FROM
+        matPriceReviewMatDetail
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="reviewIds != null and reviewIds !=''">
+                AND reviewId IN
+                <foreach collection="reviewIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <insert id="addRecord" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO matPriceReviewRecord (
+            id,
+            reviewId,
+            jclx,
+            applierCode,
+            applierName,
+            matCode,
+            matName,
+            mrpkzz,
+            cgzz,
+            cggs,
+            gc,
+            recordType,
+            planDeliveryTime,
+            cgz,
+            jingjia,
+            bizhong,
+            jgdw,
+            jldw,
+            jbdw,
+            shuima,
+            shuilv,
+            sfGjPrice,
+            jgNumber,
+            wsdj,
+            priceValidStart,
+            priceValidEnd,
+            fktj,
+            jsfs,
+            zgPrice,
+            jgld,
+            jgsy,
+            cpf,
+            remark,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        VALUE(
+            #{id,              jdbcType=VARCHAR},
+            #{reviewId,        jdbcType=VARCHAR},
+            #{jclx,            jdbcType=VARCHAR},
+            #{applierCode,     jdbcType=VARCHAR},
+            #{applierName,     jdbcType=VARCHAR},
+            #{matCode,         jdbcType=VARCHAR},
+            #{matName,         jdbcType=VARCHAR},
+            #{mrpkzz,          jdbcType=VARCHAR},
+            #{cgzz,            jdbcType=VARCHAR},
+            #{cggs,            jdbcType=VARCHAR},
+            #{gc,              jdbcType=VARCHAR},
+            #{recordType,      jdbcType=VARCHAR},
+            #{planDeliveryTime,jdbcType=VARCHAR},
+            #{cgz,             jdbcType=VARCHAR},
+            #{jingjia,         jdbcType=VARCHAR},
+            #{bizhong,         jdbcType=VARCHAR},
+            #{jgdw,            jdbcType=VARCHAR},
+            #{jldw,            jdbcType=VARCHAR},
+            #{jbdw,            jdbcType=VARCHAR},
+            #{shuima,          jdbcType=VARCHAR},
+            #{shuilv,          jdbcType=VARCHAR},
+            #{sfGjPrice,       jdbcType=VARCHAR},
+            #{jgNumber,        jdbcType=VARCHAR},
+            #{wsdj,            jdbcType=VARCHAR},
+            #{priceValidStart, jdbcType=VARCHAR},
+            #{priceValidEnd,   jdbcType=VARCHAR},
+            #{fktj,            jdbcType=VARCHAR},
+            #{jsfs,            jdbcType=VARCHAR},
+            #{zgPrice,         jdbcType=VARCHAR},
+            #{jgld,            jdbcType=VARCHAR},
+            #{jgsy,            jdbcType=VARCHAR},
+            #{cpf,             jdbcType=VARCHAR},
+            #{remark,          jdbcType=VARCHAR},
+            #{CREATE_BY_,      jdbcType=VARCHAR},
+            #{CREATE_TIME_,    jdbcType=TIMESTAMP}
+	    )
+    </insert>
+
+    <update id="updateRecord" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE
+        matPriceReviewRecord
+        SET
+        applierCode = #{applierCode,     jdbcType=VARCHAR},
+        applierName = #{applierName,     jdbcType=VARCHAR},
+        matCode = #{matCode,         jdbcType=VARCHAR},
+        matName = #{matName,         jdbcType=VARCHAR},
+        mrpkzz = #{mrpkzz,          jdbcType=VARCHAR},
+        cgzz = #{cgzz,            jdbcType=VARCHAR},
+        cggs = #{cggs,            jdbcType=VARCHAR},
+        gc = #{gc,              jdbcType=VARCHAR},
+        recordType = #{recordType,      jdbcType=VARCHAR},
+        planDeliveryTime = #{planDeliveryTime,jdbcType=VARCHAR},
+        cgz = #{cgz,             jdbcType=VARCHAR},
+        jingjia = #{jingjia,         jdbcType=VARCHAR},
+        bizhong = #{bizhong,         jdbcType=VARCHAR},
+        jgdw = #{jgdw,            jdbcType=VARCHAR},
+        jldw = #{jldw,            jdbcType=VARCHAR},
+        jbdw = #{jbdw,            jdbcType=VARCHAR},
+        shuima = #{shuima,          jdbcType=VARCHAR},
+        shuilv = #{shuilv,          jdbcType=VARCHAR},
+        sfGjPrice = #{sfGjPrice,       jdbcType=VARCHAR},
+        jgNumber = #{jgNumber,        jdbcType=VARCHAR},
+        wsdj = #{wsdj,            jdbcType=VARCHAR},
+        priceValidStart = #{priceValidStart, jdbcType=VARCHAR},
+        priceValidEnd = #{priceValidEnd,   jdbcType=VARCHAR},
+        fktj = #{fktj,            jdbcType=VARCHAR},
+        jsfs = #{jsfs,            jdbcType=VARCHAR},
+        zgPrice = #{zgPrice,         jdbcType=VARCHAR},
+        jgld = #{jgld,            jdbcType=VARCHAR},
+        jgsy = #{jgsy,            jdbcType=VARCHAR},
+        cpf = #{cpf,             jdbcType=VARCHAR},
+        remark = #{remark,jdbcType=VARCHAR},
+        UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+            id = #{id}
+    </update>
+
+    <select id="queryRecordList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            matPriceReviewRecord
+        <where>
+            <if test="reviewId != null and reviewId !=''">
+                reviewId = #{reviewId}
+            </if>
+            <if test="id !=null and id !=''">
+                AND id = #{id}
+            </if>
+            <if test="jclx != null and jclx !=''">
+                <choose>
+                    <when test="jclx == 'fjc'">
+                        AND jclx = 'fjc'
+                    </when>
+                    <when test="jclx == 'jc'">
+                        AND (jclx = 'bsjc' OR jclx = 'gyjc')
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteRecords" parameterType="java.util.List">
+        DELETE FROM matPriceReviewRecord
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="reviewIds != null and reviewIds !=''">
+                AND reviewId IN
+                <foreach collection="reviewIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    
+    <select id="queryMatExtendSuccess" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            (
+        SELECT
+            materiel_detailinfo.*,
+            GREATEST( materiel_apply.cgCommitTime, materiel_apply.gfCommitTime, materiel_apply.cwCommitTime, materiel_apply.wlCommitTime, materiel_apply.zzCommitTime ) AS extendTime
+        FROM
+            materiel_detailinfo
+            LEFT JOIN materiel_apply ON materiel_detailinfo.applyNo = materiel_apply.applyNo
+        WHERE
+            wlhm = #{wlhm}
+        ORDER BY
+            extendTime DESC
+            LIMIT 1
+            ) tmp
+        WHERE
+            tmp.extendResult IS NOT NULL
+            AND tmp.extendResult != ''
+            AND tmp.extendResult = 'success'
+    </select>
+</mapper>

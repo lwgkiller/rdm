@@ -1,0 +1,836 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.NjjdDao">
+
+
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <update id="updateRDTime" parameterType="java.util.Map">
+        update nj_baseInfo
+        set
+            UPDATE_TIME_=#{rdTime,jdbcType=TIMESTAMP}
+        where
+            id=#{njjdId}
+    </update>
+
+
+
+    <select id="queryNjjdListByStatus" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        nj_baseinfo.*,
+        os_group.NAME_ AS applyUserDeptName,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS STATUS,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        nj_baseinfo
+        LEFT JOIN os_rel_inst ON nj_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = nj_baseinfo.CREATE_BY_
+        LEFT JOIN bpm_inst ON nj_baseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="applyNumber != null and applyNumber != ''">
+            AND nj_baseinfo.applyNumber like CONCAT('%',#{applyNumber},'%')
+        </if>
+        <if test="productType != null and productType != ''">
+            AND nj_baseinfo.productType like CONCAT('%',#{productType},'%')
+        </if>
+        <if test="applyUserId != null and applyUserId != ''">
+            AND nj_baseinfo.CREATE_BY_ = #{applyUserId}
+        </if>
+        <if test="applyDepId != null and applyDepId != ''">
+            AND os_group.GROUP_ID_ = #{applyDepId}
+        </if>
+        <if test="status != null and status != ''">
+            AND bpm_inst.STATUS_ = #{status}
+        </if>
+        <if test="salesArea != null and salesArea != ''">
+            AND nj_baseinfo.salesArea like CONCAT('%',#{salesArea},'%')
+        </if>
+        <if test="projectName !=null and projectName !=''">
+            AND nj_baseinfo.projectName like CONCAT('%',#{projectName},'%')
+        </if>
+        <if test="projectNumber !=null and projectNumber !=''">
+            AND nj_baseinfo.projectNumber like CONCAT('%',#{projectNumber},'%')
+        </if>
+        <if test="rdTimeStart !=null and rdTimeStart !=''">
+            AND nj_baseinfo.CREATE_TIME_ &gt;= #{rdTimeStart}
+        </if>
+        <if test="rdTimeEnd !=null and rdTimeEnd !=''">
+            AND nj_baseinfo.CREATE_TIME_ &lt;= #{rdTimeEnd}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='other'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR nj_baseinfo.CREATE_BY_ = #{currentUserId})
+                </when>
+            </choose>
+        </if>
+        <if test="scene != null and scene != '' and scene=='apply'">
+            AND  (bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ is null or bpm_inst.STATUS_ = 'RUNNING')
+        </if>
+        order by nj_baseinfo.CREATE_TIME_ DESC
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countJsmmList" parameterType="java.util.Map" resultType="java.lang.String">
+        SELECT
+        IFNULL(substring(applyNumber,INSTR(applyNumber,'-')+6),0) num
+        FROM nj_baseinfo
+        <where>
+            <if test="countJsmmNumber !=null and countJsmmNumber !=''">
+                AND applyNumber is not null and applyNumber !=''
+            </if>
+            <if test="applyTimeStart !=null and applyTimeStart !=''">
+                AND nj_baseinfo.CREATE_TIME_ &gt;= #{applyTimeStart}
+            </if>
+            and applyNumber like 'NJ-%'
+        </where>
+        ORDER BY applyNumber desc limit 1
+    </select>
+
+    <select id="countJsmmLists" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        nj_baseinfo
+        LEFT JOIN os_rel_inst ON nj_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN bpm_inst ON nj_baseinfo.id = bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="countJsmmNumber !=null and countJsmmNumber !=''">
+                AND applyNumber is not null and applyNumber !=''
+            </if>
+            <if test="applyTimeStart !=null and applyTimeStart !=''">
+                AND nj_baseinfo.CREATE_TIME_ &gt;= #{applyTimeStart}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertNjjd" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into nj_baseInfo(
+            id
+            ,applyNumber
+            ,productType
+            ,salesArea
+            ,njcl
+            ,projectName
+            ,projectNumber
+            ,njxs
+            ,saleStatus
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{njjdId,jdbcType=VARCHAR},
+            #{bdId,jdbcType=VARCHAR},
+            #{productType,jdbcType=VARCHAR},
+            #{salesArea,jdbcType=VARCHAR},
+            #{njcl,jdbcType=VARCHAR},
+            #{projectName,jdbcType=VARCHAR},
+            #{projectNumber,jdbcType=VARCHAR},
+            #{njxs,jdbcType=VARCHAR},
+            '1',
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateNjjd" parameterType="com.alibaba.fastjson.JSONObject">
+        update nj_baseInfo
+        set
+            productType=#{productType,jdbcType=VARCHAR},
+            salesArea=#{salesArea,jdbcType=VARCHAR},
+            njcl=#{njcl,jdbcType=VARCHAR}, projectName=#{projectName,jdbcType=VARCHAR},
+            projectNumber=#{projectNumber,jdbcType=VARCHAR}, njxs=#{njxs,jdbcType=VARCHAR},
+            haveSubsidy=#{haveSubsidy,jdbcType=VARCHAR},
+            subsidyEndDate=#{subsidyEndDate,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{njjdId}
+    </update>
+
+    <update id="updateNumber" parameterType="java.util.Map">
+        update nj_baseinfo
+        set
+          applyNumber=#{jsmmNumber,jdbcType=VARCHAR}
+        where
+          id=#{njjdId}
+    </update>
+
+    <select id="queryNjjdById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            t1.applyNumber ,
+            t1.productType ,
+            t1.id AS njjdId ,
+            t1.salesArea ,
+            t1.njcl ,
+            t1.njxs ,
+            t1.projectName ,
+            t1.projectNumber ,
+            t1.saleStatus ,
+            t1.haveSubsidy,
+            t1.subsidyEndDate,
+            t1.CREATE_BY_ ,
+            os_user.FULLNAME_,
+            bpm_inst.INST_ID_ AS instId,
+            nj_paramInfo.*
+        FROM
+            nj_baseInfo t1
+            LEFT JOIN os_user ON t1.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN bpm_inst ON t1.id = bpm_inst.BUS_KEY_
+            LEFT JOIN nj_paramInfo ON t1.id = nj_paramInfo.njBaseId
+        WHERE
+            t1.id = #{njjdId}
+    </select>
+
+    <select id="queryNjjdFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        nj_fileInfo.*,
+        nj_fileTypeInfo.njfjXlName
+        FROM
+        nj_fileInfo
+        left JOIN nj_fileTypeInfo ON nj_fileInfo.njfjXlId = nj_fileTypeInfo.njfjXlId
+        WHERE
+        nj_fileInfo.njBaseId IN
+        <foreach collection="njjdIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+        <if test="njfjDl != null and njfjDl != ''">
+            and nj_fileInfo.njfjDl = #{njfjDl}
+        </if>
+
+    </select>
+
+    <select id="queryNjjdFileTypes" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            nj_fileTypeInfo
+        WHERE
+        njfjDl = #{njfjDl}
+    </select>
+
+    <insert id="addNjjdFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into nj_fileInfo(
+        id,
+        njBaseId
+        ,njfjDl
+        ,njfjXlId
+        ,fileName
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{njBaseId,jdbcType=VARCHAR},
+        #{njfjDl,jdbcType=VARCHAR},
+        #{njfjXlId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteNjjdFile" parameterType="java.util.Map">
+        delete from nj_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="njjdIds != null and njjdIds !=''">
+                AND njBaseId IN
+                <foreach collection="njjdIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteNjjd" parameterType="java.util.Map">
+        delete from nj_baseinfo
+        <where>
+            <if test="njjdIds != null and njjdIds !=''">
+                id IN
+                <foreach collection="njjdIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <!--用户信息查询-->
+    <select id="getUserList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+
+    SELECT
+    nj_userInfo.id,
+    nj_userInfo.njBaseId,
+    userName,
+    address,
+    phone,
+    DATE_FORMAT(buyTime,'%Y-%m-%d') buyTime,
+    nj_fileInfo.fileName,
+    nj_fileInfo.id fileId
+    FROM
+    nj_userInfo
+    left join   nj_fileInfo  on nj_userInfo.fjId = nj_fileInfo.id
+    WHERE
+    nj_userInfo.njBaseId = #{njjdId}
+    </select>
+
+    <!--用户信息查询-->
+    <select id="getUser" parameterType="java.lang.String" resultType="java.util.Map">
+
+    SELECT
+    nj_userInfo.id,
+    nj_userInfo.njBaseId,
+    userName,
+    address,
+    phone,
+    DATE_FORMAT(buyTime,'%Y-%m-%d') buyTime,
+    nj_fileInfo.fileName,
+    nj_fileInfo.id fileId
+    FROM
+    nj_userInfo
+    left join   nj_fileInfo  on nj_userInfo.fjId = nj_fileInfo.id
+    WHERE
+    nj_userInfo.id = #{standardId}
+    </select>
+
+    <!--用户信息保存-->
+    <insert id="saveUserList" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into nj_userinfo(
+            id,
+            njBaseId,
+            userName,
+            address,
+            phone,
+            buyTime,
+            fjId,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{njBaseId,jdbcType=VARCHAR},
+            #{userName,jdbcType=VARCHAR},
+            #{address,jdbcType=VARCHAR},
+            #{phone,jdbcType=VARCHAR},
+            #{buyTime,jdbcType=TIMESTAMP},
+            #{fjId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <!--用户信息保存-->
+    <update id="updateUserList" parameterType="com.alibaba.fastjson.JSONObject">
+        update nj_userInfo
+        set
+        njBaseId=#{njBaseId,jdbcType=VARCHAR},
+        userName=#{userName,jdbcType=VARCHAR},
+        address=#{address,jdbcType=VARCHAR},
+        phone=#{phone,jdbcType=VARCHAR},
+        buyTime=#{buyTime,jdbcType=TIMESTAMP},
+        fjId=#{fjId,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+
+    <!--用户附件修改-->
+    <update id="updateNjjdFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        update nj_fileInfo
+        set
+        njBaseId=#{njBaseId,jdbcType=VARCHAR},
+        njfjDl=#{njfjDl,jdbcType=VARCHAR},
+        njfjXlId=#{njfjXlId,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        fileSize=#{fileSize,jdbcType=TIMESTAMP},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+
+
+    <!--用户信息删除-->
+    <delete id="delUserListByIds" parameterType="java.util.Map">
+        delete from nj_userInfo
+        where id in
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="delUserListById" parameterType="java.util.Map">
+        delete from nj_userInfo
+        where id = #{id}
+    </delete>
+
+
+    <delete id="delFjById" parameterType="java.util.Map">
+       DELETE FROM
+        nj_fileinfo
+        WHERE id =
+        #{fileId}
+    </delete>
+
+    <delete id="delZsById" parameterType="java.util.Map">
+       DELETE FROM
+        nj_fileinfo
+        WHERE
+         id = #{id}
+    </delete>
+
+    <!--农机申请产品规格信息保存-->
+    <insert id="saveParamInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into nj_paramInfo(
+    id          ,
+    njBaseId    ,
+    ztXh        ,
+    ztJgxs      ,
+    ztGzzl      ,
+    ztCdrl      ,
+    ztWxcc      ,
+    ztZj        ,
+    ztLsLj      ,
+    ztLsLtgg    ,
+    ztLsLtQy    ,
+    ztLdGj      ,
+    ztLdCd      ,
+    ztLdKd      ,
+    ztLdcz      ,
+    ztHdhzBj    ,
+    ztLdJx      ,
+    ztZtldGd    ,
+    ztZtKd      ,
+    ztZtwdCd    ,
+    ztZxj       ,
+    ztJdby      ,
+    ztDws       ,
+    ztSdQj      ,
+    ztSdDt      ,
+    ztPp        ,
+    fdjXh       ,
+    fdjXs       ,
+    fdjFactory  ,
+    fdjBdGl     ,
+    fdjEdGl     ,
+    fdjBdZs     ,
+    jssXh       ,
+    jssXs       ,
+    jssFactory  ,
+    zyccZdWjlCd ,
+    zycsZdwjlDg ,
+    zycsZdwjBj  ,
+    zycsZdwjSd  ,
+    zycsZdCzwjSd,
+    zycsZdwjGd  ,
+    zycsZdxzGd  ,
+    gzzzDbCd    ,
+    gzzzDgCd    ,
+    yybXh       ,
+    yybLl       ,
+    gzyl        ,
+    xpzz        ,
+    CREATE_BY_  ,
+    CREATE_TIME_,
+    TENANT_ID_  ,
+    UPDATE_BY_  ,
+    UPDATE_TIME_
+        )values(
+    #{ggId,jdbcType=VARCHAR},
+    #{njjdId     ,jdbcType=VARCHAR},
+    #{ztXh        ,jdbcType=VARCHAR},
+    #{ztJgxs      ,jdbcType=VARCHAR},
+    #{ztGzzl      ,jdbcType=VARCHAR},
+    #{ztCdrl      ,jdbcType=VARCHAR},
+    #{ztWxcc      ,jdbcType=VARCHAR},
+    #{ztZj        ,jdbcType=VARCHAR},
+    #{ztLsLj      ,jdbcType=VARCHAR},
+    #{ztLsLtgg    ,jdbcType=VARCHAR},
+    #{ztLsLtQy    ,jdbcType=VARCHAR},
+    #{ztLdGj      ,jdbcType=VARCHAR},
+    #{ztLdCd      ,jdbcType=VARCHAR},
+    #{ztLdKd      ,jdbcType=VARCHAR},
+    #{ztLdcz      ,jdbcType=VARCHAR},
+    #{ztHdhzBj    ,jdbcType=VARCHAR},
+    #{ztLdJx      ,jdbcType=VARCHAR},
+    #{ztZtldGd    ,jdbcType=VARCHAR},
+    #{ztZtKd      ,jdbcType=VARCHAR},
+    #{ztZtwdCd    ,jdbcType=VARCHAR},
+    #{ztZxj       ,jdbcType=VARCHAR},
+    #{ztJdby      ,jdbcType=VARCHAR},
+    #{ztDws       ,jdbcType=VARCHAR},
+    #{ztSdQj      ,jdbcType=VARCHAR},
+    #{ztSdDt      ,jdbcType=VARCHAR},
+    #{ztPp        ,jdbcType=VARCHAR},
+    #{fdjXh       ,jdbcType=VARCHAR},
+    #{fdjXs       ,jdbcType=VARCHAR},
+    #{fdjFactory  ,jdbcType=VARCHAR},
+    #{fdjBdGl     ,jdbcType=VARCHAR},
+    #{fdjEdGl     ,jdbcType=VARCHAR},
+    #{fdjBdZs     ,jdbcType=VARCHAR},
+    #{jssXh       ,jdbcType=VARCHAR},
+    #{jssXs       ,jdbcType=VARCHAR},
+    #{jssFactory  ,jdbcType=VARCHAR},
+    #{zyccZdWjlCd ,jdbcType=VARCHAR},
+    #{zycsZdwjlDg ,jdbcType=VARCHAR},
+    #{zycsZdwjBj  ,jdbcType=VARCHAR},
+    #{zycsZdwjSd  ,jdbcType=VARCHAR},
+    #{zycsZdCzwjSd,jdbcType=VARCHAR},
+    #{zycsZdwjGd  ,jdbcType=VARCHAR},
+    #{zycsZdxzGd  ,jdbcType=VARCHAR},
+    #{gzzzDbCd    ,jdbcType=VARCHAR},
+    #{gzzzDgCd    ,jdbcType=VARCHAR},
+    #{yybXh       ,jdbcType=VARCHAR},
+    #{yybLl       ,jdbcType=VARCHAR},
+    #{gzyl        ,jdbcType=VARCHAR},
+    #{xpzz        ,jdbcType=VARCHAR},
+    #{CREATE_BY_  ,jdbcType=VARCHAR},
+    #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <insert id="saveParamInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO nj_paramInfo
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test=" ggId          != null">id ,</if>
+            <if test=" njjdId    != null">njBaseId ,</if>
+            <if test=" ztXh        != null">ztXh ,</if>
+            <if test=" ztJgxs      != null">ztJgxs ,</if>
+            <if test=" ztGzzl      != null">ztGzzl ,</if>
+            <if test=" ztCdrl      != null">ztCdrl ,</if>
+            <if test=" ztWxcc      != null">ztWxcc ,</if>
+            <if test=" ztZj        != null">ztZj ,</if>
+            <if test=" ztLsLj      != null">ztLsLj ,</if>
+            <if test=" ztLsLtgg    != null">ztLsLtgg ,</if>
+            <if test=" ztLsLtQy    != null">ztLsLtQy ,</if>
+            <if test=" ztLdGj      != null">ztLdGj ,</if>
+            <if test=" ztLdCd      != null">ztLdCd ,</if>
+            <if test=" ztLdKd      != null">ztLdKd ,</if>
+            <if test=" ztLdcz      != null">ztLdcz ,</if>
+            <if test=" ztHdhzBj    != null">ztHdhzBj ,</if>
+            <if test=" ztLdJx      != null">ztLdJx ,</if>
+            <if test=" ztZtldGd    != null">ztZtldGd ,</if>
+            <if test=" ztZtKd      != null">ztZtKd ,</if>
+            <if test=" ztZtwdCd    != null">ztZtwdCd ,</if>
+            <if test=" ztZxj       != null">ztZxj ,</if>
+            <if test=" ztJdby      != null">ztJdby ,</if>
+            <if test=" ztDws       != null">ztDws ,</if>
+            <if test=" ztSdQj      != null">ztSdQj ,</if>
+            <if test=" ztSdDt      != null">ztSdDt ,</if>
+            <if test=" ztPp        != null">ztPp ,</if>
+            <if test=" fdjXh       != null">fdjXh ,</if>
+            <if test=" fdjXs       != null">fdjXs ,</if>
+            <if test=" fdjFactory  != null">fdjFactory ,</if>
+            <if test=" fdjBdGl     != null">fdjBdGl ,</if>
+            <if test=" fdjEdGl     != null">fdjEdGl ,</if>
+            <if test=" fdjBdZs     != null">fdjBdZs ,</if>
+            <if test=" jssXh       != null">jssXh ,</if>
+            <if test=" jssXs       != null">jssXs ,</if>
+            <if test=" jssFactory  != null">jssFactory ,</if>
+            <if test=" zyccZdWjlCd != null">zyccZdWjlCd ,</if>
+            <if test=" zycsZdwjlDg != null">zycsZdwjlDg ,</if>
+            <if test=" zycsZdwjBj  != null">zycsZdwjBj ,</if>
+            <if test=" zycsZdwjSd  != null">zycsZdwjSd ,</if>
+            <if test=" zycsZdCzwjSd!= null">zycsZdCzwjSd,</if>
+            <if test=" zycsZdwjGd  != null">zycsZdwjGd ,</if>
+            <if test=" zycsZdxzGd  != null">zycsZdxzGd ,</if>
+            <if test=" gzzzDbCd    != null">gzzzDbCd ,</if>
+            <if test=" gzzzDgCd    != null">gzzzDgCd ,</if>
+            <if test=" yybXh       != null">yybXh ,</if>
+            <if test=" yybLl       != null">yybLl ,</if>
+            <if test=" gzyl        != null">gzyl ,</if>
+            <if test=" xpzz        != null">xpzz ,</if>
+            <if test=" CREATE_BY_  != null">CREATE_BY_ ,</if>
+            <if test=" CREATE_TIME_!= null">CREATE_TIME_,</if>
+
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="  ggId          != null">#{ ggId      },</if>
+            <if test="  njjdId    != null">#{ njjdId    },</if>
+            <if test="  ztXh        != null">#{ ztXh        },</if>
+            <if test="  ztJgxs      != null">#{ ztJgxs      },</if>
+            <if test="  ztGzzl      != null">#{ ztGzzl      },</if>
+            <if test="  ztCdrl      != null">#{ ztCdrl      },</if>
+            <if test="  ztWxcc      != null">#{ ztWxcc      },</if>
+            <if test="  ztZj        != null">#{ ztZj        },</if>
+            <if test="  ztLsLj      != null">#{ ztLsLj      },</if>
+            <if test="  ztLsLtgg    != null">#{ ztLsLtgg    },</if>
+            <if test="  ztLsLtQy    != null">#{ ztLsLtQy    },</if>
+            <if test="  ztLdGj      != null">#{ ztLdGj      },</if>
+            <if test="  ztLdCd      != null">#{ ztLdCd      },</if>
+            <if test="  ztLdKd      != null">#{ ztLdKd      },</if>
+            <if test="  ztLdcz      != null">#{ ztLdcz      },</if>
+            <if test="  ztHdhzBj    != null">#{ ztHdhzBj    },</if>
+            <if test="  ztLdJx      != null">#{ ztLdJx      },</if>
+            <if test="  ztZtldGd    != null">#{ ztZtldGd    },</if>
+            <if test="  ztZtKd      != null">#{ ztZtKd      },</if>
+            <if test="  ztZtwdCd    != null">#{ ztZtwdCd    },</if>
+            <if test="  ztZxj       != null">#{ ztZxj       },</if>
+            <if test="  ztJdby      != null">#{ ztJdby      },</if>
+            <if test="  ztDws       != null">#{ ztDws       },</if>
+            <if test="  ztSdQj      != null">#{ ztSdQj      },</if>
+            <if test="  ztSdDt      != null">#{ ztSdDt      },</if>
+            <if test="  ztPp        != null">#{ ztPp        },</if>
+            <if test="  fdjXh       != null">#{ fdjXh       },</if>
+            <if test="  fdjXs       != null">#{ fdjXs       },</if>
+            <if test="  fdjFactory  != null">#{ fdjFactory  },</if>
+            <if test="  fdjBdGl     != null">#{ fdjBdGl     },</if>
+            <if test="  fdjEdGl     != null">#{ fdjEdGl     },</if>
+            <if test="  fdjBdZs     != null">#{ fdjBdZs     },</if>
+            <if test="  jssXh       != null">#{ jssXh       },</if>
+            <if test="  jssXs       != null">#{ jssXs       },</if>
+            <if test="  jssFactory  != null">#{ jssFactory  },</if>
+            <if test="  zyccZdWjlCd != null">#{ zyccZdWjlCd },</if>
+            <if test="  zycsZdwjlDg != null">#{ zycsZdwjlDg },</if>
+            <if test="  zycsZdwjBj  != null">#{ zycsZdwjBj  },</if>
+            <if test="  zycsZdwjSd  != null">#{ zycsZdwjSd  },</if>
+            <if test="  zycsZdCzwjSd!= null">#{ zycsZdCzwjSd},</if>
+            <if test="  zycsZdwjGd  != null">#{ zycsZdwjGd  },</if>
+            <if test="  zycsZdxzGd  != null">#{ zycsZdxzGd  },</if>
+            <if test="  gzzzDbCd    != null">#{ gzzzDbCd    },</if>
+            <if test="  gzzzDgCd    != null">#{ gzzzDgCd    },</if>
+            <if test="  yybXh       != null">#{ yybXh       },</if>
+            <if test="  yybLl       != null">#{ yybLl       },</if>
+            <if test="  gzyl        != null">#{ gzyl        },</if>
+            <if test="  xpzz        != null">#{ xpzz        },</if>
+            <if test="  CREATE_BY_  != null">#{ CREATE_BY_  },</if>
+            <if test="  CREATE_TIME_!= null">#{ CREATE_TIME_},</if>
+
+        </trim>
+    </insert>
+
+    <!--农机申请产品规格信息修改-->
+    <update id="updateParamInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        update nj_paramInfo
+        set
+
+         ztXh        =#{ ztXh        ,jdbcType=VARCHAR},
+         ztJgxs      =#{ ztJgxs      ,jdbcType=VARCHAR},
+         ztGzzl      =#{ ztGzzl      ,jdbcType=VARCHAR},
+         ztCdrl      =#{ ztCdrl      ,jdbcType=VARCHAR},
+         ztWxcc      =#{ ztWxcc      ,jdbcType=VARCHAR},
+         ztZj        =#{ ztZj        ,jdbcType=VARCHAR},
+         ztLsLj      =#{ ztLsLj      ,jdbcType=VARCHAR},
+         ztLsLtgg    =#{ ztLsLtgg    ,jdbcType=VARCHAR},
+         ztLsLtQy    =#{ ztLsLtQy    ,jdbcType=VARCHAR},
+         ztLdGj      =#{ ztLdGj      ,jdbcType=VARCHAR},
+         ztLdCd      =#{ ztLdCd      ,jdbcType=VARCHAR},
+         ztLdKd      =#{ ztLdKd      ,jdbcType=VARCHAR},
+         ztLdcz      =#{ ztLdcz      ,jdbcType=VARCHAR},
+         ztHdhzBj    =#{ ztHdhzBj    ,jdbcType=VARCHAR},
+         ztLdJx      =#{ ztLdJx      ,jdbcType=VARCHAR},
+         ztZtldGd    =#{ ztZtldGd    ,jdbcType=VARCHAR},
+         ztZtKd      =#{ ztZtKd      ,jdbcType=VARCHAR},
+         ztZtwdCd    =#{ ztZtwdCd    ,jdbcType=VARCHAR},
+         ztZxj       =#{ ztZxj       ,jdbcType=VARCHAR},
+         ztJdby      =#{ ztJdby      ,jdbcType=VARCHAR},
+         ztDws       =#{ ztDws       ,jdbcType=VARCHAR},
+         ztSdQj      =#{ ztSdQj      ,jdbcType=VARCHAR},
+         ztSdDt      =#{ ztSdDt      ,jdbcType=VARCHAR},
+         ztPp        =#{ ztPp        ,jdbcType=VARCHAR},
+         fdjXh       =#{ fdjXh       ,jdbcType=VARCHAR},
+         fdjXs       =#{ fdjXs       ,jdbcType=VARCHAR},
+         fdjFactory  =#{ fdjFactory  ,jdbcType=VARCHAR},
+         fdjBdGl     =#{ fdjBdGl     ,jdbcType=VARCHAR},
+         fdjEdGl     =#{ fdjEdGl     ,jdbcType=VARCHAR},
+         fdjBdZs     =#{ fdjBdZs     ,jdbcType=VARCHAR},
+         jssXh       =#{ jssXh       ,jdbcType=VARCHAR},
+         jssXs       =#{ jssXs       ,jdbcType=VARCHAR},
+         jssFactory  =#{ jssFactory  ,jdbcType=VARCHAR},
+         zyccZdWjlCd =#{ zyccZdWjlCd ,jdbcType=VARCHAR},
+         zycsZdwjlDg =#{ zycsZdwjlDg ,jdbcType=VARCHAR},
+         zycsZdwjBj  =#{ zycsZdwjBj  ,jdbcType=VARCHAR},
+         zycsZdwjSd  =#{ zycsZdwjSd  ,jdbcType=VARCHAR},
+         zycsZdCzwjSd=#{ zycsZdCzwjSd,jdbcType=VARCHAR},
+         zycsZdwjGd  =#{ zycsZdwjGd  ,jdbcType=VARCHAR},
+         zycsZdxzGd  =#{ zycsZdxzGd  ,jdbcType=VARCHAR},
+         gzzzDbCd    =#{ gzzzDbCd    ,jdbcType=VARCHAR},
+         gzzzDgCd    =#{ gzzzDgCd    ,jdbcType=VARCHAR},
+         yybXh       =#{ yybXh       ,jdbcType=VARCHAR},
+         yybLl       =#{ yybLl       ,jdbcType=VARCHAR},
+         gzyl        =#{ gzyl        ,jdbcType=VARCHAR},
+         xpzz        =#{ xpzz        ,jdbcType=VARCHAR},
+         CREATE_BY_  =#{ CREATE_BY_  ,jdbcType=VARCHAR},
+         CREATE_TIME_=#{ CREATE_TIME_,jdbcType=TIMESTAMP},
+         TENANT_ID_  =#{ TENANT_ID_  ,jdbcType=VARCHAR},
+         UPDATE_BY_  =#{ UPDATE_BY_  ,jdbcType=VARCHAR},
+         UPDATE_TIME_=#{ UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where njBaseId=#{njjdId}
+    </update>
+
+    <!--修改农机鉴定销售状态按钮-->
+    <update id="updateSaleButton" parameterType="java.util.Map">
+        update nj_baseInfo
+        set
+          saleStatus=#{saleStatus,jdbcType=VARCHAR}
+        where
+          id=#{id}
+    </update>
+
+    <!--修改农机鉴定下载状态按钮-->
+    <update id="updateSfxzButton" parameterType="java.util.Map">
+        update nj_downloadApply
+        set
+          sfxz=#{saleStatus,jdbcType=VARCHAR}
+        where
+          id=#{applyId}
+    </update>
+
+    <select id="queryUserOperateApply" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        nj_downloadApply.*,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        nj_downloadApply
+        LEFT JOIN bpm_inst ON nj_downloadApply.id = bpm_inst.BUS_KEY_
+        <where>
+            njBaseIds = #{njjdId}
+            AND nj_downloadApply.CREATE_BY_ = #{applyUserId}
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND nj_downloadApply.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        ORDER BY FIELD( bpm_inst.STATUS_ ,'SUCCESS_END','RUNNING','DRAFTED') ASC
+    </select>
+
+    <insert id="insertNjjdxzpz" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into nj_xzpzInfo(
+            id
+            ,njBaseId
+            ,pzmc
+            ,pzdw
+            ,pzsjz
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{njBaseId,jdbcType=VARCHAR},
+            #{pzmc,jdbcType=VARCHAR},
+            #{pzdw,jdbcType=VARCHAR},
+            #{pzsjz,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateNjjdxzpz" parameterType="com.alibaba.fastjson.JSONObject">
+        update nj_xzpzInfo
+        set
+            pzmc=#{pzmc,jdbcType=VARCHAR},
+            pzdw=#{pzdw,jdbcType=VARCHAR},
+            pzsjz=#{pzsjz,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+    <delete id="deleteNjjdxzpz" parameterType="java.util.Map">
+        delete from nj_xzpzInfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="njjdIds != null and njjdIds !=''">
+                AND njBaseId IN
+                <foreach collection="njjdIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getXzpzList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+          nj_xzpzInfo.*
+        FROM
+          nj_xzpzInfo
+        WHERE
+          nj_xzpzInfo.njBaseId = #{njjdId}
+    </select>
+    <select id="queryNjjdcpgg" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        nj_paramInfo.*
+        FROM
+        nj_paramInfo
+        <where>
+            njBaseId = #{njjdId}
+        </where>
+    </select>
+    <select id="queryNjjdxzpz" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        nj_xzpzInfo.*
+        FROM
+        nj_xzpzInfo
+        <where>
+            njBaseId = #{njjdId}
+        </where>
+    </select>
+    <select id="queryNjjdFileById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            nj_fileinfo.*
+        FROM
+            nj_fileinfo
+        WHERE
+            id = #{id}
+    </select>
+    <delete id="deleteNjjdparam" parameterType="java.util.Map">
+        delete from nj_paramInfo
+        <where>
+            <if test="njjdIds != null and njjdIds !=''">
+                AND njBaseId IN
+                <foreach collection="njjdIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteNjjduser" parameterType="java.util.Map">
+        delete from nj_userInfo
+        <where>
+            <if test="njjdIds != null and njjdIds !=''">
+                AND njBaseId IN
+                <foreach collection="njjdIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <update id="updateNjSubsidy" parameterType="com.alibaba.fastjson.JSONObject">
+        update nj_baseInfo
+        set
+        haveSubsidy = #{haveSubsidy,jdbcType=VARCHAR},
+        subsidyEndDate = #{subsidyEndDate,jdbcType=VARCHAR}
+        where
+        id = #{id}
+    </update>
+</mapper>

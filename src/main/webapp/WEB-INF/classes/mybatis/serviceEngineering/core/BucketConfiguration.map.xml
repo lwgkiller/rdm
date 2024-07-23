@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.BucketConfigurationDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="@Ognl@isNotEmpty(repUser)">
+            AND business.designer like CONCAT('%',#{designer},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        service_engineering_overseas_bucket_configuration AS business
+        LEFT JOIN os_rel_inst ON business.repUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.repUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_overseas_bucket_configuration AS business
+        LEFT JOIN os_rel_inst ON business.repUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.repUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="getFileListInfos" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from service_engineering_overseas_bucket_configurationfileinfo
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND businessId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(businessTypes)">
+                AND businessType IN
+                <foreach collection="businessTypes" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds) and @Ognl@isEmpty(businessTypes)">
+                AND 1=2
+            </if>
+        </where>
+    </select>
+    <!---->
+    <delete id="deleteFileInfos" parameterType="java.util.Map">
+        delete from service_engineering_overseas_bucket_configurationfileinfo
+        <where>
+            <if test="@Ognl@isNotEmpty(businessType)">
+                AND businessType=#{businessType}
+            </if>
+            <if test="@Ognl@isNotEmpty(id)">
+                AND id=#{id}
+            </if>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND businessId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessType) and @Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="insertFileInfos" parameterType="java.util.Map">
+        insert into service_engineering_overseas_bucket_configurationfileinfo(
+        id,
+        businessId,
+        businessType,
+        fileName,
+        fileSize,
+        fileDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{businessId,jdbcType=VARCHAR},
+        #{businessType,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <select id="queryDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            bpm_inst.INST_ID_ AS instId
+        FROM service_engineering_overseas_bucket_configuration AS business
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_overseas_bucket_configuration(
+            id,
+            repUserId,
+            repUser,
+            applyTime,
+            businessStatus,
+            isAuto,
+            CREATE_BY_,
+            CREATE_TIME_,
+            INST_ID_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{repUserId,jdbcType=VARCHAR},
+            #{repUser,jdbcType=VARCHAR},
+            #{applyTime,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{isAuto,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{INST_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update service_engineering_overseas_bucket_configuration
+        set
+            repUserId=#{repUserId,jdbcType=VARCHAR},
+            repUser=#{repUser,jdbcType=VARCHAR},
+            applyTime=#{applyTime,jdbcType=VARCHAR},
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            isAuto=#{isAuto,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from service_engineering_overseas_bucket_configuration
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds)">
+                1=2
+            </if>
+        </where>
+    </delete>
+</mapper>

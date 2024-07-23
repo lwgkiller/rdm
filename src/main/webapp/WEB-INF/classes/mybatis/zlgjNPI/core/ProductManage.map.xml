@@ -1,0 +1,643 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.ProductManageDao">
+
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <delete id="deleteProductManage" parameterType="java.util.Map">
+        delete from product_exploit_manage
+        <where>
+            <if test="productManageIds != null and productManageIds !=''">
+                id IN
+                <foreach collection="productManageIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryProductManageList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        product_exploit_manage.id,
+        product_exploit_manage.product_supervisor_name productSupervisorName,
+        product_exploit_manage.product_supervisor_id productSupervisorId,
+        product_exploit_manage.tractor_parameter_name tractorParameterName,
+        product_exploit_manage.parts_technology_id parts_technology_id,
+        product_exploit_manage.parts_technology_name parts_technology_name,
+        product_exploit_manage.tractor_parameter_id tractorParameterId,
+        product_exploit_manage.craft_assembly_name craftAssemblyName,
+        product_exploit_manage.craft_assembly_id craftAssemblyId,
+        product_exploit_manage.design_type designType,
+        DATE_FORMAT(product_exploit_manage.performznce_start_time,'%Y-%m-%d') performznceStartTime,
+        DATE_FORMAT(product_exploit_manage.performznce_end_time,'%Y-%m-%d') performznceEndTime,
+        DATE_FORMAT(product_exploit_manage.product_start_time,'%Y-%m-%d') productStartTime,
+        DATE_FORMAT(product_exploit_manage.product_end_time,'%Y-%m-%d') productEndTime,
+        DATE_FORMAT(product_exploit_manage.assembly_start_time,'%Y-%m-%d') assemblyStartTime,
+        DATE_FORMAT(product_exploit_manage.assembly_end_time,'%Y-%m-%d') assemblyEndTime,
+        DATE_FORMAT(product_exploit_manage.verification_start_time,'%Y-%m-%d') verificationStartTime,
+        DATE_FORMAT(product_exploit_manage.verification_end_time,'%Y-%m-%d') verificationEndTime,
+        DATE_FORMAT(product_exploit_manage.batch_start_time,'%Y-%m-%d') batchStartTime,
+        DATE_FORMAT(product_exploit_manage.batch_end_time,'%Y-%m-%d') batchEndTime,
+        product_exploit_manage.CREATE_BY_ CREATE_BY_,
+        product_exploit_manage.CREATE_TIME_ CREATE_TIME_,
+        product_exploit_manage.TENANT_ID_ TENANT_ID_,
+        product_exploit_manage.UPDATE_BY_ UPDATE_BY_,
+        product_exploit_manage.UPDATE_TIME_ UPDATE_TIME_,
+        os_group.NAME_ AS applyUserDeptName,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS STATUS,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        product_exploit_manage
+        LEFT JOIN os_rel_inst ON product_exploit_manage.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = product_exploit_manage.CREATE_BY_
+        LEFT JOIN bpm_inst ON product_exploit_manage.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="id != null and id != ''">
+            AND product_exploit_manage.id like CONCAT('%',#{id},'%')
+        </if>
+        <if test="designType != null and designType != ''">
+            AND product_exploit_manage.design_type like CONCAT('%',#{designType},'%')
+        </if>
+        <if test="applyUserId != null and applyUserId != ''">
+            AND product_exploit_manage.CREATE_BY_ = #{applyUserId}
+        </if>
+        <if test="applyDepId != null and applyDepId != ''">
+            AND os_group.GROUP_ID_ = #{applyDepId}
+        </if>
+        <if test="status != null and status != ''">
+            AND bpm_inst.STATUS_ = #{status}
+        </if>
+
+        <if test="rdTimeStart !=null and rdTimeStart !=''">
+            AND product_exploit_manage.CREATE_TIME_ &gt;= #{rdTimeStart}
+        </if>
+        <if test="rdTimeEnd !=null and rdTimeEnd !=''">
+            AND product_exploit_manage.CREATE_TIME_ &lt;= #{rdTimeEnd}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countProductManageLists" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        product_exploit_manage
+        LEFT JOIN os_rel_inst ON product_exploit_manage.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN bpm_inst ON product_exploit_manage.id = bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="id != null and id != ''">
+                AND product_exploit_manage.id like CONCAT('%',#{id},'%')
+            </if>
+            <if test="designType != null and designType != ''">
+                AND product_exploit_manage.design_type like CONCAT('%',#{designType},'%')
+            </if>
+
+        </where>
+    </select>
+
+    <select id="getProductExploitRelation" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        id key_,
+        product_name text
+        FROM
+        product_exploit_relation
+        WHERE
+        parent_id = #{key}
+        <if test="nodeName != null and nodeName != ''">
+            AND node_name like CONCAT('%',#{nodeName},'%')
+        </if>
+    </select>
+
+    <select id="queryProductManageById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+         SELECT
+            t1.id,
+            t1.product_supervisor_name productSupervisorName,
+            t1.product_supervisor_id productSupervisorId,
+            t1.tractor_parameter_name tractorParameterName,
+            t1.tractor_parameter_id tractorParameterId,
+            t1.craft_assembly_name craftAssemblyName,
+            t1.craft_assembly_id craftAssemblyId,
+            t1.parts_technology_name partsTechnologyName,
+            t1.parts_technology_id partsTechnologyId,
+            t1.design_type designType,
+			DATE_FORMAT(t1.performznce_start_time,'%Y-%m-%d') performznceStartTime,
+            DATE_FORMAT(t1.performznce_end_time,'%Y-%m-%d') performznceEndTime,
+            DATE_FORMAT(t1.product_start_time,'%Y-%m-%d') productStartTime,
+            DATE_FORMAT(t1.product_end_time,'%Y-%m-%d') productEndTime,
+            DATE_FORMAT(t1.assembly_start_time,'%Y-%m-%d') assemblyStartTime,
+			DATE_FORMAT(t1.assembly_end_time,'%Y-%m-%d') assemblyEndTime,
+            DATE_FORMAT(t1.verification_start_time,'%Y-%m-%d') verificationStartTime,
+            DATE_FORMAT(t1.verification_end_time,'%Y-%m-%d') verificationEndTime,
+            DATE_FORMAT(t1.batch_start_time,'%Y-%m-%d') batchStartTime,
+            DATE_FORMAT(t1.batch_end_time,'%Y-%m-%d') batchEndTime,
+			t1.CREATE_BY_ CREATE_BY_,
+            t1.CREATE_TIME_ CREATE_TIME_,
+			t1.TENANT_ID_ TENANT_ID_,
+            t1.UPDATE_BY_ UPDATE_BY_,
+			t1.UPDATE_TIME_ UPDATE_TIME_,
+            os_user.FULLNAME_,
+            bpm_inst.INST_ID_ AS instId
+        FROM
+            product_exploit_manage t1
+            left join bpm_inst on t1.id = bpm_inst.BUS_KEY_
+            LEFT JOIN os_user ON t1.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+            t1.id  = #{manageId}
+             AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+
+    </select>
+
+    <delete id="deleteStandardById" parameterType="java.lang.String">
+        delete from standard_reviseBaseInfo
+        where standard_reviseBaseInfo.id=#{applyId}
+    </delete>
+
+    <select id="queryDeptByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from os_group
+        where
+        GROUP_ID_ IN
+        <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="queryStandardFileTypes" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        standard_reviseDeliverable
+        WHERE
+        1=1
+        <if test="stageKey != null and stageKey != ''">
+            and standard_reviseDeliverable.stageKey = #{stageKey}
+        </if>
+
+
+    </select>
+
+    <select id="queryStandardFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_reviseEnclosure.*,
+        standard_reviseDeliverable.typename typename
+        FROM
+        standard_reviseEnclosure
+        left JOIN standard_reviseDeliverable ON standard_reviseEnclosure.fileTypeId =
+        standard_reviseDeliverable.id
+        WHERE
+        standard_reviseEnclosure.reviseInfoId IN
+        <foreach collection="standardIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+        <if test="stageKey != null and stageKey != ''">
+            and standard_reviseDeliverable.stageKey = #{stageKey}
+        </if>
+
+    </select>
+
+    <insert id="addStandardFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_reviseEnclosure(
+        id,
+        reviseInfoId
+        ,fileTypeId
+        ,fileName
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{reviseInfoId,jdbcType=VARCHAR},
+        #{fileTypeId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <!--征求意见查询-->
+    <select id="getStandardList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+
+        SELECT
+        id,
+        reviseInfoId,
+        chapter,
+        opinion,
+        feedback,
+        os_user.FULLNAME_ AS CREATE_BY_
+        FROM
+        standard_reviseOpinon
+        left join os_user on standard_reviseOpinon.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+        reviseInfoId = #{applyId}
+        <if test="isZqyj != null and isZqyj != '' and isZqyj == 'yes'">
+            and standard_reviseOpinon.CREATE_BY_ = #{user}
+        </if>
+    </select>
+
+
+    <!--用户信息查询-->
+    <select id="getStandard" parameterType="java.lang.String" resultType="java.util.Map">
+
+    SELECT
+    id,
+    reviseInfoId,
+    chapter,
+    opinion,
+    feedback,
+    CREATE_BY_
+    FROM
+   standard_reviseOpinon
+    WHERE
+    id = #{standardId}
+    </select>
+
+    <!--用户信息保存-->
+    <insert id="saveUserList" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_reviseOpinon(
+            id,
+            reviseInfoId,
+            chapter,
+            opinion,
+            feedback,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{reviseInfoId,jdbcType=VARCHAR},
+            #{chapter,jdbcType=VARCHAR},
+            #{opinion,jdbcType=VARCHAR},
+            #{feedback,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <!--用户附件修改-->
+    <update id="updateUserList" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_reviseOpinon
+        set
+        chapter=#{chapter,jdbcType=VARCHAR},
+        opinion=#{opinion,jdbcType=VARCHAR},
+        feedback=#{feedback,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+    <delete id="delUserListById" parameterType="java.util.Map">
+        delete from standard_reviseOpinon
+        where id = #{id}
+    </delete>
+
+    <delete id="delStandardById" parameterType="java.util.Map">
+       DELETE FROM
+        standard_reviseEnclosure
+        WHERE
+         id = #{id}
+    </delete>
+
+    <select id="queryTaskAll" parameterType="java.util.Map" resultType="java.util.Map">
+        select ID_ as taskId,
+        PROC_INST_ID_,
+        NAME_
+        from act_ru_task
+        <where>
+            <if test="actInstIds != null and actInstIds != ''">
+                act_ru_task.PROC_INST_ID_ IN
+                <foreach collection="actInstIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="isJSGLB" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        os_group.NAME_ as deptname
+        from os_group
+        LEFT JOIN os_rel_inst ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        where os_group.DIM_ID_ = '1'
+        and os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+        <if test="currentUserId != null and currentUserId != ''">
+            and os_user.USER_ID_=#{currentUserId}
+        </if>
+    </select>
+
+    <update id="updateFinalStandardId2Task" parameterType="java.util.Map">
+        update standard_reviseBaseInfo
+        set
+        standardId =#{finalStandardId}
+        where
+        id=#{id}
+    </update>
+
+    <!--产品需求信息保存-->
+    <insert id="addProduct" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into product_quantity_message(
+            id,
+            manage_id,
+            demand_side_type,
+            demand_element,
+            parameter,
+            standard,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{manageId,jdbcType=VARCHAR},
+            #{demandSideType,jdbcType=VARCHAR},
+            #{demandElement,jdbcType=VARCHAR},
+            #{parameter,jdbcType=VARCHAR},
+            #{standard,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <!--产品开发管控基本信息保存-->
+    <insert id="addProductManage" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into product_exploit_manage(
+        id,
+        product_supervisor_id,
+        product_supervisor_name,
+        tractor_parameter_name,
+        tractor_parameter_id,
+        craft_assembly_name,
+        craft_assembly_id,
+        parts_technology_name,
+        parts_technology_id,
+        design_type,
+        <if test=" performznceStartTime != null and performznceStartTime != '' and performznceStartTime != 'null'">
+            performznce_start_time ,
+        </if>
+        <if test=" performznceEndTime != null and performznceEndTime != '' and performznceEndTime != 'null'">
+            performznce_end_time ,
+        </if>
+        <if test=" productStartTime != null and productStartTime != '' and productStartTime != 'null'">
+            product_start_time ,
+        </if>
+        <if test=" productEndTime != null and productEndTime != '' and productEndTime != 'null'">
+            product_end_time ,
+        </if>
+        <if test=" assemblyStartTime != null and assemblyStartTime != '' and assemblyStartTime != 'null'">
+            assembly_start_time ,
+        </if>
+        <if test=" assemblyEndTime != null and assemblyEndTime != '' and assemblyEndTime != 'null'">
+            assembly_end_time ,
+        </if>
+        <if test=" verificationStartTime != null and verificationStartTime != '' and verificationStartTime != 'null'">
+            verification_start_time ,
+        </if>
+        <if test=" verificationEndTime != null and verificationEndTime != '' and verificationEndTime != 'null'">
+            verification_end_time ,
+        </if>
+        <if test=" batchStartTime != null and batchStartTime != '' and batchStartTime != 'null'">
+            batch_start_time ,
+        </if>
+        <if test=" batchEndTime != null and batchEndTime != '' and batchEndTime != 'null'">
+            batch_end_time ,
+        </if>
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{manageId,jdbcType=VARCHAR},
+        #{productSupervisorId,jdbcType=VARCHAR},
+        #{productSupervisorName,jdbcType=VARCHAR},
+        #{tractorParameterName,jdbcType=VARCHAR},
+        #{tractorParameterId,jdbcType=VARCHAR},
+        #{craftAssemblyName,jdbcType=VARCHAR},
+        #{craftAssemblyId,jdbcType=VARCHAR},
+        #{partsTechnologyName,jdbcType=VARCHAR},
+        #{partsTechnologyId,jdbcType=VARCHAR},
+        #{designType,jdbcType=VARCHAR},
+        <if test=" performznceStartTime != null and performznceStartTime != '' and performznceStartTime != 'null'">
+            #{performznceStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" performznceEndTime != null and performznceEndTime != '' and performznceEndTime != 'null'">
+            #{performznceEndTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" productStartTime != null and productStartTime != '' and productStartTime != 'null'">
+            #{productStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" productEndTime != null and productEndTime != '' and productEndTime != 'null'">
+            #{productEndTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" assemblyStartTime != null and assemblyStartTime != '' and assemblyStartTime != 'null'">
+            #{assemblyStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" assemblyEndTime != null and assemblyEndTime != '' and assemblyEndTime != 'null'">
+            #{assemblyEndTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" verificationStartTime != null and verificationStartTime != '' and verificationStartTime != 'null'">
+            #{verificationStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" verificationEndTime != null and verificationEndTime != '' and verificationEndTime != 'null'">
+            #{verificationEndTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" batchStartTime != null and batchStartTime != '' and batchStartTime != 'null'">
+            #{batchStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" batchEndTime != null and batchEndTime != '' and batchEndTime != 'null'">
+            #{batchEndTime,jdbcType=VARCHAR},
+        </if>
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <!--产品需求信息修改-->
+    <update id="updateProduct" parameterType="com.alibaba.fastjson.JSONObject">
+        update product_quantity_message
+        set
+        demand_side_type=#{demandSideType,jdbcType=VARCHAR},
+        demand_element=#{demandElement,jdbcType=VARCHAR},
+        parameter=#{parameter,jdbcType=VARCHAR},
+        standard=#{standard,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id} and manage_id = #{manageId}
+    </update>
+
+    <!--产品开发管控基本信息修改-->
+    <update id="updateProductManage" parameterType="com.alibaba.fastjson.JSONObject">
+        update product_exploit_manage
+        set
+        product_supervisor_name=#{productSupervisorName,jdbcType=VARCHAR},
+        product_supervisor_id=#{productSupervisorId,jdbcType=VARCHAR},
+        tractor_parameter_name=#{tractorParameterName,jdbcType=VARCHAR},
+        tractor_parameter_id=#{tractorParameterId,jdbcType=VARCHAR},
+        craft_assembly_name=#{craftAssemblyName,jdbcType=VARCHAR},
+        craft_assembly_id=#{craftAssemblyId,jdbcType=VARCHAR},
+        parts_technology_name=#{partsTechnologyName,jdbcType=VARCHAR},
+        parts_technology_id=#{partsTechnologyId,jdbcType=VARCHAR},
+        design_type=#{designType,jdbcType=VARCHAR},
+        <if test=" performznceStartTime != null and performznceStartTime != '' and performznceStartTime != 'null'">
+            performznce_start_time=#{performznceStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" performznceEndTime != null and performznceEndTime != '' and performznceEndTime != 'null'">
+            performznce_end_time=#{performznceEndTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" productStartTime != null and productStartTime != '' and productStartTime != 'null'">
+            product_start_time=#{productStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" productEndTime != null and productEndTime != '' and productEndTime != 'null'">
+            product_end_time=#{productEndTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" assemblyStartTime != null and assemblyStartTime != '' and assemblyStartTime != 'null'">
+            assembly_start_time=#{assemblyStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" assemblyEndTime != null and assemblyEndTime != '' and assemblyEndTime != 'null'">
+            assembly_end_time=#{assemblyEndTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" verificationStartTime != null and verificationStartTime != '' and verificationStartTime != 'null'">
+            verification_start_time=#{verificationStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" verificationEndTime != null and verificationEndTime != '' and verificationEndTime != 'null'">
+            verification_end_time=#{verificationEndTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" batchStartTime != null and batchStartTime != '' and batchStartTime != 'null'">
+            batch_start_time=#{batchStartTime,jdbcType=VARCHAR},
+        </if>
+        <if test=" batchEndTime != null and batchEndTime != '' and batchEndTime != 'null'">
+            batch_end_time=#{batchEndTime,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+
+    <delete id="delProductManageById" parameterType="String">
+       DELETE FROM
+        product_quantity_message
+        WHERE
+         manage_id = #{manageId}
+    </delete>
+
+    <select id="getItemList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        t1.id id,
+        t1.manage_id manageId,
+        t1.demand_side_type demandSideType,
+        t1.demand_element demandElement,
+        t1.parameter parameter,
+        t1.standard standard,
+        t2.product_name productName,
+        t1.CREATE_BY_
+        from product_quantity_message t1
+        left join product_exploit_relation t2 on t1.demand_side_type = t2.id
+
+        <where>
+            <if test="mainId != null and mainId != ''">
+                and t1.manage_id =#{mainId}
+            </if>
+            <if test="dicType != null and dicType != ''">
+                and t2.parent_id = #{dicType}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectproductTypeNum" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT count(*) from product_exploit_manage
+        WHERE design_type = #{designType}
+        <if test="manageId != null and manageId != ''">
+            AND id != #{manageId}
+        </if>
+
+    </select>
+
+    <select id="queryProductManDataList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        product_exploit_manage.id,
+        product_exploit_manage.product_supervisor_name productSupervisorName,
+        product_exploit_manage.product_supervisor_id productSupervisorId,
+        product_exploit_manage.tractor_parameter_name tractorParameterName,
+        product_exploit_manage.parts_technology_id parts_technology_id,
+        product_exploit_manage.parts_technology_name parts_technology_name,
+        product_exploit_manage.tractor_parameter_id tractorParameterId,
+        product_exploit_manage.craft_assembly_name craftAssemblyName,
+        product_exploit_manage.craft_assembly_id craftAssemblyId,
+        product_exploit_manage.design_type designType,
+        DATE_FORMAT(product_exploit_manage.performznce_start_time,'%Y-%m-%d') performznceStartTime,
+        DATE_FORMAT(product_exploit_manage.performznce_end_time,'%Y-%m-%d') performznceEndTime,
+        DATE_FORMAT(product_exploit_manage.product_start_time,'%Y-%m-%d') productStartTime,
+        DATE_FORMAT(product_exploit_manage.product_end_time,'%Y-%m-%d') productEndTime,
+        DATE_FORMAT(product_exploit_manage.assembly_start_time,'%Y-%m-%d') assemblyStartTime,
+        DATE_FORMAT(product_exploit_manage.assembly_end_time,'%Y-%m-%d') assemblyEndTime,
+        DATE_FORMAT(product_exploit_manage.verification_start_time,'%Y-%m-%d') verificationStartTime,
+        DATE_FORMAT(product_exploit_manage.verification_end_time,'%Y-%m-%d') verificationEndTime,
+        DATE_FORMAT(product_exploit_manage.batch_start_time,'%Y-%m-%d') batchStartTime,
+        DATE_FORMAT(product_exploit_manage.batch_end_time,'%Y-%m-%d') batchEndTime,
+        product_exploit_manage.CREATE_BY_ CREATE_BY_,
+        product_exploit_manage.CREATE_TIME_ CREATE_TIME_,
+        product_exploit_manage.TENANT_ID_ TENANT_ID_,
+        product_exploit_manage.UPDATE_BY_ UPDATE_BY_,
+        product_exploit_manage.UPDATE_TIME_ UPDATE_TIME_,
+        os_group.NAME_ AS applyUserDeptName,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS STATUS,
+        bpm_inst.INST_ID_ AS instId,
+        per.product_name as demandSideType,
+        per.parent_id as parentName,
+        pqm.demand_element as demandElement,
+        pqm.parameter as parameter,
+        pqm.standard as standard
+        FROM
+        product_exploit_manage
+        LEFT JOIN os_rel_inst ON product_exploit_manage.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = product_exploit_manage.CREATE_BY_
+        LEFT JOIN bpm_inst ON product_exploit_manage.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        left join product_quantity_message pqm on pqm.manage_id=product_exploit_manage.id
+        left join product_exploit_relation per on per.id=pqm.demand_side_type
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="designType != null and designType != ''">
+            AND product_exploit_manage.design_type like CONCAT('%',#{designType},'%')
+        </if>
+        <if test="parentName != null and parentName != ''">
+            AND per.parent_id like CONCAT('%',#{parentName},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+</mapper>

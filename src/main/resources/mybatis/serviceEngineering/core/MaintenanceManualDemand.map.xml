@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.MaintenanceManualDemandDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="busunessNo !=null and busunessNo !=''">
+            AND business.busunessNo like CONCAT('%',#{busunessNo},'%')
+        </if>
+        <if test="demandListNo !=null and demandListNo !=''">
+            AND business.demandListNo like CONCAT('%',#{demandListNo},'%')
+        </if>
+        <if test="salesArea !=null and salesArea !=''">
+            AND business.salesArea like CONCAT('%',#{salesArea},'%')
+        </if>
+        <if test="manualLanguage !=null and manualLanguage !=''">
+            AND business.manualLanguage = #{manualLanguage}
+        </if>
+        <if test="applyUser !=null and applyUser !=''">
+            AND business.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="applyDep !=null and applyDep !=''">
+            AND business.applyDep like CONCAT('%',#{applyDep},'%')
+        </if>
+        <if test="salesModel !=null and salesModel !=''">
+            AND business.salesModel = #{salesModel}
+        </if>
+        <if test="designModel !=null and designModel !=''">
+            AND business.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND business.materialCode = #{materialCode}
+        </if>
+        <if test="businessStatus !=null and businessStatus !=''">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+        <if test="amHandle !=null and amHandle !=''">
+            AND business.amHandle like CONCAT('%',#{amHandle},'%')
+        </if>
+        <!--下面这个条件给收藏夹用的-->
+        <if test="@Ognl@isNotEmpty(collectorId)">
+            AND business.id in (
+            select service_engineering_maintenance_manualdemand_collect.businessId
+            from service_engineering_maintenance_manualdemand_collect
+            where service_engineering_maintenance_manualdemand_collect.collectorId = #{collectorId}
+            )
+        </if>
+        <!--下面这个条件给提交时检有没有查重复业务用的-->
+        <if test="@Ognl@isNotEmpty(isCE)">
+            AND business.isCE = #{isCE}
+        </if>
+        <if test="@Ognl@isNotEmpty(quantity)">
+            AND business.quantity = #{quantity}
+        </if>
+        <if test="@Ognl@isNotEmpty(publishTime)">
+            AND business.publishTime = #{publishTime}
+        </if>
+        <if test="@Ognl@isNotEmpty(xiaohanNoNoNo)">
+            AND business.businessStatus != 'A-editing'
+        </if>
+        <if test="@Ognl@isNotEmpty(notStatus)">
+            AND bpm_inst.STATUS_ NOT IN
+            <foreach collection="notStatus" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+    <!--特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst.INST_ID_ AS instId。其实现在没必要了，可以用business.INST_ID_取代-->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        service_engineering_maintenance_manualdemand AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_maintenance_manualdemand AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!--四属性精确匹配-->
+    <select id="dataListQueryExact" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.* FROM
+        service_engineering_maintenance_manualdemand AS business
+        <where>
+            <if test="@Ognl@isNotEmpty(manualLanguage)">
+                AND business.manualLanguage = #{manualLanguage}
+            </if>
+            <if test="@Ognl@isNotEmpty(salesModel)">
+                AND business.salesModel = #{salesModel}
+            </if>
+            <if test="@Ognl@isNotEmpty(designModel)">
+                AND business.designModel = #{designModel}
+            </if>
+            <if test="@Ognl@isNotEmpty(materialCode)">
+                AND business.materialCode = #{materialCode}
+            </if>
+            <if test="@Ognl@isEmpty(manualLanguage) or @Ognl@isEmpty(salesModel) or @Ognl@isEmpty(designModel) or @Ognl@isEmpty(materialCode)">
+                1=2
+            </if>
+        </where>
+    </select>
+    <!--demandListNo精确匹配-->
+    <select id="dataListQueryExactByDemandListNo" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.* FROM
+        service_engineering_maintenance_manualdemand AS business
+        <where>
+            <if test="@Ognl@isNotEmpty(demandListNo)">
+                AND business.demandListNo = #{demandListNo}
+            </if>
+            <if test="@Ognl@isEmpty(demandListNo)">
+                1=2
+            </if>
+        </where>
+    </select>
+    <!---->
+    <select id="queryFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from service_engineering_maintenance_manualdemandfileinfo
+        where mainId IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <delete id="deleteBusinessFile" parameterType="java.util.Map">
+        delete from service_engineering_maintenance_manualdemandfileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from service_engineering_maintenance_manualdemand
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!--和组织，用户，bpm_inst的关联没啥用了。业务表冗余存储了，此处还保留，供以后其他的参考。特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst-->
+    <select id="queryDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM service_engineering_maintenance_manualdemand AS business
+            LEFT JOIN os_user ON business.applyUserId = os_user.USER_ID_
+            LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+              AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+              AND os_rel_inst.DIM1_ = '1'
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_maintenance_manualdemand(
+            id,
+            busunessNo,
+            demandListNo,
+            salesModel,
+            designModel,
+            materialCode,
+            manualLanguage,
+            isCE,
+            isSelfDeclaration,
+            CEOnlyNum,
+            CELanguage,
+            salesArea,
+            quantity,
+            configurationDescription,
+            manualCode,
+            manualfileId,
+            manualVersion,
+            applyTime,
+            publishTime,
+            applyUserId,
+            applyUser,
+            applyDepId,
+            applyDep,
+            businessStatus,
+            instructions,
+            remark,
+            BconfirmingId,
+            Bconfirming,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{busunessNo,jdbcType=VARCHAR},
+            #{demandListNo,jdbcType=VARCHAR},
+            #{salesModel,jdbcType=VARCHAR},
+            #{designModel,jdbcType=VARCHAR},
+            #{materialCode,jdbcType=VARCHAR},
+            #{manualLanguage,jdbcType=VARCHAR},
+            #{isCE,jdbcType=VARCHAR},
+            #{isSelfDeclaration,jdbcType=VARCHAR},
+            #{CEOnlyNum,jdbcType=VARCHAR},
+            #{CELanguage,jdbcType=VARCHAR},
+            #{salesArea,jdbcType=VARCHAR},
+            #{quantity,jdbcType=VARCHAR},
+            #{configurationDescription,jdbcType=VARCHAR},
+            #{manualCode,jdbcType=VARCHAR},
+            #{manualfileId,jdbcType=VARCHAR},
+            #{manualVersion,jdbcType=VARCHAR},
+            #{applyTime,jdbcType=VARCHAR},
+            #{publishTime,jdbcType=VARCHAR},
+            #{applyUserId,jdbcType=VARCHAR},
+            #{applyUser,jdbcType=VARCHAR},
+            #{applyDepId,jdbcType=VARCHAR},
+            #{applyDep,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{instructions,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{BconfirmingId,jdbcType=VARCHAR},
+            #{Bconfirming,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_maintenance_manualdemand
+        set
+            busunessNo=#{busunessNo,jdbcType=VARCHAR},
+            demandListNo=#{demandListNo,jdbcType=VARCHAR},
+            demandListStatus=#{demandListStatus,jdbcType=VARCHAR},
+            salesModel=#{salesModel,jdbcType=VARCHAR},
+            designModel=#{designModel,jdbcType=VARCHAR},
+            materialCode=#{materialCode,jdbcType=VARCHAR},
+            manualLanguage=#{manualLanguage,jdbcType=VARCHAR},
+            isCE=#{isCE,jdbcType=VARCHAR},
+            isSelfDeclaration=#{isSelfDeclaration,jdbcType=VARCHAR},
+            CEOnlyNum=#{CEOnlyNum,jdbcType=VARCHAR},
+            CELanguage=#{CELanguage,jdbcType=VARCHAR},
+            salesArea=#{salesArea,jdbcType=VARCHAR},
+            quantity=#{quantity,jdbcType=VARCHAR},
+            configurationDescription=#{configurationDescription,jdbcType=VARCHAR},
+            manualCode=#{manualCode,jdbcType=VARCHAR},
+            manualfileId=#{manualfileId,jdbcType=VARCHAR},
+            manualVersion=#{manualVersion,jdbcType=VARCHAR},
+            applyTime=#{applyTime,jdbcType=VARCHAR},
+            publishTime=#{publishTime,jdbcType=VARCHAR},
+            applyUserId=#{applyUserId,jdbcType=VARCHAR},
+            applyUser=#{applyUser,jdbcType=VARCHAR},
+            applyDepId=#{applyDepId,jdbcType=VARCHAR},
+            applyDep=#{applyDep,jdbcType=VARCHAR},
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            instructions=#{instructions,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            BconfirmingId=#{BconfirmingId,jdbcType=VARCHAR},
+            Bconfirming=#{Bconfirming,jdbcType=VARCHAR},
+            amHandle=#{amHandle,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=VARCHAR},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_maintenance_manualdemandfileinfo(
+        id,
+        fileName,
+        fileSize,
+        fileDesc,
+        mainId,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <select id="queryCollect" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_maintenance_manualdemand_collect
+        WHERE collectorId = #{collectorId}
+    </select>
+    <!---->
+    <insert id="createCollect" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_maintenance_manualdemand_collect(
+        businessId,
+        collectorId,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{businessId,jdbcType=VARCHAR},
+        #{collectorId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <delete id="deleteCollect" parameterType="java.util.Map">
+        delete from service_engineering_maintenance_manualdemand_collect
+        where
+        businessId=#{businessId}
+        and
+        collectorId=#{collectorId}
+    </delete>
+    <!--获取匹配明细-->
+    <select id="getManualMatchList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            service_engineering_maintenance_manual_match.id,
+            service_engineering_maintenance_manual_match.manualFileId,
+            service_engineering_maintenance_manual_match.businessId,
+            service_engineering_maintenance_manual_match.REF_ID_,
+            service_engineering_maintenance_manualfile.salesModel,
+            service_engineering_maintenance_manualfile.designModel,
+            service_engineering_maintenance_manualfile.materialCode,
+            service_engineering_maintenance_manualfile.manualDescription,
+            service_engineering_maintenance_manualfile.cpzgId,
+            service_engineering_maintenance_manualfile.cpzgName,
+            service_engineering_maintenance_manualfile.manualLanguage,
+            service_engineering_maintenance_manualfile.manualCode,
+            service_engineering_maintenance_manualfile.manualVersion,
+            service_engineering_maintenance_manualfile.manualEdition,
+            service_engineering_maintenance_manualfile.isCE,
+            service_engineering_maintenance_manualfile.CEStatus,
+            service_engineering_maintenance_manualfile.keyUserId,
+            service_engineering_maintenance_manualfile.keyUser,
+            service_engineering_maintenance_manualfile.publishTime,
+            service_engineering_maintenance_manualfile.manualStatus
+        FROM
+            service_engineering_maintenance_manual_match
+            LEFT JOIN service_engineering_maintenance_manualfile
+                ON service_engineering_maintenance_manual_match.manualFileId = service_engineering_maintenance_manualfile.id
+        WHERE
+            service_engineering_maintenance_manual_match.businessId = #{businessId}
+    </select>
+    <!--新增匹配明细-->
+    <insert id="insertManualMatch" parameterType="com.alibaba.fastjson.JSONObject">
+    insert into service_engineering_maintenance_manual_match(
+    id,
+    businessId,
+    manualFileId,
+    REF_ID_,
+    CREATE_BY_,
+    CREATE_TIME_
+    )values(
+    #{id,jdbcType=VARCHAR},
+    #{businessId,jdbcType=VARCHAR},
+    #{manualFileId,jdbcType=VARCHAR},
+    #{REF_ID_,jdbcType=VARCHAR},
+    #{CREATE_BY_,jdbcType=VARCHAR},
+    #{CREATE_TIME_,jdbcType=TIMESTAMP}
+    )
+    </insert>
+    <!--删除匹配明细-->
+    <delete id="deleteManualMatch" parameterType="java.util.Map">
+        delete from service_engineering_maintenance_manual_match
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="businessIds != null and businessIds != ''">
+                AND businessId in
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!--修改匹配明细的REF_ID_-->
+    <insert id="updateManualMatchRefId" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_maintenance_manual_match
+        set
+        REF_ID_=#{REF_ID_,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </insert>
+</mapper>

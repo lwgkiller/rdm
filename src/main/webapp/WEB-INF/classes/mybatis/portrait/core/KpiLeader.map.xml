@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.KpiLeaderDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="addKpiBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into kpi_leader_baseinfo(
+            id
+            ,year
+            ,zkUserId
+            ,zkUserName
+            ,bkhUserIds
+            ,bkhUserNames
+            ,metricDesc
+            ,targetValue
+            ,targetFormula
+            ,targetLowerValue
+            ,targetLowerFormula
+            ,targetUpperValue
+            ,targetUpperFormula
+            ,weight
+            ,period
+            ,computeDesc
+            ,status
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        ) values(
+             #{id,jdbcType=VARCHAR}
+            ,#{year,jdbcType=VARCHAR}
+            ,#{zkUserId,jdbcType=VARCHAR}
+            ,#{zkUserName,jdbcType=VARCHAR}
+            ,#{bkhUserIds,jdbcType=VARCHAR}
+            ,#{bkhUserNames,jdbcType=VARCHAR}
+            ,#{metricDesc,jdbcType=VARCHAR}
+            ,#{targetValue,jdbcType=VARCHAR}
+            ,#{targetFormula,jdbcType=VARCHAR}
+            ,#{targetLowerValue,jdbcType=VARCHAR}
+            ,#{targetLowerFormula,jdbcType=VARCHAR}
+            ,#{targetUpperValue,jdbcType=VARCHAR}
+            ,#{targetUpperFormula,jdbcType=VARCHAR}
+            ,#{weight,jdbcType=VARCHAR}
+            ,#{period,jdbcType=VARCHAR}
+            ,#{computeDesc,jdbcType=VARCHAR}
+            ,#{status,jdbcType=VARCHAR}
+            ,#{CREATE_BY_,jdbcType=VARCHAR}
+            ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateKpiBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        update kpi_leader_baseinfo
+        set
+        year=#{year,jdbcType=VARCHAR},
+        zkUserId=#{zkUserId,jdbcType=VARCHAR},
+        zkUserName=#{zkUserName,jdbcType=VARCHAR},
+        bkhUserIds=#{bkhUserIds,jdbcType=VARCHAR},
+        bkhUserNames=#{bkhUserNames,jdbcType=VARCHAR},
+        metricDesc=#{metricDesc,jdbcType=VARCHAR},
+        targetValue=#{targetValue,jdbcType=VARCHAR},
+        targetFormula=#{targetFormula,jdbcType=VARCHAR},
+        targetLowerValue=#{targetLowerValue,jdbcType=VARCHAR},
+        targetLowerFormula=#{targetLowerFormula,jdbcType=VARCHAR},
+        targetUpperValue=#{targetUpperValue,jdbcType=VARCHAR},
+        targetUpperFormula=#{targetUpperFormula,jdbcType=VARCHAR},
+        weight=#{weight,jdbcType=VARCHAR},
+        period=#{period,jdbcType=VARCHAR},
+        computeDesc=#{computeDesc,jdbcType=VARCHAR},
+        status=#{status,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+		id=#{id}
+    </update>
+
+    <select id="queryKpiYearList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM `kpi_leader_baseinfo`
+        <where>
+            <if test="year !=null and year != ''">
+                kpi_leader_baseinfo.year = #{year}
+            </if>
+            <if test="id != null and id != ''">
+                and kpi_leader_baseinfo.id= #{id}
+            </if>
+            <if test="status != null and status != ''">
+                and kpi_leader_baseinfo.status= #{status}
+            </if>
+            <if test="zkUserName != null and zkUserName != ''">
+                and kpi_leader_baseinfo.zkUserName like CONCAT('%',#{zkUserName},'%')
+            </if>
+            <if test="bkhUserName != null and bkhUserName != ''">
+                and kpi_leader_baseinfo.bkhUserNames like CONCAT('%',#{bkhUserName},'%')
+            </if>
+            <if test="metricDesc != null and metricDesc != ''">
+                and kpi_leader_baseinfo.metricDesc like CONCAT('%',#{metricDesc},'%')
+            </if>
+        </where>
+        <include refid="orderBy" />
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countKpiYearList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM `kpi_leader_baseinfo`
+        <where>
+            <if test="year !=null and year != ''">
+                kpi_leader_baseinfo.year = #{year}
+            </if>
+            <if test="id != null and id != ''">
+                and kpi_leader_baseinfo.id= #{id}
+            </if>
+            <if test="status != null and status != ''">
+                and kpi_leader_baseinfo.status= #{status}
+            </if>
+            <if test="zkUserName != null and zkUserName != ''">
+                and kpi_leader_baseinfo.zkUserName like CONCAT('%',#{zkUserName},'%')
+            </if>
+            <if test="bkhUserName != null and bkhUserName != ''">
+                and kpi_leader_baseinfo.bkhUserNames like CONCAT('%',#{bkhUserName},'%')
+            </if>
+            <if test="metricDesc != null and metricDesc != ''">
+                and kpi_leader_baseinfo.metricDesc like CONCAT('%',#{metricDesc},'%')
+            </if>
+        </where>
+    </select>
+
+    <delete id="batchDeleteKpiBaseInfo" parameterType="java.util.List">
+        delete from kpi_leader_baseinfo
+        where id in
+        <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+
+
+    <insert id="saveUsersList" parameterType="com.alibaba.fastjson.JSONObject">
+       insert into kpi_leader_process_users(
+        id,
+        post,
+        bkhUserId,
+        bkhUserName,
+        type,
+        CREATE_BY_,
+        CREATE_TIME_
+       )
+       values(
+        #{id,jdbcType=VARCHAR},
+        #{post,jdbcType=VARCHAR},
+        #{bkhUserId,jdbcType=VARCHAR},
+        #{bkhUserName,jdbcType=VARCHAR},
+        #{type,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+       )
+   </insert>
+
+    <update id="updateUsersList" parameterType="com.alibaba.fastjson.JSONObject">
+      update kpi_leader_process_users
+      set
+      post=#{post,jdbcType=VARCHAR},
+      bkhUserId=#{bkhUserId,jdbcType=VARCHAR},
+      bkhUserName=#{bkhUserName,jdbcType=VARCHAR},
+      type=#{type,jdbcType=VARCHAR},
+      UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+      UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+      where
+      id=#{id}
+    </update>
+
+    <delete id="deleteUsersList" parameterType="com.alibaba.fastjson.JSONObject">
+      delete from kpi_leader_process_users
+      where id=#{id}
+    </delete>
+
+    <select id="queryUsersList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM kpi_leader_process_users
+        <where>
+            <if test="bkhUserName !=null and bkhUserName != ''">
+                AND kpi_leader_process_users.bkhUserName like CONCAT('%',#{bkhUserName},'%')
+            </if>
+            <if test="post !=null and post != ''">
+                AND kpi_leader_process_users.post like CONCAT('%',#{post},'%')
+            </if>
+            <if test="type !=null and type != ''">
+                AND kpi_leader_process_users.type = #{type}
+            </if>
+        </where>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countUsersList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        COUNT(*)
+        FROM kpi_leader_process_users
+        <where>
+            <if test="bkhUserName !=null and bkhUserName != ''">
+                AND kpi_leader_process_users.bkhUserName like CONCAT('%',#{bkhUserName},'%')
+            </if>
+            <if test="post !=null and post != ''">
+                AND kpi_leader_process_users.post like CONCAT('%',#{post},'%')
+            </if>
+            <if test="type !=null and type != ''">
+                AND kpi_leader_process_users.type = #{type}
+            </if>
+        </where>
+        <include refid="pageSql"/>
+    </select>
+
+    <insert id="insertKpiMonthBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into kpi_leader_process_baseInfo(
+            id
+            ,yearMonth
+            ,post
+            ,bkhUserId
+            ,bkhUserName
+            ,type
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{yearMonth,jdbcType=VARCHAR},
+            #{post,jdbcType=VARCHAR},
+            #{bkhUserId,jdbcType=VARCHAR},
+            #{bkhUserName,jdbcType=VARCHAR},
+            #{type,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateKpiMonthBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        update kpi_leader_process_baseInfo
+        set
+            yearMonth=#{yearMonth,jdbcType=VARCHAR},
+            post=#{post,jdbcType=VARCHAR},
+            bkhUserId=#{bkhUserId,jdbcType=VARCHAR},
+            bkhUserName=#{bkhUserName,jdbcType=VARCHAR},
+            type=#{type,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+
+    <insert id="insertKpiMonthDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into kpi_leader_process_detail(
+            id
+            ,kpiId
+            ,relKpiId
+            ,zkUserId
+            ,zkUserName
+            ,score
+            ,scoreDesc
+            ,completeStatus
+            ,description
+            ,copyType
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{kpiId,jdbcType=VARCHAR},
+            #{relKpiId,jdbcType=VARCHAR},
+            #{zkUserId,jdbcType=VARCHAR},
+            #{zkUserName,jdbcType=VARCHAR},
+            #{score,jdbcType=VARCHAR},
+            #{scoreDesc,jdbcType=VARCHAR},
+            #{completeStatus,jdbcType=VARCHAR},
+            #{description,jdbcType=VARCHAR},
+            #{copyType,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateKpiMonthDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update kpi_leader_process_detail
+        set
+            kpiId=#{kpiId,jdbcType=VARCHAR},
+            relKpiId=#{relKpiId,jdbcType=VARCHAR},
+            zkUserId=#{zkUserId,jdbcType=VARCHAR},
+            zkUserName=#{zkUserName,jdbcType=VARCHAR},
+            score=#{score,jdbcType=VARCHAR},
+            scoreDesc=#{scoreDesc,jdbcType=VARCHAR},
+            completeStatus=#{completeStatus,jdbcType=VARCHAR},
+            description=#{description,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+
+    <update id="updateKpiMonthDetailList" parameterType="com.alibaba.fastjson.JSONObject">
+        update kpi_leader_process_detail set
+        <if test="score != null">score = #{score},</if>
+        <if test="scoreDesc != null and scoreDesc!= ''">scoreDesc = #{scoreDesc},</if>
+        <if test="completeStatus != null">completeStatus = #{completeStatus},</if>
+        <if test="description != null">description = #{description},</if>
+        <if test="UPDATE_BY_ != null">UPDATE_BY_=#{UPDATE_BY_},</if>
+        <if test="UPDATE_TIME_ != null">UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}</if>
+        where
+        id=#{id}
+    </update>
+
+    <select id="findKpiListByBkhId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM kpi_leader_baseinfo
+        <where>
+            <if test="bkhUserId !=null and bkhUserId != ''">
+                FIND_IN_SET(#{bkhUserId},bkhUserIds)
+            </if>
+            and year = #{year}
+        </where>
+    </select>
+
+    <select id="querySolIdByKey" resultType="java.lang.String">
+        SELECT
+            bpm_solution.SOL_ID_
+        FROM
+            bpm_solution
+        WHERE
+            bpm_solution.KEY_ = 'SZYDJX'
+    </select>
+
+    <select id="queryKpiLeaderFlowList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            kpi_leader_process_baseInfo.*,
+            os_user.FULLNAME_ AS creator,
+            bpm_inst.STATUS_ AS instStatus,
+            bpm_inst.INST_ID_ AS instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+            kpi_leader_process_baseInfo
+            LEFT JOIN os_user ON os_user.USER_ID_ = kpi_leader_process_baseInfo.CREATE_BY_
+            LEFT JOIN bpm_inst ON kpi_leader_process_baseInfo.id = bpm_inst.BUS_KEY_
+        <where>
+            <if test="yearMonth != null and yearMonth != ''">
+                AND kpi_leader_process_baseInfo.yearMonth = #{yearMonth}
+            </if>
+            <if test="bkhUserId != null and bkhUserId != ''">
+                AND kpi_leader_process_baseInfo.bkhUserId = #{bkhUserId}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_ = #{instStatus}
+            </if>
+        </where>
+    </select>
+
+    <delete id="delKpiLeaderBaseFlowById" parameterType="java.lang.String">
+        delete from kpi_leader_process_baseInfo
+        where id =#{id}
+    </delete>
+
+    <delete id="delKpiLeaderDetailFlowById" parameterType="java.lang.String">
+        delete from kpi_leader_process_detail
+        where kpiId =#{id}
+    </delete>
+
+    <delete id="delTaskData" parameterType="java.lang.String">
+		delete from act_ru_task where INST_ID_ = #{instId}
+	</delete>
+
+    <select id="getKpiLeaderBaseById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        kpi_leader_process_baseInfo.*,
+        bpm_inst.INST_ID_
+        FROM `kpi_leader_process_baseInfo`
+        LEFT JOIN bpm_inst ON kpi_leader_process_baseInfo.id = bpm_inst.BUS_KEY_
+        <where>
+            <if test="id != null and id != ''">
+                kpi_leader_process_baseInfo.id = #{id}
+            </if>
+        </where>
+    </select>
+
+    <select id="getKpiLeaderDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM `kpi_leader_process_detail`
+        LEFT JOIN kpi_leader_baseinfo ON kpi_leader_process_detail.relKpiId = kpi_leader_baseinfo.id
+        <where>
+            <if test="id != null and id != ''">
+                kpi_leader_process_detail.kpiId = #{id}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateFjScore" parameterType="com.alibaba.fastjson.JSONObject">
+        update kpi_leader_process_baseInfo
+        set
+            fjScore=#{fjScore,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+
+    <select id="checkKpiYearMonth" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM `kpi_leader_process_baseinfo`
+        WHERE yearMonth =#{yearMonth}
+    </select>
+
+    <select id="getKplLeaderMonth" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM `kpi_leader_jdmonth`
+        WHERE month =#{month}
+    </select>
+
+    <select id="getKplLeaderCopyDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        kpi_leader_process_detail.*
+        FROM kpi_leader_process_detail
+        LEFT JOIN kpi_leader_process_baseinfo ON kpi_leader_process_detail.kpiId = kpi_leader_process_baseinfo.id
+        LEFT JOIN kpi_leader_baseinfo ON kpi_leader_process_detail.relKpiId = kpi_leader_baseinfo.id
+        WHERE
+        kpi_leader_baseinfo.period = '季度'
+        AND
+        kpi_leader_process_baseinfo.bkhUserId = #{bkhUserId}
+        AND
+        kpi_leader_process_baseinfo.yearMonth = #{yearMonth}
+        AND
+        kpi_leader_process_detail.relKpiId = #{relKpiId}
+    </select>
+</mapper>

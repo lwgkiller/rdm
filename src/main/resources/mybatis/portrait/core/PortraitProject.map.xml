@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitProjectDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        select t.* from(
+        SELECT
+        A.projectId,
+        G.NAME_ as deptName,
+        U.FULLNAME_ as userName,
+        A.userId,
+        ROUND(sum(A.stageScore),3) as totalScore,
+        B.number as projectCode,
+        B.projectName,
+        C.categoryName,
+        D.levelName
+        FROM
+        project_user_stagescore A
+        LEFT JOIN project_baseinfo B ON A.projectId = B.projectId
+        left join project_category C on B.categoryId = C.categoryId
+        left join project_level D on B.levelId = D.levelId
+        left join OS_REL_INST P on A.userId = P.PARTY2_
+        left join os_user U on A.userId = U.USER_ID_
+        left join os_group G on P.PARTY1_ = G.GROUP_ID_
+        where P.REL_TYPE_ID_ = 1
+        AND P.PARTY1_ in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="userId != null and userId != ''">
+            AND A.userId = #{userId}
+        </if>
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.CREATE_TIME_) = #{reportYear}
+        </if>
+        GROUP BY A.projectId,A.userId
+        )t
+        where 1=1
+         <if test="deptName != null and deptName != ''">
+            and t.deptName like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and t.userName like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="projectName != null and projectName != ''">
+            and t.projectName like CONCAT('%',#{projectName},'%')
+        </if>
+        order by t.totalScore desc
+        <include refid="pageSql"/>
+    </select>
+
+    <!--获取用户科技项目信息-->
+    <select id="getPersonProjectList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.projectId,
+        A.userId,
+        ROUND(sum(A.stageScore),3) as totalScore,
+        B.number as projectCode,
+        B.projectName,
+        C.categoryName,
+        D.levelName,
+        E.projectTask,
+        F.roleName
+        FROM
+        project_user_stagescore A
+        LEFT JOIN project_baseinfo B ON A.projectId = B.projectId
+        left join project_category C on B.categoryId = C.categoryId
+        left join project_level D on B.levelId = D.levelId
+        left join project_memberinfo E on E.projectId = A.projectId and E.userId = A.userId
+        left join project_member_role F on F.roleId = E.roleId
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.CREATE_TIME_) = #{reportYear}
+        </if>
+        GROUP BY
+        A.projectId,
+        A.userId
+    </select>
+
+
+</mapper>

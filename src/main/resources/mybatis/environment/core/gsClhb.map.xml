@@ -1,0 +1,615 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.GsClhbDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertCx" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO environmental_gsvehicle (cxId,
+                                             applyId,
+                                             applyName,
+                                             deptId,
+                                             deptName,
+                                             dqId,
+                                             dqName,
+                                             dlId,
+                                             dlName,
+                                             num,
+                                             nbbh,
+                                             zjsjxhId,
+                                             zjsjxh,
+                                             cpjxxh,
+                                             zjwlh,
+                                             jxmc,
+                                             zlname,
+                                             zl,
+                                             wxcc,
+                                             jxsbff,
+                                             hbdmwz,
+                                             hbbqwz,
+                                             zzl,
+                                             zdcs,
+                                             edgzcs,
+                                             dzyx,
+                                             sb,
+                                             jxdl,
+                                             jxxl,
+                                             zzsmc,
+                                             scdz,
+                                             rlgg,
+                                             fsqd,
+                                             rllx,
+                                             rlxsl,
+                                             rlxrj,
+                                             nsxsl,
+                                             nsxrj,
+                                             fdjzcwlh,
+                                             fdjgkbh,
+                                             zdjznj,
+                                             fyjccgrj,
+                                             pfkzwz,
+                                             pfkztdwz,
+                                             czzdxh,
+                                             czzdscc,
+                                             czzdwz,
+                                             zjgkh,
+                                             fldm,
+                                             sfgz,
+                                             cyjedgl,
+                                             cyjxs,
+                                             fdjxh,
+                                             fdjzzs,
+                                             fdjscdz,
+                                             ryxcl,
+                                             ryxqt,
+                                             ryxwz,
+                                             ryxzrj,
+                                             fyjgyw,
+                                             fyjgcl,
+                                             fyjgqt,
+                                             fyjsm,
+                                             fyjfd,
+                                             fyjps,
+                                             type,
+                                             oldCxId,
+                                             jxxzmc,
+                                             upvecc,
+                                             xxfwjc,
+                                             fdjsb,
+                                             CREATE_BY_,
+                                             CREATE_TIME_)
+        values (#{cxId,jdbcType=VARCHAR},
+                #{applyId,jdbcType=VARCHAR},
+                #{applyName,jdbcType=VARCHAR},
+                #{deptId,jdbcType=VARCHAR},
+                #{deptName,jdbcType=VARCHAR},
+                #{dqId,jdbcType=VARCHAR},
+                #{dqName,jdbcType=VARCHAR},
+                #{dlId,jdbcType=VARCHAR},
+                #{dlName,jdbcType=VARCHAR},
+                #{num,jdbcType=VARCHAR},
+                #{nbbh,jdbcType=VARCHAR},
+                #{zjsjxhId,jdbcType=VARCHAR},
+                #{zjsjxh,jdbcType=VARCHAR},
+                #{cpjxxh,jdbcType=VARCHAR},
+                #{zjwlh,jdbcType=VARCHAR},
+                #{jxmc,jdbcType=VARCHAR},
+                #{zlname,jdbcType=VARCHAR},
+                #{zl,jdbcType=VARCHAR},
+                #{wxcc,jdbcType=VARCHAR},
+                #{jxsbff,jdbcType=VARCHAR},
+                #{hbdmwz,jdbcType=VARCHAR},
+                #{hbbqwz,jdbcType=VARCHAR},
+                #{zzl,jdbcType=VARCHAR},
+                #{zdcs,jdbcType=VARCHAR},
+                #{edgzcs,jdbcType=VARCHAR},
+                #{dzyx,jdbcType=VARCHAR},
+                #{sb,jdbcType=VARCHAR},
+                #{jxdl,jdbcType=VARCHAR},
+                #{jxxl,jdbcType=VARCHAR},
+                #{zzsmc,jdbcType=VARCHAR},
+                #{scdz,jdbcType=VARCHAR},
+                #{rlgg,jdbcType=VARCHAR},
+                #{fsqd,jdbcType=VARCHAR},
+                #{rllx,jdbcType=VARCHAR},
+                #{rlxsl,jdbcType=VARCHAR},
+                #{rlxrj,jdbcType=VARCHAR},
+                #{nsxsl,jdbcType=VARCHAR},
+                #{nsxrj,jdbcType=VARCHAR},
+                #{fdjzcwlh,jdbcType=VARCHAR},
+                #{fdjgkbh,jdbcType=VARCHAR},
+                #{zdjznj,jdbcType=VARCHAR},
+                #{fyjccgrj,jdbcType=VARCHAR},
+                #{pfkzwz,jdbcType=VARCHAR},
+                #{pfkztdwz,jdbcType=VARCHAR},
+                #{czzdxh,jdbcType=VARCHAR},
+                #{czzdscc,jdbcType=VARCHAR},
+                #{czzdwz,jdbcType=VARCHAR},
+                #{zjgkh,jdbcType=VARCHAR},
+                #{fldm,jdbcType=VARCHAR},
+                #{sfgz,jdbcType=VARCHAR},
+                #{cyjedgl,jdbcType=VARCHAR},
+                #{cyjxs,jdbcType=VARCHAR},
+                #{fdjxh,jdbcType=VARCHAR},
+                #{fdjzzs,jdbcType=VARCHAR},
+                #{fdjscdz,jdbcType=VARCHAR},
+                #{ryxcl,jdbcType=VARCHAR},
+                #{ryxqt,jdbcType=VARCHAR},
+                #{ryxwz,jdbcType=VARCHAR},
+                #{ryxzrj,jdbcType=VARCHAR},
+                #{fyjgyw,jdbcType=VARCHAR},
+                #{fyjgcl,jdbcType=VARCHAR},
+                #{fyjgqt,jdbcType=VARCHAR},
+                #{fyjsm,jdbcType=VARCHAR},
+                #{fyjfd,jdbcType=VARCHAR},
+                #{fyjps,jdbcType=VARCHAR},
+                #{type,jdbcType=VARCHAR},
+                #{oldCxId,jdbcType=VARCHAR},
+                #{jxxzmc,jdbcType=VARCHAR},
+                #{upvecc,jdbcType=VARCHAR},
+                #{xxfwjc,jdbcType=VARCHAR},
+                #{fdjsb,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=VARCHAR})
+    </insert>
+    <update id="updateCx" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_gsvehicle
+        <set>
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            deptId=#{deptId,jdbcType=VARCHAR},
+            deptName=#{deptName,jdbcType=VARCHAR},
+            dqId=#{dqId,jdbcType=VARCHAR},
+            dqName=#{dqName,jdbcType=VARCHAR},
+            dlId=#{dlId,jdbcType=VARCHAR},
+            dlName=#{dlName,jdbcType=VARCHAR},
+            num=#{num,jdbcType=VARCHAR},
+            nbbh=#{nbbh,jdbcType=VARCHAR},
+            zjsjxhId=#{zjsjxhId,jdbcType=VARCHAR},
+            zjsjxh=#{zjsjxh,jdbcType=VARCHAR},
+            cpjxxh=#{cpjxxh,jdbcType=VARCHAR},
+            zjwlh=#{zjwlh,jdbcType=VARCHAR},
+            jxmc=#{jxmc,jdbcType=VARCHAR},
+            zlname=#{zlname,jdbcType=VARCHAR},
+            zl=#{zl,jdbcType=VARCHAR},
+            wxcc=#{wxcc,jdbcType=VARCHAR},
+            jxsbff=#{jxsbff,jdbcType=VARCHAR},
+            hbdmwz=#{hbdmwz,jdbcType=VARCHAR},
+            hbbqwz=#{hbbqwz,jdbcType=VARCHAR},
+            zzl=#{zzl,jdbcType=VARCHAR},
+            zdcs=#{zdcs,jdbcType=VARCHAR},
+            edgzcs=#{edgzcs,jdbcType=VARCHAR},
+            dzyx=#{dzyx,jdbcType=VARCHAR},
+            sb=#{sb,jdbcType=VARCHAR},
+            jxdl=#{jxdl,jdbcType=VARCHAR},
+            jxxl=#{jxxl,jdbcType=VARCHAR},
+            zzsmc=#{zzsmc,jdbcType=VARCHAR},
+            scdz=#{scdz,jdbcType=VARCHAR},
+            rlgg=#{rlgg,jdbcType=VARCHAR},
+            fsqd=#{fsqd,jdbcType=VARCHAR},
+            rllx=#{rllx,jdbcType=VARCHAR},
+            rlxsl=#{rlxsl,jdbcType=VARCHAR},
+            rlxrj=#{rlxrj,jdbcType=VARCHAR},
+            nsxsl=#{nsxsl,jdbcType=VARCHAR},
+            nsxrj=#{nsxrj,jdbcType=VARCHAR},
+            fdjzcwlh=#{fdjzcwlh,jdbcType=VARCHAR},
+            fdjgkbh=#{fdjgkbh,jdbcType=VARCHAR},
+            zdjznj=#{zdjznj,jdbcType=VARCHAR},
+            fyjccgrj=#{fyjccgrj,jdbcType=VARCHAR},
+            pfkzwz=#{pfkzwz,jdbcType=VARCHAR},
+            pfkztdwz=#{pfkztdwz,jdbcType=VARCHAR},
+            czzdxh=#{czzdxh,jdbcType=VARCHAR},
+            czzdscc=#{czzdscc,jdbcType=VARCHAR},
+            czzdwz=#{czzdwz,jdbcType=VARCHAR},
+            zjgkh=#{zjgkh,jdbcType=VARCHAR},
+            fldm=#{fldm,jdbcType=VARCHAR},
+            sfgz=#{sfgz,jdbcType=VARCHAR},
+            cyjedgl=#{cyjedgl,jdbcType=VARCHAR},
+            cyjxs=#{cyjxs,jdbcType=VARCHAR},
+            fdjxh=#{fdjxh,jdbcType=VARCHAR},
+            fdjzzs=#{fdjzzs,jdbcType=VARCHAR},
+            fdjscdz=#{fdjscdz,jdbcType=VARCHAR},
+            ryxcl=#{ryxcl,jdbcType=VARCHAR},
+            ryxqt=#{ryxqt,jdbcType=VARCHAR},
+            ryxwz=#{ryxwz,jdbcType=VARCHAR},
+            ryxzrj=#{ryxzrj,jdbcType=VARCHAR},
+            fyjgyw=#{fyjgyw,jdbcType=VARCHAR},
+            fyjgcl=#{fyjgcl,jdbcType=VARCHAR},
+            fyjgqt=#{fyjgqt,jdbcType=VARCHAR},
+            fyjsm=#{fyjsm,jdbcType=VARCHAR},
+            fyjfd=#{fyjfd,jdbcType=VARCHAR},
+            fyjps=#{fyjps,jdbcType=VARCHAR},
+            upvecc=#{upvecc,jdbcType=VARCHAR},
+            xxfwjc=#{xxfwjc,jdbcType=VARCHAR},
+            fdjsb=#{fdjsb,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        cxId=#{cxId}
+    </update>
+    <select id="queryCxById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select environmental_gsvehicle.*, bpm_inst.INST_ID_ as instId
+        from environmental_gsvehicle
+                 left join os_user on environmental_gsvehicle.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on environmental_gsvehicle.cxId = bpm_inst.BUS_KEY_
+        where environmental_gsvehicle.cxId = #{cxId}
+    </select>
+    <select id="queryOldCxById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select jxxzmc,
+               nbbh,
+               zjsjxhId,
+               zjsjxh,
+               cpjxxh,
+               zjwlh,
+               jxmc,
+               zlname,
+               zl,
+               wxcc,
+               jxsbff,
+               hbdmwz,
+               hbbqwz,
+               zzl,
+               zdcs,
+               edgzcs,
+               dzyx,
+               sb,
+               jxdl,
+               jxxl,
+               zzsmc,
+               scdz,
+               rlgg,
+               fsqd,
+               rllx,
+               rlxsl,
+               rlxrj,
+               nsxsl,
+               nsxrj,
+               fdjzcwlh,
+               fdjgkbh,
+               pfkzwz,
+               pfkztdwz,
+               czzdxh,
+               czzdscc,
+               czzdwz,
+               zjgkh,
+               fldm,
+               sfgz,
+               cyjedgl,
+               cyjxs,
+               fdjxh,
+               fdjzzs,
+               fdjscdz,
+               ryxcl,
+               ryxqt,
+               ryxwz,
+               ryxzrj,
+               fyjgyw,
+               fyjgcl,
+               fyjgqt,
+               fyjsm,
+               fyjfd,
+               fyjps,
+               upvecc,
+               xxfwjc,
+               fdjsb
+        from environmental_gsvehicle
+        where cxId = #{cxId}
+    </select>
+    <select id="queryCxFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        fileId,
+        fileName,
+        belongId as cxId,
+        fileType,
+        upNode,
+        fileSize,
+        CREATE_BY_,
+        CREATE_TIME_
+        FROM
+        environmental_gsvehiclefile
+        WHERE
+        belongId=#{cxId}
+        <if test="upNode != null and upNode !='' ">
+            and upNode=#{upNode}
+        </if>
+
+    </select>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_gsvehiclefile (fileId,
+                                                 fileName,
+                                                 fileSize,
+                                                 fileType,
+                                                 upNode,
+                                                 belongId,
+                                                 CREATE_BY_,
+                                                 CREATE_TIME_)
+        values (#{fileId,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{fileType,jdbcType=VARCHAR},
+                #{upNode,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <select id="queryCx" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        environmental_gsvehicle.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId
+        from
+        environmental_gsvehicle
+        LEFT JOIN os_rel_inst ON environmental_gsvehicle.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_gsvehicle.CREATE_BY_
+        left join bpm_inst on environmental_gsvehicle.cxId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="cpjxxh != null and cpjxxh != ''">
+                and environmental_gsvehicle.cpjxxh like CONCAT('%',#{cpjxxh},'%')
+            </if>
+            <if test="jxxzmc != null and jxxzmc != ''">
+                and environmental_gsvehicle.jxxzmc like CONCAT('%',#{jxxzmc},'%')
+            </if>
+            <if test="fdjxh != null and fdjxh != ''">
+                and environmental_gsvehicle.fdjxh like CONCAT('%',#{fdjxh},'%')
+            </if>
+            <if test="fdjzzs != null and fdjzzs != ''">
+                and environmental_gsvehicle.fdjzzs like CONCAT('%',#{fdjzzs},'%')
+            </if>
+            <if test="fdjscdz != null and fdjscdz != ''">
+                and environmental_gsvehicle.fdjscdz like CONCAT('%',#{fdjscdz},'%')
+            </if>
+            <if test="cyjxs != null and cyjxs != ''">
+                and environmental_gsvehicle.cyjxs like CONCAT('%',#{cyjxs},'%')
+            </if>
+            <if test="zjsjxh != null and zjsjxh != ''">
+                and environmental_gsvehicle.zjsjxh like CONCAT('%',#{zjsjxh},'%')
+            </if>
+            <if test="applyName != null and applyName != ''">
+                and environmental_gsvehicle.applyName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="deptName != null and deptName != ''">
+                and environmental_gsvehicle.deptName like CONCAT('%',#{deptName},'%')
+            </if>
+            <if test="zjwlh != null and zjwlh != ''">
+                and environmental_gsvehicle.zjwlh like CONCAT('%',#{zjwlh},'%')
+            </if>
+            <if test="checkDelay != null and checkDelay != ''">
+                and bpm_inst.STATUS_ ='RUNNING'
+                and DATE_SUB(CURDATE(), INTERVAL 30 DAY) >= date(environmental_gsvehicle.CREATE_TIME_)
+            </if>
+            AND (bpm_inst.STATUS_ != 'DRAFTED' OR environmental_gsvehicle.CREATE_BY_ = #{currentUserId})
+            AND bpm_inst.STATUS_ != 'DISCARD_END'
+            AND bpm_inst.STATUS_ != 'ABORT_END'
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countCxList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        from
+        environmental_gsvehicle
+        LEFT JOIN os_rel_inst ON environmental_gsvehicle.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_gsvehicle.CREATE_BY_
+        left join bpm_inst on environmental_gsvehicle.cxId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="cpjxxh != null and cpjxxh != ''">
+                and environmental_gsvehicle.cpjxxh like CONCAT('%',#{cpjxxh},'%')
+            </if>
+            <if test="jxxzmc != null and jxxzmc != ''">
+                and environmental_gsvehicle.jxxzmc like CONCAT('%',#{jxxzmc},'%')
+            </if>
+            <if test="fdjxh != null and fdjxh != ''">
+                and environmental_gsvehicle.fdjxh like CONCAT('%',#{fdjxh},'%')
+            </if>
+            <if test="fdjzzs != null and fdjzzs != ''">
+                and environmental_gsvehicle.fdjzzs like CONCAT('%',#{fdjzzs},'%')
+            </if>
+            <if test="fdjscdz != null and fdjscdz != ''">
+                and environmental_gsvehicle.fdjscdz like CONCAT('%',#{fdjscdz},'%')
+            </if>
+            <if test="cyjxs != null and cyjxs != ''">
+                and environmental_gsvehicle.cyjxs like CONCAT('%',#{cyjxs},'%')
+            </if>
+            <if test="zjsjxh != null and zjsjxh != ''">
+                and environmental_gsvehicle.zjsjxh like CONCAT('%',#{zjsjxh},'%')
+            </if>
+            <if test="applyName != null and applyName != ''">
+                and environmental_gsvehicle.applyName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="deptName != null and deptName != ''">
+                and environmental_gsvehicle.deptName like CONCAT('%',#{deptName},'%')
+            </if>
+            <if test="zjwlh != null and zjwlh != ''">
+                and environmental_gsvehicle.zjwlh like CONCAT('%',#{zjwlh},'%')
+            </if>
+            AND (bpm_inst.STATUS_ != 'DRAFTED' OR environmental_gsvehicle.CREATE_BY_ = #{currentUserId})
+            AND bpm_inst.STATUS_ != 'DISCARD_END'
+            AND bpm_inst.STATUS_ != 'ABORT_END'
+        </where>
+    </select>
+    <delete id="deleteCxFile" parameterType="java.util.Map">
+        delete from environmental_gsvehiclefile
+        <where>
+            <if test="fileId != null and fileId !=''">
+                fileId=#{fileId}
+            </if>
+            <if test="cxId != null and cxId !=''">
+                belongId=#{cxId}
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteCx" parameterType="java.util.Map">
+        delete
+        from environmental_gsvehicle
+        where cxId = #{cxId}
+    </delete>
+    <update id="updateNumber" parameterType="java.util.Map">
+        update environmental_gsvehicle
+        set num = #{num,jdbcType=VARCHAR}
+        where cxId = #{cxId}
+    </update>
+    <select id="queryMaxClhbNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT num
+        FROM environmental_gsvehicle
+        WHERE num like CONCAT('%', #{applyTimeStart}, '%')
+        ORDER BY num DESC
+        LIMIT 1
+    </select>
+    <select id="queryMsgInfo" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT DISTINCT os_rel_inst.PARTY2_ AS userId,
+                        os_user.CERT_NO_    AS sfz,
+                        os_user.FULLNAME_   AS userName,
+                        os_group.NAME_      AS detpName
+        FROM os_user
+                 LEFT JOIN os_rel_inst ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+                 LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+          AND (os_rel_inst.DIM1_ = "1" or os_rel_inst.DIM1_ = '2')
+          AND (
+                      os_group.NAME_ = "服务管理部"
+                          OR os_group.NAME_ = "制造管理部"
+                          OR os_group.NAME_ = "供方发展部"
+                          OR os_group.NAME_ = "工艺技术部"
+                          OR os_group.NAME_ = "装配三厂"
+                          OR os_group.NAME_ = "环保信息公开通知"
+                      )
+
+    </select>
+    <select id="countFdjNumber" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        environmental_gsvehicle
+        <where>
+            <if test="countnumInfo !=null and countnumInfo !=''">
+                jxxzmc is not null and jxxzmc !=''
+            </if>
+            and cxId != #{cxId}
+            AND cyjxs = #{cyjxs}
+            and fldm = #{fldm}
+        </where>
+    </select>
+    <update id="updateFdjNum" parameterType="java.util.Map">
+        UPDATE environmental_gsvehicle
+        SET jxxzmc = #{jxxzmc,jdbcType=VARCHAR}
+        WHERE cxId = #{cxId}
+    </update>
+    <select id="queryMaxFdjNumber" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jxxzmc
+        FROM
+        environmental_gsvehicle
+        <where>
+            <if test="countnumInfo !=null and countnumInfo !=''">
+                jxxzmc is not null and jxxzmc !=''
+            </if>
+            and fldm = #{fldm}
+            and cxId != #{cxId}
+        </where>
+        ORDER BY
+        jxxzmc DESC
+        LIMIT 1
+    </select>
+
+    <select id="queryApiList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT cxId,
+               num,
+               zjgkh                整机环保信息公开号,
+               jxxzmc               机械系族名称,
+               zjsjxh               整机设计型号,
+               cpjxxh               机械型号,
+               jxmc                 机械名称,
+               os_user.FULLNAME_ AS userName,
+               bpm_inst.STATUS_  as status
+        FROM environmental_gsvehicle
+                 LEFT JOIN os_user ON environmental_gsvehicle.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on environmental_gsvehicle.cxId = bpm_inst.BUS_KEY_
+        WHERE num like CONCAT('%', #{searchValue}, '%')
+    </select>
+
+    <update id="statusChange" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_gsvehicle
+        set noteStatus = #{noteStatus,jdbcType=VARCHAR}
+        where cxId = #{cxId}
+    </update>
+    <select id="queryFileById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM environmental_gsvehiclefile
+        WHERE fileId = #{fileId}
+    </select>
+
+    <select id="getEnvironmentByMaterial" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.zjwlh,A.zjgkh,A.fdjscdz,A.fdjsb as fdjzzs
+        FROM
+        `environmental_gsvehicle` A
+        left join bpm_inst B on A.cxId = B.BUS_KEY_
+        WHERE
+        A.zjwlh in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        and B.STATUS_ = 'SUCCESS_END'
+        and A.noteStatus = '有效'
+        union all
+        SELECT
+        A.zjwlh,A.zjgkh,A.fdjscdz,A.fdjsb as fdjzzs
+        FROM
+        environmental_vehicle A
+        left join bpm_inst B on A.wjId = B.BUS_KEY_
+        WHERE
+        A.zjwlh in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        and B.STATUS_ = 'SUCCESS_END'
+        and A.noteStatus = '有效'
+    </select>
+
+    <select id="gsEnvProductInfo" resultType="com.alibaba.fastjson.JSONObject" parameterType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            jxxzmc,
+            cpjxxh,
+            zjsjxh,
+            zjwlh
+        FROM
+            environmental_gsvehicle
+        LEFT JOIN bpm_inst ON environmental_gsvehicle.cxId = bpm_inst.BUS_KEY_
+        WHERE
+            bpm_inst.STATUS_ = #{status}
+    </select>
+</mapper>

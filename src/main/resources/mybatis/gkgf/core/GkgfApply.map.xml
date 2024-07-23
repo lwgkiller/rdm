@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.gkgf.core.dao.GkgfApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--项目流程查询-->
+    <select id="queryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        gkgf_apply.*,
+        gkgf_apply.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        os_rel_inst.PARTY1_ as applyUserDepId
+        FROM
+        gkgf_apply
+        LEFT JOIN os_user ON gkgf_apply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON gkgf_apply.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON gkgf_apply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND gkgf_apply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="model != null and model != ''">
+                AND gkgf_apply.model like CONCAT ('%',#{model},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND gkgf_apply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND gkgf_apply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="applyType != null and applyType != ''">
+                AND gkgf_apply.applyType=#{applyType}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND gkgf_apply.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+
+    <select id="getObjectById" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.INST_ID_ AS instId,
+            C.FULLNAME_ as userName,
+            D.NAME_ as deptName
+        FROM
+            gkgf_apply A
+            LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+            LEFT JOIN os_user C ON A.CREATE_BY_ = C.USER_ID_
+            left join os_group D on A.deptId = D.GROUP_ID_
+        where  A.id = #{id}
+    </select>
+
+    <select id="getJsonObject" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT  A.*,B.INST_ID_ as instId
+        FROM gkgf_apply A
+        left join bpm_inst B on A.id=B.BUS_KEY_
+        where  A.id = #{id}
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+        INSERT INTO gkgf_apply (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            TENANT_ID_,
+            model,
+            remark,
+            deptId,
+            applyType
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{TENANT_ID_,jdbcType=VARCHAR},
+            #{model,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR},
+            #{applyType,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="update" parameterType="java.util.Map">
+        UPDATE gkgf_apply SET
+        <if test="model != null and model != ''">
+            model=#{model,jdbcType=VARCHAR},
+        </if>
+        <if test="remark != null and remark != ''">
+            remark=#{remark,jdbcType=VARCHAR},
+        </if>
+        <if test="deptId != null and deptId != ''">
+            deptId=#{deptId,jdbcType=VARCHAR},
+        </if>
+        <if test="applyType != null and applyType != ''">
+            applyType=#{applyType,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+    <delete id="delete" parameterType="java.lang.String">
+        delete from gkgf_apply
+        where gkgf_apply.id=#{id}
+    </delete>
+
+    <select id="queryApplyInfo" parameterType="java.util.Map" resultType="java.util.Map">
+        select B.STATUS_ as status,A.USED as used,B.inst_id_,A.id
+        from gkgf_apply A
+        left join bpm_inst B on A.id = B.BUS_KEY_
+        where 1=1
+        <if test="taskId_ != null and taskId_ != ''">
+            and A.TASKID_ = #{taskId_}
+        </if>
+        order by A.CREATE_TIME_ desc
+    </select>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into gkgf_applyfiles(
+            id,
+            fileName,
+            fileSize,
+            fileDesc,
+            detailId,
+            fileType,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{fileSize,jdbcType=VARCHAR},
+            #{fileDesc,jdbcType=VARCHAR},
+            #{detailId,jdbcType=VARCHAR},
+            #{fileType,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="getFilesByDetailId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from gkgf_applyfiles
+        where detailId = #{detailId}
+    </select>
+    <delete id="delFileById" parameterType="java.lang.String">
+        delete from gkgf_applyfiles where id = #{id}
+    </delete>
+    <delete id="delFileByDetailId" parameterType="java.lang.String">
+        delete from gkgf_applyfiles
+        where detailId = #{detailId}
+    </delete>
+    <select id="getFileList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            os_user.FULLNAME_ as userName,
+            A.*
+            FROM
+            gkgf_applyfiles A
+            LEFT JOIN os_user ON A.CREATE_BY_ = os_user.USER_ID_
+        where 1=1
+        <if test="detailId != null and detailId != ''">
+            and A.detailId = #{detailId}
+        </if>
+        <if test="fileType != null and fileType != ''">
+            AND A.fileType=#{fileType}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getItemList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select A.*
+        from gkgf_applydetail A
+        <where>
+            <if test="applyId != null and applyId != ''">
+                and A.applyId=#{applyId}
+            </if>
+        </where>
+        ORDER BY CREATE_TIME_
+    </select>
+    <insert id="addItem" parameterType="java.util.Map">
+         INSERT INTO gkgf_applydetail (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            applyId,
+            workType,
+            tool,
+            workItem,
+            carModel,
+            selfVideoUrl,
+            bgVideoUrl
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{applyId,jdbcType=VARCHAR},
+            #{workType,jdbcType=VARCHAR},
+            #{tool,jdbcType=VARCHAR},
+            #{workItem,jdbcType=VARCHAR},
+            #{carModel,jdbcType=VARCHAR},
+            #{selfVideoUrl,jdbcType=VARCHAR},
+            #{bgVideoUrl,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateItem" parameterType="java.util.Map">
+        update gkgf_applydetail
+        <set>
+            <if test="workType != null and workType != ''">
+                workType=#{workType,jdbcType=VARCHAR},
+            </if>
+            <if test="tool != null and tool != ''">
+                tool=#{tool,jdbcType=VARCHAR},
+            </if>
+            <if test="workItem != null and workItem != ''">
+                workItem=#{workItem,jdbcType=VARCHAR},
+            </if>
+            <if test="carModel != null and carModel != ''">
+                carModel=#{carModel,jdbcType=VARCHAR},
+            </if>
+            <if test="selfVideoUrl != null and selfVideoUrl != ''">
+                selfVideoUrl=#{selfVideoUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="bgVideoUrl != null and bgVideoUrl != ''">
+                bgVideoUrl=#{bgVideoUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delItemById" parameterType="java.lang.String">
+        delete from gkgf_applydetail where id = #{id}
+    </delete>
+    <delete id="delItemByApplyId" parameterType="java.lang.String">
+        delete from gkgf_applydetail where applyId = #{applyId}
+    </delete>
+
+    <select id="getDetailList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            D.FULLNAME_ as userName,
+            E.NAME_ as deptName,
+            B.model,
+            C.STATUS_ as status,
+            C.inst_id_,
+            A.*
+        FROM
+            gkgf_applydetail A
+            LEFT JOIN gkgf_apply B on A.applyId = B.id
+            LEFT JOIN bpm_inst C ON B.id = C.BUS_KEY_
+            left join os_user D on B.CREATE_BY_ = D.USER_ID_
+            left join os_group E on B.deptId = E.GROUP_ID_
+        WHERE
+            C.STATUS_ = 'SUCCESS_END'
+            and B.applyType = #{applyType}
+        <if test="model != null and model != ''">
+            and B.model  like CONCAT('%',#{model},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and D.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and E.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="applyId != null and applyId != ''">
+            and A.applyId like CONCAT('%',#{applyId},'%')
+        </if>
+        <if test="workType != null and workType != ''">
+            and A.workType like CONCAT('%',#{workType},'%')
+        </if>
+
+    </select>
+
+</mapper>

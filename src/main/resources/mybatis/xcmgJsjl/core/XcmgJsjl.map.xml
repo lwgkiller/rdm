@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgJsjl.core.dao.XcmgJsjlDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jsjl_baseinfo.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS receiveUserName,
+        jsjl_dimension.dimensionName,
+        createUser.FULLNAME_ AS creator
+        FROM
+        jsjl_baseinfo
+        LEFT JOIN os_group ON jsjl_baseinfo.deptId = os_group.GROUP_ID_
+        LEFT JOIN os_user ON jsjl_baseinfo.receiveUserId = os_user.USER_ID_
+        LEFT JOIN jsjl_dimension ON jsjl_baseinfo.dimensionId = jsjl_dimension.id
+        LEFT JOIN os_user createUser ON jsjl_baseinfo.CREATE_BY_ = createUser.USER_ID_
+        <where>
+            <if test="deptId !=null and deptId !=''">
+                jsjl_baseinfo.deptId = #{deptId}
+            </if>
+            <if test="deptName !=null and deptName !=''">
+                os_group.NAME_ = #{deptName}
+            </if>
+            <if test="dimensionId !=null and dimensionId !=''">
+                AND jsjl_baseinfo.dimensionId = #{dimensionId}
+            </if>
+            <if test="dimensionName !=null and dimensionName !=''">
+                AND jsjl_dimension.dimensionName = #{dimensionName}
+            </if>
+            <if test="communicateCompany !=null and communicateCompany !=''">
+                AND jsjl_baseinfo.communicateCompany like CONCAT('%',#{communicateCompany},'%')
+            </if>
+            <if test="communicateStartTime != null and communicateStartTime != ''">
+                AND jsjl_baseinfo.communicateTime &gt;= #{communicateStartTime}
+            </if>
+            <if test="communicateEndTime != null and communicateEndTime != ''">
+                AND jsjl_baseinfo.communicateTime &lt;= #{communicateEndTime}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='fgzr'">
+                        AND
+                        (
+                            jsjl_baseinfo.deptId IN
+                            <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                                #{item}
+                            </foreach>
+                            OR jsjl_baseinfo.CREATE_BY_ = #{currentUserId}
+                            OR jsjl_baseinfo.meetingUserIds like CONCAT('%',#{currentUserId},'%')
+                            OR jsjl_baseinfo.planRespUserIds  like CONCAT('%',#{currentUserId},'%')
+                        )
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND
+                        (
+                            jsjl_baseinfo.meetingUserIds like CONCAT('%',#{currentUserId},'%')
+                            OR jsjl_baseinfo.CREATE_BY_ = #{currentUserId}
+                            OR jsjl_baseinfo.planRespUserIds  like CONCAT('%',#{currentUserId},'%')
+                        )
+                    </when>
+                </choose>
+            </if>
+            <if test="recordStatus !=null and recordStatus !=''">
+                AND jsjl_baseinfo.recordStatus = #{recordStatus}
+            </if>
+            <if test="scene !=null and scene !=''">
+                AND jsjl_dimension.descp = #{scene}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        jsjl_baseinfo
+        LEFT JOIN os_group ON jsjl_baseinfo.deptId = os_group.GROUP_ID_
+        LEFT JOIN os_user ON jsjl_baseinfo.receiveUserId = os_user.USER_ID_
+        LEFT JOIN jsjl_dimension ON jsjl_baseinfo.dimensionId = jsjl_dimension.id
+        LEFT JOIN os_user createUser ON jsjl_baseinfo.CREATE_BY_ = createUser.USER_ID_
+        <where>
+            <if test="deptId !=null and deptId !=''">
+                jsjl_baseinfo.deptId = #{deptId}
+            </if>
+            <if test="deptName !=null and deptName !=''">
+                os_group.NAME_ = #{deptName}
+            </if>
+            <if test="dimensionId !=null and dimensionId !=''">
+                AND jsjl_baseinfo.dimensionId = #{dimensionId}
+            </if>
+            <if test="dimensionName !=null and dimensionName !=''">
+                AND jsjl_dimension.dimensionName = #{dimensionName}
+            </if>
+            <if test="communicateCompany !=null and communicateCompany !=''">
+                AND jsjl_baseinfo.communicateCompany like CONCAT('%',#{communicateCompany},'%')
+            </if>
+            <if test="communicateStartTime != null and communicateStartTime != ''">
+                AND jsjl_baseinfo.communicateTime &gt;= #{communicateStartTime}
+            </if>
+            <if test="communicateEndTime != null and communicateEndTime != ''">
+                AND jsjl_baseinfo.communicateTime &lt;= #{communicateEndTime}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='fgzr'">
+                        AND
+                        (
+                        jsjl_baseinfo.deptId IN
+                        <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>
+                        OR jsjl_baseinfo.CREATE_BY_ = #{currentUserId}
+                        OR jsjl_baseinfo.meetingUserIds like CONCAT('%',#{currentUserId},'%')
+                        OR jsjl_baseinfo.planRespUserIds  like CONCAT('%',#{currentUserId},'%')
+                        )
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND
+                        (
+                        jsjl_baseinfo.meetingUserIds like CONCAT('%',#{currentUserId},'%')
+                        OR jsjl_baseinfo.CREATE_BY_ = #{currentUserId}
+                        OR jsjl_baseinfo.planRespUserIds  like CONCAT('%',#{currentUserId},'%')
+                        )
+                    </when>
+                </choose>
+            </if>
+            <if test="recordStatus !=null and recordStatus !=''">
+                AND jsjl_baseinfo.recordStatus = #{recordStatus}
+            </if>
+            <if test="scene !=null and scene !=''">
+                AND jsjl_dimension.descp = #{scene}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertJsjlData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jsjl_baseinfo(
+          id,
+          generationNo,
+          meetingNo,
+          deptId,
+          receiveUserId,
+          meetingUserIds,
+          communicateTime,
+          communicateRoom,
+          communicateCompany,
+          meetingTheme,
+          dimensionId,
+          contentAndConclusion,
+          planAndResult,
+          recordStatus,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{generationNo,jdbcType=VARCHAR},
+          #{meetingNo,jdbcType=VARCHAR},
+          #{deptId,jdbcType=VARCHAR},
+          #{receiveUserId,jdbcType=VARCHAR},
+          #{meetingUserIds,jdbcType=VARCHAR},
+          #{communicateTime,jdbcType=VARCHAR},
+          #{communicateRoom,jdbcType=VARCHAR},
+          #{communicateCompany,jdbcType=VARCHAR},
+          #{meetingTheme,jdbcType=VARCHAR},
+          #{dimensionId,jdbcType=VARCHAR},
+          #{contentAndConclusion,jdbcType=VARCHAR},
+          #{planAndResult,jdbcType=VARCHAR},
+          #{recordStatus,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateJsjlData" parameterType="com.alibaba.fastjson.JSONObject">
+        update jsjl_baseinfo
+        set
+        generationNo=#{generationNo,jdbcType=VARCHAR},
+        meetingNo=#{meetingNo,jdbcType=VARCHAR},
+        deptId=#{deptId,jdbcType=VARCHAR},
+        receiveUserId=#{receiveUserId,jdbcType=VARCHAR},
+        meetingUserIds=#{meetingUserIds,jdbcType=VARCHAR},
+        communicateTime=#{communicateTime,jdbcType=VARCHAR},
+        communicateRoom=#{communicateRoom,jdbcType=VARCHAR},
+        communicateCompany=#{communicateCompany,jdbcType=VARCHAR},
+        meetingTheme=#{meetingTheme,jdbcType=VARCHAR},
+        dimensionId=#{dimensionId,jdbcType=VARCHAR},
+        contentAndConclusion=#{contentAndConclusion,jdbcType=VARCHAR},
+        planAndResult=#{planAndResult,jdbcType=VARCHAR},
+        recordStatus=#{recordStatus,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <select id="queryJsjlById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            jsjl_baseinfo.*,
+            os_group.NAME_    AS deptName,
+            os_user.FULLNAME_ AS receiveUserName,
+            jsjl_dimension.dimensionName
+        FROM
+            jsjl_baseinfo
+            LEFT JOIN os_group ON jsjl_baseinfo.deptId = os_group.GROUP_ID_
+            LEFT JOIN os_user ON jsjl_baseinfo.receiveUserId = os_user.USER_ID_
+            LEFT JOIN jsjl_dimension ON jsjl_baseinfo.dimensionId = jsjl_dimension.id
+        WHERE
+            jsjl_baseinfo.id = #{jsjlId}
+    </select>
+
+    <delete id="deleteJsjl" parameterType="java.util.Map">
+        delete from jsjl_baseinfo
+        where id IN
+        <foreach collection="jsjlIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <select id="queryMeetingPlanList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT jsjl_planinfos.*,
+        jsjl_baseinfo.communicateCompany
+        FROM jsjl_planinfos
+        INNER JOIN jsjl_baseinfo
+        ON jsjl_planinfos.meetingId = jsjl_baseinfo.id
+        <where>
+            <if test="_parameter !=null and _parameter !=''">
+                meetingId = #{_parameter,jdbcType=VARCHAR}
+            </if>
+            <if test="_parameter == null or _parameter ==''">
+                jsjl_baseinfo.recordStatus = "已提交"
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertMeetingPlanData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jsjl_planinfos(
+        id,
+        meetingId,
+        meetingContent,
+        meetingPlanRespUserIds,
+        meetingPlanEndTime,
+        meetingPlanCompletion,
+        isComplete,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{meetingId,jdbcType=VARCHAR},
+        #{meetingContent,jdbcType=VARCHAR},
+        #{meetingPlanRespUserIds,jdbcType=VARCHAR},
+        #{meetingPlanEndTime,jdbcType=VARCHAR},
+        #{meetingPlanCompletion,jdbcType=VARCHAR},
+        #{isComplete,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateMeetingPlanData" parameterType="com.alibaba.fastjson.JSONObject">
+        update jsjl_planinfos
+        set
+        meetingId=#{meetingId,jdbcType=VARCHAR},
+        meetingContent=#{meetingContent,jdbcType=VARCHAR},
+        meetingPlanRespUserIds=#{meetingPlanRespUserIds,jdbcType=VARCHAR},
+        meetingPlanEndTime=#{meetingPlanEndTime,jdbcType=VARCHAR},
+        meetingPlanCompletion=#{meetingPlanCompletion,jdbcType=VARCHAR},
+        isComplete=#{isComplete,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteOneMeetingPlan" parameterType="java.lang.String">
+        delete from jsjl_planinfos where id = #{id}
+    </delete>
+    <!---->
+    <delete id="deleteMeetingPlanByMeetingId" parameterType="java.lang.String">
+        delete from jsjl_planinfos where meetingId = #{meetingid}
+    </delete>
+    <!---->
+    <select id="getFileNamesListByMainId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT jsjl_fileinfos.fileName
+        FROM jsjl_fileinfos
+        INNER JOIN jsjl_baseinfo
+        ON jsjl_fileinfos.jsjlId = jsjl_baseinfo.id
+        WHERE jsjl_baseinfo.id = #{id}
+    </select>
+    <!---->
+    <select id="getSeqJsjl" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        substring_index(meetingNo,'-',-1) as num
+        FROM jsjl_baseinfo
+        where
+        meetingNo like CONCAT(#{tempStr},'%')
+        order by substring_index(meetingNo,'-',-1)+'' desc
+        limit 1
+    </select>
+
+    <update id="updateMeetingPlanRespUserIds" parameterType="com.alibaba.fastjson.JSONObject">
+        update jsjl_baseinfo
+        set
+        planRespUserIds = #{planRespUserIds}
+        where
+        id = #{id}
+    </update>
+</mapper>

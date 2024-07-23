@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectSchedulerDao">
+    <select id="queryNormalRunningProjectList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_baseinfo.projectId,
+            project_baseinfo.currentStageId,
+            project_baseinfo.projectName,
+            os_group.NAME_ AS mainDepName
+        FROM
+            project_baseinfo
+            LEFT JOIN bpm_inst ON project_baseinfo.projectId = bpm_inst.BUS_KEY_
+            LEFT JOIN os_group ON project_baseinfo.mainDepId = os_group.GROUP_ID_
+        <where>
+            (progressRunStatus is null or progressRunStatus != '1') AND
+            <if test="instStatus != null and instStatus != ''">
+                bpm_inst.STATUS_ = #{instStatus}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryProjectCurrentPlanEndTime" parameterType="java.util.List" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            projectId,
+            planEndTime
+        FROM
+            project_plan
+        WHERE
+        <foreach collection="list" index="index" item="item" open="" close="" separator="OR">
+            ( projectId = #{item.projectId} AND stageId = #{item.currentStageId} )
+        </foreach>
+    </select>
+
+    <select id="queryDelayNoticeRecord"  parameterType="java.util.List" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            project_delaynotice
+        WHERE
+        <foreach collection="list" index="index" item="item" open="" close="" separator="OR">
+            ( projectId = #{item.projectId} AND stageId = #{item.stageId} AND sendLevel = #{item.sendLevel})
+        </foreach>
+    </select>
+
+    <select id="queryProjectMemsByRoleName" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_memberinfo.projectId,
+            project_memberinfo.userId,
+            project_member_role.roleName,
+            os_user.FULLNAME_ AS userName,
+            os_user.CERT_NO_ AS userCertNo
+        FROM
+            project_memberinfo
+            LEFT JOIN os_user ON project_memberinfo.userId = os_user.USER_ID_
+            LEFT JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+        <where>
+            project_memberinfo.projectId in
+            <foreach collection="projectIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            AND project_member_role.roleName in
+            <foreach collection="roleNames" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
+    <insert id="batchInsertDelayNotice" parameterType="java.util.List">
+        insert into project_delayNotice(id,projectId,stageId,sendLevel,CREATE_TIME_)
+        VALUES
+        <foreach collection="list" separator="," open="" close="" item="item" index="index">
+            (
+                #{item.id,jdbcType=VARCHAR},
+                #{item.projectId,jdbcType=VARCHAR},
+                #{item.stageId,jdbcType=VARCHAR},
+                #{item.sendLevel,jdbcType=VARCHAR},
+                #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getProjectListByInfo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            project_baseinfo A
+            LEFT JOIN bpm_inst B ON A.projectId = B.BUS_KEY_
+            where B.STATUS_ = #{status}
+            and A.categoryId = #{categoryId}
+    </select>
+    <select id="getProductIdByName" parameterType="java.lang.String" resultType="java.lang.String">
+       SELECT
+            id
+        FROM
+            product_spectrum
+        WHERE
+            designModel = #{productName}
+            LIMIT 1
+    </select>
+
+    <select id="getProductIdsByName" parameterType="java.lang.String" resultType="java.lang.String">
+       SELECT
+            id
+        FROM
+            product_spectrum
+        WHERE
+            designModel like CONCAT('%',#{productName},'%')
+    </select>
+
+</mapper>

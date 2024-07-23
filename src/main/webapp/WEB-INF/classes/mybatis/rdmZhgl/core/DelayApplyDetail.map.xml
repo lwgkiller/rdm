@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.DelayApplyDetailDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.FULLNAME_ as userName
+        FROM
+            delay_applydetail A
+            left join os_user B on A.userId = B.USER_ID_
+        WHERE
+            A.mainId = #{mainId}
+            <if test="userName !=null and userName !=''">
+                AND B.FULLNAME_ like CONCAT('%',#{userName},'%')
+            </if>
+        <if test="applyTime !=null and applyTime !=''">
+            AND A.workDate = #{applyTime}
+        </if>
+        <include refid="orderBy" />
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+         INSERT INTO delay_applydetail (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            workDate,
+            workTime,
+            reason,
+            userId
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{workDate,jdbcType=TIMESTAMP},
+            #{workTime,jdbcType=VARCHAR},
+            #{reason,jdbcType=VARCHAR},
+            #{userId,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="update" parameterType="java.util.Map">
+        update delay_applydetail
+        <set>
+            <if test="workDate != null and workDate != ''">
+                workDate=#{workDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="workTime != null and workTime != ''">
+                workTime=#{workTime,jdbcType=VARCHAR},
+            </if>
+            <if test="mainId != null and mainId != ''">
+                mainId=#{mainId,jdbcType=VARCHAR},
+            </if>
+            <if test="reason != null and reason != ''">
+                reason=#{reason,jdbcType=VARCHAR},
+            </if>
+            <if test="userId != null and userId != ''">
+                userId=#{userId,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from delay_applydetail
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="del" parameterType="java.lang.String">
+        delete from delay_applydetail
+        where
+        id=#{id}
+    </delete>
+    <select id="getDetailByMainId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from delay_applydetail where mainId = #{mainId}
+    </select>
+    <delete id="delDetail" parameterType="java.lang.String">
+        delete from delay_applydetail
+        where
+        mainId=#{mainId}
+    </delete>
+
+    <select id="exportDelayApply" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.FULLNAME_ AS userName,
+            D.NAME_ deptName
+        FROM
+            delay_applydetail A
+            LEFT JOIN os_user B ON A.userId = B.USER_ID_
+            left join delay_apply C on a.mainId = c.id
+            left join os_group D on C.deptId = D.GROUP_ID_
+        WHERE
+            A.mainId in
+            <foreach collection="mainIds" separator="," item="mainId" index="index" open="(" close=")">
+                #{mainId}
+            </foreach>
+        order by CONVERT(deptName using GBK) ASC, workDate asc
+    </select>
+</mapper>

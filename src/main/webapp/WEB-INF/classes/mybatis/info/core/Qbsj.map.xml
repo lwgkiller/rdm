@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.info.core.dao.QbsjDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryTypeList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            qbsj_typeInfo
+        <where>
+            <if test="bigTypeName != null and bigTypeName != ''">
+                qbsj_typeInfo.bigTypeName = #{bigTypeName}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateNumber" parameterType="com.alibaba.fastjson.JSONObject">
+        update qbsj_baseInfo
+        set
+          qbNumber=#{qbNumber,jdbcType=VARCHAR}
+        where
+          id=#{id}
+    </update>
+
+    <insert id="createQbsj" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into qbsj_baseInfo(
+            id
+            ,qbNumber
+            ,qbName
+            ,qbTypeId
+            ,qbValue
+            ,qbSource
+            ,qbKKX
+            ,qbZQD
+            ,qbDesc
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{qbNumber,jdbcType=VARCHAR},
+            #{qbName,jdbcType=VARCHAR},
+            #{qbTypeId,jdbcType=VARCHAR},
+            #{qbValue,jdbcType=VARCHAR},
+            #{qbSource,jdbcType=VARCHAR},
+            #{qbKKX,jdbcType=VARCHAR},
+            #{qbZQD,jdbcType=VARCHAR},
+            #{qbDesc,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateQbsj" parameterType="com.alibaba.fastjson.JSONObject">
+        update qbsj_baseInfo
+        set
+            qbName=#{qbName,jdbcType=VARCHAR},
+            qbTypeId=#{qbTypeId,jdbcType=VARCHAR},
+            qbValue=#{qbValue,jdbcType=VARCHAR},
+            qbSource=#{qbSource,jdbcType=VARCHAR},
+            qbKKX=#{qbKKX,jdbcType=VARCHAR},
+            qbZQD=#{qbZQD,jdbcType=VARCHAR},
+            qbDesc=#{qbDesc,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+
+    <select id="queryQbsj" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        qbsj_baseInfo.*,
+        qbsj_typeinfo.bigTypeName,
+        qbsj_typeinfo.smallTypeName,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS `status`,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        qbsj_baseInfo
+        LEFT JOIN qbsj_typeinfo ON qbsj_baseInfo.qbTypeId = qbsj_typeinfo.id
+        LEFT JOIN os_rel_inst ON qbsj_baseInfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = qbsj_baseInfo.CREATE_BY_
+        LEFT JOIN bpm_inst ON qbsj_baseInfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND (qbsj_baseInfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="qbNumber != null and qbNumber != ''">
+            and qbsj_baseInfo.qbNumber like concat('%', #{qbNumber},'%')
+        </if>
+        <if test="qbName != null and qbName != ''">
+            and qbsj_baseInfo.qbName like concat('%', #{qbName}, '%')
+        </if>
+        <if test="bigTypeName != null and bigTypeName != ''">
+            and qbsj_typeinfo.bigTypeName = #{bigTypeName}
+        </if>
+        <if test="qbTypeId != null and qbTypeId != ''">
+            and qbsj_baseInfo.qbTypeId = #{qbTypeId}
+        </if>
+        <if test="qbValue != null and qbValue != ''">
+            and qbsj_baseInfo.qbValue = #{qbValue}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgld' or roleName =='qbzy'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR qbsj_baseInfo.CREATE_BY_ = #{currentUserId})
+                </when>
+                <when test="roleName =='deptRespUser'">
+                    AND ((bpm_inst.STATUS_ != 'DRAFTED' AND os_group.GROUP_ID_ = #{deptId})OR qbsj_baseInfo.CREATE_BY_ = #{currentUserId})
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND (
+                    qbsj_baseInfo.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+            </choose>
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countQbsj" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        qbsj_baseInfo
+        LEFT JOIN qbsj_typeinfo ON qbsj_baseInfo.qbTypeId = qbsj_typeinfo.id
+        LEFT JOIN os_rel_inst ON qbsj_baseInfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN bpm_inst ON qbsj_baseInfo.id = bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND (qbsj_baseInfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="qbNumber != null and qbNumber != ''">
+            and qbsj_baseInfo.qbNumber like concat('%', #{qbNumber},'%')
+        </if>
+        <if test="qbName != null and qbName != ''">
+            and qbsj_baseInfo.qbName like concat('%', #{qbName}, '%')
+        </if>
+        <if test="bigTypeName != null and bigTypeName != ''">
+            and qbsj_typeinfo.bigTypeName = #{bigTypeName}
+        </if>
+        <if test="qbTypeId != null and qbTypeId != ''">
+            and qbsj_baseInfo.qbTypeId = #{qbTypeId}
+        </if>
+        <if test="qbValue != null and qbValue != ''">
+            and qbsj_baseInfo.qbValue = #{qbValue}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgld' or roleName =='qbzy'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR qbsj_baseInfo.CREATE_BY_ = #{currentUserId})
+                </when>
+                <when test="roleName =='deptRespUser'">
+                    AND ((bpm_inst.STATUS_ != 'DRAFTED' AND os_group.GROUP_ID_ = #{deptId})OR qbsj_baseInfo.CREATE_BY_ = #{currentUserId})
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND (
+                    qbsj_baseInfo.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <select id="queryQbsjFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        qbsj_fileInfo
+        WHERE
+        qbBaseInfoId IN
+        <foreach collection="qbgzIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <delete id="deleteQbsjFile" parameterType="java.util.Map">
+        delete from qbsj_fileInfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="qbgzIds != null and qbgzIds !=''">
+                AND qbBaseInfoId IN
+                <foreach collection="qbgzIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteQbsj" parameterType="java.util.Map">
+        delete from qbsj_baseInfo
+        <where>
+            <if test="qbgzIds != null and qbgzIds !=''">
+                id IN
+                <foreach collection="qbgzIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryQbsjById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select qbsj_baseInfo.*,
+        qbsj_typeinfo.bigTypeName,
+        qbsj_typeinfo.smallTypeName,
+        bpm_inst.INST_ID_ as instId
+        from qbsj_baseInfo
+        left join bpm_inst on qbsj_baseInfo.id=bpm_inst.BUS_KEY_
+        LEFT JOIN qbsj_typeinfo ON qbsj_baseInfo.qbTypeId = qbsj_typeinfo.id
+        where
+        qbsj_baseInfo.id=#{id}
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into qbsj_fileInfo(
+        id
+        ,fileName
+        ,qbBaseInfoId
+        ,fileSize
+        ,fileDesc
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{qbBaseInfoId,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <select id="queryMaxQbsjNum" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.util.Map">
+        SELECT
+            *
+        FROM
+            qbsj_baseInfo
+        WHERE
+            qbsj_baseInfo.CREATE_TIME_ &gt;= #{applyTimeStart}
+            AND qbNumber IS NOT NULL
+            AND qbNumber != ''
+        ORDER BY
+            SUBSTR(qbNumber, 8) + '' DESC
+            LIMIT 1
+    </select>
+</mapper>

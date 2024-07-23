@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.HgxPicArchiveDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+
+        <if test="picCode !=null and picCode !=''">
+            AND zzz.picCode like CONCAT('%',#{picCode},'%')
+        </if>
+        <if test="fileName !=null and fileName !=''">
+            AND zzz.fileName like CONCAT('%',#{fileName},'%')
+        </if>
+        <if test="creatorName != null and creatorName != ''">
+            AND zzz.creatorName like CONCAT('%',#{creatorName},'%')
+        </if>
+
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_maintenance_manualfile_standard_pic_archive AS zzz
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM
+        service_engineering_maintenance_manualfile_standard_pic_archive AS zzz
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            service_engineering_maintenance_manualfile_standard_pic_archive
+        WHERE
+            id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.lang.String">
+        delete from service_engineering_maintenance_manualfile_standard_pic_archive
+        where id = #{id}
+    </delete>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_maintenance_manualfile_standard_pic_archive(
+        id,
+        picCode,
+        fileName,
+        picType,
+        region,
+        dataSrc,
+        applyInst,
+        versionStatus,
+        remark,
+        creatorName,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{picCode,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{picType,jdbcType=VARCHAR},
+        #{region,jdbcType=VARCHAR},
+        #{dataSrc,jdbcType=VARCHAR},
+        #{applyInst,jdbcType=VARCHAR},
+        #{versionStatus,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{creatorName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update service_engineering_maintenance_manualfile_standard_pic_archive
+        set
+        picCode=#{picCode,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        picType=#{picType,jdbcType=VARCHAR},
+        region=#{region,jdbcType=VARCHAR},
+        dataSrc=#{dataSrc,jdbcType=VARCHAR},
+        applyInst=#{applyInst,jdbcType=VARCHAR},
+        versionStatus=#{versionStatus,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        1=1
+        <if test="id !=null and id !=''">
+            AND id=#{id}
+        </if>
+        <if test="picCode !=null and picCode !=''">
+            AND picCode=#{picCode}
+        </if>
+    </update>
+
+    <select id="getListByCode" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_maintenance_manualfile_standard_pic_archive
+        WHERE service_engineering_maintenance_manualfile_standard_pic_archive.picCode = #{picCode}
+    </select>
+
+
+    <select id="queryIdByFileName" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT id
+        FROM service_engineering_maintenance_manualfile_standard_pic_archive
+        WHERE service_engineering_maintenance_manualfile_standard_pic_archive.fileName = #{fileName}
+        LIMIT 1
+    </select>
+
+</mapper>

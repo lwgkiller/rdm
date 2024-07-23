@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.HyglGeneralKanBanDao">
+    <!--获取内部会议总数-->
+    <select id="getInternalTotal" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM hygl_internal_baseinfo
+        <where>
+            <if test="meetingTimeBegin != null and meetingTimeBegin != ''">
+                AND hygl_internal_baseinfo.meetingTime &gt;= #{meetingTimeBegin}
+            </if>
+            <if test="meetingTimeEnd != null and meetingTimeEnd != ''">
+                AND hygl_internal_baseinfo.meetingTime &lt;= #{meetingTimeEnd}
+            </if>
+            <if test="recordStatus !=null and recordStatus !=''">
+                AND hygl_internal_baseinfo.recordStatus = #{recordStatus}
+            </if>
+        </where>
+    </select>
+    <!--获取外部会议总数-->
+    <select id="getExternalTotal" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM jsjl_baseinfo
+        <where>
+            <if test="communicateStartTime != null and communicateStartTime != ''">
+                AND jsjl_baseinfo.communicateTime &gt;= #{communicateStartTime}
+            </if>
+            <if test="communicateEndTime != null and communicateEndTime != ''">
+                AND jsjl_baseinfo.communicateTime &lt;= #{communicateEndTime}
+            </if>
+            <if test="recordStatus !=null and recordStatus !=''">
+                AND jsjl_baseinfo.recordStatus = #{recordStatus}
+            </if>
+        </where>
+    </select>
+</mapper>

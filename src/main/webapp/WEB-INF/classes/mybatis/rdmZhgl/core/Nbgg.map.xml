@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.NbggDao">
+
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryApplyList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        nbgg_info.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        nbgg_info
+        left join bpm_inst on nbgg_info.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="applyNumber != null and applyNumber != ''">
+                nbgg_info.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND nbgg_info.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="creatorDeptName != null and creatorDeptName != ''">
+                AND nbgg_info.creatorDeptName like CONCAT('%',#{creatorDeptName},'%')
+            </if>
+            <if test="followName != null and followName != ''">
+                AND nbgg_info.followName like CONCAT('%',#{followName},'%')
+            </if>
+            <if test="aimLocation != null and aimLocation != ''">
+                AND nbgg_info.aimLocation like CONCAT('%',#{aimLocation},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                and bpm_inst.STATUS_ =#{instStatus}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR nbgg_info.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+
+        </where>
+        <include refid="orderBy"/>
+    </select>
+
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        nbgg_info.*,
+        bpm_inst.INST_ID_ as instId
+        from
+        nbgg_info left join bpm_inst on nbgg_info.id=bpm_inst.BUS_KEY_
+        where
+        id =#{id}
+    </select>
+
+
+
+    <insert id="insertNbgg" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into nbgg_info(
+        id
+        ,creatorName
+        ,creatorDeptName
+        ,followId
+        ,followName
+        ,aimLocation
+        ,outStartTime
+        ,outEndTime
+        ,outSubject
+        ,outDesc
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR}
+        ,#{creatorName,jdbcType=VARCHAR}
+        ,#{creatorDeptName,jdbcType=VARCHAR}
+        ,#{followId,jdbcType=VARCHAR}
+        ,#{followName,jdbcType=VARCHAR}
+        ,#{aimLocation,jdbcType=VARCHAR}
+        ,#{outStartTime,jdbcType=VARCHAR}
+        ,#{outEndTime,jdbcType=VARCHAR}
+        ,#{outSubject,jdbcType=VARCHAR}
+        ,#{outDesc,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <update id="updateNbgg" parameterType="com.alibaba.fastjson.JSONObject">
+        update nbgg_info
+        set
+        followId=#{followId,jdbcType=VARCHAR},
+        followName=#{followName,jdbcType=VARCHAR},
+        aimLocation=#{aimLocation,jdbcType=VARCHAR},
+        outStartTime=#{outStartTime,jdbcType=VARCHAR},
+        outEndTime=#{outEndTime,jdbcType=VARCHAR},
+        outSubject=#{outSubject,jdbcType=VARCHAR},
+        outDesc=#{outDesc,jdbcType=VARCHAR},
+        outSummary=#{outSummary,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+
+
+
+    <delete id="deleteNbgg" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from nbgg_info
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+
+    <insert id="insertDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into nbgg_detail(
+        id
+        ,applyId
+        ,fileName
+        ,fileSize
+        ,fileDesc
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{applyId,jdbcType=VARCHAR}
+        ,#{fileName,jdbcType=VARCHAR}
+        ,#{fileSize,jdbcType=VARCHAR}
+        ,#{fileDesc,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+
+
+    <delete id="deleteDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from nbgg_detail
+        <where>
+            <if test="id != null and id != ''">
+               id = #{id}
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+    <select id="queryDemandList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from nbgg_detail
+        <where>
+            <if test="applyId !=null and applyId !=''">
+                applyId = #{applyId}
+            </if>
+        </where>
+    </select>
+
+
+
+
+
+
+
+</mapper>

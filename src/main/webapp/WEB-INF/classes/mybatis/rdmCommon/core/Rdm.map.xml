@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmCommon.core.dao.RdmDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryNewUser" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        rdm_newuser
+        <where>
+            <if test="ids !=null and id != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="userNo !=null and userNo != ''">
+                AND userNo = #{userNo}
+            </if>
+            <if test="confirmStatus !=null and confirmStatus != ''">
+                AND confirmStatus = #{confirmStatus}
+            </if>
+        </where>
+        ORDER BY confirmStatus
+    </select>
+
+    <select id="queryUserByNo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            os_user
+        WHERE
+            USER_NO_ = #{userNo}
+    </select>
+
+    <select id="queryInJobUserByNo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            os_user
+        WHERE
+            USER_NO_ = #{userNo}
+            AND STATUS_ = 'IN_JOB'
+    </select>
+
+    <insert id="insertNewUser" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into rdm_newuser(
+            id
+            ,fullname
+            ,userNo
+            ,pwd
+            ,mainDepId
+            ,mainDepName
+            ,gwId
+            ,gwName
+            ,zjId
+            ,zjName
+            ,certNo
+            ,mobile
+            ,windchillPDM
+            ,szrUserId
+            ,szrUserName
+            ,confirmStatus
+        )values(
+             #{id,jdbcType=VARCHAR}
+            ,#{fullname,jdbcType=VARCHAR}
+            ,#{userNo,jdbcType=VARCHAR}
+            ,#{pwd,jdbcType=VARCHAR}
+            ,#{mainDepId,jdbcType=VARCHAR}
+            ,#{mainDepName,jdbcType=VARCHAR}
+            ,#{gwId,jdbcType=VARCHAR}
+            ,#{gwName,jdbcType=VARCHAR}
+            ,#{zjId,jdbcType=VARCHAR}
+            ,#{zjName,jdbcType=VARCHAR}
+            ,#{certNo,jdbcType=VARCHAR}
+            ,#{mobile,jdbcType=VARCHAR}
+            ,#{windchillPDM,jdbcType=VARCHAR}
+            ,#{szrUserId,jdbcType=VARCHAR}
+            ,#{szrUserName,jdbcType=VARCHAR}
+            ,#{confirmStatus,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <delete id="deleteUser" parameterType="java.util.Map">
+        delete from rdm_newuser
+        WHERE
+        id in
+        <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+    </delete>
+    <select id="queryOsDimension" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM os_dimension
+    </select>
+
+    <update id="updateConfirmStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update rdm_newuser
+        set confirmStatus='yes'
+        <where>
+            <if test="ids !=null and id != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </update>
+    <select id="queryUserInfoByIds" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_user.USER_ID_ as id,
+        os_user.FULLNAME_ as name,
+        os_user.CERT_NO_ AS certNo
+        FROM
+        os_user
+        <where>
+            <if test="ids != null and ids != ''">
+                os_user.USER_ID_ in
+                <foreach collection="ids" index="index" item="id" open="(" close=")" separator=",">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND os_user.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+    <update id="updateUserPwdStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update os_user
+        set
+        pwdStatus = #{pwdStatus,jdbcType=VARCHAR}
+        where
+        USER_ID_ = #{userId}
+    </update>
+
+
+    <select id="getDistinctGrantMenu" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.String">
+        SELECT DISTINCT MENU_ID_
+        FROM
+            os_group_menu
+        WHERE
+            GROUP_ID_ = #{srcDeptId}
+            AND netType = #{netType}
+    </select>
+    <select id="getDistinctGrantSys" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.String">
+        SELECT DISTINCT SYS_ID_
+        FROM
+            os_group_sys
+        WHERE
+            GROUP_ID_ = #{srcDeptId}
+            AND netType = #{netType}
+    </select>
+
+    <!--清空表行数-->
+    <delete id="deleteCountTableRows">
+        delete from rdmcounttablerows
+    </delete>
+    <!--生成表行数-->
+    <update id="callCountTableRows" parameterType="java.lang.String" statementType="CALLABLE">
+        {CALL CountTableRowsToTable(#{dataBaseName})}
+    </update>
+    <!--查询表行数-->
+    <select id="selectCountTableRows" resultType="com.alibaba.fastjson.JSONObject">
+        select * from rdmcounttablerows
+        <where>
+            <if test="@Ognl@isNotEmpty(tableName)">
+                AND rdmcounttablerows.tableName like CONCAT('%',#{tableName},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+    </select>
+</mapper>

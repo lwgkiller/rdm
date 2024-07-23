@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.world.core.dao.WorldFitnessImproveDao">
+
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryApplyList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        world_fitnessimprove_base.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        world_fitnessimprove_base
+        left join bpm_inst on world_fitnessimprove_base.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="applyNumber != null and applyNumber != ''">
+                world_fitnessimprove_base.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND world_fitnessimprove_base.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="creatorDeptId != null and creatorDeptId != ''">
+                AND world_fitnessimprove_base.departId = #{creatorDeptId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR world_fitnessimprove_base.CREATE_BY_ =
+                        #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countApplyList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        world_fitnessimprove_base
+        left join bpm_inst on world_fitnessimprove_base.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="applyNumber != null and applyNumber != ''">
+                world_fitnessimprove_base.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND world_fitnessimprove_base.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="creatorDeptId != null and creatorDeptId != ''">
+                AND world_fitnessimprove_base.departId = #{creatorDeptId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR world_fitnessimprove_base.CREATE_BY_ =
+                        #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+
+    </select>
+
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select * from world_fitnessImprove_base
+        where
+        id =#{id}
+    </select>
+
+
+    <insert id="insertApply" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into world_fitnessImprove_base(
+        id
+        ,applyNumber
+        ,productModel
+        ,regionKey
+        ,creatorName
+        ,improveType
+        ,improveSource
+        ,reqDesc
+        ,reqDescUrl
+        ,competitorDesgin
+        ,competitorDesginUrl
+        ,improveDesc
+        ,improveDescUrl
+        ,hwjdJudge
+        ,productManager
+        ,productManagerName
+        ,pmJudge
+        ,noImproveDesc
+        ,improveProjcetDesc
+        ,planActTime
+        ,technical
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR}
+        ,#{applyNumber,jdbcType=VARCHAR}
+        ,#{productModel,jdbcType=VARCHAR}
+        ,#{regionKey,jdbcType=VARCHAR}
+        ,#{creatorName,jdbcType=VARCHAR}
+        ,#{improveType,jdbcType=VARCHAR}
+        ,#{improveSource,jdbcType=VARCHAR}
+        ,#{reqDesc,jdbcType=VARCHAR}
+        ,#{reqDescUrl,jdbcType=VARCHAR}
+        ,#{competitorDesgin,jdbcType=VARCHAR}
+        ,#{competitorDesginUrl,jdbcType=VARCHAR}
+        ,#{improveDesc,jdbcType=VARCHAR}
+        ,#{improveDescUrl,jdbcType=VARCHAR}
+        ,#{hwjdJudge,jdbcType=VARCHAR}
+        ,#{productManager,jdbcType=VARCHAR}
+        ,#{productManagerName,jdbcType=VARCHAR}
+        ,#{pmJudge,jdbcType=VARCHAR}
+        ,#{noImproveDesc,jdbcType=VARCHAR}
+        ,#{improveProjcetDesc,jdbcType=VARCHAR}
+        ,#{planActTime,jdbcType=VARCHAR}
+        ,#{technical,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <update id="updateApply" parameterType="com.alibaba.fastjson.JSONObject">
+        update world_fitnessImprove_base
+        set
+        productModel=#{productModel,jdbcType=VARCHAR},
+        regionKey=#{regionKey,jdbcType=VARCHAR},
+        improveType=#{improveType,jdbcType=VARCHAR},
+        improveSource=#{improveSource,jdbcType=VARCHAR},
+        reqDesc=#{reqDesc,jdbcType=VARCHAR},
+        reqDescUrl=#{reqDescUrl,jdbcType=VARCHAR},
+        competitorDesgin=#{competitorDesgin,jdbcType=VARCHAR},
+        competitorDesginUrl=#{competitorDesginUrl,jdbcType=VARCHAR},
+        improveDesc=#{improveDesc,jdbcType=VARCHAR},
+        improveDescUrl=#{improveDescUrl,jdbcType=VARCHAR},
+        hwjdJudge=#{hwjdJudge,jdbcType=VARCHAR},
+        productManager=#{productManager,jdbcType=VARCHAR},
+        productManagerName=#{productManagerName,jdbcType=VARCHAR},
+        pmJudge=#{pmJudge,jdbcType=VARCHAR},
+        noImproveDesc=#{noImproveDesc,jdbcType=VARCHAR},
+        improveProjcetDesc=#{improveProjcetDesc,jdbcType=VARCHAR},
+        planActTime=#{planActTime,jdbcType=VARCHAR},
+        technical=#{technical,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <update id="updateApplyNumber" parameterType="com.alibaba.fastjson.JSONObject">
+        update world_fitnessImprove_base
+        set
+        applyNumber=#{applyNumber,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+
+    <update id="updateActionTime" parameterType="java.util.Map">
+        update world_fitnessImprove_base
+        set
+        <if test="pdqrStartTime != null and pdqrStartTime != ''">
+            pdqrStartTime = #{pdqrStartTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="pdqrEndTime != null and pdqrEndTime != ''">
+            pdqrEndTime = #{pdqrEndTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="jyqrStartTime != null and jyqrStartTime != ''">
+            jyqrStartTime = #{jyqrStartTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="jyqrEndTime != null and jyqrEndTime != ''">
+            jyqrEndTime = #{jyqrEndTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="nfgjStartTime != null and nfgjStartTime != ''">
+            nfgjStartTime = #{nfgjStartTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="nfgjEndTime != null and nfgjEndTime != ''">
+            nfgjEndTime = #{nfgjEndTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="fayzStartTime != null and fayzStartTime != ''">
+            fayzStartTime = #{fayzStartTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="fayzEndTime != null and fayzEndTime != ''">
+            fayzEndTime = #{fayzEndTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="ssjhStartTime != null and ssjhStartTime != ''">
+            ssjhStartTime = #{ssjhStartTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="ssjhEndTime != null and ssjhEndTime != ''">
+            ssjhEndTime = #{ssjhEndTime,jdbcType=TIMESTAMP},
+        </if>
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+
+        where
+        id=#{id}
+    </update>
+
+
+    <delete id="deleteApply" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from world_fitnessImprove_base
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryApplyListFile" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        world_fitnessimprove_appendix.*,
+        os_user.FULLNAME_ as creator
+
+        FROM
+        world_fitnessimprove_appendix
+        left join os_user on world_fitnessimprove_appendix.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            baseInfoId = #{baseInfoId}
+            AND fileType = #{fileType}
+        </where>
+    </select>
+
+    <insert id="insertApplyFile" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO world_fitnessimprove_appendix (
+        id, baseInfoId, fileType, fileName, fileSize,CREATE_BY_, CREATE_TIME_ )
+        VALUES
+            (
+              #{id,jdbcType=VARCHAR}
+            , #{baseInfoId,jdbcType=VARCHAR}
+            , #{fileType,jdbcType=VARCHAR}
+            , #{fileName,jdbcType=VARCHAR}
+            , #{fileSize,jdbcType=VARCHAR}
+            , #{CREATE_BY_,jdbcType=VARCHAR}
+            , #{CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <delete id="deleteApplyFile" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from world_fitnessimprove_appendix
+        <where>
+            <if test="ids != null and ids!=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="baseInfoIds != null and baseInfoIds !=''">
+                AND baseInfoId in
+                <foreach collection="baseInfoIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="fileType != null and fileType !=''">
+                AND fileType in
+                <foreach collection="fileType" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <update id="statusChange" parameterType="com.alibaba.fastjson.JSONObject">
+        update world_fitnessImprove_base
+        set
+        technical=#{technical,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+
+
+</mapper>

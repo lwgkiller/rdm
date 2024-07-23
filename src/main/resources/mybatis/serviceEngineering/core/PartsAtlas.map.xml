@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.PartsAtlasDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_parts_atlas
+        <where>
+            <if test="pin !=null and pin !=''">
+                AND service_engineering_parts_atlas.pin = #{pin}
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_engineering_parts_atlas.materialCode = #{materialCode}
+            </if>
+            <if test="productModel !=null and productModel !=''">
+                AND service_engineering_parts_atlas.productModel = #{productModel}
+            </if>
+            <if test="materialDescription !=null and materialDescription !=''">
+                AND service_engineering_parts_atlas.materialDescription like CONCAT('%',#{materialDescription},'%')
+            </if>
+            <if test="factoryCode !=null and factoryCode !=''">
+                AND service_engineering_parts_atlas.factoryCode = #{factoryCode}
+            </if>
+            <if test="batchNumber !=null and batchNumber !=''">
+                AND service_engineering_parts_atlas.batchNumber = #{batchNumber}
+            </if>
+            <if test="orderNumber !=null and orderNumber !=''">
+                AND service_engineering_parts_atlas.orderNumber = #{orderNumber}
+            </if>
+            <if test="storageTimeBegin != null and storageTimeBegin != ''">
+                AND service_engineering_parts_atlas.storageTime &gt;= #{storageTimeBegin}
+            </if>
+            <if test="storageTimeEnd != null and storageTimeEnd != ''">
+                AND service_engineering_parts_atlas.storageTime &lt;= #{storageTimeEnd}
+            </if>
+            <if test="shipmentTimeBegin != null and shipmentTimeBegin != ''">
+                AND service_engineering_parts_atlas.shipmentTime &gt;= #{shipmentTimeBegin}
+            </if>
+            <if test="shipmentTimeEnd != null and shipmentTimeEnd != ''">
+                AND service_engineering_parts_atlas.shipmentTime &lt;= #{shipmentTimeEnd}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_parts_atlas
+        <where>
+            <if test="pin !=null and pin !=''">
+                AND service_engineering_parts_atlas.pin = #{pin}
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_engineering_parts_atlas.materialCode = #{materialCode}
+            </if>
+            <if test="productModel !=null and productModel !=''">
+                AND service_engineering_parts_atlas.productModel = #{productModel}
+            </if>
+            <if test="materialDescription !=null and materialDescription !=''">
+                AND service_engineering_parts_atlas.materialDescription like CONCAT('%',#{materialDescription},'%')
+            </if>
+            <if test="factoryCode !=null and factoryCode !=''">
+                AND service_engineering_parts_atlas.factoryCode = #{factoryCode}
+            </if>
+            <if test="batchNumber !=null and batchNumber !=''">
+                AND service_engineering_parts_atlas.batchNumber = #{batchNumber}
+            </if>
+            <if test="orderNumber !=null and orderNumber !=''">
+                AND service_engineering_parts_atlas.orderNumber = #{orderNumber}
+            </if>
+            <if test="storageTimeBegin != null and storageTimeBegin != ''">
+                AND service_engineering_parts_atlas.storageTime &gt;= #{storageTimeBegin}
+            </if>
+            <if test="storageTimeEnd != null and storageTimeEnd != ''">
+                AND service_engineering_parts_atlas.storageTime &lt;= #{storageTimeEnd}
+            </if>
+            <if test="shipmentTimeBegin != null and shipmentTimeBegin != ''">
+                AND service_engineering_parts_atlas.shipmentTime &gt;= #{shipmentTimeBegin}
+            </if>
+            <if test="shipmentTimeEnd != null and shipmentTimeEnd != ''">
+                AND service_engineering_parts_atlas.shipmentTime &lt;= #{shipmentTimeEnd}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <select id="getStorageCountByMaterialCode" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM service_engineering_parts_atlas
+        WHERE materialCode = #{materialCode}
+              AND storageTime != '0000-00-00'
+              AND storageTime &gt;= '2021-00-00'
+    </select>
+    <!---->
+    <select id="getStorageCountByMaterialCodeAndStorageTime" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM service_engineering_parts_atlas
+        WHERE materialCode = #{materialCode}
+        AND storageTime like CONCAT('%',#{signYear},'%')
+    </select>
+    <!---->
+    <select id="getShipmentCountByMaterialCode" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM service_engineering_parts_atlas
+        WHERE materialCode = #{materialCode}
+              AND shipmentTime != '0000-00-00'
+              AND shipmentTime &gt;= '2021-00-00'
+    </select>
+    <!---->
+    <select id="getMaterialDescription" parameterType="java.util.Map" resultType="java.lang.String">
+        SELECT materialDescription
+        FROM service_engineering_parts_atlas
+        WHERE materialCode = #{materialCode}
+              AND storageTime &gt;= CONCAT(#{signYear},'-00-00')
+              AND storageTime &lt;= CONCAT(#{signYear},'-12-31')
+        LIMIT 1
+    </select>
+    <!---->
+    <select id="getModelStatusByMaterialCodeAndStorageTime" parameterType="java.util.Map" resultType="java.lang.String">
+        SELECT modelStatus
+        FROM service_engineering_parts_atlas
+        WHERE materialCode = #{materialCode}
+        AND storageTime like CONCAT('%',#{signYear},'%')
+        LIMIT 1
+    </select>
+    <!--根据action：storage，shipment和yearMonthBegin和yearMonthEnd获取指定区间内指定类型的数据列表-->
+    <select id="getListByActionAndDaterange" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_parts_atlas
+        <where>
+            <if test="action =='storage'">
+                AND service_engineering_parts_atlas.storageTime &gt;= #{yearMonthBegin}
+                AND service_engineering_parts_atlas.storageTime &lt;= #{yearMonthEnd}
+            </if>
+            <if test="action =='shipment'">
+                AND service_engineering_parts_atlas.shipmentTime &gt;= #{yearMonthBegin}
+                AND service_engineering_parts_atlas.shipmentTime &lt;= #{yearMonthEnd}
+            </if>
+        </where>
+        <if test="action =='storage'">
+            ORDER BY storageTime asc
+        </if>
+        <if test="action =='shipment'">
+            ORDER BY shipmentTime asc
+        </if>
+    </select>
+    <!--获取机型零件图册制作总数-->
+    <select id="getPartsAtlasModelTotal" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM (SELECT materialCode
+              FROM service_engineering_parts_atlas
+              WHERE modelStatus = '已发布'
+              GROUP BY (materialCode)) temp
+    </select>
+    <!--实例零件图册制作总数-->
+    <select id="getPartsAtlasInstanceTotal" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM service_engineering_parts_atlas
+        WHERE instanceStatus != ''
+    </select>
+    <!--
+        以下为扁平化的功能，不单独划分文件了
+    -->
+    <!--gssMonitoringReport-->
+
+
+
+
+</mapper>

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.wwrz.core.dao.WwrzStandardMngDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        wwrz_standardmng.id as mainId,
+        wwrz_standardmng.indexSort,
+        standard_source.*,
+        standard_system.systemName,
+        standard_system.systemNumber,
+        standard_system.systemCategoryId,
+        standard_systemcategory.systemCategoryName,
+        standard_category.categoryName,
+        standard_belongdep.belongDepName,
+        s1.standardNumber AS replaceNumber,
+        s2.standardNumber AS beReplaceNumber
+        FROM
+        wwrz_standardmng
+        left join standard_source on standard_source.id = wwrz_standardmng.standardId
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_systemcategory ON standard_system.systemCategoryId = standard_systemcategory.systemCategoryId
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        LEFT JOIN standard_belongdep ON standard_source.belongDepId = standard_belongdep.id
+        LEFT JOIN standard_source s1 ON standard_source.replaceId = s1.id
+        LEFT JOIN standard_source s2 ON standard_source.beReplacedById = s2.id
+        LEFT JOIN os_user user2 ON standard_source.stoperId = user2.USER_ID_
+        <where>
+            <if test="standardType != null and standardType != ''">
+                AND wwrz_standardmng.standardType = #{standardType}
+            </if>
+            <if test="standardNumber != null and standardNumber != ''">
+                AND standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <if test="standardName != null and standardName != ''">
+                AND standard_source.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="systemIds != null and systemIds != ''">
+                AND standard_source.systemId in
+                <foreach collection="systemIds" index="index" item="systemId" open="(" separator="," close=")">
+                    #{systemId}
+                </foreach>
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_source.standardStatus=#{standardStatus}
+            </if>
+            <if test="replaceNumber != null and replaceNumber != ''">
+                AND s1.standardNumber like CONCAT('%',#{replaceNumber},'%')
+            </if>
+            <if test="beReplaceNumber != null and beReplaceNumber != ''">
+                AND s2.standardNumber like CONCAT('%',#{beReplaceNumber},'%')
+            </if>
+            <if test="standardCategoryId != null and standardCategoryId != ''">
+                AND standard_source.standardCategoryId=#{standardCategoryId}
+            </if>
+            <if test="belongDepId != null and belongDepId != ''">
+                AND standard_source.belongDepId=#{belongDepId}
+            </if>
+            <if test="publishTimeFrom != null and publishTimeFrom != ''">
+                AND standard_source.publishTime &gt;= #{publishTimeFrom}
+            </if>
+            <if test="publishTimeTo != null and publishTimeTo != ''">
+                AND standard_source.publishTime &lt;= #{publishTimeTo}
+            </if>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                AND standard_system.systemCategoryId=#{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <if test="publisherId != null and publisherId != ''">
+                AND  FIND_IN_SET(#{publisherId},standard_source.publisherId)
+            </if>
+            <if test="whetherIsBorrow != null and whetherIsBorrow != ''">
+                <choose>
+                    <when test='whetherIsBorrow=="yes"'>
+                        AND (standard_source.borrowFromId is not null AND standard_source.borrowFromId !="")
+                    </when>
+                    <when test='whetherIsBorrow=="no"'>
+                        AND (standard_source.borrowFromId is null OR standard_source.borrowFromId ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="sendSupplier != null and sendSupplier != ''">
+                <choose>
+                    <when test='sendSupplier=="true"'>
+                        AND (standard_source.sendSupplier is not null AND standard_source.sendSupplier !="false")
+                    </when>
+                    <when test='sendSupplier=="false"'>
+                        AND (standard_source.sendSupplier is null OR standard_source.sendSupplier ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="banci != null and banci != ''">
+                AND standard_source.banci=#{banci}
+            </if>
+            AND (
+            concat(standard_system.visibleGroupIds, ',') regexp concat(replace(#{userGroupIds},',',',|'),',')
+            OR standard_system.visibleGroupIds is null
+            OR standard_system.visibleGroupIds = ''
+            OR standard_source.CREATE_BY_ = #{currentUserId}
+            )
+        </where>
+        order By wwrz_standardmng.indexSort
+        <include refid="pageSql"/>
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+          SELECT
+            A.*,
+            B.standardNumber,
+            B.standardName
+        FROM
+            wwrz_standardmng A
+            left join standard_source B on A.standardId = B.id
+            where A.id=#{id}
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+        INSERT INTO wwrz_standardmng (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        standardId,
+        standardType,
+        indexSort
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{UPDATE_BY_,jdbcType=VARCHAR},
+        #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        #{standardId,jdbcType=VARCHAR},
+        #{standardType,jdbcType=VARCHAR},
+        #{indexSort,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update wwrz_standardmng
+        set
+        standardId=#{standardId,jdbcType=VARCHAR},
+        indexSort=#{indexSort,jdbcType=VARCHAR},
+        <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from wwrz_standardmng
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getStandardByInfo" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            wwrz_standardmng A
+        WHERE
+            A.standardId = #{standardId}
+            AND A.standardType = #{standardType}
+            limit 1
+    </select>
+</mapper>

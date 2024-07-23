@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdMaterial.core.dao.RdMaterialSummaryDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="queryWhereSummaryListQuery">
+        main.businessStatus = '已提交'
+        <if test="@Ognl@isNotEmpty(materialType)">
+            AND item.materialType = #{materialType}
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCode)">
+            AND item.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(materialDescription)">
+            AND item.materialCode like CONCAT('%',#{materialDescription},'%')
+        </if>
+        GROUP BY
+        item.materialCode,
+        item.materialType,
+        item.materialDescription
+    </sql>
+    <sql id="queryWhereItemListQuery">
+        main.businessStatus = '已提交'
+        <if test="@Ognl@isNotEmpty(materialCode)">
+            AND item.materialCode = #{materialCode}
+        </if>
+        <if test="@Ognl@isNotEmpty(responsibleUser)">
+            AND main.responsibleUser = #{responsibleUser}
+        </if>
+        <if test="@Ognl@isNotEmpty(responsibleDep)">
+            AND main.responsibleDep like CONCAT('%',#{responsibleDep},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(reasonForStorage)">
+            AND main.reasonForStorage like CONCAT('%',#{reasonForStorage},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(inDateBegin)">
+            AND main.inDate &gt;= #{inDateBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(inDateEnd)">
+            AND main.inDate &lt;= #{inDateEnd}
+        </if>
+        <!--以下看板用-->
+        <if test="@Ognl@isNotEmpty(untreatedTimespanBegin)">
+            AND DATEDIFF(CURDATE(),STR_TO_DATE(main.inDate, '%Y-%m-%d')) &gt;= #{untreatedTimespanBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(untreatedTimespanEnd)">
+            AND DATEDIFF(CURDATE(),STR_TO_DATE(main.inDate, '%Y-%m-%d')) &lt;= #{untreatedTimespanEnd}
+        </if>
+        <if test="@Ognl@isNotEmpty(theYear)">
+            AND main.inDate like CONCAT('%',#{theYear},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(untreatedQuantityNotEqual)">
+            AND item.untreatedQuantity != #{untreatedQuantityNotEqual}
+        </if>
+    </sql>
+    <sql id="queryWhereHandingItemListQuery">
+        hMain.businessStatus = '已提交'
+        <!--以下看板用-->
+        <if test="@Ognl@isNotEmpty(theYear)">
+            AND main.inDate like CONCAT('%',#{theYear},'%')
+        </if>
+    </sql>
+    <!---->
+    <select id="summaryListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        item.materialCode,
+        item.materialType,
+        item.materialDescription,
+        SUM(item.inQuantity) AS inQuantitySummary,
+        SUM(item.untreatedQuantity) AS untreatedQuantitySummary
+        FROM
+        rd_material_instorage AS main
+        INNER JOIN rd_material_instorage_items AS item ON main.id = item.mainId
+        <where>
+            <include refid="queryWhereSummaryListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countSummaryListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        (SELECT
+        item.materialCode,
+        item.materialType,
+        item.materialDescription,
+        SUM(item.inQuantity) AS inQuantitySummary,
+        SUM(item.untreatedQuantity) AS untreatedQuantitySummary
+        FROM
+        rd_material_instorage AS main
+        INNER JOIN rd_material_instorage_items AS item ON main.id = item.mainId
+        <where>
+            <include refid="queryWhereSummaryListQuery"/>
+        </where>
+        ) temp
+    </select>
+    <!---->
+    <select id="itemListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        item.*,
+        main.businessNo,
+        main.responsibleDep,
+        main.responsibleUser,
+        main.inDate,
+        main.reasonForStorage
+        FROM
+        rd_material_instorage_items as item
+        INNER JOIN rd_material_instorage AS main
+        ON item.mainId = main.id
+        <where>
+            <include refid="queryWhereItemListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countItemListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        rd_material_instorage_items as item
+        INNER JOIN rd_material_instorage AS main
+        ON item.mainId = main.id
+        <where>
+            <include refid="queryWhereItemListQuery"/>
+        </where>
+    </select>
+    <!---->
+    <select id="handingItemListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        hItem.*,
+        hMain.businessNo,
+        hMain.responsibleDep,
+        hMain.responsibleUser,
+        hMain.handlingDate,
+        main.inDate
+        FROM
+        rd_material_handling_items as hItem
+        INNER JOIN rd_material_handling AS hMain
+        ON hItem.mainId = hMain.id
+        INNER JOIN rd_material_instorage_items as item
+        ON hItem.inStorageItemId = item.id
+        INNER JOIN rd_material_instorage as main
+        ON item.mainId = main.id
+        <where>
+            <include refid="queryWhereHandingItemListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+</mapper>

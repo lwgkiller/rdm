@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.qualityfxgj.core.dao.GyfkDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryGyfk" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        technology_response.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        technology_response
+        LEFT JOIN os_rel_inst ON technology_response.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = technology_response.CREATE_BY_
+        left join bpm_inst on technology_response.gyfkId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (technology_response.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="repDep != null and repDep != ''">
+            and technology_response.repDep like CONCAT('%',#{repDep},'%')
+        </if>
+        <if test="repPerson != null and repPerson != ''">
+            and technology_response.repPerson like CONCAT('%',#{repPerson},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countGyfkList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        technology_response
+        LEFT JOIN os_rel_inst ON technology_response.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on technology_response.gyfkId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (technology_response.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="repDep != null and repDep != ''">
+            and technology_response.repDep = #{repDep}
+        </if>
+        <if test="repPerson != null and repPerson != ''">
+            and technology_response.repPerson = #{repPerson}
+        </if>
+
+    </select>
+    <insert id="createGyfk" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into technology_response(
+            gyfkId
+            ,repDepId
+            ,repDep
+            ,repPersonId
+            ,repPerson
+            ,checkZrId
+            ,checkZrName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{gyfkId,jdbcType=VARCHAR},
+            #{repDepId,jdbcType=VARCHAR},
+            #{repDep,jdbcType=VARCHAR},
+            #{repPersonId,jdbcType=VARCHAR},
+            #{repPerson,jdbcType=VARCHAR},
+            #{checkZrId,jdbcType=VARCHAR},
+            #{checkZrName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateGyfk" parameterType="com.alibaba.fastjson.JSONObject">
+        update technology_response
+        <set>
+            <if test="repDepId != null and repDepId != ''">
+                repDepId=#{repDepId,jdbcType=VARCHAR},
+            </if>
+            <if test="repDep != null and repDep != ''">
+                repDep=#{repDep,jdbcType=VARCHAR},
+            </if>
+            <if test="repPersonId != null and repPersonId != ''">
+                repPersonId=#{repPersonId,jdbcType=VARCHAR},
+            </if>
+            <if test="repPerson != null and repPerson != ''">
+                repPerson=#{repPerson,jdbcType=VARCHAR},
+            </if>
+            <if test="checkZrId != null and checkZrId != ''">
+                checkZrId=#{checkZrId,jdbcType=VARCHAR},
+            </if>
+            <if test="checkZrName != null and checkZrName != ''">
+                checkZrName=#{checkZrName,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where
+        gyfkId=#{gyfkId}
+    </update>
+    <select id="queryGyfkById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        technology_response.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId
+        from technology_response
+        left join os_user on technology_response.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on technology_response.gyfkId=bpm_inst.BUS_KEY_
+        where technology_response.gyfkId=#{gyfkId}
+    </select>
+    <select id="queryGyfkDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            technology_detail.*,
+            os_user.FULLNAME_ AS userName
+        FROM
+            technology_detail
+            LEFT JOIN os_user ON os_user.USER_ID_ = technology_detail.CREATE_BY_
+        where
+        technology_detail.belongGyfkId = #{belongGyfkId}
+    </select>
+    <select id="queryGyfkDetailById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            technology_detail.*
+        FROM
+            technology_detail
+        where
+        technology_detail.gyxjId = #{gyxjId}
+    </select>
+
+    <select id="queryGyfkDetailFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        technology_file
+        WHERE
+        technology_file.belongDetailId= #{belongDetailId}
+    </select>
+
+    <select id="queryGyfkZzr" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        res,
+        resId
+        FROM
+        technology_detail
+        WHERE
+        belongGyfkId= #{belongGyfkId}
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into technology_file(
+        fileId
+        ,fileName
+        ,fileSize
+        ,belongDetailId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{belongDetailId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteGyfkDetailFile" parameterType="java.util.Map">
+        delete from technology_file
+        <where>
+            <if test="fileId != null and fileId != ''">
+                fileId=#{fileId}
+            </if>
+            <if test="belongDetailId != null and belongDetailId != ''">
+                And belongDetailId=#{belongDetailId}
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteGyfkDetail" parameterType="java.util.Map">
+        delete from technology_detail
+        where
+        gyxjId=#{gyxjId}
+    </delete>
+    <delete id="deleteGyfk" parameterType="java.util.Map">
+        delete from technology_response
+        where
+        gyfkId=#{gyfkId}
+    </delete>
+
+    <insert id="createGyfkDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into technology_detail(
+            gyxjId
+            ,gytype
+            ,problem
+            ,model
+            ,part
+            ,involveModel
+            ,belongGyfkId
+            ,applyId
+            ,apply
+            ,res
+            ,resId
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{gyxjId,jdbcType=VARCHAR},
+            #{gytype,jdbcType=VARCHAR},
+            #{problem,jdbcType=VARCHAR},
+            #{model,jdbcType=VARCHAR},
+            #{part,jdbcType=VARCHAR},
+            #{involveModel,jdbcType=VARCHAR},
+            #{belongGyfkId,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{apply,jdbcType=VARCHAR},
+            #{res,jdbcType=VARCHAR},
+            #{resId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateGyfkDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update technology_detail
+        <set>
+            gytype=#{gytype,jdbcType=VARCHAR},
+            problem=#{problem,jdbcType=VARCHAR},
+            model=#{model,jdbcType=VARCHAR},
+            part=#{part,jdbcType=VARCHAR},
+            involveModel=#{involveModel,jdbcType=VARCHAR},
+            applyId=#{applyId,jdbcType=VARCHAR},
+            apply=#{apply,jdbcType=VARCHAR},
+            res=#{res,jdbcType=VARCHAR},
+            resId=#{resId,jdbcType=VARCHAR},
+            method=#{method,jdbcType=VARCHAR},
+            completion=#{completion,jdbcType=VARCHAR},
+            <if test="finishTime != null and finishTime != ''">
+                finishTime=#{finishTime,jdbcType=TIMESTAMP},
+            </if>
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        gyxjId=#{gyxjId}
+    </update>
+</mapper>

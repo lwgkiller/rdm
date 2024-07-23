@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.materielextend.core.dao.MaterielTypeFDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryMaterielTypeF" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        materiel_typefInfo.*,
+        os_user.FULLNAME_ AS applyUserName,
+        os_group.NAME_ AS applyDeptName
+        FROM
+        materiel_typefInfo
+        LEFT JOIN os_user ON os_user.USER_ID_ = materiel_typefInfo.CREATE_BY_
+        LEFT JOIN os_rel_inst ON materiel_typefInfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test='applyNo != null and applyNo !=""'>
+            AND materiel_typefInfo.applyNo like CONCAT('%',#{applyNo},'%')
+        </if>
+        <if test='applyUserName != null and applyUserName !=""'>
+            AND os_user.FULLNAME_ like CONCAT('%',#{applyUserName},'%')
+        </if>
+        <if test='wlhm != null and wlhm !=""'>
+            AND materiel_typefInfo.id IN(
+            select materiel_typefdetail.belongId from materiel_typefdetail where materiel_typefdetail.wlhm=#{wlhm}
+            )
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgzr'">
+                    AND (os_group.GROUP_ID_ IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                    OR materiel_typefInfo.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND materiel_typefInfo.CREATE_BY_ = #{currentUserId}
+                </when>
+            </choose>
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countMaterielTypeFList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        materiel_typefInfo
+        LEFT JOIN os_user ON os_user.USER_ID_ = materiel_typefInfo.CREATE_BY_
+        LEFT JOIN os_rel_inst ON materiel_typefInfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test='applyNo != null and applyNo !=""'>
+            AND materiel_typefInfo.applyNo like CONCAT('%',#{applyNo},'%')
+        </if>
+        <if test='applyUserName != null and applyUserName !=""'>
+            AND os_user.FULLNAME_ like CONCAT('%',#{applyUserName},'%')
+        </if>
+        <if test='wlhm != null and wlhm !=""'>
+            AND materiel_typefInfo.applyNo IN(
+            select materiel_detailinfo.applyNo from materiel_detailinfo where materiel_detailinfo.wlhm=#{wlhm}
+            )
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgzr'">
+                    AND (os_group.GROUP_ID_ IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                    OR materiel_typefInfo.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND materiel_typefInfo.CREATE_BY_ = #{currentUserId}
+                </when>
+            </choose>
+        </if>
+    </select>
+    <insert id="createMaterielTypeF" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into materiel_typefInfo (id, applyNo, CREATE_BY_, CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{applyNo,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateMaterielTypeF" parameterType="com.alibaba.fastjson.JSONObject">
+        update materiel_typefInfo
+        <set>
+            applyNo=#{applyNo,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteMaterielTypeF" parameterType="java.util.Map">
+        delete
+        from materiel_typefInfo
+        where id = #{id}
+    </delete>
+    <select id="queryMaterielTypeFById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select materiel_typefInfo.*, os_user.FULLNAME_ AS applyUserName, os_group.NAME_ AS applyDeptName
+        FROM materiel_typefInfo
+                 LEFT JOIN os_user ON os_user.USER_ID_ = materiel_typefInfo.CREATE_BY_
+                 LEFT JOIN os_rel_inst ON materiel_typefInfo.CREATE_BY_ = os_rel_inst.PARTY2_
+                 LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        where materiel_typefInfo.id = #{id}
+          and os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+          AND os_rel_inst.DIM1_ = '1'
+    </select>
+    <select id="setWlinfo" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select materiel_detailinfo.id,
+               materiel_detailinfo.wlhm,
+               materiel_detailinfo.wlms,
+               materiel_detailinfo.gc,
+               materiel_detailinfo.xszz,
+               materiel_detailinfo.jhjhsj,
+               materiel_detailinfo.cgz,
+               materiel_detailinfo.jg,
+               materiel_detailinfo.jgdw,
+               materiel_detailinfo.dw
+        FROM materiel_detailinfo
+                 LEFT JOIN materiel_apply ON materiel_apply.applyNo = materiel_detailinfo.applyNo
+        where materiel_detailinfo.wlhm = #{wlhm}
+        and (materiel_apply.applyStatus='successEnd' or materiel_apply.applyStatus='successConfirm')
+        order by materiel_apply.applyNo desc
+        LIMIT 1
+    </select>
+    <select id="queryMaterielTypeFByApplyNo" parameterType="java.lang.String"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select id
+        FROM materiel_typefInfo
+        where applyNo = #{applyNo}
+    </select>
+    <select id="queryMaterielTypeFByUserId" parameterType="java.lang.String"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        FROM materiel_typefInfo
+        where CREATE_BY_ = #{CREATE_BY_}
+          AND (sendNotice != 'yes' or sendNotice is null)
+    </select>
+
+    <select id="queryMaterielTypeFDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        materiel_typefdetail.detailId,
+        materiel_typefdetail.supplier,
+        materiel_typefdetail.materType,
+        materiel_typefdetail.productor,
+        materiel_typefdetail.limiSend,
+        materiel_typefdetail.currency,
+        materiel_typefdetail.taxCode,
+        materiel_typefdetail.estimatePrice,
+        materiel_typefdetail.infiniteSend,
+        materiel_typefdetail.belongId,
+        materiel_typefdetail.result,
+        materiel_typefdetail.message,
+        materiel_typefdetail.infoNum,
+        materiel_typefdetail.toTest,
+        materiel_typefdetail.wlhm,
+        materiel_typefdetail.wlms,
+        materiel_typefdetail.gc,
+        materiel_typefdetail.xszz,
+        materiel_typefdetail.jhjhsj,
+        materiel_typefdetail.cgz,
+        materiel_typefdetail.jg,
+        materiel_typefdetail.jgdw,
+        materiel_typefdetail.dw
+        FROM materiel_typefdetail
+        where materiel_typefdetail.belongId = #{belongId}
+        <if test='callsap != null and callsap !=""'>
+            AND (materiel_typefdetail.result is null or materiel_typefdetail.result='' or
+            materiel_typefdetail.result='E')
+        </if>
+    </select>
+
+    <select id="queryMaterielTypeFallDetail" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT materiel_typefdetail.*
+        FROM materiel_typefdetail
+    </select>
+
+    <select id="queryMaterielTypeFDetailById" parameterType="java.util.Map"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+               materiel_typefdetail.detailId,
+               materiel_typefdetail.supplier,
+               materiel_typefdetail.materType,
+               materiel_typefdetail.productor,
+               materiel_typefdetail.limiSend,
+               materiel_typefdetail.currency,
+               materiel_typefdetail.taxCode,
+               materiel_typefdetail.estimatePrice,
+               materiel_typefdetail.infiniteSend,
+               materiel_typefdetail.belongId,
+               materiel_typefdetail.result,
+               materiel_typefdetail.message,
+               materiel_typefdetail.infoNum,
+               materiel_typefdetail.toTest,
+               materiel_typefdetail.wlhm,
+               materiel_typefdetail.wlms,
+               materiel_typefdetail.gc,
+               materiel_typefdetail.xszz,
+               materiel_typefdetail.jhjhsj,
+               materiel_typefdetail.cgz,
+               materiel_typefdetail.jg,
+               materiel_typefdetail.jgdw,
+               materiel_typefdetail.dw
+        FROM materiel_typefdetail
+        where materiel_typefdetail.detailId = #{detailId}
+    </select>
+
+    <insert id="createMaterielTypeFDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into materiel_typefdetail (detailId,
+                                          supplier,
+                                          materType,
+                                          productor,
+                                          limiSend,
+                                          currency,
+                                          taxCode,
+                                          estimatePrice,
+                                          infiniteSend,
+                                          belongId,
+                                          wlhm,
+                                          wlms,
+                                          gc,
+                                          xszz,
+                                          jhjhsj,
+                                          cgz,
+                                          jg,
+                                          jgdw,
+                                          dw,
+                                          CREATE_BY_,
+                                          CREATE_TIME_)
+        values (#{detailId,jdbcType=VARCHAR},
+                #{supplier,jdbcType=VARCHAR},
+                #{materType,jdbcType=VARCHAR},
+                #{productor,jdbcType=TIMESTAMP},
+                #{limiSend,jdbcType=VARCHAR},
+                #{currency,jdbcType=VARCHAR},
+                #{taxCode,jdbcType=VARCHAR},
+                #{estimatePrice,jdbcType=VARCHAR},
+                #{infiniteSend,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{wlhm,jdbcType=VARCHAR},
+                #{wlms,jdbcType=VARCHAR},
+                #{gc,jdbcType=VARCHAR},
+                #{xszz,jdbcType=VARCHAR},
+                #{jhjhsj,jdbcType=VARCHAR},
+                #{cgz,jdbcType=VARCHAR},
+                #{jg,jdbcType=VARCHAR},
+                #{jgdw,jdbcType=VARCHAR},
+                #{dw,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateMaterielTypeFDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update materiel_typefdetail
+        <set>
+            supplier=#{supplier,jdbcType=VARCHAR},
+            materType=#{materType,jdbcType=VARCHAR},
+            productor=#{productor,jdbcType=TIMESTAMP},
+            limiSend=#{limiSend,jdbcType=VARCHAR},
+            currency =#{currency,jdbcType=VARCHAR},
+            taxCode=#{taxCode,jdbcType=VARCHAR},
+            estimatePrice=#{estimatePrice,jdbcType=VARCHAR},
+            infiniteSend=#{infiniteSend,jdbcType=VARCHAR},
+            wlhm=#{wlhm,jdbcType=VARCHAR},
+            wlms=#{wlms,jdbcType=VARCHAR},
+            gc=#{gc,jdbcType=VARCHAR},
+            xszz=#{xszz,jdbcType=VARCHAR},
+            jhjhsj=#{jhjhsj,jdbcType=VARCHAR},
+            cgz=#{cgz,jdbcType=VARCHAR},
+            jg=#{jg,jdbcType=VARCHAR},
+            jgdw=#{jgdw,jdbcType=VARCHAR},
+            dw=#{dw,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        detailId=#{detailId}
+    </update>
+
+    <delete id="deleteMaterielTypeFDetail" parameterType="java.util.Map">
+        delete
+        from materiel_typefdetail
+        where detailId = #{detailId}
+    </delete>
+
+    <update id="updateMaterielError" parameterType="com.alibaba.fastjson.JSONObject">
+        update materiel_typefdetail
+        set result  = #{result,jdbcType=VARCHAR},
+            message = #{message,jdbcType=VARCHAR},
+            infoNum = #{infoNum,jdbcType=VARCHAR},
+            toTest  = #{toTest,jdbcType=VARCHAR}
+        WHERE detailId = #{detailId}
+    </update>
+
+    <update id="updateTypeFNotice" parameterType="java.util.Map">
+        update materiel_typefInfo
+        set sendNotice = 'yes'
+        WHERE id = #{belongId}
+    </update>
+</mapper>

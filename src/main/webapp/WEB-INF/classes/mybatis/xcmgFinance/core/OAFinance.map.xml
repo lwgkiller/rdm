@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgFinance.core.dao.OAFinanceDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertOAFinanceBasic" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into oa_finance(
+            id,
+            oaFlowId,
+            theme,
+            deptName,
+            applyName,
+            userName,
+            userId,
+            applyText,
+            applyType,
+            submitType,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{oaFlowId,jdbcType=VARCHAR},
+            #{theme,jdbcType=VARCHAR},
+            #{deptName,jdbcType=VARCHAR},
+            #{applyName,jdbcType=VARCHAR},
+            #{userName,jdbcType=VARCHAR},
+            #{userId,jdbcType=VARCHAR},
+            #{applyText,jdbcType=VARCHAR},
+            #{applyType,jdbcType=VARCHAR},
+            #{submitType,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateOAFinanceBasic" parameterType="com.alibaba.fastjson.JSONObject">
+        update oa_finance
+        set
+        theme = #{theme},
+        deptName = #{deptName},
+        applyName = #{applyName},
+        userName = #{userName},
+        userId = #{userId},
+        applyText = #{applyText},
+        applyType = #{applyType},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        oaFlowId = #{oaFlowId}
+    </update>
+
+    <select id="queryOAFinanceFlowList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM `oa_finance`
+        <where>
+            <if test="theme != null and theme != ''">
+                oa_finance.theme like '%${theme}%'
+            </if>
+            <if test="applyName != null and applyName != ''">
+                AND oa_finance.applyName like '%${applyName}%'
+            </if>
+            <if test="submitType != null and submitType != ''">
+                AND oa_finance.submitType = #{submitType}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="getOAFinanceDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM `oa_finance`
+        <where>
+            <if test="oaFlowId != null and oaFlowId != ''">
+                oa_finance.oaFlowId = #{oaFlowId}
+            </if>
+        </where>
+    </select>
+
+    <select id="getOAFinanceDetailByCurrentUserId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM `oa_finance`
+        <where>
+            1=1
+            <if test="userName != null and userName != ''">
+                AND oa_finance.userName = #{userName}
+            </if>
+            <if test="userId != null and userId != ''">
+                AND (submitType = '未提交' OR submitType = '驳回处理')
+                AND oa_finance.userId = #{userId}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryOAFinanceDetailList" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT
+        *
+        FROM
+        oa_finance_form
+        <where>
+            <if test="oaFlowId != null and oaFlowId != ''">
+                oa_finance_form.oaFlowId = #{oaFlowId}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateOAFinanceDetailList" parameterType="com.alibaba.fastjson.JSONObject">
+        update oa_finance_form
+        set
+        material = #{material},
+        description = #{description},
+        targetCost = #{targetCost},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteOAFinanceBasicById" parameterType="java.lang.String">
+        delete from oa_finance
+        where oaFlowId=#{oaFlowId}
+    </delete>
+
+    <delete id="deleteOAFinanceFormById" parameterType="java.lang.String">
+        delete from oa_finance_form
+        where oaFlowId=#{oaFlowId}
+    </delete>
+
+    <insert id="insertOAFinanceForm" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into oa_finance_form(
+            id,
+            oaFlowId,
+            typeName,
+            `number`,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{oaFlowId,jdbcType=VARCHAR},
+            #{typeName,jdbcType=VARCHAR},
+            #{number,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateOAFinanceStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update oa_finance
+        set
+        submitType = #{submitType},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        oaFlowId = #{oaFlowId}
+    </update>
+
+    <select id="queryOAFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from oa_finance_fileinfos
+        where oaFlowId = #{oaFlowId}
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into oa_finance_fileinfos(
+          id,
+          fileName,
+          fileSize,
+          oaFlowId,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) values(
+          #{id,jdbcType=VARCHAR},
+          #{fileName,jdbcType=VARCHAR},
+          #{fileSize,jdbcType=VARCHAR},
+          #{oaFlowId,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteFileById" parameterType="java.lang.String">
+        delete from oa_finance_fileinfos
+        where id =#{id}
+    </delete>
+
+    <update id="updateFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        update oa_finance_fileinfos
+        set
+        fileFullPath = #{fileFullPath}
+        where
+        id = #{id}
+    </update>
+</mapper>

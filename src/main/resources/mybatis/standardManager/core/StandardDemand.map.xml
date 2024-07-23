@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardDemandDao">
+    <select id="queryStandardDemandList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_demandFeedback.*,
+        standard_demandFeedback.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        os_group.GROUP_ID_ as applyUserDepId,
+        os_group.NAME_ as applyUserDeptName
+        FROM
+        standard_demandFeedback
+        LEFT JOIN os_user ON standard_demandFeedback.applyUserId = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON standard_demandFeedback.applyId = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="applyId != null and applyId != ''">
+                AND standard_demandFeedback.applyId like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="applyUserDeptId != null and applyUserDeptId != ''">
+                AND os_group.GROUP_ID_ = #{applyUserDeptId}
+            </if>
+            <if test="applyTimeStart != null and applyTimeStart != ''">
+                AND standard_demandFeedback.CREATE_TIME_ &gt;= #{applyTimeStart}
+            </if>
+            <if test="applyTimeEnd != null and applyTimeEnd != ''">
+                AND standard_demandFeedback.CREATE_TIME_ &lt;= #{applyTimeEnd}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="feedbackType != null and feedbackType != ''">
+                AND standard_demandFeedback.feedbackType=#{feedbackType}
+            </if>
+            <if test="acceptStatus != null and acceptStatus != ''">
+                AND standard_demandFeedback.acceptStatus=#{acceptStatus}
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+    <select id="queryDemandDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_demandfeedback.*,
+            standard_source.standardNumber,
+            standard_source.standardName,
+            os_user.FULLNAME_ AS applyUserName,
+            os_user.MOBILE_ AS applyUserPhone,
+            os_group.NAME_ AS applyUserDeptName,
+            bpm_inst.INST_ID_ as instId
+        FROM
+            standard_demandfeedback
+            left join bpm_inst on standard_demandfeedback.applyId = bpm_inst.BUS_KEY_
+            LEFT JOIN os_user ON standard_demandfeedback.applyUserId = os_user.USER_ID_
+            LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN standard_source ON standard_demandfeedback.problemStandardId=standard_source.id
+        WHERE
+            standard_demandfeedback.applyId = #{formId}
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+    </select>
+
+    <insert id="addStandardDemand" parameterType="java.util.Map">
+        INSERT INTO standard_demandFeedback (
+        applyId,
+        applyUserId,
+        problemDesc,
+        doDeptIds,
+        feedbackType,
+        problemStandardId,
+        standardUserOpinion,
+        remark,
+        doDeptRespId,
+        doDeptRespName,
+        acceptStatus,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{applyId,jdbcType=VARCHAR},
+        #{applyUserId,jdbcType=VARCHAR},
+        #{problemDesc,jdbcType=VARCHAR},
+        #{doDeptIds,jdbcType=VARCHAR},
+        #{feedbackType,jdbcType=VARCHAR},
+        #{problemStandardId,jdbcType=VARCHAR},
+        #{standardUserOpinion,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{doDeptRespId,jdbcType=VARCHAR},
+        #{doDeptRespName,jdbcType=VARCHAR},
+        #{acceptStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <insert id="updateStandardDemand" parameterType="java.util.Map">
+        UPDATE standard_demandFeedback SET
+        problemDesc=#{problemDesc,jdbcType=VARCHAR},
+        doDeptIds=#{doDeptIds,jdbcType=VARCHAR},
+        feedbackType=#{feedbackType,jdbcType=VARCHAR},
+        problemStandardId=#{problemStandardId,jdbcType=VARCHAR},
+        standardUserOpinion=#{standardUserOpinion,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        doDeptRespId=#{doDeptRespId,jdbcType=VARCHAR},
+        doDeptRespName=#{doDeptRespName,jdbcType=VARCHAR},
+        acceptStatus=#{acceptStatus,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        applyId=#{applyId}
+    </insert>
+
+    <delete id="deleteStandardDemandById" parameterType="java.lang.String">
+        delete from standard_apply
+        where standard_apply.applyId=#{applyId}
+    </delete>
+</mapper>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardApplyDao">
+    <select id="queryStandardApplyList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_apply.*,
+        standard_apply.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS applyUserName,
+        standard_source.id AS standardId,
+        standard_source.standardNumber,
+        standard_source.standardName,
+        standard_source.standardStatus,
+        standard_system.systemName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        os_rel_inst.PARTY1_ as applyUserDepId,
+        case standard_apply.applyCategoryId
+        when 'preview' then '预览申请'
+        when 'download' then '下载申请'
+        END as applyCategoryName
+        FROM
+        standard_apply
+        LEFT JOIN os_user ON standard_apply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN standard_source ON standard_apply.standardId = standard_source.id
+        LEFT JOIN standard_system on standard_source.systemId=standard_system.id
+        LEFT JOIN bpm_inst ON standard_apply.applyId = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON standard_apply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyCategoryId != null and applyCategoryId != ''">
+                AND standard_apply.applyCategoryId=#{applyCategoryId}
+            </if>
+            <if test="applyId != null and applyId != ''">
+                AND standard_apply.applyId like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="applyStandardNumber != null and applyStandardNumber != ''">
+                AND standard_source.standardNumber like CONCAT ('%',#{applyStandardNumber},'%')
+            </if>
+            <if test="applyStandardName != null and applyStandardName != ''">
+                AND standard_source.standardName like CONCAT ('%',#{applyStandardName},'%')
+            </if>
+            <if test="useStatus != null and useStatus != ''">
+                AND standard_apply.useStatus=#{useStatus}
+            </if>
+            <if test="applyTimeStart != null and applyTimeStart != ''">
+                AND standard_apply.CREATE_TIME_ &gt;= #{applyTimeStart}
+            </if>
+            <if test="applyTimeEnd != null and applyTimeEnd != ''">
+                AND standard_apply.CREATE_TIME_ &lt;= #{applyTimeEnd}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="CREATE_BY_ != null and CREATE_BY_ != ''">
+                AND standard_apply.CREATE_BY_=#{CREATE_BY_}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_apply.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+    <select id="queryStandardApplyById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_apply.*,
+        standard_source.standardName
+        FROM
+            standard_apply
+        left join standard_source on standard_apply.standardId=standard_source.id
+        WHERE
+            standard_apply.applyId = #{applyId}
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_apply.TENANT_ID_ = #{TENANT_ID_}
+        </if>
+    </select>
+
+    <insert id="addStandardApply" parameterType="java.util.Map">
+        INSERT INTO standard_apply (
+        applyId,
+        standardId,
+        applyCategoryId,
+        applyReason,
+        useStatus,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{applyId,jdbcType=VARCHAR},
+        #{standardId,jdbcType=VARCHAR},
+        #{applyCategoryId,jdbcType=VARCHAR},
+        #{applyReason,jdbcType=VARCHAR},
+        #{useStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <insert id="updateStandardApply" parameterType="java.util.Map">
+        UPDATE standard_apply SET
+        <if test="standardId != null and standardId != ''">
+            standardId=#{standardId,jdbcType=VARCHAR},
+        </if>
+        <if test="applyReason != null and applyReason != ''">
+            applyReason=#{applyReason,jdbcType=VARCHAR},
+        </if>
+        <if test="useStatus != null and useStatus != ''">
+            useStatus=#{useStatus,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        applyId=#{applyId}
+    </insert>
+
+    <delete id="deleteStandardApplyById" parameterType="java.lang.String">
+        delete from standard_apply
+        where standard_apply.applyId=#{applyId}
+    </delete>
+
+    <select id="queryUserOperateApply" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_apply.*,
+        bpm_inst.STATUS_ AS instStatus
+        FROM
+        standard_apply
+        LEFT JOIN bpm_inst ON standard_apply.applyId = bpm_inst.BUS_KEY_
+        <where>
+            standard_apply.standardId=#{standardId}
+            AND standard_apply.applyCategoryId=#{applyCategoryId}
+            AND standard_apply.CREATE_BY_ = #{applyUserId}
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_apply.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateApplyUseStatus" parameterType="java.util.Map">
+        update standard_apply
+        set useStatus=#{useStatus}
+        where
+        standard_apply.applyId=#{applyId}
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_apply.TENANT_ID_=#{TENANT_ID_}
+        </if>
+    </update>
+</mapper>

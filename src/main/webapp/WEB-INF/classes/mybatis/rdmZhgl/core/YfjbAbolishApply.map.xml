@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.YfjbAbolishApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--项目流程查询-->
+    <select id="queryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            yfjb_abolishapply.*,
+            yfjb_abolishapply.CREATE_TIME_ AS applyTime,
+            os_user.FULLNAME_ AS userName,
+            act_ru_task.NAME_ AS currentProcessTask,
+            act_ru_task.ID_ AS taskId,
+            bpm_inst.STATUS_ AS instStatus,
+            bpm_inst.INST_ID_,
+            os_rel_inst.PARTY1_ as applyUserDepId
+        FROM
+            yfjb_abolishapply
+            LEFT JOIN os_user ON yfjb_abolishapply.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN bpm_inst ON yfjb_abolishapply.id = bpm_inst.BUS_KEY_
+            LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+            LEFT JOIN os_rel_inst ON yfjb_abolishapply.CREATE_BY_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND yfjb_abolishapply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND yfjb_abolishapply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND yfjb_abolishapply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND yfjb_abolishapply.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+
+    <select id="getObjectById" parameterType="java.lang.String" resultType="java.util.Map">
+         SELECT  A.*,B.INST_ID_ as instId,
+            C.saleModel,C.designModel
+        FROM yfjb_abolishapply A
+        left join bpm_inst B on A.id=B.BUS_KEY_
+		left join yfjb_baseinfo C on C.id = A.mainId
+        where  A.id = #{id}
+    </select>
+
+    <select id="getJsonObject" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT  A.*,B.INST_ID_ as instId
+        FROM yfjb_abolishapply A
+        left join bpm_inst B on A.id=B.BUS_KEY_
+        where  A.id = #{id}
+    </select>
+
+
+
+    <insert id="add" parameterType="java.util.Map">
+        INSERT INTO yfjb_abolishapply (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            TENANT_ID_,
+            taskId_,
+            mainId,
+            reason
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{TENANT_ID_,jdbcType=VARCHAR},
+            #{taskId_,jdbcType=VARCHAR},
+            #{mainId,jdbcType=VARCHAR},
+            #{reason,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="update" parameterType="java.util.Map">
+        UPDATE yfjb_abolishapply SET
+        <if test="reason != null and reason != ''">
+            reason=#{reason,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+    <delete id="delete" parameterType="java.lang.String">
+        delete from yfjb_abolishapply
+        where yfjb_abolishapply.id=#{id}
+    </delete>
+
+    <select id="queryApplyInfo" parameterType="java.util.Map" resultType="java.util.Map">
+        select B.STATUS_  as status,A.USED as used,B.inst_id_,A.id
+        from yfjb_abolishapply A
+        left join bpm_inst B on A.id = B.BUS_KEY_
+        where 1=1
+        <if test="taskId_ != null and taskId_ != ''">
+            and A.TASKID_ = #{taskId_}
+        </if>
+        order by A.CREATE_TIME_ desc
+    </select>
+</mapper>

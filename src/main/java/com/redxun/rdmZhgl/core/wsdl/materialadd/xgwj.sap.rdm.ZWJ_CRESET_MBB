@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://esb.primeton.com/sap-adaptor" xmlns:soapenc11="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://esb.primeton.com/sap-adaptor" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://esb.primeton.com/sap-adaptor/rfc" xmlns:soapenc12="http://www.w3.org/2003/05/soap-encoding">
+  <wsdl:types>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor/rfc">
+																																				<xsd:complexType name="ArrayOfITEMS">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="ITEMS" nillable="true" type="ns1:ITEMS"/>
+				</xsd:sequence>
+			</xsd:complexType>
+																	<xsd:complexType name="ITEMS">
+				<xsd:sequence>
+									<xsd:element minOccurs="0" name="BDMNG" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="LGORT" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MAKTX" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MATNR" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MEINS" nillable="true" type="xsd:string"/>
+								</xsd:sequence>
+			</xsd:complexType>
+																						<xsd:complexType name="ArrayOfITEMS_OUT">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="ITEMS_OUT" nillable="true" type="ns1:ITEMS_OUT"/>
+				</xsd:sequence>
+			</xsd:complexType>
+																	<xsd:complexType name="ITEMS_OUT">
+				<xsd:sequence>
+									<xsd:element minOccurs="0" name="BDMNG" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="LGORT" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MAKTX" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MATNR" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MEINS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="RSNUM" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="RSPOS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="SAKNR" nillable="true" type="xsd:string"/>
+								</xsd:sequence>
+			</xsd:complexType>
+																</xsd:schema>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor">
+			<xsd:element name="ZWJ_SET_MB21">
+				<xsd:complexType>
+					<xsd:sequence>
+																<xsd:element maxOccurs="1" minOccurs="1" name="AUFNR" nillable="true" type="xsd:string"/>
+																									<xsd:element maxOccurs="1" minOccurs="1" name="BDTER" nillable="true" type="xsd:string"/>
+																									<xsd:element maxOccurs="1" minOccurs="1" name="KOSTL" nillable="true" type="xsd:string"/>
+																									<xsd:element maxOccurs="1" minOccurs="1" name="MOVE_TYPE" nillable="true" type="xsd:string"/>
+																																		<xsd:element maxOccurs="1" minOccurs="1" name="UMLGO" nillable="true" type="xsd:string"/>
+																									<xsd:element maxOccurs="1" minOccurs="1" name="WEMPF" nillable="true" type="xsd:string"/>
+																									<xsd:element maxOccurs="1" minOccurs="1" name="SAKNR" nillable="true" type="xsd:string"/>
+																					<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfITEMS" nillable="true" type="ns1:ArrayOfITEMS"/>
+																	<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfITEMS_OUT" nillable="true" type="ns1:ArrayOfITEMS_OUT"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="ZWJ_SET_MB21Response">
+				<xsd:complexType>
+					<xsd:sequence>
+																												<xsd:element maxOccurs="1" minOccurs="1" name="RETURNCODE" nillable="true" type="xsd:string"/>
+																									<xsd:element maxOccurs="1" minOccurs="1" name="RETURNMSG" nillable="true" type="xsd:string"/>
+																									<xsd:element maxOccurs="1" minOccurs="1" name="RSNUM" nillable="true" type="xsd:string"/>
+																											<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfITEMS" nillable="true" type="ns1:ArrayOfITEMS"/>
+																	<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfITEMS_OUT" nillable="true" type="ns1:ArrayOfITEMS_OUT"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="ZWJ_SET_MB21Response">
+    <wsdl:part name="parameters" element="tns:ZWJ_SET_MB21Response">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="ZWJ_SET_MB21Request">
+    <wsdl:part name="parameters" element="tns:ZWJ_SET_MB21">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="xgwj.sap.rdm.ZWJ_CRESET_MBBPortType">
+    <wsdl:operation name="ZWJ_SET_MB21">
+      <wsdl:input name="ZWJ_SET_MB21Request" message="tns:ZWJ_SET_MB21Request">
+    </wsdl:input>
+      <wsdl:output name="ZWJ_SET_MB21Response" message="tns:ZWJ_SET_MB21Response">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="xgwj.sap.rdm.ZWJ_CRESET_MBBHttpBinding" type="tns:xgwj.sap.rdm.ZWJ_CRESET_MBBPortType">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="ZWJ_SET_MB21">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="ZWJ_SET_MB21Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="ZWJ_SET_MB21Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="xgwj.sap.rdm.ZWJ_CRESET_MBB">
+    <wsdl:port name="xgwj.sap.rdm.ZWJ_CRESET_MBBHttpPort" binding="tns:xgwj.sap.rdm.ZWJ_CRESET_MBBHttpBinding">
+      <wsdlsoap:address location="HTTP://10.15.8.175:9091/xgwj.sap.rdm.ZWJ_CRESET_MBB"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

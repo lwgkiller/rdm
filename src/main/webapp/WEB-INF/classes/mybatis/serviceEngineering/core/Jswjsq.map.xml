@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.JswjsqDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryApplyList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jswjsq_info.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        jswjsq_info
+        left join bpm_inst on jswjsq_info.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="applyNumber != null and applyNumber != ''">
+                jswjsq_info.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND jswjsq_info.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="partsType != null and partsType != ''">
+                AND jswjsq_info.partsType like CONCAT('%',#{partsType},'%')
+            </if>
+            <if test="partsModel != null and partsModel != ''">
+                AND jswjsq_info.partsModel like CONCAT('%',#{partsModel},'%')
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR jswjsq_info.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+
+        </where>
+        <include refid="orderBy"/>
+    </select>
+
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        jswjsq_info.*,
+        bpm_inst.INST_ID_ as instId
+        from
+        jswjsq_info left join bpm_inst on jswjsq_info.id=bpm_inst.BUS_KEY_
+        where
+        id =#{id}
+    </select>
+
+
+    <insert id="insertJswjsq" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jswjsq_info(
+        id
+        ,applyNumber
+        ,partsType
+        ,partsModel
+        ,applyReason
+        ,creatorName
+        ,remark
+        ,checkerId
+        ,checkerName
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR}
+        ,#{applyNumber,jdbcType=VARCHAR}
+        ,#{partsType,jdbcType=VARCHAR}
+        ,#{partsModel,jdbcType=VARCHAR}
+        ,#{applyReason,jdbcType=VARCHAR}
+        ,#{creatorName,jdbcType=VARCHAR}
+        ,#{remark,jdbcType=VARCHAR}
+        ,#{checkerId,jdbcType=VARCHAR}
+        ,#{checkerName,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <update id="updateJswjsq" parameterType="com.alibaba.fastjson.JSONObject">
+        update jswjsq_info
+        set
+        partsType=#{partsType,jdbcType=VARCHAR},
+        partsModel=#{partsModel,jdbcType=VARCHAR},
+        applyReason=#{applyReason,jdbcType=VARCHAR},
+        creatorName=#{creatorName,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        checkerId=#{checkerId,jdbcType=VARCHAR},
+        checkerName=#{checkerName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <update id="updateJswjsqNumber" parameterType="com.alibaba.fastjson.JSONObject">
+        update jswjsq_info
+        set
+        applyNumber=#{applyNumber,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+
+
+    <delete id="deleteJswjsq" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from jswjsq_info
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="getUserInfoByPartsType" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        resId,
+        resName
+        FROM
+        jswjsq_settings
+        WHERE
+        partsType= #{partsType}
+    </select>
+
+
+</mapper>

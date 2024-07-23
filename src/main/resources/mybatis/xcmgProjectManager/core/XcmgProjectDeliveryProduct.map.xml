@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectDeliveryProductDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="addDeliveryProduct" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO project_deliveryproduct
+		(
+		id,
+		projectId,
+		userId,
+		deliveryId,
+		productIds,
+		productNames
+		)
+		VALUES
+		(
+		#{id,jdbcType=VARCHAR},
+		#{projectId,jdbcType=VARCHAR},
+		#{userId,jdbcType=VARCHAR},
+		#{deliveryId,jdbcType=VARCHAR},
+		#{productIds,jdbcType=VARCHAR},
+		#{productNames,jdbcType=VARCHAR}
+		)
+	</insert>
+
+    <delete id="delDeliveryProduct" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from project_deliveryproduct where projectId = #{projectId} and userId = #{userId}
+    </delete>
+
+    <delete id="delDeliveryProductByParam" parameterType="java.util.Map">
+        delete from project_deliveryproduct
+        where
+        projectId=#{projectId}
+        AND userId IN
+        <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <update id="updateDeliveryInfo" parameterType="com.alibaba.fastjson.JSONObject">
+		UPDATE project_memberInfo SET
+		respDeliveryIds=#{respDeliveryIds,jdbcType=VARCHAR},
+		respDeliveryNames=#{respDeliveryNames,jdbcType=VARCHAR}
+		WHERE
+		userid=#{userId} and projectId = #{projectId}
+	</update>
+    <select id="getDeliveryIdList" parameterType="java.lang.String" resultType="java.lang.String">
+        select deliveryId from project_deliveryproduct where projectId = #{projectId}
+    </select>
+    <select id="getDeliveryObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from project_stage_leveldelivery where deliveryId = #{deliveryId}
+    </select>
+    <select id="getRespDeliveryIds" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT
+            GROUP_CONCAT( respDeliveryIds ) as deliveryIds
+        FROM
+            `project_memberinfo`
+        WHERE
+            projectId = #{projectId}
+    </select>
+</mapper>

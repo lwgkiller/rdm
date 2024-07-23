@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.fzsj.core.dao.FzsjDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="fzsjListQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT fzsj_apply.*,
+        bpm_inst.STATUS_ as taskStatus,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_,
+        fzsj_nlzb_fzdx.fzdx,
+        fzsj_nlzb_fzfxx.field
+        FROM
+        fzsj_apply
+        left join bpm_inst on fzsj_apply.id = bpm_inst.BUS_KEY_
+        left join fzsj_nlzb_fzfxx on fzsj_nlzb_fzfxx.id = fzsj_apply.fzlbId
+        left join fzsj_nlzb_fzdx on fzsj_nlzb_fzdx.id = fzsj_nlzb_fzfxx.fzdxId
+        <where>
+            <if test="fzNumber !=null and fzNumber !=''">
+                AND fzNumber = #{fzNumber}
+            </if>
+            <if test="questName !=null and questName !=''">
+                AND questName like concat('%',#{questName},'%')
+            </if>
+            <if test="fzdx !=null and fzdx !=''">
+                AND fzsj_nlzb_fzdx.fzdx like concat('%',#{fzdx},'%')
+            </if>
+            <if test="applicationType !=null and applicationType !=''">
+                AND applicationType like concat('%',#{applicationType},'%')
+            </if>
+            <if test="prototypeState !=null and prototypeState !=''">
+                AND prototypeState = #{prototypeState}
+            </if>
+            <if test="taskResource !=null and taskResource !=''">
+                AND taskResource = #{taskResource}
+            </if>
+            <if test="fzlb !=null and fzlb !=''">
+                AND fzlb like concat('%', #{fzlb},'%')
+            </if>
+            <if test="creator !=null and creator !=''">
+                AND fzsj_apply.creator like concat('%',#{creator},'%')
+            </if>
+            <if test="department !=null and department !=''">
+                AND department like concat('%',#{department},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+            <if test="applyStartTime != null and applyStartTime !=''">
+                AND applyTime &gt;= #{applyStartTime}
+            </if>
+            <if test="applyEndTime != null and applyEndTime !=''">
+                AND applyTime &lt;= #{applyEndTime}
+            </if>
+            <if test="gjyj !=null and gjyj !=''">
+                AND fzsj_apply.gjyj = #{gjyj}
+            </if>
+            <if test="field !=null and field !=''">
+                AND fzsj_nlzb_fzfxx.field = #{field}
+            </if>
+        </where>
+        order  by  fzsj_apply.CREATE_TIME_ desc
+    </select>
+    <!---->
+    <select id="countFzsjQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        fzsj_apply
+        left join bpm_inst on fzsj_apply.id=bpm_inst.BUS_KEY_
+        left join fzsj_nlzb_fzfxx on fzsj_nlzb_fzfxx.id = fzsj_apply.fzlbId
+        left join fzsj_nlzb_fzdx on fzsj_nlzb_fzdx.id = fzsj_nlzb_fzfxx.fzdxId
+        <where>
+            <if test="fzNumber !=null and fzNumber !=''">
+                AND fzNumber = #{fzNumber}
+            </if>
+            <if test="questName !=null and questName !=''">
+                AND questName like concat('%',#{questName},'%')
+            </if>
+            <if test="fzdx !=null and fzdx !=''">
+                AND fzsj_nlzb_fzdx.fzdx like concat('%',#{fzdx},'%')
+            </if>
+            <if test="applicationType !=null and applicationType !=''">
+                AND applicationType like concat('%',#{applicationType},'%')
+            </if>
+            <if test="prototypeState !=null and prototypeState !=''">
+                AND prototypeState = #{prototypeState}
+            </if>
+            <if test="taskResource !=null and taskResource !=''">
+                AND taskResource = #{taskResource}
+            </if>
+            <if test="fzlb !=null and fzlb !=''">
+                AND fzlb like concat('%', #{fzlb},'%')
+            </if>
+            <if test="creator !=null and creator !=''">
+                AND fzsj_apply.creator like concat('%',#{creator},'%')
+            </if>
+            <if test="department !=null and department !=''">
+                AND department like concat('%',#{department},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+            <if test="applyStartTime != null and applyStartTime !=''">
+                AND applyTime &gt;= #{applyStartTime}
+            </if>
+            <if test="applyEndTime != null and applyEndTime !=''">
+                AND applyTime &lt;= #{applyEndTime}
+            </if>
+            <if test="field !=null and field !=''">
+                AND fzsj_nlzb_fzfxx.field = #{field}
+            </if>
+        </where>
+        order  by  fzsj_apply.CREATE_TIME_ desc
+    </select>
+    <!---->
+    <insert id="insertFzsj" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO fzsj_apply (
+            id,
+            idUrgent,
+            departmentId,
+            department,
+            questName,
+            applicationType,
+            prototypeState,
+            taskResource,
+            fzlb,
+            fzlbId,
+            demandData,
+            fzmd,
+            cpzgOrSzrId,
+            cpzgOrSzr,
+            fzszrId,
+            fzszr,
+            <if test="applyTime != null and applyTime != ''">
+                applyTime,
+            </if>
+            sqlcsfjs,
+            gjyj,
+            gjyy,
+            <if test="predictFinishTime != null and predictFinishTime != ''">
+                predictFinishTime,
+            </if>
+            <if test="ldjsspsj != null and ldjsspsj != ''">
+                ldjsspsj,
+            </if>
+            gjhxntsfk,
+            creator,
+            CREATE_BY_,
+            CREATE_TIME_,
+            projectId,
+            projectName,
+            itemCode,
+            productStage,
+            taskType,
+            isSendToSDM
+        )
+        VALUES (
+            #{id},
+            #{idUrgent},
+            #{departmentId},
+            #{department},
+            #{questName},
+            #{applicationType},
+            #{prototypeState},
+            #{taskResource},
+            #{fzlb},
+            #{fzlbId},
+            #{demandData},
+            #{fzmd},
+            #{cpzgOrSzrId},
+            #{cpzgOrSzr},
+            #{fzszrId},
+            #{fzszr},
+            <if test="applyTime != null and applyTime != ''">
+                #{applyTime},
+            </if>
+            #{sqlcsfjs},
+            #{gjyj},
+            #{gjyy},
+            <if test="predictFinishTime != null and predictFinishTime != ''">
+                #{predictFinishTime},
+            </if>
+            <if test="ldjsspsj != null and ldjsspsj != ''">
+                #{ldjsspsj},
+            </if>
+            #{gjhxntsfk},
+            #{creator},
+            #{CREATE_BY_},
+            #{CREATE_TIME_},
+            #{projectId},
+            #{projectName},
+            #{itemCode},
+            #{productStage},
+            #{taskType},
+            #{isSendToSDM}
+        );
+    </insert>
+
+    <update id="updateFzsj" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE fzsj_apply 
+        SET idUrgent = #{idUrgent},
+            departmentId = #{departmentId},
+            department = #{department},
+            questName = #{questName},
+            applicationType = #{applicationType},
+            prototypeState = #{prototypeState},
+            taskResource = #{taskResource},
+            fzlb = #{fzlb},
+            fzlbId = #{fzlbId},
+            demandData = #{demandData},
+            fzmd = #{fzmd},
+            cpzgOrSzrId = #{cpzgOrSzrId},
+            cpzgOrSzr = #{cpzgOrSzr},
+            fzszrId = #{fzszrId},
+            fzszr = #{fzszr},
+            <if test="applyTime != null and applyTime != ''">
+                applyTime = #{applyTime},
+            </if>
+            <if test="fzNumber != null and fzNumber != ''">
+                fzNumber = #{fzNumber},
+            </if>
+            sqlcsfjs = #{sqlcsfjs},
+            gjyj = #{gjyj},
+            gjyy = #{gjyy},
+            <if test="predictFinishTime != null and predictFinishTime != ''">
+                predictFinishTime = #{predictFinishTime},
+            </if>
+            <if test="ldjsspsj != null and ldjsspsj != ''">
+                ldjsspsj = #{ldjsspsj},
+            </if>
+            gjhxntsfk = #{gjhxntsfk},
+            UPDATE_BY_ = #{UPDATE_BY_},
+            UPDATE_TIME_ = #{UPDATE_TIME_},
+            projectId = #{projectId},
+            projectName = #{projectName},
+            itemCode = #{itemCode},
+            isSendToSDM = #{isSendToSDM},
+            productStage = #{productStage},
+            taskType = #{taskType}
+        WHERE
+            id = #{id};
+    </update>
+    <!---->
+    <delete id="deleteFzsj" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from fzsj_apply
+        where id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryFzsjById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        fzsj_apply.*,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.STATUS_ as taskStatus,
+        fzsj_nlzb_fzfxx.currentAblityLevel,
+        fzsj_nlzb_fzdx.fzdx
+        from fzsj_apply
+        left join bpm_inst on fzsj_apply.id=bpm_inst.BUS_KEY_
+        left join fzsj_nlzb_fzfxx on fzsj_apply.fzlbId=fzsj_nlzb_fzfxx.id
+        left join fzsj_nlzb_fzdx on fzsj_nlzb_fzdx.id=fzsj_nlzb_fzfxx.fzdxId
+        where fzsj_apply.id=#{id}
+    </select>
+
+    <select id="queryFzsjFileList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        fzsj_fileinfo.*
+        from fzsj_fileinfo
+        where belongDetailId IN
+        <foreach collection="belongDetailIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <delete id="delFzsjFileByBelongDetailId" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from fzsj_fileinfo
+        where belongDetailId IN
+        <foreach collection="belongDetailIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteFzsjFileById" parameterType="java.lang.String">
+        delete from fzsj_fileinfo
+        where id =#{id}
+    </delete>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into fzsj_fileinfo(
+          id,
+          fileName,
+          fileSize,
+          belongDetailId,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) values(
+          #{id},
+          #{fileName},
+          #{fileSize},
+          #{belongDetailId},
+          #{CREATE_BY_},
+          #{CREATE_TIME_}
+        )
+    </insert>
+
+    <select id="queryFzzx" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select fzsj_apply_fzzx.* , fzsj_apply_fzzx.zxry zxryId_name
+        from fzsj_apply_fzzx where fzsjId = #{fzsjId}
+    </select>
+
+    <select id="getFzzxDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_apply_fzzx where id = #{fzzxId}
+    </select>
+
+    <insert id="createFzzx" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO fzsj_apply_fzzx (
+            id,
+            fzsjId,
+            zxryId,
+            zxry,
+            timeNode,
+            fzjgjjy,
+            confirmResult,
+            confirmReason,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        VALUES(
+            #{id},
+            #{fzsjId},
+            #{zxryId},
+            #{zxry},
+            #{timeNode},
+            #{fzjgjjy},
+            #{confirmResult},
+            #{confirmReason},
+            #{CREATE_BY_},
+            #{CREATE_TIME_}
+        )
+    </insert>
+
+    <update id="updateFzzx" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE fzsj_apply_fzzx
+        SET fzsjId = #{fzsjId},
+        zxryId = #{zxryId},
+        zxry = #{zxry},
+        timeNode = #{timeNode},
+        fzjgjjy = #{fzjgjjy},
+        confirmResult = #{confirmResult},
+        confirmReason = #{confirmReason},
+        star = #{star},
+        comment = #{comment},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        WHERE id = #{id};
+    </update>
+
+    <select id="fzzxAddValid" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_apply_fzzx where fzsjId = #{fzsjId} and fzjgjjy = ''
+    </select>
+
+    <delete id="deleteFzzx" parameterType="java.lang.String">
+        delete from fzsj_apply_fzzx where id = #{fzzxId}
+    </delete>
+
+    <select id="queryLastFzzx" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_apply_fzzx where fzsjId = #{fzsjId} order by CREATE_TIME_ desc limit 1
+    </select>
+
+    <select id="getYearList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            LEFT(date_format( fzsj.applyTime, '%Y%m%d' ), 4 ) yyyy
+        FROM
+            fzsj_apply fzsj
+            LEFT JOIN bpm_inst ON fzsj.id = bpm_inst.BUS_KEY_
+        WHERE
+            bpm_inst.STATUS_ = 'SUCCESS_END'
+        GROUP BY
+            LEFT(date_format( fzsj.applyTime, '%Y%m%d'),4)
+        order by LEFT(date_format( fzsj.applyTime, '%Y%m%d'),4)
+    </select>
+
+    <select id="getNdtjList" resultType="com.alibaba.fastjson.JSONObject" parameterType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            count(*) count, field,
+            LEFT (date_format( fzsj.applyTime, '%Y%m%d' ), 4 ) yyyy
+        FROM
+            fzsj_apply fzsj
+            LEFT JOIN fzsj_nlzb_fzfxx fzfxx ON fzfxx.id = fzsj.fzlbId
+            LEFT JOIN bpm_inst ON fzsj.id = bpm_inst.BUS_KEY_
+        <where>
+            bpm_inst.STATUS_ = 'SUCCESS_END'
+            <if test="startYear != null and startYear!= ''">
+                and left(date_format( fzsj.applyTime, '%Y%m%d'),4) &gt;= #{startYear}
+            </if>
+            <if test="endYear != null and endYear!= ''">
+                and left(date_format( fzsj.applyTime, '%Y%m%d'),4) &lt;= #{endYear}
+            </if>
+        </where>
+
+        GROUP BY
+            left(date_format( fzsj.applyTime, '%Y%m%d'),4), field
+    </select>
+
+    <select id="queryFZLYEnum" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.lang.String">
+        SELECT
+            sys_dic.KEY_ AS field,
+            sys_dic.DESCP_ AS fieldDesc
+        FROM
+            sys_dic
+            LEFT JOIN sys_tree ON sys_dic.TYPE_ID_ = sys_tree.TREE_ID_
+        WHERE
+            sys_tree.KEY_ = 'FZLY'
+            AND sys_dic.KEY_=(
+              select field from fzsj_nlzb_fzfxx where id=#{fzlbId}
+            )
+        limit 1
+    </select>
+
+    <select id="queryNowYearMaxNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            SUBSTR( fzNumber, 13 ) AS num
+        FROM
+            fzsj_apply
+        WHERE
+            fzNumber IS NOT NULL
+            AND fzNumber != ''
+            AND SUBSTR( fzNumber, 4, 4 ) = #{year}
+        ORDER BY num DESC
+        limit 1
+    </select>
+
+    <select id="queryFzsjByProject" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            fzsj_apply.*,
+            bpm_inst.STATUS_ AS taskStatus
+        FROM
+            fzsj_apply
+            LEFT JOIN bpm_inst ON fzsj_apply.id = bpm_inst.BUS_KEY_
+        WHERE
+            fzsj_apply.projectId = #{projectId}
+            AND ( bpm_inst.STATUS_ = 'RUNNING' OR bpm_inst.STATUS_ = 'SUCCESS_END' )
+    </select>
+
+</mapper>

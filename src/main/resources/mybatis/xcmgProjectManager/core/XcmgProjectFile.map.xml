@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectFileDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--项目变更流程查询-->
+    <select id="queryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_fileapply.*,
+        project_fileapply.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        project_baseInfo.projectName,
+        bpm_solution.NAME_ as solutionType,
+        os_rel_inst.PARTY1_ as applyUserDepId
+        FROM
+        project_fileapply
+        LEFT JOIN os_user ON project_fileapply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON project_fileapply.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON project_fileapply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        left join project_baseInfo on project_fileapply.projectId = project_baseInfo.projectId
+        left join bpm_solution on bpm_solution.SOL_ID_ = bpm_inst.SOL_ID_
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND project_fileapply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND project_fileapply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND project_fileapply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="projectName != null and projectName != ''">
+                AND project_baseInfo.projectName like CONCAT ('%',#{projectName},'%')
+            </if>
+            <if test="deptIds !=null and deptIds != ''">
+                AND os_rel_inst.PARTY1_ IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+
+    <select id="getObject" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        tmp.*,
+        project_baseinfo.number,
+        project_baseinfo.projectName,
+        project_baseinfo.mainDepId,
+        project_level.levelName AS projectLevel,
+        project_category.categoryName AS projectType,
+        os_group.NAME_ AS mainDeptName,
+        project_stagedivide.stageName,
+        bpm_inst.INST_ID_ AS instId,
+        os_user.FULLNAME_ AS mainResUserName
+        FROM
+        ( SELECT * FROM project_fileapply WHERE id = #{id} ) AS tmp
+        LEFT JOIN bpm_inst ON bpm_inst.BUS_KEY_ = tmp.id
+        LEFT JOIN project_baseinfo ON tmp.projectId = project_baseinfo.projectId
+        LEFT JOIN project_level ON project_baseinfo.levelId = project_level.levelId
+        LEFT JOIN project_category ON project_baseinfo.categoryId = project_category.categoryId
+        LEFT JOIN os_group ON project_baseinfo.mainDepId = os_group.GROUP_ID_
+        LEFT JOIN project_stagedivide ON tmp.stageId = project_stagedivide.stageId
+        LEFT JOIN project_memberinfo ON tmp.projectId = project_memberinfo.projectId
+        LEFT JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+        LEFT JOIN os_user ON os_user.USER_ID_ = project_memberinfo.userId
+        WHERE
+        project_member_role.roleName = '项目负责人'
+        LIMIT 1
+    </select>
+
+
+    <insert id="add" parameterType="java.util.Map">
+        INSERT INTO project_fileapply (
+        id,
+        projectId,
+        stageId,
+        fileIds,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{projectId,jdbcType=VARCHAR},
+        #{stageId,jdbcType=VARCHAR},
+        #{fileIds,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <insert id="update" parameterType="java.util.Map">
+        UPDATE project_fileapply SET
+        fileIds=#{fileIds,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+
+    <delete id="delete" parameterType="java.lang.String">
+        delete from project_fileapply
+        where project_fileapply.id=#{id}
+    </delete>
+
+
+
+    <!--查询交付物列表-->
+    <select id="getFileList" parameterType="java.util.Map" resultType="java.util.Map">
+        select A.fileName,A.relativeFilePath,A.id,B.deliveryName,A.fileSize
+        from project_fileinfo A
+        left join project_stage_leveldelivery B on A.deliveryId = B.deliveryId
+        where id in
+        <foreach collection="fileIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <!--查询阶段交付物-->
+    <select id="getStageFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select A.* ,B.deliveryName
+        from project_fileinfo A
+        left join project_stage_leveldelivery B on A.deliveryId = B.deliveryId
+        where A.projectId = #{projectId}
+        and A.pid = #{stageId}
+    </select>
+    <!--获取已经通过审批阶段交付物-->
+    <select id="getApprovalFileList" parameterType="java.util.Map" resultType="java.util.Map">
+         select B.id,B.fileIds
+            from project_fileapply B
+			left join bpm_inst C on B.id = C.BUS_KEY_
+			where C.STATUS_ = 'SUCCESS_END'
+			and B.projectId = #{projectId}
+			and B.stageId = #{stageId}
+    </select>
+    <!--获取文件信息-->
+    <select id="getFileObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from project_fileinfo where id = #{id}
+    </select>
+
+    <!--获取文件信息-->
+    <select id="getFileApplyObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from project_fileapply where id = #{id}
+    </select>
+
+    <update id="updateProjectFileFoldName" parameterType="com.alibaba.fastjson.JSONObject">
+        update project_fileinfo
+        set fileName= #{projectName}
+        where
+        projectId = #{projectId}
+        AND pid = '-1'
+        AND isFolder = '1'
+    </update>
+
+    <update id="updateFileProduct" parameterType="com.alibaba.fastjson.JSONObject">
+        update project_fileinfo
+        set productIds= #{productIds},productNames= #{productNames}
+        where
+        id = #{fileId}
+    </update>
+</mapper>

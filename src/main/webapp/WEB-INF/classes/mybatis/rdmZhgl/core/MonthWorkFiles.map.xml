@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.MonthWorkFilesDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ydgz_files(
+            id,
+            fileName,
+            fileSize,
+            fileDesc,
+            applyId,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{fileSize,jdbcType=VARCHAR},
+            #{fileDesc,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="getFilesById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from ydgz_files
+        where applyId = #{applyId}
+    </select>
+    <delete id="delFile" parameterType="java.util.Map">
+        delete from ydgz_files
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="applyId != null and applyId !=''">
+                AND applyId = #{applyId}
+            </if>
+        </where>
+    </delete>
+    <delete id="delFileByApplyId" parameterType="java.lang.String">
+        delete from ydgz_files
+        where applyId = #{applyId}
+    </delete>
+</mapper>

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.world.core.dao.LccpDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    
+    <select id="queryLccp" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        measure_info.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        measure_info
+        LEFT JOIN os_rel_inst ON measure_info.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = measure_info.CREATE_BY_
+        left join bpm_inst on measure_info.lccpId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (measure_info.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="model != null and model != ''">
+            and measure_info.model like CONCAT('%',#{model},'%')
+        </if>
+        <if test="ddNumber != null and ddNumber != ''">
+            and measure_info.ddNumber like CONCAT('%',#{ddNumber},'%')
+        </if>
+        <if test="cpzg != null and cpzg != ''">
+            and measure_info.cpzg = #{cpzg}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countLccpList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        COUNT(*)
+        FROM
+        measure_info
+        LEFT JOIN os_rel_inst ON measure_info.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = measure_info.CREATE_BY_
+        left join bpm_inst on measure_info.lccpId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (measure_info.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="model != null and model != ''">
+            and measure_info.model like CONCAT('%',#{model},'%')
+        </if>
+        <if test="ddNumber != null and ddNumber != ''">
+            and measure_info.ddNumber like CONCAT('%',#{ddNumber},'%')
+        </if>
+        <if test="cpzg != null and cpzg != ''">
+            and measure_info.cpzg = #{cpzg}
+        </if>
+    </select>
+
+    <insert id="createLccp" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into measure_info(
+            lccpId
+            ,ckMonth
+            ,cpzgId
+            ,cpzg
+            ,resId
+            ,res
+            ,depId
+            ,dep
+            ,ddNumber
+            ,region
+            ,country
+            ,model
+            ,need
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{lccpId,jdbcType=VARCHAR},
+            #{ckMonth,jdbcType=TIMESTAMP},
+            #{cpzgId,jdbcType=VARCHAR},
+            #{cpzg,jdbcType=VARCHAR},
+            #{resId,jdbcType=VARCHAR},
+            #{res,jdbcType=VARCHAR},
+            #{depId,jdbcType=VARCHAR},
+            #{dep,jdbcType=VARCHAR},
+            #{ddNumber,jdbcType=VARCHAR},
+            #{region,jdbcType=VARCHAR},
+            #{country,jdbcType=VARCHAR},
+            #{model,jdbcType=VARCHAR},
+            #{need,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateLccp" parameterType="com.alibaba.fastjson.JSONObject">
+        update measure_info
+        <set>
+            ckMonth=#{ckMonth,jdbcType=TIMESTAMP},
+            cpzgId=#{cpzgId,jdbcType=VARCHAR},
+            cpzg=#{cpzg,jdbcType=VARCHAR},
+            resId=#{resId,jdbcType=VARCHAR},
+            res=#{res,jdbcType=VARCHAR},
+            depId=#{depId,jdbcType=VARCHAR},
+            dep=#{dep,jdbcType=VARCHAR},
+            ddNumber=#{ddNumber,jdbcType=VARCHAR},
+            region=#{region,jdbcType=VARCHAR},
+            country=#{country,jdbcType=VARCHAR},
+            model=#{model,jdbcType=VARCHAR},
+            need=#{need,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        lccpId=#{lccpId}
+    </update>
+    
+    <select id="queryLccpById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        measure_info.*,
+        bpm_inst.INST_ID_ as instId
+        from measure_info
+        left join os_user on measure_info.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on measure_info.lccpId=bpm_inst.BUS_KEY_
+        where measure_info.lccpId=#{lccpId}
+    </select>
+
+    <select id="queryLccpFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        measure_file
+        WHERE
+        belongId=#{lccpId}
+        AND
+        location = #{location}
+    </select>
+
+    <select id="queryLccpFileLists" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        measure_file
+        WHERE
+        belongId=#{lccpId}
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into measure_file(
+        fileId
+        ,fileName
+        ,belongId
+        ,fileSize
+        ,location
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{location,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteLccpFile" parameterType="java.util.Map">
+        delete from measure_file
+        <where>
+            <if test="fileId != null and fileId !=''">
+                fileId=#{fileId}
+            </if>
+            <if test="lccpId != null and lccpId !=''">
+                belongId=#{lccpId}
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteLccp" parameterType="java.util.Map">
+        delete from measure_info
+        <where>
+            <if test="lccpId != null and lccpId !=''">
+                lccpId=#{lccpId}
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryCountryList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.util.Map">
+        SELECT
+        *
+        FROM
+        sup_country
+        WHERE
+        del_flag = 0
+        <if test="country_name != null and country_name != ''">
+            AND sup_country.country_name like '%${country_name}%'
+        </if>
+        <if test="english_name != null and english_name != ''">
+            AND sup_country.english_name like '%${english_name}%'
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.JxxqxfDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="jxxqxfListQuery" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT service_enginineering_jxxqxf.*, u.FULLNAME_ creator
+        FROM
+        service_enginineering_jxxqxf
+        left join os_user u on u.USER_ID_ = service_enginineering_jxxqxf.CREATE_BY_
+        <where>
+            <if test="issueDepartment !=null and issueDepartment !=''">
+                AND issueDepartment like concat('%',#{issueDepartment},'%')
+            </if>
+            <if test="productDepartment !=null and productDepartment !=''">
+                AND productDepartment like concat('%',#{productDepartment},'%')
+            </if>
+            <if test="versionType !=null and versionType !=''">
+                AND versionType = #{versionType}
+            </if>
+            <if test="productType !=null and productType !=''">
+                AND productType =#{productType}
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND materialCode like concat('%',#{materialCode},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND salesModel like concat('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND designModel like concat('%',#{designModel},'%')
+            </if>
+            <if test="pinCode != null and pinCode != ''">
+                AND pinCode like concat('%',#{pinCode},'%')
+            </if>
+            <if test="priority != null and priority != ''">
+                AND priority = #{priority}
+            </if>
+            <if test="passBacks != null and passBacks != ''">
+                AND passBack in
+                <foreach collection="passBack" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="jxxqxfCountQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        service_enginineering_jxxqxf
+        <where>
+            <if test="issueDepartment !=null and issueDepartment !=''">
+                AND issueDepartment like concat('%',#{issueDepartment},'%')
+            </if>
+            <if test="productDepartment !=null and productDepartment !=''">
+                AND productDepartment like concat('%',#{productDepartment},'%')
+            </if>
+            <if test="versionType !=null and versionType !=''">
+                AND versionType = #{versionType}
+            </if>
+            <if test="productType !=null and productType !=''">
+                AND productType = #{productType}
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND materialCode like concat('%',#{materialCode},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND salesModel like concat('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND designModel like concat('%',#{designModel},'%')
+            </if>
+            <if test="pinCode != null and pinCode != ''">
+                AND pinCode like concat('%',#{pinCode},'%')
+            </if>
+            <if test="priority != null and priority != ''">
+                AND priority = #{priority}
+            </if>
+            <if test="passBacks != null and passBacks != ''">
+                AND passBack in
+                <foreach collection="passBack" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertJxxqxf" parameterType="java.util.Map">
+        insert into service_enginineering_jxxqxf(
+          id,
+          issueDepartmentId,
+          issueDepartment,
+          productDepartmentId,
+          productDepartment,
+          versionType,
+          productType,
+          materialCode,
+          salesModel,
+          designModel,
+          pinCode,
+          priority,
+          passBack,
+          passBackNum,
+          remark,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id},
+          #{issueDepartmentId},
+          #{issueDepartment},
+          #{productDepartmentId},
+          #{productDepartment},
+          #{versionType},
+          #{productType},
+          #{materialCode},
+          #{salesModel},
+          #{designModel},
+          #{pinCode},
+          #{priority},
+          #{passBack},
+          #{passBackNum},
+          #{remark},
+          #{CREATE_BY_},
+          #{CREATE_TIME_}
+        )
+    </insert>
+
+    <update id="updateJxxqxf" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_enginineering_jxxqxf set
+            issueDepartmentId = #{issueDepartmentId},
+            issueDepartment = #{issueDepartment},
+            productDepartmentId = #{productDepartmentId},
+            productDepartment = #{productDepartment},
+            versionType = #{versionType},
+            productType = #{productType},
+            materialCode = #{materialCode},
+            salesModel = #{salesModel},
+            designModel = #{designModel},
+            pinCode = #{pinCode},
+            priority = #{priority},
+            passBack = #{passBack},
+            passBackNum = #{passBackNum},
+            remark = #{remark},
+            UPDATE_BY_=#{UPDATE_BY_},
+            UPDATE_TIME_=#{UPDATE_TIME_}
+        where  id = #{id}
+    </update>
+
+    <delete id="deleteJxxqxf" parameterType="java.util.Map">
+        delete from service_enginineering_jxxqxf
+        where id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryJxxqxfById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select service_enginineering_jxxqxf.* from service_enginineering_jxxqxf where id = #{id}
+    </select>
+
+
+    <!--查询组织id根据KEY值-->
+    <select id="getGroupById" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+	        A.GROUP_ID_ as groupId,A.NAME_,A.KEY_
+        FROM
+	        os_group A
+        WHERE
+            A.STATUS_ = 'ENABLED'
+            and A.DIM_ID_ = #{DimId}
+            and A.NAME_ = #{deptName}
+        LIMIT 1
+    </select>
+
+    <select id="queryZshcl" resultType="java.lang.String">
+        SELECT
+	      round(case when sum(passBackNum) is null then 0 else sum(passBackNum) end/ case when count(*) = 0 then 1 else count(*)*30 end * 100,1) zshcl
+        FROM service_enginineering_jxxqxf
+    </select>
+
+    <select id="queryNotHcwcCount" resultType="java.lang.Integer">
+      SELECT  count(*) notHcwcCount from service_enginineering_jxxqxf where passBack != 'hcwc'
+    </select>
+</mapper>

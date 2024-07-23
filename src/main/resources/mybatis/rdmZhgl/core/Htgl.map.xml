@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.HtglDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <sql id="query_where">
+        <if test="contractNo !=null and contractNo !=''">
+            AND htgl_baseinfo.contractNo like CONCAT('%',#{contractNo},'%')
+        </if>
+        <if test="contractDesc !=null and contractDesc !=''">
+            AND htgl_baseinfo.contractDesc like CONCAT('%',#{contractDesc},'%')
+        </if>
+        <if test="signerUserId !=null and signerUserId !=''">
+            AND htgl_baseinfo.signerUserId = #{signerUserId}
+        </if>
+        <if test="signYear !=null and signYear !=''">
+            AND htgl_baseinfo.signYear = #{signYear}
+        </if>
+        <if test="signMonth !=null and signMonth !=''">
+            AND htgl_baseinfo.signMonth = #{signMonth}
+        </if>
+        <if test="signerUserDepId !=null and signerUserDepId !=''">
+            AND htgl_baseinfo.signerUserDepId = #{signerUserDepId}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgzr' or roleName =='fzr'">
+                    AND (htgl_baseinfo.signerUserDepId IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                    OR htgl_baseinfo.signerUserId = #{currentUserId})
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND htgl_baseinfo.signerUserId = #{currentUserId}
+                </when>
+            </choose>
+        </if>
+        <if test="isDiscard !=null and isDiscard !=''">
+            AND htgl_baseinfo.isDiscard = #{isDiscard}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        htgl_baseinfo.*,
+        os_group.NAME_ AS signerUserDepName,
+        os_user.FULLNAME_ AS signerUserName,
+        createUser.FULLNAME_ AS creator
+        FROM
+        htgl_baseinfo
+        LEFT JOIN os_group
+        ON htgl_baseinfo.signerUserDepId = os_group.GROUP_ID_
+        LEFT JOIN os_user
+        ON htgl_baseinfo.signerUserId = os_user.USER_ID_
+        LEFT JOIN os_user createUser
+        ON htgl_baseinfo.CREATE_BY_ = createUser.USER_ID_
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        htgl_baseinfo
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertContractData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into htgl_baseinfo(
+        id,
+        contractNo,
+        contractDesc,
+        signerUserId,
+        signerUserDepId,
+        signYear,
+        signMonth,
+        signDate,
+        CAndTStatus,
+        partA,
+        partB,
+        partC,
+        partD,
+        isSingHonest,
+        isRecord,
+        isFile,
+        isDiscard,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{contractNo,jdbcType=VARCHAR},
+        #{contractDesc,jdbcType=VARCHAR},
+        #{signerUserId,jdbcType=VARCHAR},
+        #{signerUserDepId,jdbcType=VARCHAR},
+        #{signYear,jdbcType=VARCHAR},
+        #{signMonth,jdbcType=VARCHAR},
+        #{signDate,jdbcType=VARCHAR},
+        #{CAndTStatus,jdbcType=VARCHAR},
+        #{partA,jdbcType=VARCHAR},
+        #{partB,jdbcType=VARCHAR},
+        #{partC,jdbcType=VARCHAR},
+        #{partD,jdbcType=VARCHAR},
+        #{isSingHonest,jdbcType=VARCHAR},
+        #{isRecord,jdbcType=VARCHAR},
+        #{isFile,jdbcType=VARCHAR},
+        #{isDiscard,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateContractData" parameterType="com.alibaba.fastjson.JSONObject">
+        update htgl_baseinfo
+        set
+        contractDesc=#{contractDesc,jdbcType=VARCHAR},
+        signerUserId=#{signerUserId,jdbcType=VARCHAR},
+        signerUserDepId=#{signerUserDepId,jdbcType=VARCHAR},
+        signYear=#{signYear,jdbcType=VARCHAR},
+        signMonth=#{signMonth,jdbcType=VARCHAR},
+        signDate=#{signDate,jdbcType=VARCHAR},
+        CAndTStatus=#{CAndTStatus,jdbcType=VARCHAR},
+        partA=#{partA,jdbcType=VARCHAR},
+        partB=#{partB,jdbcType=VARCHAR},
+        partC=#{partC,jdbcType=VARCHAR},
+        partD=#{partD,jdbcType=VARCHAR},
+        isSingHonest=#{isSingHonest,jdbcType=VARCHAR},
+        isRecord=#{isRecord,jdbcType=VARCHAR},
+        isFile=#{isFile,jdbcType=VARCHAR},
+        isDiscard=#{isDiscard,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <select id="queryContractById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            htgl_baseinfo.*,
+            os_group.NAME_       AS signerUserDepName,
+            os_user.FULLNAME_    AS signerUserName,
+            createUser.FULLNAME_ AS creator
+        FROM
+            htgl_baseinfo
+            LEFT JOIN os_group
+                ON htgl_baseinfo.signerUserDepId = os_group.GROUP_ID_
+            LEFT JOIN os_user
+                ON htgl_baseinfo.signerUserId = os_user.USER_ID_
+            LEFT JOIN os_user createUser
+                ON htgl_baseinfo.CREATE_BY_ = createUser.USER_ID_
+        WHERE
+            htgl_baseinfo.id = #{contractId}
+    </select>
+    <!---->
+    <delete id="deleteContract" parameterType="java.util.Map">
+        delete from htgl_baseinfo
+        where id IN
+        <foreach collection="contractIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <update id="discardContract" parameterType="java.util.Map">
+        update htgl_baseinfo
+        set
+        isDiscard = '1'
+        where id IN
+        <foreach collection="contractIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+    <!---->
+    <select id="getFileNamesListByMainId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT htgl_fileinfo.fileName
+        FROM htgl_fileinfo
+            INNER JOIN htgl_baseinfo
+                ON htgl_fileinfo.contractId = htgl_baseinfo.id
+        WHERE htgl_baseinfo.id = #{id}
+    </select>
+</mapper>

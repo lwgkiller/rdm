@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.ZljdOverviewDao">
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--查询参数时间段内 提交技术交底书所有部门-->
+    <select id="queryValue" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        patentApplicant,
+        applicationValue,
+        count(*)
+        FROM
+        patent_interpretation
+        WHERE
+        (applicationValue!=null or applicationValue!='')
+        <if test="startTime != null and startTime != ''">
+            AND CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        GROUP BY applicationValue,patentApplicant
+    </select>
+
+    <select id="queryZljdUnfinishNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count( * ) AS unFinishNum
+        FROM
+        patent_interpretation
+        WHERE
+        (( interpretationCompletionDate = NULL OR interpretationCompletionDate = '' )
+        OR interpretationCompletionDate >= NOW())
+        <if test="startTime != null and startTime != ''">
+            AND CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND CREATE_TIME_ &lt;= #{endTime}
+        </if>
+    </select>
+
+    <select id="queryZljdDelay" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count(*) as delayNum
+        FROM
+        (
+        SELECT
+        A.id,
+        A.patentName,
+        A.interpretationCompletionDate,
+        C.COMPLETE_TIME_ AS finishTime,
+        max( C.CREATE_TIME_ ),
+        A.CREATE_TIME_ AS createTime,
+        C.NODE_NAME_
+        FROM
+        patent_interpretation A
+        LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+        LEFT JOIN bpm_node_jump C ON B.ACT_INST_ID_ = C.ACT_INST_ID_
+        WHERE
+        C.NODE_NAME_ = '解读人解读中'
+        GROUP BY
+        A.id
+        ) tmp
+        WHERE
+        (( DATE_ADD( tmp.interpretationCompletionDate, INTERVAL 1 DAY ) &lt;= tmp.finishTime )
+        OR ((isNull(tmp.finishTime) OR tmp.finishTime = '' ) AND tmp.interpretationCompletionDate &lt;= NOW()))
+        <if test="startTime != null and startTime != ''">
+            AND tmp.createTime &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND tmp.createTime &lt;= #{endTime}
+        </if>
+    </select>
+
+    <select id="queryZljdFinished" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        count(*) as finishNum
+        FROM
+        (
+        SELECT
+        A.id,
+        A.patentName,
+        A.interpretationCompletionDate,
+        C.COMPLETE_TIME_ AS finishTime,
+        max( C.CREATE_TIME_ ),
+        A.CREATE_TIME_ AS createTime,
+        C.NODE_NAME_
+        FROM
+        patent_interpretation A
+        LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+        LEFT JOIN bpm_node_jump C ON B.ACT_INST_ID_ = C.ACT_INST_ID_
+        WHERE
+        C.NODE_NAME_ = '解读人解读中'
+        and C.COMPLETE_TIME_ &lt;= DATE_ADD( A.interpretationCompletionDate, INTERVAL 1 DAY )
+        GROUP BY
+        A.id) tmp
+        where
+        1=1
+        <if test="startTime != null and startTime != ''">
+            AND tmp.createTime &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND tmp.createTime &lt;= #{endTime}
+        </if>
+    </select>
+
+    <select id="queryReFinishNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count(*) as finishNum
+        FROM patent_interpretation_items
+        where
+        (chuangXinJiaoDiShuNo is not null and chuangXinJiaoDiShuNo!='')
+        and (chuangXinFangAn LIKE CONCAT('%','可以申请专利','%')
+        or (chuangXinJiaoDiDate is not null and chuangXinJiaoDiDate!=''))
+        <if test="startTime != null and startTime != ''">
+            AND CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND CREATE_TIME_ &lt;= #{endTime}
+        </if>
+    </select>
+
+    <select id="queryReTotalNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        id,
+        chuangXinJiaoDiDate,chuangXinJiaoDiShuNo,
+        chuangXinFangAn
+        FROM patent_interpretation_items
+        where
+        (chuangXinFangAn LIKE CONCAT('%', '可以申请专利', '%')
+        or (chuangXinJiaoDiDate is not null and chuangXinJiaoDiDate!=''))
+        <if test="startTime != null and startTime != ''">
+            AND CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND CREATE_TIME_ &lt;= #{endTime}
+        </if>
+    </select>
+
+    <select id="queryZljdNumByuser" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.interpretationEvaluation,
+        B.description,
+        A.interpreterUserId,
+        C.FULLNAME_ AS userName,
+        E.NAME_ AS userDept
+        FROM
+        patent_interpretation A
+        LEFT JOIN os_user C ON C.USER_ID_ = A.interpreterUserId
+        LEFT JOIN os_rel_inst D ON C.USER_ID_ = D.PARTY2_
+        LEFT JOIN os_group E ON D.PARTY1_ = E.GROUP_ID_
+        LEFT JOIN patent_interpretation_technologybranch B ON A.technologyBranchId = B.id
+        WHERE
+        ( A.interpretationEvaluation IS NOT NULL AND A.interpretationEvaluation != '' )
+        and D.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND D.DIM1_ = '1'
+        <if test="startTime != null and startTime != ''">
+            AND A.CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND A.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        ORDER BY
+        A.interpreterUserId
+    </select>
+
+    <select id="queryReNumByuser" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        B.chuangXinJiaoDiShuNo,
+        B.chuangXinPingFen,
+        B.chuangXinRenId,
+        B.chuangXinRen as userName,
+        E.NAME_ AS userDept
+        FROM patent_interpretation A
+        left join patent_interpretation_items B on A.id = B.mainId
+        LEFT JOIN os_user C ON C.USER_ID_ = B.chuangXinRenId
+        LEFT JOIN os_rel_inst D ON C.USER_ID_ = D.PARTY2_
+        LEFT JOIN os_group E ON D.PARTY1_ = E.GROUP_ID_
+        where
+        (B.chuangXinJiaoDiShuNo is not null and B.chuangXinJiaoDiShuNo !='')
+        and (B.chuangXinPingFen is not null and B.chuangXinPingFen !='')
+        and D.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND D.DIM1_ = '1'
+        AND B.chuangXinJiaoDiDate>=A.openDate
+        <if test="startTime != null and startTime != ''">
+            AND A.CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND A.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        ORDER BY B.chuangXinRenId
+    </select>
+
+    <select id="queryApplyNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+          A.id,
+          A.patentName,
+          YEAR(A.applicationDate) as applyYear,
+          B.description as fifthName,
+          C.description AS forthName,
+          D.description AS thirdName,
+          E.description AS secondName,
+          F.description AS firstName
+          FROM patent_interpretation A
+          LEFT JOIN patent_interpretation_technologybranch B ON A.technologyBranchId = B.id
+          LEFT JOIN patent_interpretation_technologybranch C ON B.parentId = C.id
+          LEFT JOIN patent_interpretation_technologybranch D ON C.parentId = D.id
+          LEFT JOIN patent_interpretation_technologybranch E ON D.parentId = E.id
+          LEFT JOIN patent_interpretation_technologybranch F ON E.parentId = F.id
+          WHERE (A.technologyBranchId IS NOT NULL AND A.technologyBranchId!='')
+          and A.professionalCategory = #{professionalCategory}
+          AND A.patentApplicant ='卡特'
+          ORDER BY applyYear
+    </select>
+    <select id="queryNewApplyNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+          YEAR(A.applicationDate) as applyYear,
+          B.description as technialName,
+          count(1) as num
+          FROM patent_interpretation A
+          LEFT JOIN patent_interpretation_technologybranch B ON A.technologyBranchId = B.id
+          WHERE (A.technologyBranchId IS NOT NULL AND A.technologyBranchId!='')
+          and A.professionalCategory = #{professionalCategory}
+          AND A.patentApplicant ='卡特'
+          group BY applyYear,technialName
+		  order by technialName,applyYear asc
+    </select>
+    <select id="queryIPCNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+SELECT
+	B.description,
+	t.sumNum,
+	A.IPCMainNo,
+	COUNT( 1 ) AS countNum,
+	A.patentApplicant
+FROM
+	patent_interpretation A
+	LEFT JOIN patent_interpretation_technologybranch B ON A.technologyBranchId = B.id
+	LEFT JOIN (
+SELECT
+	A.technologyBranchId,
+	B.description,
+	COUNT( * ) AS sumNum
+FROM
+	patent_interpretation A
+	LEFT JOIN patent_interpretation_technologybranch B ON A.technologyBranchId = B.id
+WHERE
+	A.IPCMainNo IS NOT NULL
+	AND A.IPCMainNo != ''
+	AND A.technologyBranchId IS NOT NULL
+	AND A.technologyBranchId != ''
+	AND A.professionalCategory = #{zlType}
+GROUP BY
+	B.description
+ORDER BY
+	sumNum DESC
+	) T ON A.technologyBranchId = T.technologyBranchId
+WHERE
+	A.IPCMainNo IS NOT NULL
+	AND A.IPCMainNo != ''
+	AND A.technologyBranchId IS NOT NULL
+	AND A.technologyBranchId != ''
+
+	AND A.professionalCategory = #{zlType}
+GROUP BY
+	B.description,
+	A.IPCMainNo,
+	A.patentApplicant
+ORDER BY
+	sumnum DESC,
+	countNum DESC
+    </select>
+    <select id="countIPCNum" parameterType="java.util.Map" resultType="java.lang.Integer">
+        	SELECT
+	COUNT( * )
+FROM
+	patent_interpretation A
+
+WHERE
+	( A.IPCMainNo IS NOT NULL AND A.IPCMainNo != '' )
+	AND ( A.technologyBranchId IS NOT NULL AND A.technologyBranchId != '' )
+	AND A.patentApplicant = '卡特'
+	and A.professionalCategory = #{zlType}
+    </select>
+    <select id="queryIPCType" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+SELECT
+	B.description,
+	t.sumNum,
+	A.IPCMainNo
+FROM
+	patent_interpretation A
+	LEFT JOIN patent_interpretation_technologybranch B ON A.technologyBranchId = B.id
+	LEFT JOIN (
+SELECT
+	A.technologyBranchId,
+	B.description,
+	COUNT( * ) AS sumNum
+FROM
+	patent_interpretation A
+	LEFT JOIN patent_interpretation_technologybranch B ON A.technologyBranchId = B.id
+WHERE
+	A.IPCMainNo IS NOT NULL
+	AND A.IPCMainNo != ''
+	AND A.technologyBranchId IS NOT NULL
+	AND A.technologyBranchId != ''
+	AND A.professionalCategory = #{zlType}
+GROUP BY
+	B.description
+ORDER BY
+	sumNum DESC
+	) T ON A.technologyBranchId = T.technologyBranchId
+WHERE
+	A.IPCMainNo IS NOT NULL
+	AND A.IPCMainNo != ''
+	AND A.technologyBranchId IS NOT NULL
+	AND A.technologyBranchId != ''
+	AND A.professionalCategory = #{zlType}
+GROUP BY
+	B.description,
+	A.IPCMainNo
+ORDER BY
+	sumnum DESC
+    </select>
+</mapper>
+

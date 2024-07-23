@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectConfigDao">
+    <select id="levelDivideList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_leveldivide.*,
+        project_level.levelName,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator
+        FROM
+        project_leveldivide
+        LEFT JOIN project_level ON project_leveldivide.levelId = project_level.levelId
+        LEFT JOIN os_user AS os_user1 ON project_leveldivide.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON project_leveldivide.UPDATE_BY_ = os_user2.USER_ID_
+    </select>
+
+    <update id="updateLevelDivide" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE project_leveldivide SET
+        minScore=#{minScore,jdbcType=INTEGER},
+        maxScore=#{maxScore,jdbcType=INTEGER},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+		levelId=#{levelId}
+    </update>
+
+    <select id="standardScoreList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_level_standardscore.*,
+        project_level.levelName,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator
+        FROM
+        project_level_standardscore
+        LEFT JOIN project_level ON project_level_standardscore.levelId = project_level.levelId
+        LEFT JOIN os_user AS os_user1 ON project_level_standardscore.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON project_level_standardscore.UPDATE_BY_ = os_user2.USER_ID_
+        <where>
+            <if test="categoryId != null and categoryId != ''">
+                project_level_standardscore.categoryId=#{categoryId}
+            </if>
+            <if test="levelId != null and levelId != ''">
+                AND project_level_standardscore.levelId=#{levelId}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateStandardScore" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE project_level_standardscore SET
+        score=#{score,jdbcType=INTEGER},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+		id=#{id}
+    </update>
+
+    <select id="deliveryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_stage_leveldelivery.*,
+        project_stagedivide.stageNo,
+        CONCAT( project_stagedivide.stageName, '（', project_stagedivide.stagePercent, '%）' ) AS stageNameAndPercent,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator,
+        bpm_solution.NAME_ as solutionName
+        FROM
+        project_stagedivide
+        LEFT JOIN project_stage_leveldelivery ON project_stage_leveldelivery.stageId = project_stagedivide.stageId
+        LEFT JOIN os_user AS os_user1 ON project_stage_leveldelivery.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON project_stage_leveldelivery.UPDATE_BY_ = os_user2.USER_ID_
+        left join bpm_solution on project_stage_leveldelivery.fileType = bpm_solution.SOL_ID_
+        <where>
+            <if test="categoryId != null and categoryId != ''">
+                project_stagedivide.categoryId=#{categoryId}
+            </if>
+        </where>
+        ORDER BY
+        project_stagedivide.stageNo,project_stage_leveldelivery.deliveryId
+    </select>
+
+    <delete id="delDelivery" parameterType="java.lang.String">
+        delete from project_stage_leveldelivery
+        where
+        deliveryId=#{id}
+    </delete>
+
+    <select id="queryStageByCategory" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        project_stagedivide.stageId,
+        CONCAT( project_stagedivide.stageName, '（', project_stagedivide.stagePercent, '%）' ) AS stageNameAndPercent,
+        project_stagedivide.stageNo
+        from project_stageDivide
+        <where>
+            <if test="categoryId != null and categoryId != ''">
+                and project_stageDivide.categoryId=#{categoryId}
+            </if>
+        </where>
+        ORDER BY stageNo
+    </select>
+
+    <select id="queryDeliveryById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_stage_leveldelivery.*,
+        project_stagedivide.stageNo
+        FROM
+        project_stage_leveldelivery
+        left join project_stagedivide
+        on project_stage_leveldelivery.stageId=project_stagedivide.stageId
+        <where>
+            <if test="deliveryId != null and deliveryId != ''">
+                and project_stage_leveldelivery.deliveryId=#{deliveryId}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateDelivery" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE project_stage_leveldelivery SET
+        stageId=#{stageId,jdbcType=VARCHAR},
+        levelIds=#{levelIds,jdbcType=VARCHAR},
+        deliveryName=#{deliveryName,jdbcType=VARCHAR},
+        excludeSourceIds=#{excludeSourceIds,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        fileType=#{fileType,jdbcType=VARCHAR},
+        fromPdm=#{fromPdm,jdbcType=VARCHAR}
+        WHERE
+		deliveryId=#{deliveryId}
+    </update>
+
+    <insert id="saveDelivery" parameterType="com.alibaba.fastjson.JSONObject">
+      insert into project_stage_leveldelivery
+      (deliveryId,stageId,levelIds,deliveryName,excludeSourceIds,CREATE_BY_,CREATE_TIME_,fileType,fromPdm)
+      values(
+      #{deliveryId,jdbcType=VARCHAR},
+      #{stageId,jdbcType=VARCHAR},
+      #{levelIds,jdbcType=VARCHAR},
+      #{deliveryName,jdbcType=VARCHAR},
+      #{excludeSourceIds,jdbcType=VARCHAR},
+      #{CREATE_BY_,jdbcType=VARCHAR},
+      #{CREATE_TIME_,jdbcType=TIMESTAMP},
+      #{fileType,jdbcType=VARCHAR},
+      #{fromPdm,jdbcType=VARCHAR}
+      )
+    </insert>
+
+    <select id="ratingScoreList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_rating_score.*,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator
+        FROM
+        project_rating_score
+        LEFT JOIN os_user AS os_user1 ON project_rating_score.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON project_rating_score.UPDATE_BY_ = os_user2.USER_ID_
+        ORDER BY
+        maxRatio DESC
+    </select>
+
+    <update id="updateRatingScore" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE project_rating_score SET
+        minScore=#{minScore,jdbcType=INTEGER},
+        maxScore=#{maxScore,jdbcType=INTEGER},
+        ratingName=#{ratingName,jdbcType=VARCHAR},
+        ratio=#{ratio,jdbcType=DOUBLE},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+		ratingId=#{ratingId}
+    </update>
+
+    <insert id="saveRatingScore" parameterType="com.alibaba.fastjson.JSONObject">
+      insert into project_rating_score
+      (ratingId,minScore,maxScore,ratingName,ratio,CREATE_BY_,CREATE_TIME_)
+      values(
+      #{ratingId,jdbcType=VARCHAR},
+      #{minScore,jdbcType=INTEGER},
+      #{maxScore,jdbcType=INTEGER},
+      #{ratingName,jdbcType=VARCHAR},
+      #{ratio,jdbcType=DOUBLE},
+      #{CREATE_BY_,jdbcType=VARCHAR},
+      #{CREATE_TIME_,jdbcType=TIMESTAMP}
+      )
+    </insert>
+
+    <delete id="delRatingScore" parameterType="java.lang.String">
+        delete from project_rating_score
+        where
+        ratingId=#{ratingId}
+    </delete>
+
+    <select id="memRoleRatioList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_member_role.*,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator
+        FROM
+        project_member_role
+        LEFT JOIN os_user AS os_user1 ON project_member_role.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON project_member_role.UPDATE_BY_ = os_user2.USER_ID_
+    </select>
+
+    <update id="updatememRoleRatio" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE project_member_role SET
+        minRatio=#{minRatio,jdbcType=INTEGER},
+        maxRatio=#{maxRatio,jdbcType=INTEGER},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+		roleId=#{roleId}
+    </update>
+
+    <select id="memRoleRankList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_role_rank.*,
+        project_member_role.roleName,
+        project_level.levelName,
+        os_group.NAME_ as minRankName,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator
+        FROM
+        project_role_rank
+        LEFT JOIN project_member_role ON project_role_rank.roleId = project_member_role.roleId
+        LEFT JOIN project_level ON project_role_rank.levelId = project_level.levelId
+        left join os_group on project_role_rank.minRankKey=os_group.KEY_
+        left join os_dimension on os_group.DIM_ID_=os_dimension.DIM_ID_
+        LEFT JOIN os_user AS os_user1 ON project_role_rank.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON project_role_rank.UPDATE_BY_ = os_user2.USER_ID_
+        <where>
+            (os_dimension.DIM_KEY_='ZJ'
+            or os_dimension.DIM_KEY_='GW')
+        </where>
+        order by roleId,levelId
+    </select>
+
+    <update id="updatememRoleRank" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE project_role_rank SET
+        minRankKey=#{minRankKey,jdbcType=INTEGER},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+		roleId=#{roleId}
+		and levelId=#{levelId}
+    </update>
+    <select id="achievementTypeList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_achievement_type.*,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator
+        FROM
+        project_achievement_type
+        LEFT JOIN os_user AS os_user1 ON project_achievement_type.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON project_achievement_type.UPDATE_BY_ = os_user2.USER_ID_
+        ORDER BY
+        sequence
+    </select>
+
+
+    <update id="updateAchievementType" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE project_achievement_type SET
+        catagoryName=#{catagoryName,jdbcType=INTEGER},
+        sequence=#{sequence,jdbcType=INTEGER},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+		id=#{id}
+    </update>
+
+    <insert id="saveAchievementType" parameterType="com.alibaba.fastjson.JSONObject">
+      insert into project_achievement_type
+      (id,catagoryName,sequence,CREATE_BY_,CREATE_TIME_)
+      values(
+       #{id,jdbcType=VARCHAR},
+      #{catagoryName,jdbcType=VARCHAR},
+      #{sequence,jdbcType=INTEGER},
+      #{CREATE_BY_,jdbcType=VARCHAR},
+      #{CREATE_TIME_,jdbcType=TIMESTAMP}
+      )
+    </insert>
+
+    <delete id="delAchievementType" parameterType="java.lang.String">
+        delete from project_achievement_type
+        where
+        id=#{id}
+    </delete>
+
+    <select id="getBpmSolutions" resultType="java.util.Map">
+        SELECT A.SOL_ID_ as id,A.NAME_ as text
+        FROM bpm_solution A
+        left join sys_tree B on A.TREE_ID_ = B.TREE_ID_
+        where B.KEY_ = 'XMJFWGL'
+    </select>
+
+    <select id="queryDeliveryByNameAndProjectId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            project_stage_leveldelivery
+        <where>
+            <choose>
+                <when test="stageId !=null and stageId !=''">
+                    project_stage_leveldelivery.stageId = #{stageId}
+                </when>
+                <otherwise>
+                    project_stage_leveldelivery.stageId IN (
+                    SELECT stageId FROM project_stagedivide
+                    WHERE project_stagedivide.categoryId = (
+                    SELECT categoryId FROM project_baseinfo
+                    WHERE project_baseinfo.projectId = #{projectId}
+                    )
+                    )
+                </otherwise>
+            </choose>
+            AND project_stage_leveldelivery.deliveryName = #{deliveryName}
+        </where>
+    </select>
+</mapper>

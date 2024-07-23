@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.MixedinputDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="whereFiling">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND business.businessType = 'filing'
+        <if test="@Ognl@isNotEmpty(applyUser)">
+            AND business.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <sql id="whereDiscard">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND business.businessType = 'discard'
+        <if test="@Ognl@isNotEmpty(applyUser)">
+            AND business.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <sql id="whereMaster">
+        <if test="@Ognl@isNotEmpty(orderNo)">
+            AND business.orderNo = #{orderNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(batchNo)">
+            AND business.batchNo = #{batchNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCodeOfMachine)">
+            AND business.materialCodeOfMachine = #{materialCodeOfMachine}
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCode)">
+            AND business.materialCode = #{materialCode}
+        </if>
+        <if test="@Ognl@isNotEmpty(isMixedInput)">
+            AND business.isMixedInput = #{isMixedInput}
+        </if>
+        <if test="@Ognl@isNotEmpty(repUserName)">
+            AND business.repUserName = #{repUserName}
+        </if>
+        <if test="@Ognl@isNotEmpty(signYear)">
+            AND business.signYear = #{signYear}
+        </if>
+        <if test="@Ognl@isNotEmpty(signMonth)">
+            AND business.signMonth = #{signMonth}
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <!---->
+    <select id="filingDataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        service_engineering_mixedinput_voucher AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="whereFiling"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countFilingDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_mixedinput_voucher AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="whereFiling"/>
+        </where>
+    </select>
+    <!---->
+    <select id="discardDataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        service_engineering_mixedinput_voucher AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="whereDiscard"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDiscardDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_mixedinput_voucher AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="whereDiscard"/>
+        </where>
+    </select>
+    <!---->
+    <select id="masterdataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*
+        FROM
+        service_engineering_mixedinput_masterdata AS business
+        <where>
+            <include refid="whereMaster"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countMasterdataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_mixedinput_masterdata AS business
+        <where>
+            <include refid="whereMaster"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryFilingDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            bpm_inst.INST_ID_ AS instId
+        FROM service_engineering_mixedinput_voucher AS business
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+    </select>
+    <!---->
+    <select id="queryDiscardDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            bpm_inst.INST_ID_ AS instId
+        FROM service_engineering_mixedinput_voucher AS business
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+    </select>
+    <!---->
+    <select id="queryMasterdataDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_mixedinput_masterdata
+        WHERE id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertBusinessFiling" parameterType="java.util.Map">
+        insert into service_engineering_mixedinput_voucher(
+            id,
+            applyTime,
+            applyUserId,
+            applyUser,
+            businessStatus,
+            remarks,
+            recordItems,
+            businessType,
+            CREATE_BY_,
+            CREATE_TIME_,
+            INST_ID_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{applyTime,jdbcType=VARCHAR},
+            #{applyUserId,jdbcType=VARCHAR},
+            #{applyUser,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{remarks,jdbcType=VARCHAR},
+            #{recordItems,jdbcType=VARCHAR},
+            #{businessType,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{INST_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <insert id="insertBusinessDiscard" parameterType="java.util.Map">
+        insert into service_engineering_mixedinput_voucher(
+        id,
+        applyTime,
+        applyUserId,
+        applyUser,
+        businessStatus,
+        remarks,
+        recordItems,
+        businessType,
+        CREATE_BY_,
+        CREATE_TIME_,
+        INST_ID_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{applyTime,jdbcType=VARCHAR},
+        #{applyUserId,jdbcType=VARCHAR},
+        #{applyUser,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{remarks,jdbcType=VARCHAR},
+        #{recordItems,jdbcType=VARCHAR},
+        #{businessType,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{INST_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusinessFiling" parameterType="java.util.Map">
+        update service_engineering_mixedinput_voucher
+        set
+            applyTime=#{applyTime,jdbcType=VARCHAR},
+            applyUserId=#{applyUserId,jdbcType=VARCHAR},
+            applyUser=#{applyUser,jdbcType=VARCHAR},
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            remarks=#{remarks,jdbcType=VARCHAR},
+            recordItems=#{recordItems,jdbcType=VARCHAR},
+            businessType=#{businessType,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <update id="updateBusinessDiscard" parameterType="java.util.Map">
+        update service_engineering_mixedinput_voucher
+        set
+        applyTime=#{applyTime,jdbcType=VARCHAR},
+        applyUserId=#{applyUserId,jdbcType=VARCHAR},
+        applyUser=#{applyUser,jdbcType=VARCHAR},
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        remarks=#{remarks,jdbcType=VARCHAR},
+        recordItems=#{recordItems,jdbcType=VARCHAR},
+        businessType=#{businessType,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteBusinessFiling" parameterType="java.util.Map">
+        delete from service_engineering_mixedinput_voucher
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds)">
+                1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteBusinessDiscard" parameterType="java.util.Map">
+        delete from service_engineering_mixedinput_voucher
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds)">
+                1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteBusinessMasterdata" parameterType="java.util.Map">
+        delete from service_engineering_mixedinput_masterdata
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds)">
+                1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="insertBusinessMasterData" parameterType="java.util.Map">
+        insert into service_engineering_mixedinput_masterdata(
+        id,
+        orderNo,
+        batchNo,
+        orderInputCount,
+        materialCodeOfMachine,
+        materialDescriptionOfMachine,
+        materialCode,
+        materialDescription,
+        materialCount,
+        isMixedInput,
+        remarks1,
+        remarks2,
+        repUserName,
+        signYear,
+        signMonth,
+        remarks,
+        businessStatus,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{orderNo,jdbcType=VARCHAR},
+        #{batchNo,jdbcType=VARCHAR},
+        #{orderInputCount,jdbcType=VARCHAR},
+        #{materialCodeOfMachine,jdbcType=VARCHAR},
+        #{materialDescriptionOfMachine,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{materialDescription,jdbcType=VARCHAR},
+        #{materialCount,jdbcType=VARCHAR},
+        #{isMixedInput,jdbcType=VARCHAR},
+        #{remarks1,jdbcType=VARCHAR},
+        #{remarks2,jdbcType=VARCHAR},
+        #{repUserName,jdbcType=VARCHAR},
+        #{signYear,jdbcType=VARCHAR},
+        #{signMonth,jdbcType=VARCHAR},
+        #{remarks,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <delete id="discardBusinessMasterdata" parameterType="java.util.Map">
+        update service_engineering_mixedinput_masterdata
+        set
+        businessStatus='作废'
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds)">
+                1=2
+            </if>
+        </where>
+    </delete>
+</mapper>

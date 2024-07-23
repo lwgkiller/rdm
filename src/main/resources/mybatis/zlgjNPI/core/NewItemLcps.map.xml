@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.NewItemLcpsDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryXplcList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        xplcqpsTab.*,
+        os_user.FULLNAME_ AS creator,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.ACT_INST_ID_,
+        os_group.NAME_ as creatorDeptName
+        FROM
+        xplcqpsTab
+        LEFT JOIN os_user ON xplcqpsTab.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON xplcqpsTab.xplcId = bpm_inst.BUS_KEY_
+        left join os_rel_inst on xplcqpsTab.CREATE_BY_=os_rel_inst.PARTY2_
+        LEFT JOIN os_group on os_rel_inst.PARTY1_=os_group.GROUP_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+            and os_rel_inst.DIM1_='1'
+            <if test="cpzgName != null and cpzgName != ''">
+                AND xplcqpsTab.cpzgName LIKE CONCAT( '%', #{cpzgName}, '%' )
+            </if>
+            <if test="applyUserId != null and applyUserId != ''">
+                AND jsjds_baseinfo.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="applyUserDeptId != null and applyUserDeptId != ''">
+                AND os_group.GROUP_ID_ = #{applyUserDeptId}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                <choose>
+                    <when test="instStatus == 'SUCCESS_END'">
+                        AND (bpm_inst.STATUS_ = #{instStatus} OR bpm_inst.STATUS_ is NULL OR bpm_inst.STATUS_ = '')
+                    </when>
+                    <otherwise>
+                        AND bpm_inst.STATUS_ = #{instStatus}
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertLcps" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into xplcqpsTab(
+            xplcId
+            ,cpzgId
+            ,cpzgName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{xplcId,jdbcType=VARCHAR},
+            #{cpzgId,jdbcType=VARCHAR},
+            #{cpzgName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateLcps" parameterType="com.alibaba.fastjson.JSONObject">
+        update xplcqpsTab
+        set
+            cpzgId=#{cpzgId,jdbcType=VARCHAR},
+            cpzgName=#{cpzgName,jdbcType=VARCHAR},
+            sffgsp=#{sffgsp,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            xplcId=#{xplcId}
+    </update>
+
+    <select id="queryXplcById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select xplcqpsTab.*,
+                os_user.FULLNAME_ AS creator,
+                bpm_inst.INST_ID_ as instId
+        from xplcqpsTab
+        left join os_user on xplcqpsTab.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on xplcqpsTab.xplcId=bpm_inst.BUS_KEY_
+        where xplcqpsTab.xplcId=#{xplcId}
+    </select>
+
+    <select id="queryXplcFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            xplcqps_fileTab.*
+        FROM
+            xplcqps_fileTab
+        WHERE
+            xplcqps_fileTab.xplcId IN
+        <foreach collection="xplcIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <insert id="addXplcFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into xplcqps_fileTab(
+        id
+        ,xplcId
+        ,fileName
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{xplcId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        now()
+        )
+    </insert>
+
+    <delete id="deleteXplcFile" parameterType="java.util.Map">
+        delete from xplcqps_fileTab
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="xplcIds != null and xplcIds !=''">
+                AND xplcId IN
+                <foreach collection="xplcIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteXplc" parameterType="java.util.Map">
+        delete from xplcqpsTab
+        <where>
+            <if test="xplcIds != null and xplcIds !=''">
+                xplcId IN
+                <foreach collection="xplcIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <insert id="saveXplcxx" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into xplcqps_infoTab(
+            id,
+            xplcId,
+            product,
+            jixin,
+            lbj,
+            wtqd,
+            yhcs,
+            bmId,
+            bmName,
+            zrrId,
+            zrrName,
+            wcTime,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{xplcId,jdbcType=VARCHAR},
+            #{product,jdbcType=VARCHAR},
+            #{jixin,jdbcType=VARCHAR},
+            #{lbj,jdbcType=VARCHAR},
+            #{wtqd,jdbcType=VARCHAR},
+            #{yhcs,jdbcType=VARCHAR},
+            #{bmId,jdbcType=VARCHAR},
+            #{bmName,jdbcType=VARCHAR},
+            #{zrrId,jdbcType=VARCHAR},
+            #{zrrName,jdbcType=VARCHAR},
+            #{wcTime,jdbcType=TIMESTAMP},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateXplcxx" parameterType="com.alibaba.fastjson.JSONObject">
+        update xplcqps_infoTab
+        set
+        product=#{product,jdbcType=VARCHAR},
+        jixin=#{jixin,jdbcType=VARCHAR},
+        lbj=#{lbj,jdbcType=VARCHAR},
+        wtqd=#{wtqd,jdbcType=VARCHAR},
+        yhcs=#{yhcs,jdbcType=VARCHAR},
+        bmId=#{bmId,jdbcType=VARCHAR},
+        bmName=#{bmName,jdbcType=VARCHAR},
+        zrrId=#{zrrId,jdbcType=VARCHAR},
+        zrrName=#{zrrName,jdbcType=VARCHAR},
+        wcTime=#{wcTime,jdbcType=TIMESTAMP},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+    <select id="getXplcxxList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+          xplcqps_infoTab.*
+        FROM
+          xplcqps_infoTab
+        WHERE
+          xplcqps_infoTab.xplcId = #{xplcId}
+    </select>
+    <select id="getXplcxx" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT
+          xplcqps_infoTab.*
+        FROM
+          xplcqps_infoTab
+        WHERE
+          xplcqps_infoTab.id = #{id}
+    </select>
+    <delete id="delXplcxxListById" parameterType="java.util.Map">
+        delete from xplcqps_infoTab
+        where id = #{id}
+    </delete>
+    <delete id="delXplcxxList" parameterType="java.util.Map">
+        delete from xplcqps_infoTab
+        <where>
+            <if test="xplcIds != null and xplcIds !=''">
+                xplcId IN
+                <foreach collection="xplcIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+</mapper>

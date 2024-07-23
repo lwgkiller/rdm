@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.HtglFileDao">
+    <!---->
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into htgl_fileinfo(
+        id,
+        fileName,
+        fileSize,
+        fileDesc,
+        fileType,
+        contractId,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{fileType,jdbcType=VARCHAR},
+        #{contractId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <delete id="deleteFileById" parameterType="java.lang.String">
+        delete from htgl_fileinfo
+        where id =#{fileId}
+    </delete>
+    <!---->
+    <delete id="deleteFileByContractIds" parameterType="java.lang.String">
+        delete from htgl_fileinfo
+        where contractId IN
+        <foreach collection="contractIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <select id="queryFilesByContractIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from htgl_fileinfo
+        where contractId IN
+        <foreach collection="contractIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+</mapper>

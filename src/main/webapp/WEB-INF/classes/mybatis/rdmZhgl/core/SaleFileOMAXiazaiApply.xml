@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.SaleFileOMAXiazaiApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertApply" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into salefileoma_xiazaiapply(
+        id
+        ,applyNumber
+        ,creatorName
+        ,creatorDeptId
+        ,useDesc
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR}
+        ,#{applyNumber,jdbcType=VARCHAR}
+        ,#{creatorName,jdbcType=VARCHAR}
+        ,#{creatorDeptId,jdbcType=VARCHAR}
+        ,#{useDesc,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateApply" parameterType="com.alibaba.fastjson.JSONObject">
+        update salefileoma_xiazaiapply
+        set
+        useDesc=#{useDesc,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <update id="updateApplyNumber" parameterType="com.alibaba.fastjson.JSONObject">
+        update salefileoma_xiazaiapply
+        set
+        applyNumber=#{applyNumber,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteApply" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from salefileoma_xiazaiapply
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryApplyList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        salefileoma_xiazaiapply.*,
+        os_group.NAME_ AS applyUserDeptName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        salefileoma_xiazaiapply
+        LEFT JOIN os_group ON salefileoma_xiazaiapply.creatorDeptId = os_group.GROUP_ID_
+        left join bpm_inst on salefileoma_xiazaiapply.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="applyNumber != null and applyNumber != ''">
+                salefileoma_xiazaiapply.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND salefileoma_xiazaiapply.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="applyUserDeptName != null and applyUserDeptName != ''">
+                AND os_group.NAME_ like CONCAT('%',#{applyUserDeptName},'%')
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR salefileoma_xiazaiapply.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countApplyList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        salefileoma_xiazaiapply
+        LEFT JOIN os_group ON salefileoma_xiazaiapply.creatorDeptId = os_group.GROUP_ID_
+        left join bpm_inst on salefileoma_xiazaiapply.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="applyNumber != null and applyNumber != ''">
+                salefileoma_xiazaiapply.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND salefileoma_xiazaiapply.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="applyUserDeptName != null and applyUserDeptName != ''">
+                AND os_group.NAME_ like CONCAT('%',#{applyUserDeptName},'%')
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR salefileoma_xiazaiapply.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            salefileoma_xiazaiapply.*,
+            os_group.NAME_    AS creatorDeptName,
+            bpm_inst.INST_ID_ AS instId
+        FROM
+            salefileoma_xiazaiapply
+            LEFT JOIN bpm_inst
+                ON salefileoma_xiazaiapply.id = bpm_inst.BUS_KEY_
+            LEFT JOIN os_group ON salefileoma_xiazaiapply.creatorDeptId = os_group.GROUP_ID_
+        WHERE
+            id = #{id}
+    </select>
+    <insert id="insertDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into salefileoma_xiazaiapplydetail(
+        id
+        ,applyId
+        ,salefileId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        ,fileType
+        ,systemType
+        ,designModel
+        ,materialCode
+        ,saleModel
+        ,directorName
+        ,applicabilityDoc
+        ,version
+        ,language
+        ,region
+        ,fileStatus
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{applyId,jdbcType=VARCHAR}
+        ,#{salefileId,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        ,#{fileType,jdbcType=VARCHAR}
+        ,#{systemType,jdbcType=VARCHAR}
+        ,#{designModel,jdbcType=VARCHAR}
+        ,#{materialCode,jdbcType=VARCHAR}
+        ,#{saleModel,jdbcType=VARCHAR}
+        ,#{directorName,jdbcType=VARCHAR}
+        ,#{applicabilityDoc,jdbcType=VARCHAR}
+        ,#{version,jdbcType=VARCHAR}
+        ,#{language,jdbcType=VARCHAR}
+        ,#{region,jdbcType=VARCHAR}
+        ,#{fileStatus,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <delete id="deleteDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from salefileoma_xiazaiapplydetail
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryDemandList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            salefileoma_xiazaiapplydetail.*,
+            salefileoma_applyfiles.id AS fileId,
+            salefileoma_applyfiles.fileName,
+            salefileoma_apply.CREATE_BY_ AS fileCreatorId,
+            os_user.FULLNAME_ AS fileCreatorName
+        FROM
+            salefileoma_xiazaiapplydetail
+
+            LEFT JOIN salefileoma_apply
+                ON salefileoma_apply.id = salefileoma_xiazaiapplydetail.salefileId
+            LEFT JOIN salefileoma_applyfiles
+                ON salefileoma_apply.id = salefileoma_applyfiles.applyId
+            LEFT JOIN os_user ON salefileoma_apply.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+            salefileoma_xiazaiapplydetail.applyId = #{applyId}
+    </select>
+    <!---->
+</mapper>

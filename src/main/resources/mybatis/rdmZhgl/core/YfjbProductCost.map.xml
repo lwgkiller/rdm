@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.YfjbProductCostDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ as creator
+        FROM
+        yfjb_productCost A
+        left join os_user B on A.CREATE_BY_ = B.USER_ID_
+        <where>
+            <if test="costYear != null and costYear != ''">
+                and A.costYear #{costYear}
+            </if>
+            <if test="model != null and model != ''">
+                and A.model = #{model}
+            </if>
+            <if test="deptId != null and deptId != ''">
+                and  A.deptId = #{deptId}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addItem" parameterType="java.util.Map">
+        INSERT INTO yfjb_productCost (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            deptId,
+            model,
+            costYear,
+            cost
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{deptId,jdbcType=VARCHAR},
+            #{model,jdbcType=VARCHAR},
+            #{costYear,jdbcType=VARCHAR},
+            #{cost,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateItem" parameterType="java.util.Map">
+        update yfjb_productCost
+        <set>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+            <if test="costYear != null and costYear != ''">
+                costYear=#{costYear,jdbcType=VARCHAR},
+            </if>
+            <if test="model != null and model != ''">
+                model=#{model,jdbcType=VARCHAR},
+            </if>
+            <if test="cost != null and cost != ''">
+                cost=#{cost,jdbcType=VARCHAR},
+            </if>
+        </set>
+        WHERE
+         id=#{id}
+    </update>
+    <delete id="delItem" parameterType="java.lang.String">
+        delete from yfjb_productCost where id = #{id}
+    </delete>
+    <select id="getCostByInfo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select sum(A.cost) as cost from yfjb_productcost A
+        where 1=1
+        <if test="saleModelList != null and saleModelList != ''">
+            and A.model in
+            <foreach collection="saleModelList" index="index" item="saleModel" open="(" separator="," close=")">
+                #{saleModel}
+            </foreach>
+        </if>
+        <if test="costYear != null and costYear != ''">
+            and A.costYear=#{costYear,jdbcType=VARCHAR}
+        </if>
+    </select>
+    <select id="getObjByInfo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select * from yfjb_productcost A
+        where 1=1
+        <if test="model != null and model != ''">
+            and A.model=#{model,jdbcType=VARCHAR}
+        </if>
+        <if test="costYear != null and costYear != ''">
+            and A.costYear=#{costYear,jdbcType=VARCHAR}
+        </if>
+    </select>
+</mapper>

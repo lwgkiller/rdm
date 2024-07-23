@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardUpdateDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryGzjl" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_updatebase.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        standard_updatebase
+        LEFT JOIN os_user ON os_user.USER_ID_ = standard_updatebase.CREATE_BY_
+        WHERE
+        belongbz=#{belongbz}
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countGzjlList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        standard_updatebase
+        WHERE
+        belongbz=#{belongbz}
+
+    </select>
+    <insert id="createGzjl" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_updatebase(
+            updateId
+            ,belongbz
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{updateId,jdbcType=VARCHAR},
+            #{belongbz,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateGzjl" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_updatebase
+        <set>
+            why=#{why,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        updateId=#{updateId}
+    </update>
+    <select id="queryGzjlById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        standard_updatebase.*,
+        standard_updatebase.CREATE_BY_ AS userId,
+       os_user.FULLNAME_ AS userName
+        FROM
+        standard_updatebase
+        LEFT JOIN os_user ON os_user.USER_ID_ = standard_updatebase.CREATE_BY_
+        where standard_updatebase.updateId=#{updateId}
+    </select>
+    <select id="queryGzjlDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_updatedetail.*
+        FROM
+            standard_updatedetail
+        where
+        standard_updatedetail.belongId = #{belongId}
+    </select>
+
+
+    <delete id="deleteGzjlDetail" parameterType="java.util.Map">
+        delete from standard_updatedetail
+        where
+        detailId=#{detailId}
+    </delete>
+    <delete id="deleteGzjl" parameterType="java.util.Map">
+        delete from standard_updatebase
+        where
+        updateId=#{updateId}
+    </delete>
+
+    <insert id="createGzjlDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_updatedetail(
+            detailId
+            ,updateNote
+            ,oldNote
+            ,newNote
+            ,belongId
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{detailId,jdbcType=VARCHAR},
+            #{updateNote,jdbcType=VARCHAR},
+            #{oldNote,jdbcType=VARCHAR},
+            #{newNote,jdbcType=VARCHAR},
+            #{belongId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateGzjlDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_updatedetail
+        <set>
+            updateNote=#{updateNote,jdbcType=VARCHAR},
+            oldNote=#{oldNote,jdbcType=VARCHAR},
+            newNote=#{newNote,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        detailId=#{detailId}
+    </update>
+</mapper>

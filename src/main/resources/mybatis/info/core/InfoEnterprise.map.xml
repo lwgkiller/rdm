@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.info.core.dao.InfoEnterpriseDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="selectGnList" parameterType="java.util.Map" resultType="com.redxun.info.core.model.InfoGngys">
+        SELECT
+        gn.id,
+        gn.code,
+        gn.is_hg,
+        gn.gfName,
+        gn.ptCategory,
+        gn.wlName,
+        gn.wlCategory,
+        gn.CREATE_BY_ as createBy,
+        gn.CREATE_TIME_ createTime,
+        gn.TENANT_ID_ as tenantId,
+        gn.UPDATE_BY_ as updateBy,
+        gn.UPDATE_TIME_ as updateTime,
+        ouc.FULLNAME_ AS creator,
+        ouu.FULLNAME_ AS updator
+        FROM info_gngys gn
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = gn.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = gn.UPDATE_BY_
+        WHERE 1=1
+        <if test="code != null and code != ''">AND gn.code = #{code}</if>
+        <if test="gfName != null and gfName != ''">AND gn.gfName LIKE CONCAT( '%', #{gfName}, '%' )</if>
+        <if test="wlName != null and wlName != ''">AND gn.wlName LIKE CONCAT( '%', #{wlName}, '%' )</if>
+        order by gn.CREATE_TIME_ desc
+        <if test="sortField != null and sortField !='' and sortOrder != null and sortOrder !='' ">
+            , ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="selectGnCount" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM info_gngys
+    </select>
+
+    <insert id="batchInsertGn" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO info_gngys
+                (id,code,is_hg,gfName,ptCategory,wlName,wlCategory,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.code},#{item.is_hg},#{item.gfName},#{item.ptCategory},#{item.wlName},#{item.wlCategory},#{item.createBy},SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+
+    <update id="batchUpdateGn" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update info_gngys
+                <set>
+                    <if test="item.code != null and item.code != ''">code=#{item.code},</if>
+                    <if test="item.is_hg != null and item.is_hg != ''">is_hg=#{item.is_hg},</if>
+                    <if test="item.gfName != null and item.gfName != ''">gfName=#{item.gfName},</if>
+                    <if test="item.ptCategory != null and item.ptCategory != ''">ptCategory=#{item.ptCategory},</if>
+                    <if test="item.wlName != null and item.wlName != ''">wlName=#{item.wlName},</if>
+                    <if test="item.wlCategory != null and item.wlCategory != ''">wlCategory=#{item.wlCategory},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+
+    <delete id="batchDeleteGn">
+        <if test="list != null and list.size > 0">
+            delete from info_gngys where id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+            delete from info_gyslxr where belongId in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+            delete from info_cpyb_files where belongId in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+    <!-- ==============国外企业供应方=============== -->
+
+    <select id="selectGwList" parameterType="java.util.Map" resultType="com.redxun.info.core.model.InfoGwgys">
+        SELECT
+        gw.id,
+        gw.code,
+        gw.area,
+        gw.is_hg,
+        gw.gfName,
+        gw.ptCategory,
+        gw.wlName,
+        gw.wlCategory,
+        gw.CREATE_BY_ as createBy,
+        gw.CREATE_TIME_ createTime,
+        gw.TENANT_ID_ as tenantId,
+        gw.UPDATE_BY_ as updateBy,
+        gw.UPDATE_TIME_ as updateTime,
+        ouc.FULLNAME_ AS creator,
+        ouu.FULLNAME_ AS updator
+        FROM info_gwgys gw
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = gw.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = gw.UPDATE_BY_
+        WHERE 1=1
+        <if test="code != null and code != ''">AND gw.code = #{code}</if>
+        <if test="area != null and area != ''">AND gw.area LIKE CONCAT( '%', #{area}, '%' )</if>
+        <if test="gfName != null and gfName != ''">AND gw.gfName LIKE CONCAT( '%', #{gfName}, '%' )</if>
+        <if test="wlName != null and wlName != ''">AND gw.wlName LIKE CONCAT( '%', #{wlName}, '%' )</if>
+        order by gw.CREATE_TIME_ desc
+        <if test="sortField != null and sortField !='' and sortOrder != null and sortOrder !='' ">
+            , ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="selectGwCount" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM info_gwgys
+    </select>
+
+    <insert id="batchInsertGw" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO info_gwgys
+                (id,area,code,is_hg,gfName,ptCategory,wlName,wlCategory,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.area},#{item.code},#{item.is_hg},#{item.gfName},#{item.ptCategory},#{item.wlName},#{item.wlCategory},#{item.createBy},SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+
+    <update id="batchUpdateGw" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update info_gwgys
+                <set>
+                    <if test="item.code != null and item.code != ''">code=#{item.code},</if>
+                    <if test="item.area != null and item.area != ''">area=#{item.area},</if>
+                    <if test="item.is_hg != null and item.is_hg != ''">is_hg=#{item.is_hg},</if>
+                    <if test="item.gfName != null and item.gfName != ''">gfName=#{item.gfName},</if>
+                    <if test="item.ptCategory != null and item.ptCategory != ''">ptCategory=#{item.ptCategory},</if>
+                    <if test="item.wlName != null and item.wlName != ''">wlName=#{item.wlName},</if>
+                    <if test="item.wlCategory != null and item.wlCategory != ''">wlCategory=#{item.wlCategory},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+
+    <delete id="batchDeleteGw">
+        <if test="list != null and list.size > 0">
+            delete from info_gwgys where id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+        delete from info_gyslxr where belongId in
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>;
+        delete from info_cpyb_files where belongId in
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>;
+    </delete>
+
+    <!-- ==============企业供应方联系人=============== -->
+
+    <select id="selectEnterpriseContactsList" parameterType="java.util.Map"
+            resultType="com.redxun.info.core.model.InfoGyslxr">
+        SELECT
+        gyslx.id,
+        gyslx.belongId,
+        gyslx.contactName,
+        gyslx.post,
+        gyslx.phone,
+        gyslx.CREATE_BY_ as createBy,
+        gyslx.CREATE_TIME_ createTime,
+        gyslx.TENANT_ID_ as tenantId,
+        gyslx.UPDATE_BY_ as updateBy,
+        gyslx.UPDATE_TIME_ as updateTime,
+        ouc.FULLNAME_ AS creator,
+        ouu.FULLNAME_ AS updator
+        FROM info_gyslxr gyslx
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = gyslx.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = gyslx.UPDATE_BY_
+        WHERE 1=1
+        <if test="belongId != null and belongId != ''">AND gyslx.belongId = #{belongId}</if>
+        <if test="contactName != null and contactName != ''">AND gyslx.contactName LIKE CONCAT( '%', #{contactName}, '%'
+            )
+        </if>
+        <if test="post != null and post != ''">AND gyslx.post = #{post}</if>
+        <if test="phone != null and phone != ''">AND gyslx.phone = #{phone}</if>
+        order by gyslx.CREATE_TIME_ desc
+        <if test="sortField != null and sortField !='' and sortOrder != null and sortOrder !='' ">
+            , ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="selectEnterpriseContactsCount" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM info_gyslxr
+        WHERE 1=1
+        <if test="belongId != null and belongId != ''">AND info_gyslxr.belongId = #{belongId}</if>
+    </select>
+
+    <insert id="batchInsertEnterpriseContacts" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO info_gyslxr (id,belongId,contactName,post,phone,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.belongId},#{item.contactName},#{item.post},#{item.phone},#{item.createBy},SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+
+    <update id="batchUpdateEnterpriseContacts" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update info_gyslxr
+                <set>
+                    <if test="item.belongId != null and item.belongId != ''">belongId=#{item.belongId},</if>
+                    <if test="item.contactName != null and item.contactName != ''">contactName=#{item.contactName},</if>
+                    <if test="item.post != null and item.post != ''">post=#{item.post},</if>
+                    <if test="item.phone != null and item.phone != ''">phone=#{item.phone},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+
+    <delete id="batchDeleteEnterpriseContacts">
+        <if test="list != null and list.size > 0">
+            delete from info_gyslxr where id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+    <delete id="deleteEnterpriseContactsBy">
+        <if test="list != null and list.size > 0">
+            delete from info_gyslxr where belongId in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+    <!-- ==============企业供应方样本文件=============== -->
+
+    <select id="selectEnterpriseFileList" parameterType="java.util.Map"
+            resultType="com.redxun.info.core.model.InfoCpybFiles">
+        SELECT
+        file.id,
+        file.belongId,
+        file.fileName,
+        file.fileSize,
+        file.CREATE_BY_ as createBy,
+        file.CREATE_TIME_ createTime,
+        file.TENANT_ID_ as tenantId,
+        file.UPDATE_BY_ as updateBy,
+        file.UPDATE_TIME_ as updateTime,
+        ouc.FULLNAME_ AS creator,
+        ouu.FULLNAME_ AS updator
+        FROM info_cpyb_files file
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = file.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = file.UPDATE_BY_
+        WHERE 1=1
+        <if test="belongId != null and belongId != ''">AND file.belongId = #{belongId}</if>
+        <if test="fileName != null and fileName != ''">AND file.fileName LIKE CONCAT( '%', #{fileName}, '%' )</if>
+        order by file.CREATE_TIME_ desc
+        <if test="sortField != null and sortField !='' and sortOrder != null and sortOrder !='' ">
+            , ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="selectEnterpriseFileCount" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM info_cpyb_files
+        WHERE 1=1
+        <if test="belongId != null and belongId != ''">AND belongId = #{belongId}</if>
+    </select>
+
+    <insert id="batchInsertEnterpriseFile" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO info_cpyb_files (id,belongId,fileName,fileSize,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.belongId},#{item.fileName},#{item.fileSize},#{item.createBy},SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+
+    <update id="batchUpdateEnterpriseFile" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update info_cpyb_files
+                <set>
+                    <if test="item.belongId != null and item.belongId != ''">belongId=#{item.belongId},</if>
+                    <if test="item.fileName != null and item.fileName != ''">fileName=#{item.fileName},</if>
+                    <if test="item.fileSize != null and item.fileSize != ''">fileSize=#{item.fileSize},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+
+    <delete id="batchDeleteEnterpriseFile">
+        <if test="list != null and list.size > 0">
+            delete from info_cpyb_files where id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+    <delete id="deleteEnterpriseFileBy">
+        <if test="list != null and list.size > 0">
+            delete from info_cpyb_files where belongId in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+</mapper>

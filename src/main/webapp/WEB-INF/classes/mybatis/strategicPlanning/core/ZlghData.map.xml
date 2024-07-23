@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.strategicPlanning.core.dao.ZlghDataDao">
+
+    <resultMap id="zlghZljc" type="com.redxun.strategicPlanning.core.domain.ZlghZljc">
+        <id property="id" column="id"/>
+        <result property="zljcName" column="zljc_name"/>
+        <result property="creator" column="creator"/>
+        <result property="createBy" column="CREATE_BY_"/>
+        <result property="createTime" column="CREATE_TIME_"/>
+        <result property="tenantId" column="TENANT_ID_"/>
+        <result property="updateBy" column="UPDATE_BY_"/>
+        <result property="updateTime" column="UPDATE_TIME_"/>
+    </resultMap>
+
+    <resultMap id="zlghZlkt" type="com.redxun.strategicPlanning.core.domain.ZlghZlkt">
+        <id property="id" column="id"/>
+        <result property="zljcId" column="zljcId"/>
+        <result property="ktName" column="kt_name"/>
+        <result property="creator" column="creator"/>
+        <result property="createBy" column="CREATE_BY_"/>
+        <result property="createTime" column="CREATE_TIME_"/>
+        <result property="tenantId" column="TENANT_ID_"/>
+        <result property="updateBy" column="UPDATE_BY_"/>
+        <result property="updateTime" column="UPDATE_TIME_"/>
+    </resultMap>
+
+    <resultMap id="zlghZlktDTO" type="com.redxun.strategicPlanning.core.domain.dto.ZlghZlktDto">
+        <id property="id" column="id"/>
+        <result property="zlktId" column="zlkt_id"/>
+        <result property="zljcName" column="zljc_name"/>
+        <result property="ktName" column="kt_name"/>
+        <result property="creator" column="creator"/>
+        <result property="createBy" column="CREATE_BY_"/>
+        <result property="createTime" column="CREATE_TIME_"/>
+        <result property="tenantId" column="TENANT_ID_"/>
+        <result property="updateBy" column="UPDATE_BY_"/>
+        <result property="updateTime" column="UPDATE_TIME_"/>
+    </resultMap>
+
+    <resultMap id="zlghZyhd" type="com.redxun.strategicPlanning.core.domain.ZlghZyhd">
+        <id property="id" column="id"/>
+        <result property="moveName" column="move_name"/>
+        <result property="overallGoals" column="overall_goals"/>
+        <result property="initiatorId" column="initiator_id"/>
+        <result property="initiatorName" column="initiator_name"/>
+        <result property="respUserIds" column="respUserIds"/>
+        <result property="respUserNames" column="respUserNames"/>
+        <result property="respDeptIds" column="respDeptIds"/>
+        <result property="respDeptNames" column="respDeptNames"/>
+        <result property="zljcId" column="zljc_id"/>
+        <result property="zlktId" column="zlkt_id"/>
+        <result property="creator" column="creator"/>
+        <result property="createBy" column="CREATE_BY_"/>
+        <result property="createTime" column="CREATE_TIME_"/>
+        <result property="tenantId" column="TENANT_ID_"/>
+        <result property="updateBy" column="UPDATE_BY_"/>
+        <result property="updateTime" column="UPDATE_TIME_"/>
+    </resultMap>
+
+    <resultMap id="zlghZlydDTO" type="com.redxun.strategicPlanning.core.domain.dto.ZlghZyhdDto">
+        <id property="id" column="id"/>
+        <result property="zljcName" column="zljc_name"/>
+        <result property="ktName" column="kt_name"/>
+        <result property="zlktId" column="zlktId"/>
+        <result property="zyhdId" column="zyhdId"/>
+        <result property="moveName" column="move_name"/>
+        <result property="overallGoals" column="overall_goals"/>
+        <result property="initiatorId" column="initiator_id"/>
+        <result property="initiatorName" column="initiator_name"/>
+        <result property="respUserIds" column="respUserIds"/>
+        <result property="respUserNames" column="respUserNames"/>
+        <result property="respDeptIds" column="respDeptIds"/>
+        <result property="respDeptNames" column="respDeptNames"/>
+        <result property="creator" column="creator"/>
+        <result property="updator" column="updator"/>
+        <result property="createBy" column="CREATE_BY_"/>
+        <result property="createTime" column="CREATE_TIME_"/>
+        <result property="tenantId" column="TENANT_ID_"/>
+        <result property="updateBy" column="UPDATE_BY_"/>
+        <result property="updateTime" column="UPDATE_TIME_"/>
+    </resultMap>
+
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="selectZljcList" parameterType="java.util.Map"
+            resultMap="zlghZljc">
+        SELECT
+        id,
+        zljc_name,
+        `zlgh_zljc`.CREATE_BY_, FULLNAME_ AS creator,
+        `zlgh_zljc`.CREATE_TIME_,
+        `zlgh_zljc`.TENANT_ID_,
+        `zlgh_zljc`.UPDATE_BY_,
+        `zlgh_zljc`.UPDATE_TIME_
+        FROM
+        `zlgh_zljc`
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zlgh_zljc`.CREATE_BY_
+        WHERE
+        1 = 1
+        <if test="zljcName != null and zljcName != ''">
+            AND zljc_name LIKE CONCAT( '%', #{zljcName}, '%' )
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="listZljcText" resultType="com.redxun.strategicPlanning.core.domain.ZlghZljc">
+        SELECT
+        id,
+        zljc_name as zljcName
+        FROM
+        `zlgh_zljc`
+        WHERE
+        1 = 1
+    </select>
+
+    <select id="selectZljcCount" parameterType="java.util.Map"
+            resultType="integer">
+        SELECT count(1)
+        FROM
+        `zlgh_zljc`
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zlgh_zljc`.CREATE_BY_
+        WHERE
+        1 = 1
+        <if test="zljcName != null and zljcName != ''">
+            AND zljc_name LIKE CONCAT( '%', #{zljcName}, '%' )
+        </if>
+    </select>
+    <select id="selectZljcById" parameterType="java.util.Map"
+            resultMap="zlghZljc">
+        SELECT
+        id,
+        zljc_name,
+        `zlgh_zljc`.CREATE_BY_, FULLNAME_ AS creator,
+        `zlgh_zljc`.CREATE_TIME_,
+        `zlgh_zljc`.TENANT_ID_,
+        `zlgh_zljc`.UPDATE_BY_,
+        `zlgh_zljc`.UPDATE_TIME_
+        FROM
+        `zlgh_zljc`
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zlgh_zljc`.CREATE_BY_
+        WHERE
+        1 = 1
+        AND id = #{id}
+    </select>
+    <insert id="batchInsertZljc" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO zlgh_zljc (id,zljc_name,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.zljcName},#{item.createBy}, SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+    <update id="batchUpdateZljc" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update zlgh_zljc
+                <set>
+                    <if test="item.zljcName != null and item.zljcName != ''">zljc_name=#{item.zljcName},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+    <delete id="batchDeleteZljc">
+        <if test="list != null and list.size > 0">
+            delete from zlgh_zljc where id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+    <select id="selectZlktList" parameterType="java.util.Map"
+            resultMap="zlghZlktDTO">
+        SELECT
+        `zlgh_zljc`.id,
+        `zlgh_zlkt`.id AS zlkt_id,
+        `zlgh_zljc`.zljc_name,
+        `zlgh_zlkt`.kt_name,
+        `zlgh_zlkt`.CREATE_BY_, FULLNAME_ AS creator,
+        `zlgh_zlkt`.CREATE_TIME_,
+        `zlgh_zlkt`.TENANT_ID_,
+        `zlgh_zlkt`.UPDATE_BY_,
+        `zlgh_zlkt`.UPDATE_TIME_
+        FROM
+        `zlgh_zlkt`
+        LEFT JOIN `zlgh_zljc` ON `zlgh_zljc`.`id` = `zlgh_zlkt`.zljc_id
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zlgh_zlkt`.CREATE_BY_
+        WHERE
+        1 = 1
+        <if test="ktName != null and ktName != ''">
+            AND `zlgh_zlkt`.kt_name LIKE CONCAT( '%', #{ktName}, '%' )
+        </if>
+        <if test="zljcId != null and zljcId != ''">
+            AND `zlgh_zlkt`.zljc_id =#{zljcId}
+        </if>
+        order by zlgh_zljc.zljc_name asc
+        <if test="sortField != null and sortField !='' and sortOrder != null and sortOrder !='' ">
+            , ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="selectZlktListByZljcId" resultType="com.redxun.strategicPlanning.core.domain.ZlghZlkt">
+        SELECT
+        id,
+        zljc_id as zljcId,
+        kt_name as ktName
+        FROM zlgh_zlkt
+        WHERE 1=1
+        AND zljc_id in
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="listZlktByZljcId" resultType="com.redxun.strategicPlanning.core.domain.ZlghZlkt">
+        SELECT
+        `zlgh_zlkt`.id,
+        `zlgh_zlkt`.zljc_id as zljcId,
+        `zlgh_zlkt`.kt_name as ktName
+        FROM zlgh_zlkt
+        WHERE 1=1
+        <if test="zljcId != null and zljcId != ''">
+            AND `zlgh_zlkt`.zljc_id =#{zljcId}
+        </if>
+    </select>
+
+    <select id="selectZlktCount" parameterType="java.util.Map"
+            resultType="integer">
+        SELECT
+        count(1)
+        FROM
+        `zlgh_zlkt`
+        LEFT JOIN `zlgh_zljc` ON `zlgh_zljc`.`id` = `zlgh_zlkt`.zljc_id
+        WHERE
+        1 = 1
+        <if test="ktName != null and ktName != ''">
+            AND `zlgh_zlkt`.kt_name LIKE CONCAT( '%', #{ktName}, '%' )
+        </if>
+        <if test="zljcId != null and zljcId != ''">
+            AND `zlgh_zlkt`.zljc_id =#{zljcId}
+        </if>
+    </select>
+
+    <select id="selectZlktById" parameterType="string" resultMap="zlghZlktDTO">
+        SELECT
+        `zlgh_zljc`.id,
+        `zlgh_zlkt`.id AS zlkt_id,
+        `zlgh_zljc`.zljc_name,
+        `zlgh_zlkt`.kt_name,
+        `zlgh_zlkt`.CREATE_BY_, FULLNAME_ AS creator,
+        `zlgh_zlkt`.CREATE_TIME_,
+        `zlgh_zlkt`.TENANT_ID_,
+        `zlgh_zlkt`.UPDATE_BY_,
+        `zlgh_zlkt`.UPDATE_TIME_
+        FROM
+        `zlgh_zlkt`
+        LEFT JOIN `zlgh_zljc` ON `zlgh_zljc`.`id` = `zlgh_zlkt`.zljc_id
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zlgh_zlkt`.CREATE_BY_
+        WHERE
+        1 = 1
+        AND `zlgh_zlkt`.id = #{id}
+    </select>
+
+    <insert id="batchInsertZlkt" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO zlgh_zlkt (id,zljc_id,kt_name,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.zljcId},#{item.ktName},#{item.createBy}, SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+    <update id="batchUpdateZlkt" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update zlgh_zlkt
+                <set>
+                    <if test="item.zljcId != null and item.zljcId != ''">zljc_id=#{item.zljcId},</if>
+                    <if test="item.ktName != null">kt_name=#{item.ktName},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+    <delete id="batchDeleteZlkt">
+        <if test="list != null and list.size > 0">
+            delete from zlgh_zlkt where id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+    <select id="selectZyhdList" parameterType="java.util.Map"
+            resultMap="zlghZlydDTO">
+        SELECT
+        zzc.id,
+        zzc.zljc_name,
+        zzk.id as zlktId,
+        zzk.kt_name,
+        zh.id as zyhdId,
+        zh.move_name,
+        zh.overall_goals,
+        zh.initiator_id,
+        zh.initiator_name,
+        zh.respUserIds,
+        zh.respUserNames,
+        zh.respDeptIds,
+        zh.respDeptNames,
+        ouc.FULLNAME_ AS creator,
+        zh.CREATE_BY_,
+        zh.CREATE_TIME_,
+        zh.TENANT_ID_,
+        ouu.FULLNAME_ AS updator,
+        zh.UPDATE_BY_,
+        zh.UPDATE_TIME_
+        FROM zlgh_huodong zh
+        left join zlgh_zlkt zzk on zzk.id = zh.zlkt_id
+        left join zlgh_zljc zzc on  zzc.id = zzk.zljc_id
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = zh.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = zh.CREATE_BY_
+        WHERE 1=1
+        <if test="moveName != null and moveName != ''">
+            AND zh.move_name LIKE CONCAT( '%', #{moveName}, '%' )
+        </if>
+        <if test="id != null and id != ''">
+            AND zzc.zljc_id =#{id}
+        </if>
+        <if test="zlktId != null and zlktId != ''">
+            AND zzk.zljc_id =#{zlktId}
+        </if>
+        order by zzc.zljc_name asc, zzk.kt_name asc
+        <if test="sortField != null and sortField !='' and sortOrder != null and sortOrder !='' ">
+            , ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="selectZyhdListByZlktId" parameterType="java.util.List" resultType="com.redxun.strategicPlanning.core.domain.ZlghZyhd">
+        SELECT
+        id,
+        move_name AS moveName,
+        overall_goals AS overallGoals,
+        initiator_id AS initiatorId,
+        initiator_name AS initiatorName,
+        respUserIds AS respUserIds,
+        respUserNames AS respUserNames,
+        respDeptIds AS respDeptIds,
+        respDeptNames AS respDeptNames,
+        zljc_id AS zljcId,
+        zlkt_id AS zlktId
+        FROM zlgh_huodong
+        WHERE 1=1
+        AND zlkt_id in
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectZyhdCount" parameterType="java.util.Map"
+            resultType="integer">
+        SELECT
+        count(1)
+        FROM zlgh_huodong zh
+        left join zlgh_zlkt zzk on zzk.id = zh.zlkt_id
+        left join zlgh_zljc zzc on  zzc.id = zzk.zljc_id
+        WHERE 1=1
+        <if test="moveName != null and moveName != ''">
+            AND zh.move_name LIKE CONCAT( '%', #{moveName}, '%' )
+        </if>
+        <if test="id != null and id != ''">
+            AND zzc.zljc_id =#{id}
+        </if>
+        <if test="zlktId != null and zlktId != ''">
+            AND zzk.zljc_id =#{zlktId}
+        </if>
+    </select>
+
+    <insert id="batchInsertZyhd" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO zlgh_huodong (id,move_name,overall_goals,initiator_id,initiator_name,respUserIds,respUserNames,respDeptIds,respDeptNames,zljc_id,zlkt_id,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.moveName},#{item.overallGoals},#{item.initiatorId},#{item.initiatorName},#{item.respUserIds},#{item.respUserNames},#{item.respDeptIds},#{item.respDeptNames},#{item.zljcId},#{item.zlktId},#{item.createBy}, SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+
+    <update id="batchUpdateZyhd" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update zlgh_huodong
+                <set>
+                    <if test="item.moveName != null">move_name=#{item.moveName},</if>
+                    <if test="item.overallGoals != null">overall_goals=#{item.overallGoals},</if>
+                    <if test="item.initiatorId != null and item.initiatorId != ''">initiator_id=#{item.initiatorId},</if>
+                    <if test="item.initiatorName != null and item.initiatorName != ''">initiator_name=#{item.initiatorName},</if>
+                    <if test="item.respUserIds != null and item.respUserIds != ''">respUserIds=#{item.respUserIds},</if>
+                    <if test="item.respUserNames != null and item.respUserNames != ''">respUserNames=#{item.respUserNames},</if>
+                    <if test="item.respDeptIds != null and item.respDeptIds != ''">respDeptIds=#{item.respDeptIds},</if>
+                    <if test="item.respDeptNames != null and item.respDeptNames != ''">respDeptNames=#{item.respDeptNames},</if>
+                    <if test="item.zljcId != null and item.zljcId != ''">zljc_id=#{item.zljcId},</if>
+                    <if test="item.zlktId != null and item.zlktId != ''">zlkt_id=#{item.zlktId},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+    <delete id="batchDeleteZyhd">
+        <if test="list != null and list.size > 0">
+            delete from zlgh_huodong where id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+            delete from zlgh_hdnf where zyhd_id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+</mapper>

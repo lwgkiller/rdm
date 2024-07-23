@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.SqbgDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    
+    <select id="querySqbg" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        salefile_change.*,
+        salefile_apply.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        salefile_change
+        LEFT JOIN os_rel_inst ON salefile_change.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN salefile_apply ON salefile_change.saleId = salefile_apply.id
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = salefile_change.CREATE_BY_
+        left join bpm_inst on salefile_change.sqbgId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (salefile_change.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+            and salefile_change.applyType = #{applyType}
+        <if test="saleId != null and saleId != ''">
+            and salefile_change.saleId like CONCAT('%',#{saleId},'%')
+        </if>
+        <if test="designModel != null and designModel != ''">
+            and salefile_apply.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and salefile_apply.saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countSqbgList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        salefile_change
+        LEFT JOIN salefile_apply ON salefile_change.saleId = salefile_apply.id
+        LEFT JOIN os_rel_inst ON salefile_change.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on salefile_change.sqbgId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (salefile_change.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        and salefile_change.applyType = #{applyType}
+        <if test="saleId != null and saleId != ''">
+            and salefile_change.saleId like CONCAT('%',#{saleId},'%')
+        </if>
+        <if test="designModel != null and designModel != ''">
+            and salefile_apply.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and salefile_apply.saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+    </select>
+    <insert id="createSqbg" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into salefile_change(
+            sqbgId
+            ,saleId
+            ,newVersion
+            ,director
+            ,directorName
+            ,applyType
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{sqbgId,jdbcType=VARCHAR},
+            #{saleId,jdbcType=VARCHAR},
+            #{newVersion,jdbcType=VARCHAR},
+            #{director,jdbcType=VARCHAR},
+            #{directorName,jdbcType=VARCHAR},
+            #{applyType,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateSqbg" parameterType="com.alibaba.fastjson.JSONObject">
+        update salefile_change
+        <set>
+            newVersion=#{newVersion,jdbcType=VARCHAR},
+            director=#{director,jdbcType=VARCHAR},
+            directorName=#{directorName,jdbcType=VARCHAR},
+            saleId=#{saleId,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        sqbgId=#{sqbgId}
+    </update>
+    
+    <select id="querySqbgById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        salefile_change.*,
+        salefile_apply.fileType,
+        salefile_apply.designModel,
+        salefile_apply.saleModel,
+        salefile_apply.language,
+        salefile_apply.region,
+        bpm_inst.INST_ID_ as instId,
+        os_rel_inst.PARTY1_ as editorUserDeptId
+        from salefile_change
+        LEFT JOIN salefile_apply ON salefile_change.saleId = salefile_apply.id
+        left join bpm_inst on salefile_change.sqbgId=bpm_inst.BUS_KEY_
+        LEFT JOIN os_rel_inst ON salefile_change.CREATE_BY_ = os_rel_inst.PARTY2_
+        where
+        salefile_change.sqbgId=#{sqbgId}
+        and os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+    </select>
+
+    <update id="updateStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update bpm_inst
+        <set>
+            STATUS_ ='DISCARD_END'
+        </set>
+        where
+        INST_ID_=#{instId}
+    </update>
+    <select id="querySqbgFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        salefile_changefile
+        WHERE
+        belongId=#{sqbgId}
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into salefile_changefile(
+        fileId
+        ,fileName
+        ,belongId
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteSqbgFile" parameterType="java.util.Map">
+        delete from salefile_changefile
+        <where>
+            <if test="fileId != null and fileId !=''">
+                fileId=#{fileId}
+            </if>
+            <if test="sqbgId != null and sqbgId !=''">
+                belongId=#{sqbgId}
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteSqbg" parameterType="java.util.Map">
+        delete from salefile_change
+        <where>
+            <if test="sqbgId != null and sqbgId !=''">
+                sqbgId=#{sqbgId}
+            </if>
+        </where>
+    </delete>
+    <select id="queryDetailList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from salefile_detail
+        where
+            belongId=#{sqbgId}
+    </select>
+
+    <insert id="createDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO salefile_detail (
+        detailId,
+        beforec,
+        afterc,
+        belongId,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{detailId,jdbcType=VARCHAR},
+        #{beforec,jdbcType=VARCHAR},
+        #{afterc,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update salefile_detail
+        <set>
+            beforec =#{config,jdbcType=VARCHAR},
+            afterc=#{risk,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </set>
+        where
+        detailId=#{detailId}
+    </update>
+    <delete id="deleteDetail" parameterType="java.util.Map">
+    delete from salefile_detail
+    <where>
+        <if test="detailId != null and detailId !=''">
+            detailId=#{detailId}
+        </if>
+        <if test="sqbgId != null and sqbgId !=''">
+            belongId=#{sqbgId}
+        </if>
+    </where>
+    </delete>
+</mapper>

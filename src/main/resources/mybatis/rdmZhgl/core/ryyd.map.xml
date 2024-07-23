@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.RyydDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryRyyd" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        ryyd_tj
+        <where>
+        <if test="title != null and title != ''">
+            title like CONCAT('%',#{title},'%')
+        </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countRyydList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        ryyd_tj
+        <where>
+            <if test="title != null and title != ''">
+                title like CONCAT('%',#{title},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="queryRyydDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        ryyd_detail
+        <where>
+            <if test="gridType != null and gridType != ''">
+                gridType =#{gridType}
+            </if>
+                and belongId =#{belongId}
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="createRyyd" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ryyd_tj(
+            zId
+            ,title
+            ,totalNum
+            ,totalZc
+            ,totalLw
+            ,totalJx
+            ,totalDx
+            ,upNumkh
+            ,upZckh
+            ,upLwkh
+            ,upJxkh
+            ,upDxkh
+            ,upNumlj
+            ,upZclj
+            ,upLwlj
+            ,upJxlj
+            ,upDxlj
+            ,downNumkh
+            ,downZckh
+            ,downLwkh
+            ,downJxkh
+            ,downDxkh
+            ,downNumlj
+            ,downZclj
+            ,downLwlj
+            ,downJxlj
+            ,downDxlj
+            ,month
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{zId,jdbcType=VARCHAR},
+            #{title,jdbcType=VARCHAR},
+            #{totalNum,jdbcType=VARCHAR},
+            #{totalZc,jdbcType=VARCHAR},
+            #{totalLw,jdbcType=VARCHAR},
+            #{totalJx,jdbcType=VARCHAR},
+            #{totalDx,jdbcType=VARCHAR},
+            #{upNumkh,jdbcType=VARCHAR},
+            #{upZckh,jdbcType=VARCHAR},
+            #{upLwkh,jdbcType=VARCHAR},
+            #{upJxkh,jdbcType=VARCHAR},
+            #{upDxkh,jdbcType=VARCHAR},
+            #{upNumlj,jdbcType=VARCHAR},
+            #{upZclj,jdbcType=VARCHAR},
+            #{upLwlj,jdbcType=VARCHAR},
+            #{upJxlj,jdbcType=VARCHAR},
+            #{upDxlj,jdbcType=VARCHAR},
+            #{downNumkh,jdbcType=VARCHAR},
+            #{downZckh,jdbcType=VARCHAR},
+            #{downLwkh,jdbcType=VARCHAR},
+            #{downJxkh,jdbcType=VARCHAR},
+            #{downDxkh,jdbcType=VARCHAR},
+            #{downNumlj,jdbcType=VARCHAR},
+            #{downZclj,jdbcType=VARCHAR},
+            #{downLwlj,jdbcType=VARCHAR},
+            #{downJxlj,jdbcType=VARCHAR},
+            #{downDxlj,jdbcType=VARCHAR},
+            #{month,jdbcType=TIMESTAMP},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateRyyd" parameterType="com.alibaba.fastjson.JSONObject">
+        update ryyd_tj
+        set
+            title=#{title,jdbcType=VARCHAR},
+            totalNum=#{totalNum,jdbcType=VARCHAR},
+            totalZc=#{totalZc,jdbcType=VARCHAR},
+            totalLw=#{totalLw,jdbcType=VARCHAR},
+            totalJx=#{totalJx,jdbcType=VARCHAR},
+            totalDx=#{totalDx,jdbcType=VARCHAR},
+            upNumkh=#{upNumkh,jdbcType=VARCHAR},
+            upZckh=#{upZckh,jdbcType=VARCHAR},
+            upLwkh=#{upLwkh,jdbcType=VARCHAR},
+            upJxkh=#{upJxkh,jdbcType=VARCHAR},
+            upDxkh=#{upDxkh,jdbcType=VARCHAR},
+            upNumlj=#{upNumlj,jdbcType=VARCHAR},
+            upZclj=#{upZclj,jdbcType=VARCHAR},
+            upLwlj=#{upLwlj,jdbcType=VARCHAR},
+            upJxlj=#{upJxlj,jdbcType=VARCHAR},
+            upDxlj=#{upDxlj,jdbcType=VARCHAR},
+            downNumkh=#{downNumkh,jdbcType=VARCHAR},
+            downZckh=#{downZckh,jdbcType=VARCHAR},
+            downLwkh=#{downLwkh,jdbcType=VARCHAR},
+            downJxkh=#{downJxkh,jdbcType=VARCHAR},
+            downDxkh=#{downDxkh,jdbcType=VARCHAR},
+            downNumlj=#{downNumlj,jdbcType=VARCHAR},
+            downZclj=#{downZclj,jdbcType=VARCHAR},
+            downLwlj=#{downLwlj,jdbcType=VARCHAR},
+            downJxlj=#{downJxlj,jdbcType=VARCHAR},
+            downDxlj=#{downDxlj,jdbcType=VARCHAR},
+            month=#{month,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        zId=#{zId}
+    </update>
+    <insert id="createRyydDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ryyd_detail(
+            rId
+            ,name
+            ,identity
+            ,post
+            ,ryType
+            ,ydType
+            ,gridType
+            ,belongId
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{rId,jdbcType=VARCHAR},
+            #{name,jdbcType=VARCHAR},
+            #{identity,jdbcType=VARCHAR},
+            #{post,jdbcType=VARCHAR},
+            #{ryType,jdbcType=VARCHAR},
+            #{ydType,jdbcType=VARCHAR},
+            #{gridType,jdbcType=VARCHAR},
+            #{belongId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateRyydDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update ryyd_detail
+        set
+            name=#{name,jdbcType=VARCHAR},
+            identity=#{identity,jdbcType=VARCHAR},
+            ryType=#{ryType,jdbcType=VARCHAR},
+            ydType=#{ydType,jdbcType=VARCHAR},
+            gridType=#{gridType,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        rId=#{rId}
+    </update>
+    <select id="queryRyydById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        ryyd_tj
+        <where>
+              zId =#{zId}
+        </where>
+    </select>
+    <delete id="deleteRyydDetail" parameterType="java.util.Map">
+        delete from ryyd_detail
+        <where>
+            <if test="rId != null and rId != ''">
+                rId=#{rId}
+            </if>
+            <if test="belongId != null and belongId != ''">
+                and belongId=#{belongId}
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteRyyd" parameterType="java.util.Map">
+        delete from ryyd_tj
+        <where>
+            <if test="zId != null and zId != ''">
+                zId=#{zId}
+            </if>
+        </where>
+    </delete>
+    <select id="queryTitle" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        title
+        FROM
+        ryyd_tj
+    </select>
+</mapper>

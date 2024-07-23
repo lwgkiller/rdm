@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.JxbzzbshDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} DESC
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="jxbzzbshListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT service_enginineering_jxbzzbsh.*,
+        bpm_inst.STATUS_ as taskStatus,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_,
+        os_user.FULLNAME_ creator,
+        service_engineering_standardvalue_shipmentnotmade.materialName
+        FROM
+        service_enginineering_jxbzzbsh
+        left JOIN service_engineering_standardvalue_shipmentnotmade
+        ON service_enginineering_jxbzzbsh.shipmentnotmadeId = service_engineering_standardvalue_shipmentnotmade.id
+        left join bpm_inst on service_enginineering_jxbzzbsh.id=bpm_inst.BUS_KEY_
+        left join os_user on service_enginineering_jxbzzbsh.CREATE_BY_=os_user.USER_ID_
+        <where>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_enginineering_jxbzzbsh.materialCode like concat('%',#{materialCode},'%')
+            </if>
+            <if test="productDepartment !=null and productDepartment !=''">
+                AND service_enginineering_jxbzzbsh.productDepartment like concat('%',#{productDepartment},'%')
+            </if>
+            <if test="productType !=null and productType !=''">
+                AND service_enginineering_jxbzzbsh.productType = #{productType}
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND service_enginineering_jxbzzbsh.salesModel like concat('%',#{salesModel},'%')
+            </if>
+            <if test="versionType !=null and versionType !=''">
+                AND service_enginineering_jxbzzbsh.versionType = #{versionType}
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                <choose>
+                    <when test="taskStatus == 'SUCCESS_END'">
+                        AND (bpm_inst.STATUS_ = #{taskStatus} or bpm_inst.STATUS_ is null)
+                    </when>
+                    <otherwise>
+                        AND bpm_inst.STATUS_ = #{taskStatus}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR service_enginineering_jxbzzbsh.CREATE_BY_ = #{currentUserId}
+                    or bpm_inst.STATUS_ is null)
+                </if>
+            </if>
+            <if test="materialName !=null and materialName !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.materialName like concat('%', #{materialName},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countJxbzzbshQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        service_enginineering_jxbzzbsh
+        left JOIN service_engineering_standardvalue_shipmentnotmade
+        ON service_enginineering_jxbzzbsh.shipmentnotmadeId = service_engineering_standardvalue_shipmentnotmade.id
+        left join bpm_inst on service_enginineering_jxbzzbsh.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_enginineering_jxbzzbsh.materialCode like concat('%',#{materialCode},'%')
+            </if>
+            <if test="productDepartment !=null and productDepartment !=''">
+                AND service_enginineering_jxbzzbsh.productDepartment like concat('%',#{productDepartment},'%')
+            </if>
+            <if test="productType !=null and productType !=''">
+                AND service_enginineering_jxbzzbsh.productType = #{productType}
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND service_enginineering_jxbzzbsh.salesModel like concat('%',#{salesModel},'%')
+            </if>
+            <if test="versionType !=null and versionType !=''">
+                AND service_enginineering_jxbzzbsh.versionType = #{versionType}
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                <choose>
+                    <when test="taskStatus == 'SUCCESS_END'">
+                        AND (bpm_inst.STATUS_ = #{taskStatus} or bpm_inst.STATUS_ is null)
+                    </when>
+                    <otherwise>
+                        AND bpm_inst.STATUS_ = #{taskStatus}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR service_enginineering_jxbzzbsh.CREATE_BY_ = #{currentUserId}
+                    or bpm_inst.STATUS_ is null)
+                </if>
+            </if>
+            <if test="materialName !=null and materialName !=''">
+                AND service_engineering_standardvalue_shipmentnotmade.materialName like concat('%', #{materialName},'%')
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertJxbzzbsh" parameterType="java.util.Map">
+        insert into service_enginineering_jxbzzbsh(id,
+                                                   shipmentnotmadeId,
+                                                   materialCode,
+                                                   productDepartmentId,
+                                                   productDepartment,
+                                                   productType,
+                                                   salesModel,
+                                                   versionType,
+                                                   applicationNumber,
+                                                   distributionDepartmentId,
+                                                   distributionDepartment,
+                                                   oldId,
+                                                   changeReason,
+                                                   pinFour,
+                                                   gssNum,
+                                                   testChange,
+                                                   autoProcess,
+                                                   CREATE_BY_,
+                                                   CREATE_TIME_)
+        values (#{id},
+                #{shipmentnotmadeId},
+                #{materialCode},
+                #{productDepartmentId},
+                #{productDepartment},
+                #{productType},
+                #{salesModel},
+                #{versionType},
+                #{applicationNumber},
+                #{distributionDepartmentId},
+                #{distributionDepartment},
+                #{oldId},
+                #{changeReason},
+                #{pinFour},
+                #{gssNum},
+                #{testChange},
+                #{autoProcess},
+                #{CREATE_BY_},
+                #{CREATE_TIME_})
+    </insert>
+
+    <update id="updateJxbzzbsh" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_enginineering_jxbzzbsh set
+          shipmentnotmadeId = #{shipmentnotmadeId},
+          materialCode = #{materialCode},
+          productDepartmentId = #{productDepartmentId},
+          productDepartment = #{productDepartment},
+          productType = #{productType},
+          salesModel = #{salesModel},
+          versionType = #{versionType},
+          applicationNumber = #{applicationNumber},
+          distributionDepartmentId = #{distributionDepartmentId},
+          distributionDepartment = #{distributionDepartment},
+          oldId=#{oldId},
+          changeReason=#{changeReason},
+          pinFour=#{pinFour},
+          gssNum= #{gssNum},
+          testChange=#{testChange},
+          autoProcess=#{autoProcess},
+          UPDATE_BY_=#{UPDATE_BY_},
+          UPDATE_TIME_=#{UPDATE_TIME_}
+        where  id = #{id}
+    </update>
+    <!---->
+    <delete id="deleteJxbzzbsh" parameterType="java.util.Map">
+        delete from service_enginineering_jxbzzbsh
+        where id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryJxbzzbshById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        service_enginineering_jxbzzbsh.*,
+        os_user.FULLNAME_ creator,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.STATUS_ as taskStatus
+        from service_enginineering_jxbzzbsh
+        left join os_user on service_enginineering_jxbzzbsh.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on service_enginineering_jxbzzbsh.id=bpm_inst.BUS_KEY_
+        where service_enginineering_jxbzzbsh.id=#{id}
+    </select>
+
+    <select id="getOldJxbzzbshDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        shipmentnotmadeId,
+          materialCode,
+          productDepartmentId,
+          productDepartment,
+          productType,
+          salesModel,
+          versionType,
+          pinFour
+        from service_enginineering_jxbzzbsh
+        where id=#{id}
+    </select>
+
+    <select id="getTestJxbzzbshDetailByMaterialCode" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+            service_enginineering_jxbzzbsh.id AS oldId,
+            service_enginineering_jxbzzbsh.shipmentnotmadeId,
+            service_enginineering_jxbzzbsh.materialCode,
+            service_enginineering_jxbzzbsh.productDepartmentId,
+            service_enginineering_jxbzzbsh.productDepartment,
+            service_enginineering_jxbzzbsh.productType,
+            service_enginineering_jxbzzbsh.salesModel,
+            service_enginineering_jxbzzbsh.versionType,
+            service_enginineering_jxbzzbsh.pinFour,
+            service_engineering_standardvalue_shipmentnotmade.principalId
+        from service_enginineering_jxbzzbsh
+                 left join service_engineering_standardvalue_shipmentnotmade
+                     on service_enginineering_jxbzzbsh.shipmentnotmadeId=service_engineering_standardvalue_shipmentnotmade.id
+        where service_enginineering_jxbzzbsh.materialCode=#{materialCode}
+        and service_enginineering_jxbzzbsh.versionType='csb'
+          and service_enginineering_jxbzzbsh.note = '最新版本'
+    </select>
+
+    <select id="queryMaxApplicationNumber" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="java.lang.String">
+        SELECT max(applicationNumber) from service_enginineering_jxbzzbsh where salesModel = #{salesModel} and applicationNumber like concat(#{year},'%')
+    </select>
+
+    <select id="checkShipmentnotmadeIdUnique" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * from service_enginineering_jxbzzbsh
+        left join bpm_inst on service_enginineering_jxbzzbsh.id=bpm_inst.BUS_KEY_
+        where shipmentnotmadeId = #{shipmentnotmadeId} and bpm_inst.STATUS_ in ('RUNNING','SUCCESS_END')
+    </select>
+
+    <update id="updateStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_enginineering_jxbzzbsh
+        <set>
+            <if test="versionNum !=null and versionNum !=''">
+            versionNum = #{versionNum},
+            </if>
+            note = #{note}
+        </set>
+
+        where  id = #{id}
+    </update>
+
+    <select id="queryFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        service_enginineering_jxbzzb_fileinfos.* ,
+        u.FULLNAME_ creator,
+        service_enginineering_jxbzzbsh.materialCode,
+            service_enginineering_jxbzzbsh.versionNum
+        from service_enginineering_jxbzzb_fileinfos
+        left join os_user u on u.USER_ID_ = service_enginineering_jxbzzb_fileinfos.CREATE_BY_
+        left join service_enginineering_jxbzzbsh on service_enginineering_jxbzzb_fileinfos.masterId
+        = service_enginineering_jxbzzbsh.id
+        where
+            service_enginineering_jxbzzb_fileinfos.masterId = #{masterId}
+    </select>
+
+    <select id="queryFileListByMaterialCode" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+            service_enginineering_jxbzzb_fileinfos.* ,
+            u.FULLNAME_ creator,
+            service_enginineering_jxbzzbsh.materialCode,
+            service_enginineering_jxbzzbsh.versionNum
+        from service_enginineering_jxbzzb_fileinfos
+                 left join os_user u on u.USER_ID_ = service_enginineering_jxbzzb_fileinfos.CREATE_BY_
+                 left join service_enginineering_jxbzzbsh on service_enginineering_jxbzzb_fileinfos.masterId
+            = service_enginineering_jxbzzbsh.id
+        where
+            service_enginineering_jxbzzbsh.materialCode = #{materialCode}
+        and service_enginineering_jxbzzbsh.versionType = 'csb'
+        and service_enginineering_jxbzzbsh.note = '最新版本'
+    </select>
+</mapper>

@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.ZlgjItemOverviewDao">
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="selectListByMonth" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgj.wtId,
+        LEFT(zlgj.CREATE_TIME_,7) as createMonth,
+        zlgj.zrbmshTime,
+        bpm_inst.STATUS_
+        FROM
+        zlgj_wtsb_tab zlgj
+        left join bpm_inst on zlgj.wtId = bpm_inst.BUS_KEY_
+        <where>
+            (((zlgj.zrbmshTime is not null and zlgj.zrbmshTime !='') or bpm_inst.STATUS_='DISCARD_END') or
+            ((zlgj.zrbmshTime is null or zlgj.zrbmshTime ='') and bpm_inst.STATUS_ = 'RUNNING'))
+            <if test='czxpj == "0"'>
+                AND((
+                zlgj.gzxt IS NOT NULL
+                AND zlgj.gzxt != ''
+                AND zlgj.gzxt != '操控性评价'
+                )
+                OR ( zlgj.gzxt IS NULL )
+                OR ( zlgj.gzxt = '' ))
+            </if>
+            <if test="wtlx != null and wtlx != ''">
+                AND zlgj.wtlx = #{wtlx}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND LEFT(zlgj.CREATE_TIME_,7) >= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND LEFT(zlgj.CREATE_TIME_,7) &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+    <select id="selectByDate" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgj.wtId,
+        zlgj.ssbmName,
+        zlgj.zrrId,
+        bpm_inst.STATUS_,
+        zlgj.zrbmshTime,
+        zlgj.ifgj,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId
+        FROM
+        zlgj_wtsb_tab zlgj
+        LEFT JOIN bpm_inst ON bpm_inst.BUS_KEY_ = zlgj.wtId
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+        (
+            ((zlgj.zrbmshTime is not null and zlgj.zrbmshTime !='') or (bpm_inst.STATUS_='DISCARD_END' and (zlgj.ifgj !='' and zlgj.ifgj is not null)))
+             or ((zlgj.zrbmshTime is null or zlgj.zrbmshTime ='') and bpm_inst.STATUS_ = 'RUNNING')
+            )
+        <if test='czxpj == "0"'>
+            AND((
+            zlgj.gzxt IS NOT NULL
+            AND zlgj.gzxt != ''
+            AND zlgj.gzxt != '操控性评价'
+            )
+            OR ( zlgj.gzxt IS NULL )
+            OR ( zlgj.gzxt = '' ))
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND zlgj.CREATE_TIME_ >= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND zlgj.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        <if test="wtlxs != null and wtlxs != ''">
+            and wtlx IN
+            <foreach collection="wtlxs" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectByDateType" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgj.wtId,
+        zlgj.ssbmName,
+        bpm_inst.STATUS_,
+        zlgj.zrbmshTime,
+        zlgj.yzcd
+        FROM
+        zlgj_wtsb_tab zlgj
+        LEFT JOIN bpm_inst ON bpm_inst.BUS_KEY_ = zlgj.wtId
+        WHERE
+        (((zlgj.zrbmshTime is not null and zlgj.zrbmshTime !='') or bpm_inst.STATUS_='DISCARD_END') or ((zlgj.zrbmshTime
+        is null or zlgj.zrbmshTime ='') and bpm_inst.STATUS_ = 'RUNNING'))
+        <if test='czxpj == "0"'>
+            AND((
+            zlgj.gzxt IS NOT NULL
+            AND zlgj.gzxt != ''
+            AND zlgj.gzxt != '操控性评价'
+            )
+            OR ( zlgj.gzxt IS NULL )
+            OR ( zlgj.gzxt = '' ))
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND zlgj.CREATE_TIME_ >= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND zlgj.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        <if test="wtlxs != null and wtlxs != ''">
+            AND zlgj.wtlx IN
+            <foreach collection="wtlxs" index="index" item="item" open="(" separator="," close=")">
+               #{item}
+            </foreach>
+        </if>
+        <if test="yzcds != null and yzcds != ''">
+            and zlgj.yzcd IN
+            <foreach collection="yzcds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectDataByMonth" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgj.wtId,
+        LEFT(zlgj.CREATE_TIME_,7) as createMonth,
+        zlgj.zrbmshTime,
+        bpm_inst.STATUS_,
+        zlgj.yzcd
+        FROM
+        zlgj_wtsb_tab zlgj
+        left join bpm_inst on zlgj.wtId = bpm_inst.BUS_KEY_
+        <where>
+            (((zlgj.zrbmshTime is not null and zlgj.zrbmshTime !='') or bpm_inst.STATUS_='DISCARD_END') or
+            ((zlgj.zrbmshTime is null or zlgj.zrbmshTime ='') and bpm_inst.STATUS_ = 'RUNNING'))
+            <if test='czxpj == "0"'>
+                AND((
+                zlgj.gzxt IS NOT NULL
+                AND zlgj.gzxt != ''
+                AND zlgj.gzxt != '操控性评价'
+                )
+                OR ( zlgj.gzxt IS NULL )
+                OR ( zlgj.gzxt = '' ))
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND zlgj.CREATE_TIME_ >= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND zlgj.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+            <if test="wtlxs != null and wtlxs != ''">
+                AND zlgj.wtlx IN
+                <foreach collection="wtlxs" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="yzcds != null and yzcds != ''">
+                and zlgj.yzcd IN
+                <foreach collection="yzcds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectByWtlxs" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgj.wtId,
+        zlgj.wtlx,
+        zlgj.zrrId,
+        zlgj.zrrName,
+        zlgj.ssbmId,
+        og.NAME_ AS ssbmName,
+        zlgj.yzTime,
+        zlgj.yjTime,
+        zlgj.gjxg,
+        zlgj.gzr,
+        zlgj.gjhgzl,
+        zlgj.sfyx,
+        zlgj.sffgsp,
+        zlgj.CREATE_BY_,
+        zlgj.CREATE_TIME_,
+        zlgj.TENANT_ID_,
+        zlgj.UPDATE_BY_,
+        zlgj.UPDATE_TIME_,
+        bi.STATUS_,
+        zlgj.zrbmshTime
+        FROM
+        zlgj_wtsb_tab zlgj
+        LEFT JOIN bpm_inst bi ON bi.BUS_KEY_ = zlgj.wtId
+        LEFT JOIN os_group og ON og.GROUP_ID_ = zlgj.ssbmId
+        WHERE
+        (((zlgj.zrbmshTime is not null and zlgj.zrbmshTime !='') or bi.STATUS_='DISCARD_END')
+        or ((zlgj.zrbmshTime is null or zlgj.zrbmshTime ='') and bi.STATUS_ = 'RUNNING'))
+        <if test='czxpj == "0"'>
+            AND((
+            zlgj.gzxt IS NOT NULL
+            AND zlgj.gzxt != ''
+            AND zlgj.gzxt != '操控性评价'
+            )
+            OR ( zlgj.gzxt IS NULL )
+            OR ( zlgj.gzxt = '' ))
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND zlgj.CREATE_TIME_ >= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND zlgj.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        <if test="list != null and list.size > 0">
+            AND zlgj.wtlx in
+            <foreach collection="list" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by zlgj.CREATE_TIME_ DESC
+    </select>
+    <select id="queryZrrTime" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jjcd,
+        zrrStart,
+        ssbmId,
+        ssbmName,
+        yzcd
+        FROM
+        zlgj_wtsb_tab zlgj
+        LEFT JOIN bpm_inst bi ON bi.BUS_KEY_ = zlgj.wtId
+        WHERE
+        (zrrStart IS NOT NULL AND zrrStart != '')
+        <if test='czxpj == "0"'>
+            AND((
+            zlgj.gzxt IS NOT NULL
+            AND zlgj.gzxt != ''
+            AND zlgj.gzxt != '操控性评价'
+            )
+            OR ( zlgj.gzxt IS NULL )
+            OR ( zlgj.gzxt = '' ))
+        </if>
+        AND (ssbmId IS NOT NULL AND ssbmId != '')
+        AND (zrrEnd IS NULL OR zrrEnd = '')
+        AND DATE_FORMAT(zrrStart, '%Y-%m') >= #{startYearMonth}
+        and bi.STATUS_ = 'RUNNING'
+        <if test="wtlxs != null and wtlxs != ''">
+            AND zlgj.wtlx IN
+            <foreach collection="wtlxs" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectListByDay" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgj.wtId,
+        zlgj.CREATE_TIME_,
+        zlgj.zrbmshTime,
+        bpm_inst.STATUS_
+        FROM
+        zlgj_wtsb_tab zlgj
+        left join bpm_inst on zlgj.wtId = bpm_inst.BUS_KEY_
+        <where>
+            (((zlgj.zrbmshTime is not null and zlgj.zrbmshTime !='') or bpm_inst.STATUS_='DISCARD_END') or
+            ((zlgj.zrbmshTime is null or zlgj.zrbmshTime ='') and bpm_inst.STATUS_ = 'RUNNING'))
+            <if test='czxpj == "0"'>
+                AND((
+                zlgj.gzxt IS NOT NULL
+                AND zlgj.gzxt != ''
+                AND zlgj.gzxt != '操控性评价'
+                )
+                OR ( zlgj.gzxt IS NULL )
+                OR ( zlgj.gzxt = '' ))
+            </if>
+            <if test="wtlx != null and wtlx != ''">
+                AND zlgj.wtlx = #{wtlx}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND zlgj.CREATE_TIME_ >= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND zlgj.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+</mapper>

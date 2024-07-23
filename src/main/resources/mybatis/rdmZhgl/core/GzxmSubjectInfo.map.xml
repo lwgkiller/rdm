@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.GzxmSubjectInfoDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ as reportUserName,
+        C.NAME_ as deptName,
+        D.projectName
+        FROM
+        gzxm_subjectinfo A
+        left join os_user B on A.reportUserId = B.USER_ID_
+        left join os_group C on A.deptId = C.GROUP_ID_
+        left join gzxm_projectinfo D on A.projectId = D.id
+        <where>
+            <if test="deptId != null and deptId != ''">
+                A.deptId = #{deptId}
+            </if>
+            <if test="currentStage != null and currentStage != ''">
+                A.currentStage = #{currentStage}
+            </if>
+            <if test="responsor != null and responsor != ''">
+                and A.responsor like CONCAT('%',#{responsor},'%')
+            </if>
+            <if test="projectName != null and projectName != ''">
+                and D.projectName like CONCAT('%',#{projectName},'%')
+            </if>
+            <if test="userId != null and userId != ''">
+                and (A.reportUserId = #{userId} or A.CREATE_BY_ = #{userId})
+            </if>
+        </where>
+        order by A.subjectIndex
+        <include refid="pageSql"/>
+    </select>
+    <select id="getItems" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*
+        FROM
+        gzxm_subjecttask A
+        LEFT JOIN gzxm_subjectinfo B ON A.mainId = B.id
+        <where>
+            <if test="deptName != null and deptName != ''">
+                and B.deptName=#{deptName}
+            </if>
+        </where>
+        order by A.indexSort+''
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+            A.*,
+            B.FULLNAME_ AS reportUserName
+        FROM
+            gzxm_subjectinfo A
+            LEFT JOIN os_user B ON A.reportUserId = B.USER_ID_
+            where id=#{id}
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO gzxm_subjectinfo (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            deptId,
+            subjectName,
+            responsor,
+            responseDept,
+            startDate,
+            endDate,
+            currentStage,
+            processDetail,
+            projectId,
+            reportUserId,
+            subjectIndex
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{deptId,jdbcType=VARCHAR},
+            #{subjectName,jdbcType=VARCHAR},
+            #{responsor,jdbcType=VARCHAR},
+            #{responseDept,jdbcType=VARCHAR},
+            #{startDate,jdbcType=TIMESTAMP},
+            #{endDate,jdbcType=TIMESTAMP},
+            #{currentStage,jdbcType=VARCHAR},
+            #{processDetail,jdbcType=VARCHAR},
+            #{projectId,jdbcType=VARCHAR},
+            #{reportUserId,jdbcType=VARCHAR},
+            #{subjectIndex,jdbcType=INTEGER}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update gzxm_subjectinfo
+        set
+                subjectName=#{subjectName,jdbcType=VARCHAR},
+                projectId=#{projectId,jdbcType=VARCHAR},
+                responsor=#{responsor,jdbcType=VARCHAR},
+                responseDept=#{responseDept,jdbcType=VARCHAR},
+                subjectIndex=#{subjectIndex,jdbcType=INTEGER},
+                <choose>
+                    <when test="startDate == ''">
+                        startDate = null,
+                    </when>
+                    <otherwise>
+                        startDate=#{startDate,jdbcType=TIMESTAMP},
+                    </otherwise>
+                </choose>
+                <choose>
+                    <when test="endDate == ''">
+                        endDate = null,
+                    </when>
+                    <otherwise>
+                        endDate=#{endDate,jdbcType=TIMESTAMP},
+                    </otherwise>
+                </choose>
+                currentStage=#{currentStage,jdbcType=VARCHAR},
+                processDetail=#{processDetail,jdbcType=VARCHAR},
+                reportUserId=#{reportUserId,jdbcType=VARCHAR},
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <insert id="addItem" parameterType="java.util.Map">
+        INSERT INTO gzxm_subjecttask (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        mainId,
+        important,
+        indexSort,
+        taskName,
+        taskTarget,
+        outputFile,
+        resDeptIds,
+        resUserIds,
+        <if test="planStartDate != null and planStartDate != ''">
+            planStartDate,
+        </if>
+        <if test="planEndDate != null and planEndDate != ''">
+            planEndDate,
+        </if>
+        <if test="actStartDate != null and actStartDate != ''">
+            actStartDate,
+        </if>
+        <if test="actEndDate != null and actEndDate != ''">
+            actEndDate,
+        </if>
+        reason,
+        remark
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{UPDATE_BY_,jdbcType=VARCHAR},
+        #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        #{mainId,jdbcType=VARCHAR},
+        #{important,jdbcType=VARCHAR},
+        #{indexSort,jdbcType=VARCHAR},
+        #{taskName,jdbcType=VARCHAR},
+        #{taskTarget,jdbcType=VARCHAR},
+        #{outputFile,jdbcType=VARCHAR},
+        #{resDeptIds,jdbcType=VARCHAR},
+        #{resUserIds,jdbcType=VARCHAR},
+        <if test="planStartDate != null and planStartDate != ''">
+            #{planStartDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="planEndDate != null and planEndDate != ''">
+            #{planEndDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="actStartDate != null and actStartDate != ''">
+            #{actStartDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="actEndDate != null and actEndDate != ''">
+            #{actEndDate,jdbcType=TIMESTAMP},
+        </if>
+        #{reason,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateItem" parameterType="java.util.Map">
+        update gzxm_subjecttask
+        set
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                indexSort=#{indexSort,jdbcType=VARCHAR},
+                important=#{important,jdbcType=VARCHAR},
+                taskName=#{taskName,jdbcType=VARCHAR},
+                taskTarget=#{taskTarget,jdbcType=VARCHAR},
+                outputFile=#{outputFile,jdbcType=VARCHAR},
+                resDeptIds=#{resDeptIds,jdbcType=VARCHAR},
+                resUserIds=#{resUserIds,jdbcType=VARCHAR},
+                <choose>
+                    <when test="planStartDate == ''">
+                        planStartDate = null,
+                    </when>
+                    <otherwise>
+                        planStartDate=#{planStartDate,jdbcType=TIMESTAMP},
+                    </otherwise>
+                </choose>
+                <choose>
+                    <when test="planEndDate == ''">
+                        planEndDate = null,
+                    </when>
+                    <otherwise>
+                        planEndDate=#{planEndDate,jdbcType=TIMESTAMP},
+                    </otherwise>
+                </choose>
+                <choose>
+                    <when test="actStartDate == ''">
+                        actStartDate = null,
+                    </when>
+                    <otherwise>
+                        actStartDate=#{actStartDate,jdbcType=TIMESTAMP},
+                    </otherwise>
+                </choose>
+                <choose>
+                    <when test="actEndDate == ''">
+                        actEndDate = null,
+                    </when>
+                    <otherwise>
+                        actEndDate=#{actEndDate,jdbcType=TIMESTAMP},
+                    </otherwise>
+                </choose>
+                reason=#{reason,jdbcType=VARCHAR},
+                remark=#{remark,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delItem" parameterType="java.lang.String">
+        delete from gzxm_subjecttask where id = #{id}
+    </delete>
+    <select id="getItemList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select A.*,B.processDetail,B.currentStage,
+        (case B.currentStage when '1' then '按计划完成' when '2' then '轻微落后' when '3' then '严重滞后' end) as currentStageText
+        from gzxm_subjecttask A
+        left join gzxm_subjectinfo B on A.mainId = B.id
+        <where>
+            <if test="mainId != null and mainId != ''">
+                and A.mainId=#{mainId}
+            </if>
+        </where>
+        ORDER BY A.indexSort*1,A.CREATE_TIME_
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from gzxm_subjectinfo
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="batchDeleteItems" parameterType="java.util.Map">
+        delete from gzxm_subjecttask
+        WHERE
+        mainId in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getGzxmList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        B.FULLNAME_ as creator,
+        C.NAME_ as deptName
+        FROM
+        gzxm_subjectinfo A
+        left join os_user B on A.CREATE_BY_ = B.USER_ID_
+        left join os_group C on A.deptId = C.GROUP_ID_
+        <where>
+            <if test="projectYear != null and projectYear != ''">
+                A.projectYear = #{projectYear}
+            </if>
+        </where>
+        order by A.deptId
+    </select>
+    <select id="getSubjectInfoByName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from gzxm_subjectinfo A where A.subjectName = #{subjectName}
+    </select>
+</mapper>

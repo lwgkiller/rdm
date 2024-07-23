@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="projectName !=null and projectName !=''">
+            AND business.projectName like CONCAT('%',#{projectName},'%')
+        </if>
+        <if test="number !=null and number !=''">
+            AND business.number = #{number}
+        </if>
+    </sql>
+    <!---->
+    <select id="allProjectListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*
+        FROM
+        project_baseinfo AS business
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countAllProjectListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM
+        project_baseinfo AS business
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+
+	<insert id="createBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO project_baseInfo
+		(
+		buildTime,
+		categoryId,
+		CREATE_BY_,
+		CREATE_TIME_,
+		currentStageNo,
+		currentStageId,
+		beginLevelId,
+		levelId,
+		mainDepId,
+		`number`,
+		otherDepId,
+		projectId,
+		projectName,
+		sourceId,
+		INST_ID_,
+		hzdw,
+		remark,
+		ysbh,
+		cwddh,
+		gbcwddh,
+		productIds,
+		productNames,
+		pointStandardScore
+		)
+		VALUES
+		(
+		#{buildTime,jdbcType=TIMESTAMP},
+		#{categoryId,jdbcType=VARCHAR},
+		#{createBy,jdbcType=VARCHAR},
+		#{createTime,jdbcType=TIMESTAMP},
+		#{currentStageNo,jdbcType=VARCHAR},
+		#{currentStageId,jdbcType=VARCHAR},
+		#{beginLevelId,jdbcType=VARCHAR},
+		#{levelId,jdbcType=VARCHAR},
+		#{mainDepId,jdbcType=VARCHAR},
+		#{number,jdbcType=VARCHAR},
+		#{otherDepId,jdbcType=VARCHAR},
+		#{projectId,jdbcType=VARCHAR},
+		#{projectName,jdbcType=VARCHAR},
+		#{sourceId,jdbcType=VARCHAR},
+		#{instId,jdbcType=VARCHAR},
+		#{hzdw,jdbcType=VARCHAR},
+		#{remark,jdbcType=VARCHAR},
+		#{ysbh,jdbcType=VARCHAR},
+		#{cwddh,jdbcType=VARCHAR},
+		#{gbcwddh,jdbcType=VARCHAR},
+		#{productIds,jdbcType=VARCHAR},
+		#{productNames,jdbcType=VARCHAR},
+		#{pointStandardScore,jdbcType=VARCHAR}
+		)
+	</insert>
+
+	<select id="queryProjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+			project_baseinfo.*,
+			project_stageDivide.stageName AS currentStageName,
+			project_source.sourceName as sourceName,
+			bpm_inst.STATUS_ as status,
+			project_category.categoryName
+		FROM
+			project_baseinfo
+			LEFT JOIN project_stageDivide ON project_baseinfo.currentStageId = project_stagedivide.stageId
+			left join project_source on project_baseinfo.sourceId=project_source.sourceId
+			left join bpm_inst on project_baseinfo.projectId=bpm_inst.BUS_KEY_
+			left join project_category on project_baseinfo.categoryId=project_category.categoryId
+		WHERE
+		project_baseinfo.projectId=#{projectId}
+	</select>
+
+	<!--<select id="query" parameterType="java.util.Map" resultMap="XcmgProject">
+		SELECT * FROM project_baseInfo
+		<where>
+			<if test="@Ognl@isNotEmpty(whereSql)">
+				${whereSql}
+			</if>
+		</where>
+		<if test="@Ognl@isNotEmpty(orderBySql)">
+			ORDER BY ${orderBySql}
+		</if>
+		<if test="@Ognl@isEmpty(orderBySql)">
+			ORDER BY projectId DESC
+		</if>
+	</select>-->
+
+	<update id="updateProjectBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+		UPDATE project_baseInfo
+		SET
+		buildTime=#{buildTime,jdbcType=TIMESTAMP},
+		categoryId=#{categoryId,jdbcType=VARCHAR},
+		currentStageNo=#{currentStageNo,jdbcType=VARCHAR},
+		currentStageId=#{currentStageId,jdbcType=VARCHAR},
+		knotScore=#{knotScore,jdbcType=DOUBLE},
+		knotRatio=#{knotRatio,jdbcType=DOUBLE},
+		knotTime=#{knotTime,jdbcType=TIMESTAMP},
+		beginLevelId=#{beginLevelId,jdbcType=VARCHAR},
+		levelId=#{levelId,jdbcType=VARCHAR},
+		mainDepId=#{mainDepId,jdbcType=VARCHAR},
+		`number`=#{number,jdbcType=VARCHAR},
+		otherDepId=#{otherDepId,jdbcType=VARCHAR},
+		projectName=#{projectName,jdbcType=VARCHAR},
+		sourceId=#{sourceId,jdbcType=VARCHAR},
+		INST_ID_=#{instId,jdbcType=VARCHAR},
+		UPDATE_BY_=#{updateBy,jdbcType=VARCHAR},
+		UPDATE_TIME_=#{updateTime,jdbcType=TIMESTAMP},
+		pointStandardScore=#{pointStandardScore,jdbcType=VARCHAR},
+		hzdw=#{hzdw,jdbcType=VARCHAR},
+		remark=#{remark,jdbcType=VARCHAR},
+		ysbh=#{ysbh,jdbcType=VARCHAR},
+		cwddh=#{cwddh,jdbcType=VARCHAR},
+		gbcwddh=#{gbcwddh,jdbcType=VARCHAR},
+		productIds=#{productIds,jdbcType=VARCHAR},
+		productNames=#{productNames,jdbcType=VARCHAR}
+		WHERE
+		projectId=#{projectId}
+	</update>
+
+	<delete id="removeById" parameterType="java.lang.String">
+		DELETE FROM project_baseInfo
+		WHERE
+		projectId=#{projectId}
+	</delete>
+
+    <update id="updateProjectBaseInfoInstId" parameterType="com.alibaba.fastjson.JSONObject">
+		UPDATE project_baseInfo
+		SET
+		INST_ID_=#{instId,jdbcType=VARCHAR}
+		WHERE
+		projectId=#{projectId}
+	</update>
+
+	<select id="queryXpszInfo" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+		A.*,
+		B.productId,
+		B.productModelReal
+		FROM
+		xpsz_plan_item A
+		LEFT JOIN xpsz_baseinfo B ON A.mainId = B.id
+		where
+			A.itemType = '1'
+			<if test="productIds != null and productIds != ''">
+				and B.productId in
+				<foreach collection="productIds" index="index" item="productId" open="(" separator="," close=")">
+					#{productId}
+				</foreach>
+			</if>
+	</select>
+</mapper>

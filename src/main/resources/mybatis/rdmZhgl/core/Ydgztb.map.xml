@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.YdgztbDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryApplyList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        ydgztb_base.*,
+        case  when a.applyId is null then "no"
+        when a.applyId is not null then "yes" end as isWtb,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        ydgztb_base
+        left join bpm_inst on ydgztb_base.id=bpm_inst.BUS_KEY_
+        left join (select distinct applyId from ydgztb_file ) a on ydgztb_base.id = a.applyId
+        left join os_group on ydgztb_base.departId = os_group.GROUP_ID_
+        <where>
+            <if test="creatorName != null and creatorName != ''">
+                AND ydgztb_base.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="departName != null and departName != ''">
+                AND ydgztb_base.departName like CONCAT('%',#{departName},'%')
+            </if>
+            <if test="workReportName != null and workReportName != ''">
+                AND ydgztb_base.workReportName like CONCAT('%',#{workReportName},'%')
+            </if>
+            <if test="category != null and category != ''">
+                AND ydgztb_base.category like CONCAT('%',#{category},'%')
+            </if>
+            <if test="abstract != null and abstract != ''">
+                AND ydgztb_base.abstract like CONCAT('%',#{abstract},'%')
+            </if>
+            <if test="keyWords != null and keyWords != ''">
+                AND ydgztb_base.keyWords like CONCAT('%',#{keyWords},'%')
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                AND ydgztb_base.yearMonth like CONCAT('%',#{yearMonth},'%')
+            </if>
+            <if test="isWtb != null and isWtb == 'yes'">
+                AND a.applyId is not null
+            </if>
+            <if test="isYxal != null and isYxal == 'yes'">
+                AND isYxal = #{isYxal}
+            </if>
+            <if test="isYxal != null and isYxal == 'no'">
+                AND (isYxal = #{isYxal} or isYxal is null)
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND ydgztb_base.CREATE_BY_ = #{currentUserId}
+                    </when>
+                    <when test="roleName =='tbAdmin'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR
+                        ydgztb_base.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        order by yearMonth desc
+
+
+
+    </select>
+
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        ydgztb_base.*,
+        bpm_inst.INST_ID_ as instId
+        from
+        ydgztb_base left join bpm_inst on ydgztb_base.id=bpm_inst.BUS_KEY_
+        where
+        id =#{id}
+    </select>
+
+
+    <insert id="insertYdgztb" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ydgztb_base(
+        id
+        ,yearMonth
+        ,creatorName
+        ,departName
+        ,applyTime
+        ,departId
+        ,workReportName
+        ,category
+        ,keyWords
+        ,abstract
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR}
+        ,#{yearMonth,jdbcType=VARCHAR}
+        ,#{creatorName,jdbcType=VARCHAR}
+        ,#{departName,jdbcType=VARCHAR}
+        ,#{applyTime,jdbcType=TIMESTAMP}
+        ,#{departId,jdbcType=VARCHAR}
+        ,#{workReportName,jdbcType=VARCHAR}
+        ,#{category,jdbcType=VARCHAR}
+        ,#{keyWords,jdbcType=VARCHAR}
+        ,#{abstract,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <update id="updateYdgztb" parameterType="com.alibaba.fastjson.JSONObject">
+        update ydgztb_base
+        set
+        yearMonth=#{yearMonth,jdbcType=VARCHAR},
+        workReportName=#{workReportName,jdbcType=VARCHAR},
+        category=#{category,jdbcType=VARCHAR},
+        keyWords=#{keyWords,jdbcType=VARCHAR},
+        abstract=#{abstract,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <update id="setOverTime" parameterType="com.alibaba.fastjson.JSONObject">
+        update ydgztb_base
+        set
+        isOverTime=#{isOverTime,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+
+    <!--<update id="updateYdgztbNumber" parameterType="com.alibaba.fastjson.JSONObject">-->
+        <!--update ydgztb_base-->
+        <!--set-->
+        <!--applyNumber=#{applyNumber,jdbcType=VARCHAR}-->
+        <!--where-->
+        <!--id=#{id}-->
+    <!--</update>-->
+    <update id="chooseYxal" parameterType="com.alibaba.fastjson.JSONObject">
+        update ydgztb_base
+        set
+        isYxal= #{isYxal},
+        yxalTime = #{yxalTime}
+        <where>
+            1=1
+            <if test="ids != null and ids != ''">
+                and id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="id != null and id != ''">
+                and id  id=#{id}
+            </if>
+        </where>
+
+    </update>
+    <update id="cancelYxal" parameterType="com.alibaba.fastjson.JSONObject">
+        update ydgztb_base
+        set
+        isYxal= #{isYxal},
+        yxalTime = #{yxalTime}
+        <where>
+            1=1
+            <if test="ids != null and ids != ''">
+                and id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="id != null and id != ''">
+                and id  id=#{id}
+            </if>
+        </where>
+    </update>
+
+    <update id="updateYdgztbStatus">
+        UPDATE ydgztb_base
+        SET ydgztb_base.tbStatus = "ytwt"
+        WHERE
+            ydgztb_base.id IN (
+            SELECT id FROM
+                (SELECT DISTINCT
+                     ydgztb_base.id
+                 FROM
+                     ydgztb_base
+                         LEFT JOIN bpm_inst ON ydgztb_base.id = bpm_inst.BUS_KEY_
+                         LEFT JOIN ( SELECT DISTINCT applyId FROM ydgztb_file ) a ON ydgztb_base.id = a.applyId
+                 WHERE
+                     a.applyId IS NULL
+                   AND bpm_inst.STATUS_ != "DISCARD_END"
+        AND ydgztb_base.yearMonth = DATE_FORMAT(NOW(), '%Y-%m')) T
+            )
+    </update>
+
+    <select id="queryWtbInstIds" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT DISTINCT
+            bpm_inst.INST_ID_ as instId
+        FROM
+            ydgztb_base
+                LEFT JOIN bpm_inst ON ydgztb_base.id = bpm_inst.BUS_KEY_
+                LEFT JOIN ( SELECT DISTINCT applyId FROM ydgztb_file ) a ON ydgztb_base.id = a.applyId
+        WHERE
+            a.applyId IS NULL
+            AND bpm_inst.STATUS_ != "DISCARD_END"
+            AND ydgztb_base.yearMonth = DATE_FORMAT(NOW(), '%Y-%m')
+    </select>
+
+
+    <delete id="deleteYdgztb" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from ydgztb_base
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+    <insert id="insertFile" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ydgztb_file(
+        id
+        ,applyId
+        ,fileName
+        ,fileSize
+        ,fileDesc
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{applyId,jdbcType=VARCHAR}
+        ,#{fileName,jdbcType=VARCHAR}
+        ,#{fileSize,jdbcType=VARCHAR}
+        ,#{fileDesc,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <delete id="deleteFile" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from ydgztb_file
+        <where>
+            <if test="id != null and id != ''">
+                id = #{id}
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+    <select id="queryFileList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from ydgztb_file
+        <where>
+            <if test="applyId !=null and applyId !=''">
+                applyId = #{applyId}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="queryUndoDepartList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        departName,
+        departId,
+        count( CASE WHEN isYxal = "yes" THEN 1 ELSE NULL END ) AS cnt
+        FROM
+        ydgztb_base
+        where yearMonth = #{yearMonth}
+        GROUP BY
+        departName
+        HAVING
+        cnt &lt; 1
+    </select>
+
+
+    <select id="queryDepartTotalNumber" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="java.lang.Integer">
+        SELECT
+        d.KEY_    AS totalNumber
+        FROM sys_dic d LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{type}
+        AND t.cat_key_ = 'CAT_DIM'
+        AND d.NAME_ = #{deptName}
+    </select>
+
+
+    <select id="queryDepartChoseNumber" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="java.lang.Integer">
+        SELECT
+            count( 1 )
+        FROM
+            ydgztb_base
+        WHERE
+            departName = #{deptName}
+            AND yearMonth = #{yearMonth}
+            AND isYxal = "yes"
+    </select>
+
+    <select id="queryExist" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        ydgztb_base.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        ydgztb_base
+        left join bpm_inst on ydgztb_base.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="yearMonth != null and yearMonth != ''">
+                ydgztb_base.yearMonth = #{yearMonth}
+            </if>
+            <if test="notEqualId != null and notEqualId != ''">
+                AND ydgztb_base.id != #{notEqualId}
+            </if>
+            <if test="creatorId != null and creatorId != ''">
+                AND ydgztb_base.CREATE_BY_ = #{creatorId}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+    </select>
+
+    <select id="queryRemindCancel" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        ydgztb_remindcancel
+        where
+        yearMonth=#{yearMonth}
+    </select>
+    <select id="queryJoinDept" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT DISTINCT departName
+        FROM ydgztb_base
+    </select>
+    <select id="queryDeptSub" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT departName, COUNT(*) as isTB
+        FROM (
+             SELECT
+                 ydgztb_base.id,
+                 ydgztb_base.yearMonth,
+                 ydgztb_base.creatorName,
+                 ydgztb_base.departName,
+                 ydgztb_base.isYxal,
+                 ydgztb_base.tbStatus,
+                 case  when a.applyId is null then "no"
+                       when a.applyId is not null then "yes" end as isWtb,
+                 bpm_inst.STATUS_ as status
+             FROM
+                 ydgztb_base
+                     left join bpm_inst on ydgztb_base.id=bpm_inst.BUS_KEY_
+                     left join (select distinct applyId from ydgztb_file ) a on ydgztb_base.id = a.applyId
+                     left join os_group on ydgztb_base.departId = os_group.GROUP_ID_
+        <where>
+            <if test="yearMonth != null and yearMonth != ''">
+                yearMonth = #{yearMonth}
+            </if>
+            <if test="isYxal != null and isYxal != ''">
+                AND isYxal = #{isYxal}
+            </if>
+            <if test="isNotYxal != null and isNotYxal != ''">
+                AND (isYxal != #{isNotYxal} OR isYxal is NULL)
+            </if>
+        </where>
+             ) base
+        <where>
+            1=1
+            <if test="isWtb != null and isWtb != '' and isWtb=='yes'">
+            and base.isWtb = 'yes'
+            </if>
+            <if test="isWtb != null and isWtb != '' and isWtb=='no'">
+                and base.isWtb = 'no'
+                and base.tbStatus = 'ytwt'
+            </if>
+        </where>
+        GROUP BY departName
+    </select>
+
+    <insert id="insertRemindCancel" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ydgztb_remindcancel(
+            id
+            ,deptRespUserId
+            ,yearMonth
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )values (
+             #{id,jdbcType=VARCHAR}
+            ,#{deptRespUserId,jdbcType=VARCHAR}
+            ,#{yearMonth,jdbcType=VARCHAR}
+            ,#{CREATE_BY_,jdbcType=VARCHAR}
+            ,#{CREATE_TIME_,jdbcType=VARCHAR}
+        )
+    </insert>
+
+
+</mapper>

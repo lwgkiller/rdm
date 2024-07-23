@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.powerApplicationTechnology.core.dao.RoadtestDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+        pat_roadtest
+        <where>
+            <if test="designModel !=null and designModel !=''">
+                AND pat_roadtest.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+            <if test="pin !=null and pin !=''">
+                AND pat_roadtest.pin = #{pin}
+            </if>
+            <if test="location !=null and location !=''">
+                AND pat_roadtest.location = #{location}
+            </if>
+            <if test="isClose !=null and isClose !=''">
+                AND pat_roadtest.isClose = #{isClose}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM
+        pat_roadtest
+        <where>
+            <if test="designModel !=null and designModel !=''">
+                AND pat_roadtest.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+            <if test="pin !=null and pin !=''">
+                AND pat_roadtest.pin = #{pin}
+            </if>
+            <if test="location !=null and location !=''">
+                AND pat_roadtest.location = #{location}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <select id="getDailyIdList" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT id
+        FROM pat_roadtest_daily
+        WHERE mainId = #{businessId}
+    </select>
+    <!---->
+    <select id="getTestdataIdList" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT id
+        FROM pat_roadtest_testdata
+        WHERE mainId = #{businessId}
+    </select>
+    <!---->
+    <select id="getTestdataFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from pat_roadtest_testdata_fileinfo
+        where mainId IN
+        <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from pat_roadtest
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteDaily" parameterType="java.util.Map">
+        delete from pat_roadtest_daily
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteTestdata" parameterType="java.util.Map">
+        delete from pat_roadtest_testdata
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteTestdataFileinfo" parameterType="java.util.Map">
+        delete from pat_roadtest_testdata_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="testdataIds != null and testdataIds !=''">
+                AND mainId IN
+                <foreach collection="testdataIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="startBusiness" parameterType="java.util.Map">
+        UPDATE pat_roadtest SET isClose = '否'
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="closeBusiness" parameterType="java.util.Map">
+        UPDATE pat_roadtest SET isClose = '是'
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="getDailyList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM pat_roadtest_daily
+        <where>
+            <if test="businessId !=null and businessId !=''">
+                AND mainId = #{businessId}
+            </if>
+            <if test="beginDate !=null and beginDate !=''">
+                AND theDate &gt;= #{beginDate}
+            </if>
+            <if test="endDate !=null and endDate !=''">
+                AND theDate &lt;= #{endDate}
+            </if>
+            <if test="theDate !=null and theDate !=''">
+                AND theDate = #{theDate}
+            </if>
+        </where>
+        ORDER BY theDate DESC
+    </select>
+    <!---->
+    <select id="getTestdataList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM pat_roadtest_testdata
+        <where>
+            <if test="_parameter !=null and _parameter !=''">
+                AND mainId = #{_parameter,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <select id="getDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM pat_roadtest
+        WHERE id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into pat_roadtest(
+        id,
+        designModel,
+        pin,
+        engineModel,
+        location,
+        roadtestStatus,
+        roadtestBeginDate,
+        roadtestEndDate,
+        roadtestType,
+        roadtestContent,
+        targetDailyAverageWorkingHours,
+        targetDailyAverageWorkingHoursRemaining,
+        actualDailyAverageWorkingHours,
+        cumulativeWorkingHours,
+        cumulativeFuelConsumption,
+        cumulativeUreaConsumption,
+        perhourFuelConsumption,
+        perhourUreaConsumption,
+        calculateDate,
+        isClose,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{pin,jdbcType=VARCHAR},
+        #{engineModel,jdbcType=VARCHAR},
+        #{location,jdbcType=VARCHAR},
+        #{roadtestStatus,jdbcType=VARCHAR},
+        #{roadtestBeginDate,jdbcType=VARCHAR},
+        #{roadtestEndDate,jdbcType=VARCHAR},
+        #{roadtestType,jdbcType=VARCHAR},
+        #{roadtestContent,jdbcType=VARCHAR},
+        #{targetDailyAverageWorkingHours,jdbcType=VARCHAR},
+        #{targetDailyAverageWorkingHoursRemaining,jdbcType=VARCHAR},
+        #{actualDailyAverageWorkingHours,jdbcType=VARCHAR},
+        #{cumulativeWorkingHours,jdbcType=VARCHAR},
+        #{cumulativeFuelConsumption,jdbcType=VARCHAR},
+        #{cumulativeUreaConsumption,jdbcType=VARCHAR},
+        #{perhourFuelConsumption,jdbcType=VARCHAR},
+        #{perhourUreaConsumption,jdbcType=VARCHAR},
+        #{calculateDate,jdbcType=VARCHAR},
+        #{isClose,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        update pat_roadtest
+        set
+        designModel=#{designModel,jdbcType=VARCHAR},
+        pin=#{pin,jdbcType=VARCHAR},
+        engineModel=#{engineModel,jdbcType=VARCHAR},
+        location=#{location,jdbcType=VARCHAR},
+        roadtestStatus=#{roadtestStatus,jdbcType=VARCHAR},
+        roadtestBeginDate=#{roadtestBeginDate,jdbcType=VARCHAR},
+        roadtestEndDate=#{roadtestEndDate,jdbcType=VARCHAR},
+        roadtestType=#{roadtestType,jdbcType=VARCHAR},
+        roadtestContent=#{roadtestContent,jdbcType=VARCHAR},
+        targetDailyAverageWorkingHours=#{targetDailyAverageWorkingHours,jdbcType=VARCHAR},
+        targetDailyAverageWorkingHoursRemaining=#{targetDailyAverageWorkingHoursRemaining,jdbcType=VARCHAR},
+        actualDailyAverageWorkingHours=#{actualDailyAverageWorkingHours,jdbcType=VARCHAR},
+        cumulativeWorkingHours=#{cumulativeWorkingHours,jdbcType=VARCHAR},
+        cumulativeFuelConsumption=#{cumulativeFuelConsumption,jdbcType=VARCHAR},
+        cumulativeUreaConsumption=#{cumulativeUreaConsumption,jdbcType=VARCHAR},
+        perhourFuelConsumption=#{perhourFuelConsumption,jdbcType=VARCHAR},
+        perhourUreaConsumption=#{perhourUreaConsumption,jdbcType=VARCHAR},
+        calculateDate=#{calculateDate,jdbcType=VARCHAR},
+        isClose=#{isClose,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <insert id="insertDaily" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into pat_roadtest_daily(
+        id,
+        mainId,
+        theDate,
+        crmStatus,
+        crmStatusNeg,
+        dailyWorkingHours,
+        dailyFuelConsumption,
+        dailyUreaConsumption,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{theDate,jdbcType=VARCHAR},
+        #{crmStatus,jdbcType=VARCHAR},
+        #{crmStatusNeg,jdbcType=VARCHAR},
+        #{dailyWorkingHours,jdbcType=VARCHAR},
+        #{dailyFuelConsumption,jdbcType=VARCHAR},
+        #{dailyUreaConsumption,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateDaily" parameterType="com.alibaba.fastjson.JSONObject">
+        update pat_roadtest_daily
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        theDate=#{theDate,jdbcType=VARCHAR},
+        crmStatus=#{crmStatus,jdbcType=VARCHAR},
+        crmStatusNeg=#{crmStatusNeg,jdbcType=VARCHAR},
+        dailyWorkingHours=#{dailyWorkingHours,jdbcType=VARCHAR},
+        dailyFuelConsumption=#{dailyFuelConsumption,jdbcType=VARCHAR},
+        dailyUreaConsumption=#{dailyUreaConsumption,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <select id="getTestdataDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM pat_roadtest_testdata
+        WHERE pat_roadtest_testdata.id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertTestdata" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into pat_roadtest_testdata(
+        id,
+        mainId,
+        testName,
+        testContent,
+        testTimeSpan,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{testName,jdbcType=VARCHAR},
+        #{testContent,jdbcType=VARCHAR},
+        #{testTimeSpan,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateTestdata" parameterType="com.alibaba.fastjson.JSONObject">
+        update pat_roadtest_testdata
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        testName=#{testName,jdbcType=VARCHAR},
+        testContent=#{testContent,jdbcType=VARCHAR},
+        testTimeSpan=#{testTimeSpan,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <insert id="addTestdataFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into pat_roadtest_testdata_fileinfo(
+        id,
+        mainId,
+        fileName,
+        fileSize,
+        fileDesc,
+        fileType,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{fileType,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <insert id="insertGpscache" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into pat_roadtest_gpscache(
+        id,
+        mainId,
+        vinCode,
+        lng,
+        lat,
+        gpsTime,
+        accStatus,
+        totalEngineHours,
+        engineWaterTemperature,
+        fuelLevel,
+        hydraulicOilTemperature,
+        altitude,
+        enginespeed,
+        totalEngineFuel,
+        currentWorkTime,
+        throttleGear,
+        alarmList,
+        cacheDate,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{vinCode,jdbcType=VARCHAR},
+        #{lng,jdbcType=VARCHAR},
+        #{lat,jdbcType=VARCHAR},
+        #{gpsTime,jdbcType=VARCHAR},
+        #{accStatus,jdbcType=VARCHAR},
+        #{totalEngineHours,jdbcType=VARCHAR},
+        #{engineWaterTemperature,jdbcType=VARCHAR},
+        #{fuelLevel,jdbcType=VARCHAR},
+        #{hydraulicOilTemperature,jdbcType=VARCHAR},
+        #{altitude,jdbcType=VARCHAR},
+        #{enginespeed,jdbcType=VARCHAR},
+        #{totalEngineFuel,jdbcType=VARCHAR},
+        #{currentWorkTime,jdbcType=VARCHAR},
+        #{throttleGear,jdbcType=VARCHAR},
+        #{alarmList,jdbcType=VARCHAR},
+        #{cacheDate,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <select id="getGpscacheList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM pat_roadtest_gpscache
+        <where>
+            <if test="businessId !=null and businessId !=''">
+                AND mainId = #{businessId}
+            </if>
+            <if test="vinCode !=null and vinCode !=''">
+                AND vinCode = #{vinCode}
+            </if>
+            <if test="cacheDate !=null and cacheDate !=''">
+                AND cacheDate = #{cacheDate}
+            </if>
+        </where>
+        ORDER BY cacheDate DESC
+    </select>
+    <!---->
+    <update id="updateGpscache" parameterType="com.alibaba.fastjson.JSONObject">
+        update pat_roadtest_gpscache
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        vinCode=#{vinCode,jdbcType=VARCHAR},
+        lng=#{lng,jdbcType=VARCHAR},
+        lat=#{lat,jdbcType=VARCHAR},
+        gpsTime=#{gpsTime,jdbcType=VARCHAR},
+        accStatus=#{accStatus,jdbcType=VARCHAR},
+        totalEngineHours=#{totalEngineHours,jdbcType=VARCHAR},
+        engineWaterTemperature=#{engineWaterTemperature,jdbcType=VARCHAR},
+        fuelLevel=#{fuelLevel,jdbcType=VARCHAR},
+        hydraulicOilTemperature=#{hydraulicOilTemperature,jdbcType=VARCHAR},
+        altitude=#{altitude,jdbcType=VARCHAR},
+        enginespeed=#{enginespeed,jdbcType=VARCHAR},
+        totalEngineFuel=#{totalEngineFuel,jdbcType=VARCHAR},
+        currentWorkTime=#{currentWorkTime,jdbcType=VARCHAR},
+        throttleGear=#{throttleGear,jdbcType=VARCHAR},
+        alarmList=#{alarmList,jdbcType=VARCHAR},
+        cacheDate=#{cacheDate,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+</mapper>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.RjscDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertRjsc" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO environmental_rj (
+        rjId,
+        rjName,
+        rjNo,
+        term,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{rjId,jdbcType=VARCHAR},
+        #{rjName,jdbcType=VARCHAR},
+        #{rjNo,jdbcType=VARCHAR},
+        #{term,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateRjsc" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_rj
+        <set>
+            <if test="rjName != null and rjName != ''">
+                rjName=#{rjName,jdbcType=VARCHAR},
+            </if>
+            <if test="rjName != null and rjName != ''">
+                rjName=#{rjName,jdbcType=VARCHAR},
+            </if>
+            <if test="term != null and term != ''">
+                term=#{term,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where
+        rjId=#{rjId}
+    </update>
+    <select id="queryRjscById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select environmental_rj.*
+        from environmental_rj
+        where
+        rjId=#{rjId}
+    </select>
+    <select id="queryRjscFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        fileId,
+        fileName,
+        belongId as rjId,
+        fileSize
+        FROM
+        environmental_rjfile
+        WHERE
+        <if test="rjIds != null and rjIds !=''">
+            belongId IN
+            <foreach collection="rjIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_rjfile(
+          fileId,
+          fileName,
+          fileSize,
+          belongId,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) values(
+          #{fileId,jdbcType=VARCHAR},
+          #{fileName,jdbcType=VARCHAR},
+          #{fileSize,jdbcType=VARCHAR},
+          #{belongId,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="queryRjsc" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environmental_rj.*,
+        os_user.FULLNAME_ AS userName
+        from
+        environmental_rj
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_rj.CREATE_BY_
+        <where>
+            <if test="rjName != null and rjName != ''">
+                rjName like CONCAT('%',#{rjName},'%')
+            </if>
+            <if test="rjNo != null and rjNo != ''">
+                rjNo like CONCAT('%',#{rjNo},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countRjscList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        environmental_rj
+        <where>
+            <if test="rjName != null and rjName != ''">
+                rjName like CONCAT('%',#{rjName},'%')
+            </if>
+            <if test="rjNo != null and rjNo != ''">
+                rjNo like CONCAT('%',#{rjNo},'%')
+            </if>
+        </where>
+    </select>
+    <delete id="deleteRjscFile" parameterType="java.util.Map">
+        delete from environmental_rjfile
+        <where>
+            <if test="id != null and id != ''">
+                fileId=#{id}
+            </if>
+            <if test="rjIds != null and rjIds !=''">
+                AND belongId IN
+                <foreach collection="rjIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteRjsc" parameterType="java.util.Map">
+        delete from environmental_rj
+        <where>
+            <if test="rjIds != null and rjIds !=''">
+                AND rjId IN
+                <foreach collection="rjIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+</mapper>

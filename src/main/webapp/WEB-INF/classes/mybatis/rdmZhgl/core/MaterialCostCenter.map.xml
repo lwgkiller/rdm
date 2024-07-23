@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.MaterialCostCenterDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="getCostCenterList" parameterType="java.util.Map" resultType="java.util.Map">
+        select A.*
+        from material_costcenter A
+        <where>
+            <if test="deptCode != null and deptCode != ''">
+                AND A.deptCode like CONCAT('%',#{deptCode},'%')
+            </if>
+            <if test="deptName != null and deptName != ''">
+                AND A.deptName like CONCAT('%',#{deptName},'%')
+            </if>
+        </where>
+        order by A.deptCode
+        <include refid="pageSql"/>
+    </select>
+    <delete id="deleteAll">
+        delete from material_costcenter;
+    </delete>
+    <insert id="batchInsert" parameterType="com.alibaba.fastjson.JSONArray">
+        INSERT INTO material_costcenter (
+        deptCode,
+        deptName
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.value,jdbcType=VARCHAR},
+            #{item.text,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+    <select id="getCostCenterDic" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.deptCode as value,
+            A.deptName as text
+        FROM
+	        material_costcenter A
+	        where A.deptCode like '%JSZX%'
+    </select>
+</mapper>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgbudget.core.dao.BudgetMonthUserDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryRelInstRoles" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            os_group.KEY_ AS roleKey
+        FROM
+            os_rel_inst
+            LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+            os_dimension.DIM_KEY_ = '_ROLE'
+            AND os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+            AND os_rel_inst.PARTY2_ = #{userId}
+    </select>
+
+    <select id="queryUserDeptRoles" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            os_rel_inst.REL_TYPE_KEY_ AS typeKey,
+            os_rel_inst.PARTY1_ AS groupId
+        FROM
+            os_rel_inst
+            LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        WHERE
+            os_dimension.DIM_KEY_ = '_ADMIN'
+            AND os_rel_inst.PARTY2_ = #{userId}
+    </select>
+
+    <select id="queryNodeVarsByNodeId" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        bpm_sol_var.KEY_,
+        bpm_sol_var.NAME_,
+        bpm_sol_var.DEF_VAL_
+        FROM
+        bpm_sol_var
+        LEFT JOIN bpm_solution ON bpm_sol_var.SOL_ID_ = bpm_solution.SOL_ID_
+        <where>
+            <if test="SCOPE_ != null and SCOPE_ != ''">
+                bpm_sol_var.SCOPE_ = #{SCOPE_}
+            </if>
+            <if test="SOL_ID_ != null and SOL_ID_ != ''">
+                and bpm_sol_var.SOL_ID_=#{SOL_ID_}
+            </if>
+            <if test="SOL_KEY_ != null and SOL_KEY_ != ''">
+                and bpm_solution.KEY_=#{SOL_KEY_}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                and bpm_sol_var.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryProjectList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.util.Map">
+        SELECT
+			DISTINCT
+            project_baseinfo.*,
+            bpm_inst.STATUS_ as status,
+			os_user.USER_ID_ as respId,
+			os_user.FULLNAME_ as respMan
+        FROM
+            project_baseinfo
+        left join bpm_inst on project_baseinfo.projectId=bpm_inst.BUS_KEY_
+		left join project_memberinfo ON project_memberinfo.projectId = project_baseinfo.projectId
+        left join project_member_role on project_memberinfo.roleId = project_member_role.roleId
+		LEFT JOIN os_user ON project_memberinfo.userId = os_user.USER_ID_
+        LEFT JOIN budget_projectinfo ON project_baseinfo.projectId = budget_projectinfo.projectId
+        where bpm_inst.STATUS_ = 'RUNNING'
+        AND project_member_role.roleId = 2
+        AND (project_baseinfo.cwddh IS NOT NULL
+        OR project_baseinfo.gbcwddh IS NOT NULL )
+        AND (project_baseinfo.cwddh != ''
+        OR project_baseinfo.gbcwddh != '')
+        <if test="projectId != null and projectId != ''">
+            AND project_baseinfo.projectId = #{projectId}
+        </if>
+        <if test="projectName != null and projectName != ''">
+            AND project_baseinfo.projectName like '%${projectName}%'
+        </if>
+        <if test="number != null and number != ''">
+            AND project_baseinfo.number like '%${number}%'
+        </if>
+        <if test="resId != null and resId != ''">
+            AND os_user.USER_ID_ = #{resId}
+        </if>
+        <if test="respMan != null and respMan != ''">
+            AND os_user.FULLNAME_ = #{respMan}
+        </if>
+        <if test="cwddh != null and cwddh != ''">
+            AND project_baseinfo.cwddh = #{cwddh}
+        </if>
+        <if test="budgetId != null and budgetId != ''">
+            AND budget_projectinfo.budgetId = #{budgetId}
+        </if>
+    </select>
+
+    <delete id="delTaskData" parameterType="java.lang.String">
+		delete from act_ru_task where INST_ID_ = #{instId}
+	</delete>
+
+    <delete id="discardBudgetMonth" parameterType="java.lang.String">
+		update bpm_inst
+		set
+		STATUS_ = 'DISCARD_END'
+		WHERE
+		INST_ID_=#{instId}
+	</delete>
+</mapper>

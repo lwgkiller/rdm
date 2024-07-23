@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.YfjbChangeNoticeDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.*,
+        C.FULLNAME_ as responseMan,
+        D.NAME_ as deptName
+        FROM
+        yfjb_changenotice A
+        left join yfjb_baseinfo B on A.mainId = B.id
+        left join os_user C on B.response = C.USER_ID_
+        left join os_group D on B.deptId = D.GROUP_ID_
+        <where>
+            <if test="saleModel != null and saleModel != ''">
+                and B.saleModel like CONCAT('%',#{saleModel},'%')
+            </if>
+            <if test="designModel != null and designModel != ''">
+                and B.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+            <if test="responseMan != null and responseMan != ''">
+                and C.FULLNAME_ like CONCAT('%',#{responseMan},'%')
+            </if>
+            <if test="costType != null and costType != ''">
+                and B.costType = #{costType}
+            </if>
+            <if test="reportYear != null and reportYear != ''">
+                and substring(A.noticeDate,1,4)=#{reportYear}
+            </if>
+            <if test="isDw != null and isDw != ''">
+                and (B.deptId = #{deptId} or B.deptId = #{zkDeptId})
+            </if>
+            <if test="isDw == null or isDw == ''">
+                <if test="deptId != null and deptId != ''">
+                    and B.deptId = #{deptId}
+                </if>
+            </if>
+
+        </where>
+        order by A.CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.orgSupplier,
+	        B.newSupplier
+        FROM
+            yfjb_changenotice A
+            LEFT JOIN yfjb_baseinfo B ON A.mainId = B.id
+            where A.id=#{id}
+    </select>
+    <select id="getObjectByMainId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.orgSupplier,
+	        B.newSupplier
+        FROM
+            yfjb_changenotice A
+            LEFT JOIN yfjb_baseinfo B ON A.mainId = B.id
+            where A.mainId=#{mainId}
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO yfjb_changenotice (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            changeable,
+            assessment,
+            noticeNo,
+            noticeDate,
+            storageAndCar,
+            remark
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{changeable,jdbcType=VARCHAR},
+            #{assessment,jdbcType=FLOAT},
+            #{noticeNo,jdbcType=VARCHAR},
+            #{noticeDate,jdbcType=TIMESTAMP},
+            #{storageAndCar,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update yfjb_changenotice
+        <set>
+            <if test="changeable != null and changeable != ''">
+                changeable=#{changeable,jdbcType=VARCHAR},
+            </if>
+            <if test="assessment != null and assessment != ''">
+                assessment=#{assessment,jdbcType=VARCHAR},
+            </if>
+            <if test="noticeNo != null and noticeNo != ''">
+                noticeNo=#{noticeNo,jdbcType=VARCHAR},
+            </if>
+            <if test="noticeDate != null and noticeDate != ''">
+                noticeDate=#{noticeDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="storageAndCar != null and storageAndCar != ''">
+                storageAndCar=#{storageAndCar,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null and remark != ''">
+                remark=#{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from yfjb_changenotice
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,1559 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.ZlgjWTDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!--查询主信息-->
+    <select id="queryZlgjList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zwt.*,
+        DATE_FORMAT(zwt.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME,
+        os_group.NAME_ AS applyUserDeptName,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_,
+        act_ru_task.CREATE_TIME_ as taskCreateTime,
+        component_test_kanban.componentCategory,
+        component_test_kanban.id as lbjId,
+        component_test_kanban.componentModel,
+        component_test_kanban.materialCode,
+        component_test_kanban.machineModel,
+        component_test_kanban.laboratory,
+        component_test_kanban.testType,
+        component_test_kanban.completeTestMonth,
+        component_test_kanban.testLeader,
+        component_test_kanban.testLeaderId,
+        component_test_kanban.sampleType,
+        component_test_kanban.nonconformingDescription,
+        component_test_kanban.improvementSuggestions,
+        component_test_kanban.testConclusion,
+        component_test_kanban.testRounds,
+        component_test_kanban.componentName
+        FROM
+        zlgj_wtsb_tab zwt
+        LEFT JOIN os_rel_inst ON zwt.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN component_test_kanban ON zwt.lbjId = component_test_kanban.id
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = zwt.CREATE_BY_
+        left join bpm_inst on zwt.wtId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test='czxpj == "0"'>
+            AND((
+            zwt.gzxt IS NOT NULL
+            AND zwt.gzxt != ''
+            AND zwt.gzxt != '操控性评价'
+            )
+            OR ( zwt.gzxt IS NULL )
+            OR ( zwt.gzxt = '' ))
+        </if>
+        <if test="gzxt != null and gzxt != ''">
+            AND zwt.gzxt like CONCAT('%',#{gzxt},'%')
+        </if>
+        <if test="zrrName != null and zrrName != ''">
+            AND zwt.zrrName like CONCAT('%',#{zrrName},'%')
+        </if>
+        <if test="zlgjNumber != null and zlgjNumber != ''">
+            AND zwt.zlgjNumber like CONCAT('%',#{zlgjNumber},'%')
+        </if>
+        <if test="smallJiXing != null and smallJiXing != ''">
+            AND zwt.smallJiXing like CONCAT('%',#{smallJiXing},'%')
+        </if>
+        <if test="wtlxtype != null and wtlxtype != ''">
+            AND zwt.wtlx like CONCAT('%',#{wtlxtype},'%')
+        </if>
+        <if test="gzlj != null and gzlj != ''">
+            AND zwt.gzlj like CONCAT('%',#{gzlj},'%')
+        </if>
+        <if test="wtms != null and wtms != ''">
+            AND zwt.wtms like CONCAT('%',#{wtms},'%')
+        </if>
+        <if test="zrcpzgId != null and zrcpzgId != ''">
+            AND zwt.zrcpzgId = #{zrcpzgId}
+        </if>
+        <if test="zrrId != null and zrrId != ''">
+            AND zwt.zrrId = #{zrrId}
+        </if>
+        <if test="ssbmId != null and ssbmId != ''">
+            AND zwt.ssbmId = #{ssbmId}
+        </if>
+        <if test="zjbh != null and zjbh != ''">
+            AND zwt.zjbh like CONCAT('%',#{zjbh},'%')
+        </if>
+        <if test="jiXing != null and jiXing != ''">
+            AND zwt.jiXing like CONCAT('%',#{jiXing},'%')
+        </if>
+        <if test="applyUserId != null and applyUserId != ''">
+            AND zwt.CREATE_BY_ = #{applyUserId}
+        </if>
+        <if test="applyDepId != null and applyDepId != ''">
+            AND os_group.GROUP_ID_ = #{applyDepId}
+        </if>
+        <if test="create_startTime != null and create_startTime != ''">
+            AND zwt.CREATE_TIME_ &gt;= CONCAT(#{create_startTime}, ' 00:00:00')
+        </if>
+        <if test="create_endTime != null and create_endTime != ''">
+            AND zwt.CREATE_TIME_ &lt;= CONCAT(#{create_endTime}, ' 23:59:59')
+        </if>
+        <if test="deptName != null and deptName != ''">
+            AND zwt.ssbmName = #{deptName}
+        </if>
+        <if test="jiean != null and jiean != ''">
+            <choose>
+                <when test="jiean =='yes'">
+                    AND ((zwt.zrbmshTime is not null and zwt.zrbmshTime !='') or bpm_inst.STATUS_='DISCARD_END')
+                </when>
+                <otherwise>
+                    AND ((zwt.zrbmshTime is null or zwt.zrbmshTime ='') and bpm_inst.STATUS_ ='RUNNING')
+                </otherwise>
+            </choose>
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='other'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR zwt.CREATE_BY_ = #{currentUserId})
+                </when>
+            </choose>
+        </if>
+        <if test="tdmSylx != null and tdmSylx != ''">
+            AND zwt.tdmSylx = #{tdmSylx}
+        </if>
+        <if test="jjcd != null and jjcd != ''">
+            AND zwt.jjcd = #{jjcd}
+        </if>
+        <if test="yzcd != null and yzcd != ''">
+            AND zwt.yzcd IN
+            <foreach collection="yzcd" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="ifgj != null and ifgj != ''">
+            AND zwt.ifgj = #{ifgj}
+        </if>
+        <if test="sggk != null and sggk != ''">
+            AND zwt.sggk like CONCAT('%',#{sggk},'%')
+        </if>
+        <if test="componentName != null and componentName != ''">
+            AND component_test_kanban.componentName like CONCAT('%',#{componentName},'%')
+        </if>
+        <if test="componentModel != null and componentModel != ''">
+            AND component_test_kanban.componentModel like CONCAT('%',#{componentModel},'%')
+        </if>
+        <if test="materialCode != null and materialCode != ''">
+            AND component_test_kanban.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="machineModel != null and machineModel != ''">
+            AND component_test_kanban.machineModel like CONCAT('%',#{machineModel},'%')
+        </if>
+        <if test="status != null and status != ''">
+            and bpm_inst.STATUS_ = #{status}
+        </if>
+        <include refid="orderBy"/>
+    </select>
+    <!--主信息计数-->
+    <select id="countZlgjList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        zlgj_wtsb_tab zwt
+        LEFT JOIN os_rel_inst ON zwt.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN component_test_kanban ON zwt.lbjId = component_test_kanban.id
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on zwt.wtId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test='czxpj == "0"'>
+                AND((
+                zwt.gzxt IS NOT NULL
+                AND zwt.gzxt != ''
+                AND zwt.gzxt != '操控性评价'
+                )
+                OR ( zwt.gzxt IS NULL )
+                OR ( zwt.gzxt = '' ))
+            </if>
+            <if test="gzxt != null and gzxt != ''">
+                AND zwt.gzxt like CONCAT('%',#{gzxt},'%')
+            </if>
+            <if test="zrrName != null and zrrName != ''">
+                AND zwt.zrrName like CONCAT('%',#{zrrName},'%')
+            </if>
+            <if test="zlgjNumber != null and zlgjNumber != ''">
+                AND zwt.zlgjNumber like CONCAT('%',#{zlgjNumber},'%')
+            </if>
+            <if test="wtlxtype != null and wtlxtype != ''">
+                AND zwt.wtlx like CONCAT('%',#{wtlxtype},'%')
+            </if>
+            <if test="smallJiXing != null and smallJiXing != ''">
+                AND zwt.smallJiXing like CONCAT('%',#{smallJiXing},'%')
+            </if>
+            <if test="gzlj != null and gzlj != ''">
+                AND zwt.gzlj like CONCAT('%',#{gzlj},'%')
+            </if>
+            <if test="wtms != null and wtms != ''">
+                AND zwt.wtms like CONCAT('%',#{wtms},'%')
+            </if>
+            <if test="zrcpzgId != null and zrcpzgId != ''">
+                AND zwt.zrcpzgId = #{zrcpzgId}
+            </if>
+            <if test="zrrId != null and zrrId != ''">
+                AND zwt.zrrId = #{zrrId}
+            </if>
+            <if test="ssbmId != null and ssbmId != ''">
+                AND zwt.ssbmId = #{ssbmId}
+            </if>
+            <if test="zjbh != null and zjbh != ''">
+                AND zwt.zjbh like CONCAT('%',#{zjbh},'%')
+            </if>
+            <if test="jiXing != null and jiXing != ''">
+                AND zwt.jiXing like CONCAT('%',#{jiXing},'%')
+            </if>
+            <if test="applyUserId != null and applyUserId != ''">
+                AND zwt.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="applyDepId != null and applyDepId != ''">
+                AND os_group.GROUP_ID_ = #{applyDepId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="create_startTime != null and create_startTime != ''">
+                AND zwt.CREATE_TIME_ &gt;= CONCAT(#{create_startTime}, ' 00:00:00')
+            </if>
+            <if test="create_endTime != null and create_endTime != ''">
+                AND zwt.CREATE_TIME_ &lt;= CONCAT(#{create_endTime}, ' 23:59:59')
+            </if>
+            <if test="deptName != null and deptName != ''">
+                AND zwt.ssbmName = #{deptName}
+            </if>
+            <if test="jiean != null and jiean != ''">
+                <choose>
+                    <when test="jiean =='yes'">
+                        AND ((zwt.zrbmshTime is not null and zwt.zrbmshTime !='') or bpm_inst.STATUS_='DISCARD_END')
+                    </when>
+                    <otherwise>
+                        AND ((zwt.zrbmshTime is null or zwt.zrbmshTime ='') and bpm_inst.STATUS_ ='RUNNING')
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR zwt.CREATE_BY_ =
+                        #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+            <if test="tdmSylx != null and tdmSylx != ''">
+                AND zwt.tdmSylx = #{tdmSylx}
+            </if>
+            <if test="jjcd != null and jjcd != ''">
+                AND zwt.jjcd = #{jjcd}
+            </if>
+            <if test="yzcd != null and yzcd != ''">
+                AND zwt.yzcd IN
+                <foreach collection="yzcd" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="ifgj != null and ifgj != ''">
+                AND zwt.ifgj = #{ifgj}
+            </if>
+            <if test="sggk != null and sggk != ''">
+                AND zwt.sggk like CONCAT('%',#{sggk},'%')
+            </if>
+            <if test="componentName != null and componentName != ''">
+                AND component_test_kanban.componentName like CONCAT('%',#{componentName},'%')
+            </if>
+            <if test="componentModel != null and componentModel != ''">
+                AND component_test_kanban.componentModel like CONCAT('%',#{componentModel},'%')
+            </if>
+            <if test="materialCode != null and materialCode != ''">
+                AND component_test_kanban.materialCode like CONCAT('%',#{materialCode},'%')
+            </if>
+            <if test="machineModel != null and machineModel != ''">
+                AND component_test_kanban.machineModel like CONCAT('%',#{machineModel},'%')
+            </if>
+            <if test="status != null and status != ''">
+                and bpm_inst.STATUS_ = #{status}
+            </if>
+        </where>
+    </select>
+    <!--添加主信息-->
+    <insert id="insertZlgj" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zlgj_wtsb_tab (wtId,
+                                   wtlx,
+                                   jiXing,
+                                   smallJiXing,
+                                   zjbh,
+                                   gzxs,
+                                   gzlj,
+                                   gzxt,
+                                   gzbw,
+                                   sggk,
+                                   lbjgys,
+                                   jjsl,
+                                   gzsl,
+                                   gzl,
+                                   wtms,
+                                   wtpcjc,
+                                   xcczfa,
+                                   gjyq,
+                                   zrrId,
+                                   zrrName,
+                                   ssbmId,
+                                   ssbmName,
+                                   yzTime,
+                                   yjTime,
+                                   gjxg,
+                                   gzr,
+                                   gjhgzl,
+                                   sfyx,
+                                   sffgsp,
+                                   CREATE_BY_,
+                                   CREATE_TIME_,
+                                   zrcpzgId,
+                                   zrcpzgName,
+                                   ifgj,
+                                   noReason,
+                                   gzsplj,
+                                   jjcd,
+                                   yzcd,
+                                   tdmSylx,
+                                   pfbz,
+                                   rounds,
+                                   improvementMethod,
+                                   ifba,
+                                   togetherNum,
+                                   togetherId,
+                                   scDate,
+                                   jjDate,
+                                   gzDate,
+                                   gzNum,
+                                   gzProgram,
+                                   lbjId,
+                                   saleArea)
+        values (#{wtId,jdbcType=VARCHAR},
+                #{wtlx,jdbcType=VARCHAR},
+                #{jiXing,jdbcType=VARCHAR},
+                #{smallJiXing,jdbcType=VARCHAR},
+                #{zjbh,jdbcType=VARCHAR},
+                #{gzxs,jdbcType=VARCHAR},
+                #{gzlj,jdbcType=VARCHAR},
+                #{gzxt,jdbcType=VARCHAR},
+                #{gzbw,jdbcType=VARCHAR},
+                #{sggk,jdbcType=VARCHAR},
+                #{lbjgys,jdbcType=VARCHAR},
+                #{jjsl,jdbcType=VARCHAR},
+                #{gzsl,jdbcType=VARCHAR},
+                #{gzl,jdbcType=VARCHAR},
+                #{wtms,jdbcType=VARCHAR},
+                #{wtpcjc,jdbcType=VARCHAR},
+                #{xcczfa,jdbcType=VARCHAR},
+                #{gjyq,jdbcType=VARCHAR},
+                #{zrrId,jdbcType=VARCHAR},
+                #{zrrName,jdbcType=VARCHAR},
+                #{ssbmId,jdbcType=VARCHAR},
+                #{ssbmName,jdbcType=VARCHAR},
+                #{yzTime,jdbcType=TIMESTAMP},
+                #{yjTime,jdbcType=TIMESTAMP},
+                #{gjxg,jdbcType=VARCHAR},
+                #{gzr,jdbcType=VARCHAR},
+                #{gjhgzl,jdbcType=VARCHAR},
+                #{sfyx,jdbcType=VARCHAR},
+                #{sffgsp,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP},
+                #{zrcpzgId,jdbcType=VARCHAR},
+                #{zrcpzgName,jdbcType=VARCHAR},
+                #{ifgj,jdbcType=VARCHAR},
+                #{noReason,jdbcType=VARCHAR},
+                #{gzsplj,jdbcType=VARCHAR},
+                #{jjcd,jdbcType=VARCHAR},
+                #{yzcd,jdbcType=VARCHAR},
+                #{tdmSylx,jdbcType=VARCHAR},
+                #{pfbz,jdbcType=VARCHAR},
+                #{rounds,jdbcType=VARCHAR},
+                #{improvementMethod,jdbcType=VARCHAR},
+                #{ifba,jdbcType=VARCHAR},
+                #{togetherNum,jdbcType=VARCHAR},
+                #{togetherId,jdbcType=VARCHAR},
+                #{scDate,jdbcType=VARCHAR},
+                #{jjDate,jdbcType=VARCHAR},
+                #{gzDate,jdbcType=VARCHAR},
+                #{gzNum,jdbcType=VARCHAR},
+                #{gzProgram,jdbcType=VARCHAR},
+                #{lbjId,jdbcType=VARCHAR},
+                #{saleArea,jdbcType=VARCHAR})
+    </insert>
+    <!--更新主信息-->
+    <update id="updateZlgj" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_wtsb_tab
+        set wtlx              = #{wtlx,jdbcType=VARCHAR},
+            jiXing            = #{jiXing,jdbcType=VARCHAR},
+            smallJiXing       = #{smallJiXing,jdbcType=VARCHAR},
+            zjbh              = #{zjbh,jdbcType=VARCHAR},
+            gzxs              = #{gzxs,jdbcType=VARCHAR},
+            gzlj              = #{gzlj,jdbcType=VARCHAR},
+            gzxt              = #{gzxt,jdbcType=VARCHAR},
+            gzbw              = #{gzbw,jdbcType=VARCHAR},
+            sggk              = #{sggk,jdbcType=VARCHAR},
+            lbjgys            = #{lbjgys,jdbcType=VARCHAR},
+            jjsl              = #{jjsl,jdbcType=VARCHAR},
+            gzsl              = #{gzsl,jdbcType=VARCHAR},
+            gzl               = #{gzl,jdbcType=VARCHAR},
+            wtms              = #{wtms,jdbcType=VARCHAR},
+            wtpcjc            = #{wtpcjc,jdbcType=VARCHAR},
+            xcczfa            = #{xcczfa,jdbcType=VARCHAR},
+            gjyq              = #{gjyq,jdbcType=VARCHAR},
+            zrrId             = #{zrrId,jdbcType=VARCHAR},
+            zrrName           = #{zrrName,jdbcType=VARCHAR},
+            ssbmId            = #{ssbmId,jdbcType=VARCHAR},
+            ssbmName          = #{ssbmName,jdbcType=VARCHAR},
+            yzTime            = #{yzTime,jdbcType=TIMESTAMP},
+            yjTime            = #{yjTime,jdbcType=TIMESTAMP},
+            gjxg              = #{gjxg,jdbcType=VARCHAR},
+            gzr               = #{gzr,jdbcType=VARCHAR},
+            gjhgzl            = #{gjhgzl,jdbcType=VARCHAR},
+            sfyx              = #{sfyx,jdbcType=VARCHAR},
+            sffgsp            = #{sffgsp,jdbcType=VARCHAR},
+            UPDATE_BY_        = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_      = #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            zrcpzgId          = #{zrcpzgId,jdbcType=VARCHAR},
+            zrcpzgName        = #{zrcpzgName,jdbcType=VARCHAR},
+            ifgj              = #{ifgj,jdbcType=VARCHAR},
+            noReason          = #{noReason,jdbcType=VARCHAR},
+            gzsplj            = #{gzsplj,jdbcType=VARCHAR},
+            jjcd              = #{jjcd,jdbcType=VARCHAR},
+            yzcd              = #{yzcd,jdbcType=VARCHAR},
+            tdmSylx           = #{tdmSylx,jdbcType=VARCHAR},
+            pfbz              = #{pfbz,jdbcType=VARCHAR},
+            rounds            = #{rounds,jdbcType=VARCHAR},
+            improvementMethod = #{improvementMethod,jdbcType=VARCHAR},
+            ifba              = #{ifba,jdbcType=VARCHAR},
+            togetherNum       = #{togetherNum,jdbcType=VARCHAR},
+            togetherId        = #{togetherId,jdbcType=VARCHAR},
+            scDate            = #{scDate,jdbcType=VARCHAR},
+            jjDate            = #{jjDate,jdbcType=VARCHAR},
+            gzDate            = #{gzDate,jdbcType=VARCHAR},
+            gzNum             = #{gzNum,jdbcType=VARCHAR},
+            gzProgram         = #{gzProgram,jdbcType=VARCHAR},
+            lbjId             = #{lbjId,jdbcType=VARCHAR},
+            saleArea          = #{saleArea,jdbcType=VARCHAR},
+            issuePartNo       = #{issuePartNo,jdbcType=VARCHAR}
+        where wtId = #{wtId}
+    </update>
+    <!--删除主信息-->
+    <delete id="deleteZlgj" parameterType="java.util.Map">
+        delete from zlgj_wtsb_tab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!--查询单个主信息-->
+    <select id="queryZlgjById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT zwt.*,
+               component_test_kanban.componentCategory,
+               component_test_kanban.id as lbjId,
+               component_test_kanban.componentModel,
+               component_test_kanban.materialCode,
+               component_test_kanban.machineModel,
+               component_test_kanban.laboratory,
+               component_test_kanban.testType,
+               component_test_kanban.completeTestMonth,
+               component_test_kanban.testLeader,
+               component_test_kanban.testLeaderId,
+               component_test_kanban.sampleType,
+               component_test_kanban.nonconformingDescription,
+               component_test_kanban.improvementSuggestions,
+               component_test_kanban.testConclusion,
+               component_test_kanban.testRounds,
+               component_test_kanban.componentName,
+               os_user.FULLNAME_        AS applyUserName,
+               os_group.NAME_           AS applyUserDeptName,
+               bpm_inst.INST_ID_        AS instId
+        FROM zlgj_wtsb_tab zwt
+                 LEFT JOIN os_user ON zwt.CREATE_BY_ = os_user.USER_ID_
+                 LEFT JOIN component_test_kanban ON zwt.lbjId = component_test_kanban.id
+                 LEFT JOIN os_rel_inst ON zwt.CREATE_BY_ = os_rel_inst.PARTY2_
+                 LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+                 LEFT JOIN bpm_inst ON zwt.wtId = bpm_inst.BUS_KEY_
+        WHERE zwt.wtId = #{wtId}
+          and os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+          AND os_rel_inst.DIM1_ = '1'
+    </select>
+    <!--查询超期主信息-->
+    <select id="queryZlgjListCq" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zwt.*,
+        DATE_FORMAT(zwt.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME,
+        os_group.NAME_ AS applyUserDeptName,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId
+        FROM
+        zlgj_wtsb_tab zwt
+        LEFT JOIN os_rel_inst ON zwt.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = zwt.CREATE_BY_
+        left join bpm_inst on zwt.wtId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND bpm_inst.STATUS_ != 'DRAFTED'
+        <if test='czxpj == "0"'>
+            AND((
+            zwt.gzxt IS NOT NULL
+            AND zwt.gzxt != ''
+            AND zwt.gzxt != '操控性评价'
+            )
+            OR ( zwt.gzxt IS NULL )
+            OR ( zwt.gzxt = '' ))
+        </if>
+        <if test="chartType == 1">
+            AND ( zrrStart IS NOT NULL AND zrrStart != '' )
+            AND ( ssbmId IS NOT NULL AND ssbmId != '' )
+            AND ( zrrEnd IS NULL OR zrrEnd = '' )
+            AND (
+            (jjcd = '紧急' AND TIMESTAMPDIFF(DAY,zrrStart,NOW()) &gt; 5)
+            OR (jjcd = '特急' AND TIMESTAMPDIFF(DAY,zrrStart,NOW()) &gt; 3)
+            OR (jjcd = '一般' AND TIMESTAMPDIFF(DAY,zrrStart,NOW()) &gt; 10)
+            )
+        </if>
+        <if test="zlgjNumber != null and zlgjNumber != ''">
+            AND zwt.zlgjNumber like CONCAT('%',#{zlgjNumber},'%')
+        </if>
+        <if test="wtlx != null and wtlx != ''">
+            AND FIND_IN_SET(zwt.wtlx,#{wtlx})
+        </if>
+        <if test="smallJiXing != null and smallJiXing != ''">
+            AND zwt.smallJiXing like CONCAT('%',#{smallJiXing},'%')
+        </if>
+        <if test="gzlj != null and gzlj != ''">
+            AND zwt.gzlj like CONCAT('%',#{gzlj},'%')
+        </if>
+        <if test="wtms != null and wtms != ''">
+            AND zwt.wtms like CONCAT('%',#{wtms},'%')
+        </if>
+        <if test="zrcpzgId != null and zrcpzgId != ''">
+            AND zwt.zrcpzgId = #{zrcpzgId}
+        </if>
+        <if test="zrrId != null and zrrId != ''">
+            AND zwt.zrrId = #{zrrId}
+        </if>
+        <if test="ssbmId != null and ssbmId != ''">
+            AND zwt.ssbmId = #{ssbmId}
+        </if>
+        <if test="zjbh != null and zjbh != ''">
+            AND zwt.zjbh like CONCAT('%',#{zjbh},'%')
+        </if>
+        <if test="jiXing != null and jiXing != ''">
+            AND zwt.jiXing like CONCAT('%',#{jiXing},'%')
+        </if>
+        <if test="applyUserId != null and applyUserId != ''">
+            AND zwt.CREATE_BY_ = #{applyUserId}
+        </if>
+        <if test="applyDepId != null and applyDepId != ''">
+            AND os_group.GROUP_ID_ = #{applyDepId}
+        </if>
+        <if test="create_startTime != null and create_startTime != '' and chartType != 1">
+            AND zwt.CREATE_TIME_ &gt;= CONCAT(#{create_startTime}, ' 00:00:00')
+        </if>
+        <if test="create_endTime != null and create_endTime != ''">
+            AND zwt.CREATE_TIME_ &lt;= CONCAT(#{create_endTime}, ' 23:59:59')
+        </if>
+        <if test="create_startTime != null and create_startTime != '' and chartType == 1">
+            AND DATE_FORMAT( zrrStart, '%Y-%m-%d' ) &gt;= #{create_startTime}
+        </if>
+        <if test="deptName != null and deptName != '' and ssbmType != null and ssbmType != ''">
+            AND zwt.ssbmName = #{deptName}
+        </if>
+        <if test="jiean != null and jiean != ''">
+            <choose>
+                <when test="jiean =='yes'">
+                    AND ((zwt.zrbmshTime is not null and zwt.zrbmshTime !='') or bpm_inst.STATUS_='DISCARD_END')
+                </when>
+                <otherwise>
+                    AND ((zwt.zrbmshTime is null or zwt.zrbmshTime ='') and bpm_inst.STATUS_ ='RUNNING')
+                </otherwise>
+            </choose>
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='other'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR zwt.CREATE_BY_ = #{currentUserId})
+                </when>
+            </choose>
+        </if>
+        <if test="tdmSylx != null and tdmSylx != ''">
+            AND zwt.tdmSylx = #{tdmSylx}
+        </if>
+        <if test="jjcd != null and jjcd != ''">
+            AND zwt.jjcd = #{jjcd}
+        </if>
+        <if test="yzcd != null and yzcd != ''">
+            AND zwt.yzcd IN
+            <foreach collection="yzcd" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="chartType == 2">
+            <if test="ifgj != null and ifgj != ''">
+                AND zwt.ifgj = #{ifgj}
+            </if>
+            <if test="sggk != null and sggk != ''">
+                AND zwt.sggk like CONCAT('%',#{sggk},'%')
+            </if>
+        </if>
+        <if test="zrrType != null and zrrType != ''">
+            AND (zwt.zrrId is not null and zwt.zrrId!='')
+        </if>
+        <if test="processType != null and processType != ''">
+            AND bpm_inst.STATUS_ ='RUNNING'
+        </if>
+    </select>
+    <!--根据主信息ids获取文件列表-->
+    <select id="queryZlgjFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        ztt.*
+        FROM
+        zlgj_tpfj_tab ztt
+        WHERE
+        ztt.wtId IN
+        <foreach collection="zlgjIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!--根据主信息id||附件类型||文件名获取文件列表-->
+    <select id="getFileListByTypeId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        ztt.fileName,
+        ztt.id,
+        ztt.wtId,
+        ztt.faId,
+        ztt.fjlx,
+        ztt.fileSize,
+        ztt.CREATE_BY_,
+        DATE_FORMAT(ztt.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        os_user.FULLNAME_ AS creator
+        FROM
+        zlgj_tpfj_tab ztt
+        LEFT JOIN os_user ON ztt.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+        1=1
+        <if test="mainId != null and mainId != ''">
+            and ztt.wtId = #{mainId}
+        </if>
+        <if test="fjlx != null and fjlx != ''">
+            AND ztt.fjlx = #{fjlx}
+        </if>
+        <if test="fileName != null and fileName != ''">
+            AND ztt.fileName like concat('%', #{fileName},'%')
+        </if>
+    </select>
+    <!--根据主信息id||附件类型||文件名获||解决方案id取文件列表-->
+    <select id="getFileListByTypeIdh" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        ztt.fileName,
+        ztt.id,
+        ztt.wtId,
+        ztt.faId,
+        ztt.fjlx,
+        ztt.fileSize,
+        ztt.CREATE_BY_,
+        DATE_FORMAT(ztt.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        ztt.CREATE_BY_,
+        os_user.FULLNAME_ AS creator
+        FROM
+        zlgj_tpfj_tab ztt
+        LEFT JOIN os_user ON ztt.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+        1=1
+        <if test="faId != null and faId != ''">
+            and ztt.faId = #{faId}
+        </if>
+        <if test="fjlx != null and fjlx != ''">
+            AND ztt.fjlx = #{fjlx}
+        </if>
+        <if test="fileName != null and fileName != ''">
+            AND ztt.fileName like concat('%', #{fileName},'%')
+        </if>
+        <if test="mainId != null and mainId != ''">
+            and ztt.wtId = #{mainId}
+        </if>
+
+    </select>
+    <!--添加附件信息-->
+    <insert id="addFileInfos" parameterType="java.util.Map">
+        INSERT INTO zlgj_tpfj_tab (id, CREATE_BY_, CREATE_TIME_, fileName, fileSize, wtId, fjlx, faId)
+        VALUES (#{id,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{fileName,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{wtId,jdbcType=VARCHAR},
+                #{fjlx,jdbcType=VARCHAR},
+                #{faId,jdbcType=VARCHAR})
+    </insert>
+    <!--根据主信息ids||文件id删除附件信息-->
+    <delete id="deleteZlgjFile" parameterType="java.util.Map">
+        delete from zlgj_tpfj_tab
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="wtIds != null and wtIds !=''">
+                AND wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!--根据文件ids删除附件信息-->
+    <delete id="deleteFileByIds" parameterType="java.util.Map">
+        delete from zlgj_tpfj_tab
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!--根据附件id||解决方案ids删除附件信息，todo：没用到-->
+    <delete id="deleteZlgjFilegh" parameterType="java.util.Map">
+        delete from zlgj_tpfj_tab
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="wtIds != null and wtIds !=''">
+                AND faId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!--更新责任部门审核时间-->
+    <update id="updateZrbmshTime" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_wtsb_tab
+        set zrbmshTime = #{zrbmshTime,jdbcType=TIMESTAMP}
+        where wtId = #{wtId}
+    </update>
+    <!--根据解决方案id查找主信息id，todo：没用到-->
+    <select id="queryWtId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        wtId
+        FROM
+        zlgj_jjfa_tab
+        <where>
+            <if test="faId !=null and faId !=''">
+                faId = #{faId}
+            </if>
+        </where>
+    </select>
+    <!--问题原因-->
+    <insert id="addWtyy" parameterType="java.util.Map">
+        INSERT INTO zlgj_wtyy_tab (yyId, CREATE_BY_, CREATE_TIME_, UPDATE_BY_, UPDATE_TIME_, reason, wtId)
+        values (#{yyId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{reason,jdbcType=VARCHAR},
+                #{wtId,jdbcType=VARCHAR})
+    </insert>
+    <update id="updatWtyy" parameterType="java.util.Map">
+        update zlgj_wtyy_tab
+        <set>
+            reason=#{reason,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=now()
+        </set>
+        WHERE
+        yyId=#{yyId}
+    </update>
+    <delete id="delWtyy" parameterType="java.lang.String">
+        delete
+        from zlgj_wtyy_tab
+        where yyId = #{yyId}
+    </delete>
+    <delete id="deleteWtyy" parameterType="java.util.Map">
+        delete from zlgj_wtyy_tab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getReasonList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zwt.*
+        FROM
+        zlgj_wtyy_tab zwt
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                zwt.wtId = #{wtId}
+            </if>
+        </where>
+    </select>
+    <select id="reasonList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        yyId,reason
+        FROM
+        zlgj_wtyy_tab
+        where
+        yyId IN
+        <foreach collection="yyIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!--临时措施-->
+    <insert id="addLscs" parameterType="java.util.Map">
+        INSERT INTO zlgj_lscs_tab (csId,
+                                   yyId,
+                                   CREATE_BY_,
+                                   CREATE_TIME_,
+                                   UPDATE_BY_,
+                                   UPDATE_TIME_,
+                                   dcfa,
+                                   ddpc,
+                                   zrr,
+                                   zrrName,
+                                   wcTime,
+                                   tzdh,
+                                   wtId,
+                                   rounds)
+        values (#{csId,jdbcType=VARCHAR},
+                #{yyId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{dcfa,jdbcType=VARCHAR},
+                #{ddpc,jdbcType=VARCHAR},
+                #{zrr,jdbcType=VARCHAR},
+                #{zrrName,jdbcType=VARCHAR},
+                #{wcTime,jdbcType=TIMESTAMP},
+                #{tzdh,jdbcType=VARCHAR},
+                #{wtId,jdbcType=VARCHAR},
+                #{rounds,jdbcType=VARCHAR})
+    </insert>
+    <update id="updatLscs" parameterType="java.util.Map">
+        update zlgj_lscs_tab
+        <set>
+            yyId=#{yyId,jdbcType=VARCHAR},
+            dcfa=#{dcfa,jdbcType=VARCHAR},
+            ddpc=#{ddpc,jdbcType=VARCHAR},
+            zrr=#{zrr,jdbcType=VARCHAR},
+            zrrName=#{zrrName,jdbcType=VARCHAR},
+            wcTime=#{wcTime,jdbcType=TIMESTAMP},
+            tzdh=#{tzdh,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=now(),
+            rounds=#{rounds,jdbcType=VARCHAR}
+        </set>
+        WHERE
+        csId=#{csId}
+    </update>
+    <delete id="delLscs" parameterType="java.lang.String">
+        delete
+        from zlgj_lscs_tab
+        where csId = #{csId}
+    </delete>
+    <delete id="deleteLscs" parameterType="java.util.Map">
+        delete from zlgj_lscs_tab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getLscsList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlt.csId,
+        zlt.yyId,
+        zlt.wtId,
+        zwt.reason as reason,
+        zlt.dcfa,
+        zlt.ddpc,
+        zlt.zrr,
+        zlt.zrrName,
+        zlt.tzdh,
+        zlt.rounds,
+        DATE_FORMAT(zlt.wcTime,'%Y-%m-%d') wcTime
+        FROM
+        zlgj_lscs_tab zlt
+        left join zlgj_wtyy_tab zwt on zwt.yyId=zlt.yyId
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                zlt.wtId = #{wtId}
+            </if>
+            <if test="rounds !=null and rounds !=''">
+                and zlt.rounds = #{rounds}
+            </if>
+        </where>
+    </select>
+    <!--原因验证-->
+    <insert id="addYyyz" parameterType="java.util.Map">
+        INSERT INTO zlgj_yyyz_tab (yzyyId,
+                                   yyId,
+                                   CREATE_BY_,
+                                   CREATE_TIME_,
+                                   UPDATE_BY_,
+                                   UPDATE_TIME_,
+                                   jcjg,
+                                   jielun,
+                                   rounds,
+                                   wtId)
+        values (#{yzyyId,jdbcType=VARCHAR},
+                #{yyId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{jcjg,jdbcType=VARCHAR},
+                #{jielun,jdbcType=VARCHAR},
+                #{rounds,jdbcType=VARCHAR},
+                #{wtId,jdbcType=VARCHAR})
+    </insert>
+    <update id="updatYyyz" parameterType="java.util.Map">
+        update zlgj_yyyz_tab
+        <set>
+            yyId=#{yyId,jdbcType=VARCHAR},
+            jcjg=#{jcjg,jdbcType=VARCHAR},
+            jielun=#{jielun,jdbcType=VARCHAR},
+            rounds=#{rounds,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=now()
+        </set>
+        WHERE
+        yzyyId=#{yzyyId}
+    </update>
+    <delete id="delYyyz" parameterType="java.lang.String">
+        delete
+        from zlgj_yyyz_tab
+        where yzyyId = #{yzyyId}
+    </delete>
+    <delete id="deleteYyyz" parameterType="java.util.Map">
+        delete from zlgj_yyyz_tab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getyzList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zyt.yzyyId,
+        zyt.wtId,
+        zyt.yyId,
+        zwt.reason as reason,
+        zyt.jcjg,
+        zyt.jielun,
+        zyt.rounds
+        FROM
+        zlgj_yyyz_tab zyt
+        left join zlgj_wtyy_tab zwt on zwt.yyId= zyt.yyId
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                zyt.wtId = #{wtId}
+            </if>
+            <if test="rounds !=null and rounds !=''">
+                and zyt.rounds = #{rounds}
+            </if>
+        </where>
+    </select>
+    <!--方案验证-->
+    <insert id="addFayz" parameterType="java.util.Map">
+        INSERT INTO zlgj_fayz_tab (faId,
+                                   yyId,
+                                   CREATE_BY_,
+                                   CREATE_TIME_,
+                                   UPDATE_BY_,
+                                   UPDATE_TIME_,
+                                   yzzrr,
+                                   yzzrrName,
+                                   sjTime,
+                                   yzjg,
+                                   gjfa,
+                                   rounds,
+                                   wtId)
+        values (#{faId,jdbcType=VARCHAR},
+                #{yyId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{yzzrr,jdbcType=VARCHAR},
+                #{yzzrrName,jdbcType=VARCHAR},
+                #{sjTime,jdbcType=TIMESTAMP},
+                #{yzjg,jdbcType=VARCHAR},
+                #{gjfa,jdbcType=VARCHAR},
+                #{rounds,jdbcType=VARCHAR},
+                #{wtId,jdbcType=VARCHAR})
+    </insert>
+    <update id="updatFayz" parameterType="java.util.Map">
+        update zlgj_fayz_tab
+        <set>
+            yyId=#{yyId,jdbcType=VARCHAR},
+            yzjg=#{yzjg,jdbcType=VARCHAR},
+            gjfa=#{gjfa,jdbcType=VARCHAR},
+            yzzrr=#{yzzrr,jdbcType=VARCHAR},
+            yzzrrName=#{yzzrrName,jdbcType=VARCHAR},
+            sjTime=#{sjTime,jdbcType=TIMESTAMP},
+            rounds=#{rounds,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=now()
+        </set>
+        WHERE
+        faId=#{faId}
+    </update>
+    <delete id="delFayz" parameterType="java.lang.String">
+        delete
+        from zlgj_fayz_tab
+        where faId = #{faId}
+    </delete>
+    <delete id="deleteFayz" parameterType="java.util.Map">
+        delete from zlgj_fayz_tab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getfayzList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zft.faId,
+        zft.yyId,
+        zft.wtId,
+        zwt.reason as reason,
+        zft.yzjg,
+        zft.gjfa,
+        zft.yzzrr,
+        zft.yzzrrName,
+        zft.rounds,
+        DATE_FORMAT(zft.sjTime,'%Y-%m-%d') sjTime
+        FROM
+        zlgj_fayz_tab zft
+        left join zlgj_wtyy_tab zwt on zwt.yyId=zft.yyId
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                zft.wtId = #{wtId}
+            </if>
+            <if test="rounds !=null and rounds !=''">
+                and zft.rounds = #{rounds}
+            </if>
+        </where>
+    </select>
+    <!--永久解决方案-->
+    <insert id="addJjfa" parameterType="java.util.Map">
+        INSERT INTO zlgj_jjfa_tab (faId,
+                                   yyId,
+                                   CREATE_BY_,
+                                   CREATE_TIME_,
+                                   UPDATE_BY_,
+                                   UPDATE_TIME_,
+                                   zrr,
+                                   zrrName,
+                                   wcTime,
+                                   cqcs,
+                                   tzdh,
+                                   wtId,
+                                   rounds,
+                                   yjqhch)
+        values (#{faId,jdbcType=VARCHAR},
+                #{yyId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{zrr,jdbcType=VARCHAR},
+                #{zrrName,jdbcType=VARCHAR},
+                #{wcTime,jdbcType=TIMESTAMP},
+                #{cqcs,jdbcType=VARCHAR},
+                #{tzdh,jdbcType=VARCHAR},
+                #{wtId,jdbcType=VARCHAR},
+                #{rounds,jdbcType=VARCHAR},
+                #{yjqhch,jdbcType=VARCHAR})
+    </insert>
+    <update id="updatJjfa" parameterType="java.util.Map">
+        update zlgj_jjfa_tab
+        <set>
+            yyId=#{yyId,jdbcType=VARCHAR},
+            cqcs=#{cqcs,jdbcType=VARCHAR},
+            tzdh=#{tzdh,jdbcType=VARCHAR},
+            zrr=#{zrr,jdbcType=VARCHAR},
+            zrrName=#{zrrName,jdbcType=VARCHAR},
+            wcTime=#{wcTime,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=now(),
+            yjqhch=#{yjqhch,jdbcType=VARCHAR},
+            rounds=#{rounds,jdbcType=VARCHAR}
+        </set>
+        WHERE
+        faId=#{faId}
+    </update>
+    <delete id="delJjfa" parameterType="java.lang.String">
+        delete
+        from zlgj_jjfa_tab
+        where faId = #{faId}
+    </delete>
+    <delete id="deleteJjfa" parameterType="java.util.Map">
+        delete from zlgj_jjfa_tab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getfajjList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zjt.yyId,
+        zwt.reason as reason,
+        zjt.faId,
+        zjt.wtId,
+        zjt.cqcs,
+        zjt.tzdh,
+        zjt.zrr,
+        zjt.zrrName,
+        zjt.yjqhch,
+        zjt.rounds,
+        DATE_FORMAT(zjt.wcTime,'%Y-%m-%d') wcTime
+        FROM
+        zlgj_jjfa_tab zjt
+        left join zlgj_wtyy_tab zwt on zwt.yyId=zjt.yyId
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                zjt.wtId = #{wtId}
+            </if>
+            <if test="rounds !=null and rounds !=''">
+                and zjt.rounds = #{rounds}
+            </if>
+        </where>
+    </select>
+    <!--风险排查-->
+    <insert id="addRiskUser" parameterType="java.util.Map">
+        INSERT INTO zlgj_risk_user (ryId,
+                                    leaderId,
+                                    leaderName,
+                                    resId,
+                                    resName,
+                                    qualified,
+                                    unqualified,
+                                    wtId,
+                                    CREATE_BY_,
+                                    CREATE_TIME_,
+                                    UPDATE_BY_,
+                                    UPDATE_TIME_)
+        values (#{ryId,jdbcType=VARCHAR},
+                #{leaderId,jdbcType=VARCHAR},
+                #{leaderName,jdbcType=VARCHAR},
+                #{resId,jdbcType=VARCHAR},
+                #{resName,jdbcType=TIMESTAMP},
+                #{qualified,jdbcType=VARCHAR},
+                #{unqualified,jdbcType=VARCHAR},
+                #{wtId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <update id="updateRiskUser" parameterType="java.util.Map">
+        update zlgj_risk_user
+        set leaderId     = #{leaderId,jdbcType=VARCHAR},
+            leaderName   = #{leaderName,jdbcType=VARCHAR},
+            resId        = #{resId,jdbcType=VARCHAR},
+            resName      = #{resName,jdbcType=TIMESTAMP},
+            qualified    = #{qualified,jdbcType=VARCHAR},
+            unqualified  = #{unqualified,jdbcType=VARCHAR},
+            UPDATE_BY_   = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = now()
+        WHERE ryId = #{ryId}
+    </update>
+    <delete id="delRiskUser" parameterType="java.lang.String">
+        delete
+        from zlgj_risk_user
+        where ryId = #{ryId}
+    </delete>
+    <delete id="deleteRiskUser" parameterType="java.util.Map">
+        delete from zlgj_risk_user
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getRiskUserList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM zlgj_risk_user
+        where wtId = #{wtId}
+    </select>
+    <insert id="addRisk" parameterType="java.util.Map">
+        INSERT INTO zlgj_risk_detail (riskId,
+                                      riskContent,
+                                      riskLevel,
+                                      solution,
+                                      market,
+                                      handle,
+                                      noticeNo,
+                                      changeNo,
+                                      wtId,
+                                      CREATE_BY_,
+                                      CREATE_TIME_,
+                                      UPDATE_BY_,
+                                      UPDATE_TIME_)
+        values (#{riskId,jdbcType=VARCHAR},
+                #{riskContent,jdbcType=VARCHAR},
+                #{riskLevel,jdbcType=VARCHAR},
+                #{solution,jdbcType=VARCHAR},
+                #{market,jdbcType=TIMESTAMP},
+                #{handle,jdbcType=VARCHAR},
+                #{noticeNo,jdbcType=VARCHAR},
+                #{changeNo,jdbcType=VARCHAR},
+                #{wtId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <update id="updateRisk" parameterType="java.util.Map">
+        update zlgj_risk_detail
+        set riskContent  = #{riskContent,jdbcType=VARCHAR},
+            riskLevel    = #{riskLevel,jdbcType=VARCHAR},
+            solution     = #{solution,jdbcType=VARCHAR},
+            market       = #{market,jdbcType=TIMESTAMP},
+            handle       = #{handle,jdbcType=VARCHAR},
+            noticeNo     = #{noticeNo,jdbcType=VARCHAR},
+            changeNo     = #{changeNo,jdbcType=VARCHAR},
+            UPDATE_BY_   = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = now()
+        WHERE riskId = #{riskId}
+    </update>
+    <delete id="delRisk" parameterType="java.lang.String">
+        delete
+        from zlgj_risk_detail
+        where riskId = #{riskId}
+    </delete>
+    <delete id="deleteRisk" parameterType="java.util.Map">
+        delete from zlgj_risk_detail
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getRiskList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgj_risk_detail.*,
+        os_user.FULLNAME_ AS creator
+        FROM
+        zlgj_risk_detail
+        left join os_user on zlgj_risk_detail.CREATE_BY_=os_user.USER_ID_
+        where
+        zlgj_risk_detail.wtId = #{wtId}
+        <if test="CREATE_BY_ != null and CREATE_BY_ != ''">
+            AND zlgj_risk_detail.CREATE_BY_ = #{CREATE_BY_}
+        </if>
+        <if test="riskLevel != null and riskLevel != ''">
+            AND zlgj_risk_detail.riskLevel != '无风险'
+        </if>
+    </select>
+    <!--以下杂项-->
+    <select id="queryUserByZlgjgcs" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT os_user.USER_ID_, os_user.FULLNAME_
+        FROM os_user
+                 LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        WHERE os_rel_inst.REL_TYPE_KEY_ = #{REL_TYPE_KEY_}
+        ORDER BY USER_ID_
+    </select>
+    <select id="queryJyjlUserRoles" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT os_rel_inst.REL_TYPE_KEY_, os_rel_inst.PARTY1_, os_group.NAME_, os_user.USER_ID_, os_user.FULLNAME_
+        FROM os_rel_inst
+                 LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+                 LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+                 LEFT JOIN os_user ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        WHERE os_dimension.DIM_KEY_ = '_ROLE'
+          AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+          AND os_group.NAME_ = #{userId}
+    </select>
+
+    <select id="queryUserByRelType" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT DISTINCT os_user.USER_ID_, os_user.FULLNAME_
+        FROM os_user
+                 LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        WHERE os_rel_inst.REL_TYPE_KEY_ = #{REL_TYPE_KEY_}
+    </select>
+    <select id="querySCWTSHRYEnum" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.util.Map">
+        SELECT sys_dic.VALUE_ AS userId, sys_dic.DESCP_ AS userName
+        FROM sys_dic
+                 LEFT JOIN sys_tree ON sys_dic.TYPE_ID_ = sys_tree.TREE_ID_
+        WHERE sys_tree.KEY_ = 'SCWTSHRY'
+          AND sys_dic.KEY_ = #{jiXing}
+        LIMIT 1
+    </select>
+
+    <select id="queryGzxtCodeByName" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.lang.String">
+        SELECT sys_dic.VALUE_ AS name, sys_dic.DESCP_ AS des
+        FROM sys_dic
+                 LEFT JOIN sys_tree ON sys_dic.TYPE_ID_ = sys_tree.TREE_ID_
+        WHERE sys_tree.KEY_ = 'GZXT'
+          AND sys_dic.KEY_ = #{gzxtName}
+        LIMIT 1
+    </select>
+
+    <select id="queryReasonByWtId" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.util.Map">
+        SELECT
+        wtId,
+        yyId,
+        reason
+        FROM
+        zlgj_wtyy_tab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryLscsByWtId" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.util.Map">
+        SELECT
+        *
+        FROM
+        zlgj_lscs_tab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryCqcsByWtId" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.util.Map">
+        SELECT
+        *
+        FROM
+        zlgj_jjfa_tab
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <update id="updateNumber" parameterType="java.util.Map">
+        update zlgj_wtsb_tab
+        set zlgjNumber = #{zlgjNumber,jdbcType=VARCHAR},
+            rounds     = #{rounds,jdbcType=VARCHAR}
+        where wtId = #{wtId}
+    </update>
+
+    <select id="queryMainDeptByUserId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT os_group.*
+        FROM os_group
+                 JOIN (SELECT PARTY1_
+                       FROM os_rel_inst
+                       WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                         AND DIM1_ = '1'
+                         AND PARTY2_ = #{userId}) tmp ON os_group.GROUP_ID_ = tmp.PARTY1_
+    </select>
+
+    <select id="queryMaxZlgjNumber" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT zlgjNumber
+        FROM zlgj_wtsb_tab
+        WHERE zlgjNumber LIKE CONCAT(#{zlgjNumber}, '%')
+        ORDER BY zlgjNumber DESC
+        LIMIT 1
+    </select>
+    <!--此处增加计划结束时间，和开始时间同时更新-->
+    <update id="updateZrcpzgStart" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_wtsb_tab
+        set zrcpzgStart   = #{zrcpzgStart,jdbcType=TIMESTAMP},
+            zrcpzgEndPlan = #{zrcpzgEndPlan,jdbcType=TIMESTAMP}
+        where wtId = #{wtId}
+    </update>
+
+    <update id="updateZrcpzgEnd" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_wtsb_tab
+        set zrcpzgEnd = #{zrcpzgEnd,jdbcType=TIMESTAMP}
+        where wtId = #{wtId}
+    </update>
+    <!--此处增加计划结束时间，和开始时间同时更新-->
+    <update id="updateZrrStart" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_wtsb_tab
+        set zrrStart   = #{zrrStart,jdbcType=TIMESTAMP},
+            zrrEndPlan = #{zrrEndPlan,jdbcType=TIMESTAMP}
+        where wtId = #{wtId}
+    </update>
+
+    <update id="updateZrrEnd" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_wtsb_tab
+        set zrrEnd = #{zrrEnd,jdbcType=TIMESTAMP}
+        where wtId = #{wtId}
+    </update>
+
+    <select id="queryOutSystemByBusKeyId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM zlgj_wtsb_outsystem
+        WHERE busKeyId = #{busKeyId}
+    </select>
+
+    <update id="updateOutSystemCallResult" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_wtsb_outsystem
+        set callBackResult = #{callBackResult,jdbcType=VARCHAR}
+        where id = #{id}
+    </update>
+
+    <select id="queryNodeFirstCreateTime" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        bpm_inst.BUS_KEY_ AS wtId,
+        bpm_node_jump.NODE_NAME_ AS nodeName,
+        min( bpm_node_jump.CREATE_TIME_ ) AS createTime
+        FROM
+        bpm_node_jump
+        LEFT JOIN bpm_inst ON bpm_node_jump.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+        WHERE
+        bpm_node_jump.NODE_NAME_ IN
+        <foreach collection="nodeNames" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        AND bpm_inst.BUS_KEY_ IN
+        <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        GROUP BY
+        bpm_inst.BUS_KEY_, bpm_node_jump.NODE_NAME_
+        ORDER BY bpm_inst.BUS_KEY_
+    </select>
+
+    <insert id="insertZlgjOutSystem" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO zlgj_wtsb_outsystem (id,
+                                         busKeyId,
+                                         outSystem,
+                                         outSystemJson,
+                                         callBackResult,
+                                         CREATE_BY_,
+                                         CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{busKeyId,jdbcType=VARCHAR},
+                #{outSystem,jdbcType=VARCHAR},
+                #{outSystemJson,jdbcType=VARCHAR},
+                #{callBackResult,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <delete id="deleteOutSystemByBusKeyId" parameterType="java.util.Map">
+        delete from zlgj_wtsb_outsystem
+        WHERE busKeyId in
+        <foreach collection="busKeyIds" separator="," index="index" item="item" open="(" close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryApiList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT zwt.wtid,
+               zwt.zlgjNumber,
+               zwt.yzcd,
+               zwt.jiXing,
+               zwt.smallJiXing,
+               zwt.gzlj,
+               zwt.wtms,
+               DATE_FORMAT(zwt.CREATE_TIME_, '%Y-%m-%d') CREATE_TIME,
+               os_group.NAME_    AS                      applyUserDeptName,
+               os_user.FULLNAME_ AS                      applyUserName,
+               act_ru_task.NAME_ AS                      currentProcessTask,
+               bpm_inst.STATUS_  AS                      STATUS
+        FROM zlgj_wtsb_tab zwt
+                 LEFT JOIN os_rel_inst ON zwt.CREATE_BY_ = os_rel_inst.PARTY2_
+                 LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+                 LEFT JOIN os_user ON os_user.USER_ID_ = zwt.CREATE_BY_
+                 LEFT JOIN bpm_inst ON zwt.wtId = bpm_inst.BUS_KEY_
+                 LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+          AND os_rel_inst.DIM1_ = '1'
+          AND zlgjNumber LIKE CONCAT('%', #{searchValue}, '%')
+    </select>
+
+    <select id="queryNodeHandler" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT bpm_node_jump.*, os_user.FULLNAME_
+        FROM bpm_node_jump
+                 LEFT JOIN bpm_inst ON bpm_node_jump.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+                 left join os_user on bpm_node_jump.HANDLER_ID_ = os_user.USER_ID_
+        WHERE bpm_node_jump.NODE_NAME_ = #{nodeName}
+          AND bpm_inst.INST_ID_ = #{instId}
+    </select>
+
+    <update id="updatePdmPrNo" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_wtsb_tab
+        set pdmPrNo = #{pdmPrNo}
+        where
+        wtId = #{wtId}
+    </update>
+</mapper>

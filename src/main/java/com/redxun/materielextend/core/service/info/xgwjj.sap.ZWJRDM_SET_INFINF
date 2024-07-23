@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://esb.primeton.com/sap-adaptor" xmlns:soapenc11="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://esb.primeton.com/sap-adaptor" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://esb.primeton.com/sap-adaptor/rfc" xmlns:soapenc12="http://www.w3.org/2003/05/soap-encoding">
+  <wsdl:types>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor/rfc">
+									<xsd:complexType name="ArrayOfIT_TAB">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="IT_TAB" nillable="true" type="ns1:IT_TAB"/>
+				</xsd:sequence>
+			</xsd:complexType>
+																	<xsd:complexType name="IT_TAB">
+				<xsd:sequence>
+									<xsd:element minOccurs="0" name="ZMARK" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="ZRESULT" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MESSAGE" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="BPRME" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="EKGRP" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="EKORG" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="ESOKZ" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="EVERS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="INFNR" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="NETPR" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="LIFNR" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MATNR" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MWSKZ" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="PEINH" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="APLFZ" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="WAERS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="WERKS" nillable="true" type="xsd:string"/>
+								</xsd:sequence>
+			</xsd:complexType>
+																</xsd:schema>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor">
+			<xsd:element name="ZWJRDM_SET_INFNR">
+				<xsd:complexType>
+					<xsd:sequence>
+												<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfIT_TAB" nillable="true" type="ns1:ArrayOfIT_TAB"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="ZWJRDM_SET_INFNRResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+												<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfIT_TAB" nillable="true" type="ns1:ArrayOfIT_TAB"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="ZWJRDM_SET_INFNRRequest">
+    <wsdl:part name="parameters" element="tns:ZWJRDM_SET_INFNR">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="ZWJRDM_SET_INFNRResponse">
+    <wsdl:part name="parameters" element="tns:ZWJRDM_SET_INFNRResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="xgwjj.sap.ZWJRDM_SET_INFINFPortType">
+    <wsdl:operation name="ZWJRDM_SET_INFNR">
+      <wsdl:input name="ZWJRDM_SET_INFNRRequest" message="tns:ZWJRDM_SET_INFNRRequest">
+    </wsdl:input>
+      <wsdl:output name="ZWJRDM_SET_INFNRResponse" message="tns:ZWJRDM_SET_INFNRResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="xgwjj.sap.ZWJRDM_SET_INFINFHttpBinding" type="tns:xgwjj.sap.ZWJRDM_SET_INFINFPortType">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="ZWJRDM_SET_INFNR">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="ZWJRDM_SET_INFNRRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="ZWJRDM_SET_INFNRResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="xgwjj.sap.ZWJRDM_SET_INFINF">
+    <wsdl:port name="xgwjj.sap.ZWJRDM_SET_INFINFHttpPort" binding="tns:xgwjj.sap.ZWJRDM_SET_INFINFHttpBinding">
+      <wsdlsoap:address location="HTTP://10.15.8.175:9091/xgwjj.sap.ZWJRDM_SET_INFINF"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.MaterialProcureME51NDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="queryList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        material_procure_me51n.*,
+        os_user.FULLNAME_ AS applyUserName,
+        os_group.NAME_ AS applyDeptName
+        FROM
+        material_procure_me51n
+        LEFT JOIN os_user ON os_user.USER_ID_ = material_procure_me51n.CREATE_BY_
+        LEFT JOIN os_rel_inst ON material_procure_me51n.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test='applyNo != null and applyNo !=""'>
+            AND material_procure_me51n.applyNo like CONCAT('%',#{applyNo},'%')
+        </if>
+        <if test='applyUserName != null and applyUserName !=""'>
+            AND os_user.FULLNAME_ like CONCAT('%',#{applyUserName},'%')
+        </if>
+        <if test="apply_startTime != null and apply_startTime != ''">
+            AND material_procure_me51n.CREATE_TIME_ &gt;= #{apply_startTime}
+        </if>
+        <if test="apply_endTime != null and apply_endTime != ''">
+            AND material_procure_me51n.CREATE_TIME_ &lt;= #{apply_endTime}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgzr'">
+                    AND (os_group.GROUP_ID_ IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                    OR material_procure_me51n.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND material_procure_me51n.CREATE_BY_ = #{currentUserId}
+                </when>
+            </choose>
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countQueryList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        material_procure_me51n
+        LEFT JOIN os_user ON os_user.USER_ID_ = material_procure_me51n.CREATE_BY_
+        LEFT JOIN os_rel_inst ON material_procure_me51n.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test='applyNo != null and applyNo !=""'>
+            AND material_procure_me51n.applyNo like CONCAT('%',#{applyNo},'%')
+        </if>
+        <if test='applyUserName != null and applyUserName !=""'>
+            AND os_user.FULLNAME_ like CONCAT('%',#{applyUserName},'%')
+        </if>
+        <if test="apply_startTime != null and apply_startTime != ''">
+            AND material_procure_me51n.CREATE_TIME_ &gt;= #{apply_startTime}
+        </if>
+        <if test="apply_endTime != null and apply_endTime != ''">
+            AND material_procure_me51n.CREATE_TIME_ &lt;= #{apply_endTime}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgzr'">
+                    AND (os_group.GROUP_ID_ IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                    OR material_procure_me51n.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND material_procure_me51n.CREATE_BY_ = #{currentUserId}
+                </when>
+            </choose>
+        </if>
+    </select>
+    <!---->
+    <select id="queryListItems" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM material_procure_me51n_items
+        <where>
+            <if test="@Ognl@isNotEmpty(mainIds)">
+                AND mainId IN
+                <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(mainId)">
+                AND mainId = #{mainId}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <select id="getItemList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM material_procure_me51n_items
+        WHERE material_procure_me51n_items.mainId = #{mainId}
+    </select>
+    <!---->
+    <select id="getDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            material_procure_me51n.*,
+            os_user.FULLNAME_ AS applyUserName,
+            os_group.NAME_    AS applyDeptName
+        FROM
+            material_procure_me51n
+            LEFT JOIN os_user ON os_user.USER_ID_ = material_procure_me51n.CREATE_BY_
+            LEFT JOIN os_rel_inst ON material_procure_me51n.CREATE_BY_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE material_procure_me51n.id = #{id}
+              AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+              AND os_rel_inst.DIM1_ = '1'
+    </select>
+    <!---->
+    <insert id="insertApply" parameterType="java.util.Map">
+        INSERT INTO material_procure_me51n (
+        id,
+        applyNo,
+        reasonForUse,
+        businessStatus,
+        result,
+        message,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{applyNo,jdbcType=VARCHAR},
+        #{reasonForUse,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{result,jdbcType=VARCHAR},
+        #{message,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <insert id="updateApply" parameterType="java.util.Map">
+        UPDATE material_procure_me51n SET
+        applyNo=#{applyNo,jdbcType=VARCHAR},
+        reasonForUse=#{reasonForUse,jdbcType=VARCHAR},
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        result=#{result,jdbcType=VARCHAR},
+        message=#{message,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+    <!---->
+    <delete id="deleteApply" parameterType="java.lang.String">
+        delete from material_procure_me51n
+        where id = #{id}
+    </delete>
+    <!---->
+    <insert id="insertItem" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO material_procure_me51n_items (
+        id,
+        mainId,
+        materialCode,
+        purcureCount,
+        factoryNumber,
+        purcureOrg,
+        isDelete,
+        operation,
+        itemNo,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{purcureCount,jdbcType=VARCHAR},
+        #{factoryNumber,jdbcType=VARCHAR},
+        #{purcureOrg,jdbcType=VARCHAR},
+        #{isDelete,jdbcType=VARCHAR},
+        #{operation,jdbcType=VARCHAR},
+        #{itemNo,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateItem" parameterType="com.alibaba.fastjson.JSONObject">
+        update material_procure_me51n_items
+        set
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        purcureCount=#{purcureCount,jdbcType=VARCHAR},
+        factoryNumber=#{factoryNumber,jdbcType=VARCHAR},
+        purcureOrg=#{purcureOrg,jdbcType=VARCHAR},
+        isDelete=#{isDelete,jdbcType=VARCHAR},
+        operation=#{operation,jdbcType=VARCHAR},
+        itemNo=#{itemNo,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteItem" parameterType="java.lang.String">
+        delete from material_procure_me51n_items
+        where id = #{id}
+    </delete>
+</mapper>

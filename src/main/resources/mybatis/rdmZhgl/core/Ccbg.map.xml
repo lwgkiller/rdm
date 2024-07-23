@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.CcbgDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+        (ccbg_baseinfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="level1 != null and level1 != ''">
+            AND ccbg_baseinfo.level1 = #{level1}
+        </if>
+        <if test="level2 != null and level2 != ''">
+            AND ccbg_baseinfo.level2 = #{level2}
+        </if>
+        <if test="year != null and year != ''">
+            AND ccbg_baseinfo.year like CONCAT('%',#{year},'%')
+        </if>
+        <if test="month != null and month != ''">
+            AND ccbg_baseinfo.month like CONCAT('%',#{month},'%')
+        </if>
+        <if test="editorUserName != null and editorUserName != ''">
+            AND ccbg_baseinfo.editorUserName like CONCAT('%',#{editorUserName},'%')
+        </if>
+        <if test="memberUserNames != null and memberUserNames != ''">
+            AND ccbg_baseinfo.memberUserNames like CONCAT('%',#{memberUserNames},'%')
+        </if>
+        <if test="businessStatus != null and businessStatus != ''">
+            AND ccbg_baseinfo.businessStatus = #{businessStatus}
+        </if>
+        <if test="editorUserDepId != null and editorUserDepId != ''">
+            AND ccbg_baseinfo.editorUserDeptId = #{editorUserDepId}
+        </if>
+    </sql>
+
+
+    <!---->
+    <select id="queryFgzrByUserId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            os_user.USER_ID_,
+            os_user.FULLNAME_
+        FROM
+            os_user
+        WHERE
+            os_user.STATUS_ = 'IN_JOB'
+            AND os_user.USER_ID_ IN (
+                SELECT PARTY2_
+                FROM
+                    os_rel_inst
+                WHERE
+                    os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-DIRECTOR'
+                    AND DIM1_ = '1'
+                    AND os_rel_inst.PARTY1_ IN (
+                        SELECT PARTY1_
+                        FROM os_rel_inst
+                        WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND DIM1_ = '1'
+                              AND os_rel_inst.PARTY2_ = #{userId})
+            )
+    </select>
+    <!---->
+    <select id="querySzrByUserId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            os_user.USER_ID_,
+            os_user.FULLNAME_
+        FROM
+            os_user
+        WHERE
+            os_user.STATUS_ = 'IN_JOB'
+            AND os_user.USER_ID_ IN
+                (
+                    SELECT PARTY2_
+                    FROM
+                        os_rel_inst
+                    WHERE
+                        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                        AND DIM1_ = '1'
+                        AND os_rel_inst.PARTY1_ IN (
+                            SELECT PARTY1_
+                            FROM os_rel_inst
+                            WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND DIM1_ = '1'
+                                  AND os_rel_inst.PARTY2_ = #{userId})
+                )
+            AND os_user.USER_ID_ IN
+                (
+                    SELECT PARTY2_
+                    FROM
+                        os_rel_inst
+                        INNER JOIN os_group
+                            ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+                    WHERE
+                        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                        AND DIM1_ = '107902686716190730'
+                        AND os_group.NAME_ LIKE '%室主任%'
+                )
+    </select>
+    <!---->
+    <select id="queryCcbgList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        ccbg_baseinfo.*,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId
+        FROM
+        ccbg_baseinfo
+        left join bpm_inst on ccbg_baseinfo.id=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countCcbgList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        ccbg_baseinfo
+        left join bpm_inst on ccbg_baseinfo.id=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertCcbg" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ccbg_baseinfo(
+            id
+            ,memberUserIds
+            ,memberUserNames
+            ,beginTime
+            ,endTime
+            ,year
+            ,month
+            ,trip
+            ,primaryCoverage
+            ,summaryAndProposal
+            ,editorUserDeptId
+            ,editorUserDeptName
+            ,editorUserId
+            ,editorUserName
+            ,reviewerUserId
+            ,reviewerUserName
+            ,approverUserId
+            ,approverUserName
+            ,businessStatus
+            ,remark
+            ,level1
+            ,level2
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{memberUserIds,jdbcType=VARCHAR},
+            #{memberUserNames,jdbcType=VARCHAR},
+            #{beginTime,jdbcType=VARCHAR},
+            #{endTime,jdbcType=VARCHAR},
+            #{year,jdbcType=VARCHAR},
+            #{month,jdbcType=VARCHAR},
+            #{trip,jdbcType=VARCHAR},
+            #{primaryCoverage,jdbcType=VARCHAR},
+            #{summaryAndProposal,jdbcType=VARCHAR},
+            #{editorUserDeptId,jdbcType=VARCHAR},
+            #{editorUserDeptName,jdbcType=VARCHAR},
+            #{editorUserId,jdbcType=VARCHAR},
+            #{editorUserName,jdbcType=VARCHAR},
+            #{reviewerUserId,jdbcType=VARCHAR},
+            #{reviewerUserName,jdbcType=VARCHAR},
+            #{approverUserId,jdbcType=VARCHAR},
+            #{approverUserName,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{level1,jdbcType=VARCHAR},
+            #{level2,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateCcbg" parameterType="com.alibaba.fastjson.JSONObject">
+        update ccbg_baseinfo
+        set
+            memberUserIds=#{memberUserIds,jdbcType=VARCHAR},
+            memberUserNames=#{memberUserNames,jdbcType=VARCHAR},
+            beginTime=#{beginTime,jdbcType=VARCHAR},
+            endTime=#{endTime,jdbcType=VARCHAR},
+            year=#{year,jdbcType=VARCHAR},
+            month=#{month,jdbcType=VARCHAR},
+            trip=#{trip,jdbcType=VARCHAR},
+            primaryCoverage=#{primaryCoverage,jdbcType=VARCHAR},
+            summaryAndProposal=#{summaryAndProposal,jdbcType=VARCHAR},
+            editorUserDeptId=#{editorUserDeptId,jdbcType=VARCHAR},
+            editorUserDeptName=#{editorUserDeptName,jdbcType=VARCHAR},
+            editorUserId=#{editorUserId,jdbcType=VARCHAR},
+            editorUserName=#{editorUserName,jdbcType=VARCHAR},
+            reviewerUserId=#{reviewerUserId,jdbcType=VARCHAR},
+            reviewerUserName=#{reviewerUserName,jdbcType=VARCHAR},
+            approverUserId=#{approverUserId,jdbcType=VARCHAR},
+            approverUserName=#{approverUserName,jdbcType=VARCHAR},
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            level1=#{level1,jdbcType=VARCHAR},
+            level2=#{level2,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=VARCHAR},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <select id="queryCcbgById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            ccbg_baseinfo.*,
+            os_user.FULLNAME_,
+            os_group.NAME_    AS editorUserDeptName,
+            bpm_inst.INST_ID_ AS instId
+        FROM ccbg_baseinfo
+            LEFT JOIN os_user ON ccbg_baseinfo.editorUserId = os_user.USER_ID_
+            LEFT JOIN os_rel_inst ON ccbg_baseinfo.editorUserId = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN bpm_inst ON ccbg_baseinfo.id = bpm_inst.BUS_KEY_
+        WHERE ccbg_baseinfo.id = #{ccbgId}
+              AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+              AND os_rel_inst.DIM1_ = '1'
+    </select>
+    <!---->
+    <select id="queryCcbgFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from ccbg_fileinfo
+        where reportId IN
+        <foreach collection="ccbgIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <insert id="addCcbgFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ccbg_fileInfo(
+        id,
+        fileName,
+        fileSize,
+        fileDesc,
+        reportId,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{ccbgId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <delete id="deleteCcbgFile" parameterType="java.util.Map">
+        delete from ccbg_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="ccbgIds != null and ccbgIds !=''">
+                AND reportId IN
+                <foreach collection="ccbgIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteCcbg" parameterType="java.util.Map">
+        delete from ccbg_baseinfo
+        <where>
+            <if test="ccbgIds != null and ccbgIds !=''">
+                id IN
+                <foreach collection="ccbgIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="getFileNamesListByMainId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT CONCAT(ccbg_fileinfo.fileName, ',', ccbg_fileinfo.id, ',', ccbg_fileinfo.fileSize) AS fileName
+        FROM ccbg_fileinfo
+            INNER JOIN ccbg_baseinfo
+                ON ccbg_fileinfo.reportId = ccbg_baseinfo.id
+        WHERE ccbg_baseinfo.id = #{id}
+    </select>
+
+    <!--    <select id="userUpdateQuery" resultType="com.alibaba.fastjson.JSONObject">
+            SELECT
+        ccbg_baseinfo.id,
+        editor.FULLNAME_ AS editorUserName,
+        reviewer.FULLNAME_ AS reviewerUserName,
+        approver.FULLNAME_ AS approverUserName,
+        os_group.NAME_ AS editorUserDeptName,
+        os_group.GROUP_ID_ as editorUserDeptId
+    FROM
+        ccbg_baseinfo
+        LEFT JOIN os_user AS editor ON editor.USER_ID_ = ccbg_baseinfo.editorUserId
+        LEFT JOIN os_user AS reviewer ON reviewer.USER_ID_ = ccbg_baseinfo.reviewerUserId
+        LEFT JOIN os_user AS approver ON approver.USER_ID_ = ccbg_baseinfo.approverUserId
+        LEFT JOIN os_rel_inst ON ccbg_baseinfo.editorUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        E
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        </select>
+
+        <update id="userUpdate" parameterType="com.alibaba.fastjson.JSONObject">
+            update ccbg_baseinfo
+            set
+                editorUserName=#{editorUserName,jdbcType=VARCHAR},
+                reviewerUserName=#{reviewerUserName,jdbcType=VARCHAR},
+                approverUserName=#{approverUserName,jdbcType=VARCHAR},
+                editorUserDeptId=#{editorUserDeptId,jdbcType=VARCHAR},
+                editorUserDeptName=#{editorUserDeptName,jdbcType=VARCHAR}
+            where
+                id=#{id}
+        </update>-->
+
+</mapper>

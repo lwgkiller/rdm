@@ -1,0 +1,671 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.WgjzlsjDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        service_enginineering_wgjzlsj.*,
+        bpm_inst.STATUS_ AS taskStatus,
+        bpm_inst.INST_ID_ AS instId,
+        act_ru_task.ID_ AS taskId,
+        act_ru_task.NAME_ AS currentProcessTask,
+        os_user.FULLNAME_ creator
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_user ON service_enginineering_wgjzlsj.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="dataType !=null and dataType !=''">
+                AND service_enginineering_wgjzlsj.dataType like concat('%',#{dataType},'%')
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_enginineering_wgjzlsj.materialCode like concat('%',#{materialCode},'%')
+            </if>
+            <if test="materialDescription !=null and materialDescription !=''">
+                AND service_enginineering_wgjzlsj.materialDescription like concat('%',#{materialDescription},'%')
+            </if>
+            <if test="materialDepartment !=null and materialDepartment !=''">
+                AND service_enginineering_wgjzlsj.materialDepartment like concat('%',#{materialDepartment},'%')
+            </if>
+            <if test="office !=null and office !=''">
+                AND service_enginineering_wgjzlsj.office = #{office}
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND service_enginineering_wgjzlsj.designModel like concat('%',#{designModel},'%')
+            </if>
+            <if test="supplier !=null and supplier !=''">
+                AND service_enginineering_wgjzlsj.supplier like concat('%',#{supplier},'%')
+            </if>
+            <if test="cpsPrincipal !=null and cpsPrincipal !=''">
+                AND service_enginineering_wgjzlsj.cpsPrincipal like concat('%',#{cpsPrincipal},'%')
+            </if>
+            <if test="filing != null and filing != ''">
+                AND service_enginineering_wgjzlsj.filing = #{filing}
+            </if>
+            <if test="responseLevel != null and responseLevel != ''">
+                AND service_enginineering_wgjzlsj.responseLevel = #{responseLevel}
+            </if>
+            <if test="filingStartTime != null and filingStartTime !=''">
+                AND filingTime &gt;= #{filingStartTime}
+            </if>
+            <if test="filingEndTime != null and filingEndTime !=''">
+                AND filingTime &lt;= #{filingEndTime}
+            </if>
+            <if test="makeStartTime != null and makeStartTime !=''">
+                AND makeTime &gt;= #{makeStartTime}
+            </if>
+            <if test="makeEndTime != null and makeEndTime !=''">
+                AND makeTime &lt;= #{makeEndTime}
+            </if>
+            <if test="creator != null and creator != ''">
+                AND os_user.FULLNAME_ like concat('%',#{creator},'%')
+            </if>
+            <if test="thirdMake != null and thirdMake != ''">
+                <choose>
+                    <when test="thirdMake == 'yes'">
+                        AND service_enginineering_wgjzlsj.thirdMake = #{thirdMake}
+                    </when>
+                    <otherwise>
+                        AND (service_enginineering_wgjzlsj.thirdMake = '' or service_enginineering_wgjzlsj.thirdMake = #{thirdMake})
+                    </otherwise>
+                </choose>
+
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' or bpm_inst.STATUS_ is null OR service_enginineering_wgjzlsj.CREATE_BY_ = #{currentUserId})
+                </if>
+            </if>
+            <if test="taskStatus != null and taskStatus != ''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+        </where>
+        order by CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        service_enginineering_wgjzlsj
+        left join bpm_inst on service_enginineering_wgjzlsj.id=bpm_inst.BUS_KEY_
+        left join os_user on service_enginineering_wgjzlsj.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="dataType !=null and dataType !=''">
+                AND service_enginineering_wgjzlsj.dataType like concat('%',#{dataType},'%')
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_enginineering_wgjzlsj.materialCode like concat('%',#{materialCode},'%')
+            </if>
+            <if test="materialDescription !=null and materialDescription !=''">
+                AND service_enginineering_wgjzlsj.materialDescription like concat('%',#{materialDescription},'%')
+            </if>
+            <if test="materialDepartment !=null and materialDepartment !=''">
+                AND service_enginineering_wgjzlsj.materialDepartment like concat('%',#{materialDepartment},'%')
+            </if>
+            <if test="office !=null and office !=''">
+                AND service_enginineering_wgjzlsj.office = #{office}
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND service_enginineering_wgjzlsj.designModel like concat('%',#{designModel},'%')
+            </if>
+            <if test="supplier !=null and supplier !=''">
+                AND service_enginineering_wgjzlsj.supplier like concat('%',#{supplier},'%')
+            </if>
+            <if test="cpsPrincipal !=null and cpsPrincipal !=''">
+                AND service_enginineering_wgjzlsj.cpsPrincipal like concat('%',#{cpsPrincipal},'%')
+            </if>
+            <if test="filing != null and filing != ''">
+                AND service_enginineering_wgjzlsj.filing = #{filing}
+            </if>
+            <if test="responseLevel != null and responseLevel != ''">
+                AND service_enginineering_wgjzlsj.responseLevel = #{responseLevel}
+            </if>
+            <if test="filingStartTime != null and filingStartTime !=''">
+                AND filingTime &gt;= #{filingStartTime}
+            </if>
+            <if test="filingEndTime != null and filingEndTime !=''">
+                AND filingTime &lt;= #{filingEndTime}
+            </if>
+            <if test="makeStartTime != null and makeStartTime !=''">
+                AND makeTime &gt;= #{makeStartTime}
+            </if>
+            <if test="makeEndTime != null and makeEndTime !=''">
+                AND makeTime &lt;= #{makeEndTime}
+            </if>
+            <if test="creator != null and creator != ''">
+                AND os_user.FULLNAME_ like concat('%',#{creator},'%')
+            </if>
+            <if test="thirdMake != null and thirdMake != ''">
+                <choose>
+                    <when test="thirdMake == 'yes'">
+                        AND service_enginineering_wgjzlsj.thirdMake = #{thirdMake}
+                    </when>
+                    <otherwise>
+                        AND (service_enginineering_wgjzlsj.thirdMake = '' or service_enginineering_wgjzlsj.thirdMake = #{thirdMake})
+                    </otherwise>
+                </choose>
+
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' or bpm_inst.STATUS_ is null OR service_enginineering_wgjzlsj.CREATE_BY_ = #{currentUserId})
+                </if>
+            </if>
+            <if test="taskStatus != null and taskStatus != ''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_enginineering_wgjzlsj(
+        id,
+        businessNo,
+        dataType,
+        materialCode,
+        materialName,
+        materialDescription,
+        materialDepartmentId,
+        materialDepartment,
+        office,
+        orderNo,
+        designModel,
+        <if test="submitDate != null and submitDate != ''">submitDate,</if>
+        fwgcPrincipalId,
+        fwgcPrincipal,
+        cpsPrincipalId,
+        cpsPrincipal,
+        <if test="filingTimeExp != null and filingTimeExp != ''">filingTimeExp,</if>
+        supplier,
+        supplierContact,
+        supplieContactWay,
+        filing,
+        <if test="filingTime != null and filingTime != ''">filingTime,</if>
+        networkDiskPath,
+        thirdMake,
+        <if test="yjwcsj != null and yjwcsj != ''">yjwcsj,</if>
+        <if test="makeTimePlan != null and makeTimePlan != ''">makeTimePlan,</if>
+        <if test="makeTime != null and makeTime != ''">makeTime,</if>
+        VTNo,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{businessNo,jdbcType=VARCHAR},
+        #{dataType,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{materialName,jdbcType=VARCHAR},
+        #{materialDescription,jdbcType=VARCHAR},
+        #{materialDepartmentId,jdbcType=VARCHAR},
+        #{materialDepartment,jdbcType=VARCHAR},
+        #{office,jdbcType=VARCHAR},
+        #{orderNo,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        <if test="submitDate != null and submitDate != ''">#{submitDate,jdbcType=TIMESTAMP},</if>
+        #{fwgcPrincipalId,jdbcType=VARCHAR},
+        #{fwgcPrincipal,jdbcType=VARCHAR},
+        #{cpsPrincipalId,jdbcType=VARCHAR},
+        #{cpsPrincipal,jdbcType=VARCHAR},
+        <if test="filingTimeExp != null and filingTimeExp != ''">#{filingTimeExp,jdbcType=TIMESTAMP},</if>
+        #{supplier,jdbcType=VARCHAR},
+        #{supplierContact,jdbcType=VARCHAR},
+        #{supplieContactWay,jdbcType=VARCHAR},
+        #{filing,jdbcType=VARCHAR},
+        <if test="filingTime != null and filingTime != ''">#{filingTime,jdbcType=TIMESTAMP},</if>
+        #{networkDiskPath,jdbcType=VARCHAR},
+        #{thirdMake,jdbcType=VARCHAR},
+        <if test="yjwcsj != null and yjwcsj != ''">#{yjwcsj,jdbcType=TIMESTAMP},</if>
+        <if test="makeTimePlan != null and makeTimePlan != ''">#{makeTimePlan,jdbcType=TIMESTAMP},</if>
+        <if test="makeTime != null and makeTime != ''">#{makeTime,jdbcType=TIMESTAMP},</if>
+        #{VTNo,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateData" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_enginineering_wgjzlsj set
+        businessNo=#{businessNo,jdbcType=VARCHAR},
+        dataType = #{dataType},
+        materialCode = #{materialCode},
+        materialName = #{materialName},
+        materialDescription = #{materialDescription},
+        materialDepartmentId = #{materialDepartmentId},
+        materialDepartment = #{materialDepartment},
+        office = #{office},
+        orderNo = #{orderNo},
+        designModel = #{designModel},
+        <if test="submitDate != null and submitDate != ''">submitDate = #{submitDate},</if>
+        fwgcPrincipalId =#{fwgcPrincipalId},
+        fwgcPrincipal = #{fwgcPrincipal},
+        cpsPrincipalId = #{cpsPrincipalId},
+        cpsPrincipal = #{cpsPrincipal},
+        <if test="filingTimeExp != null and filingTimeExp != ''">filingTimeExp = #{filingTimeExp},</if>
+        supplier = #{supplier},
+        supplierContact = #{supplierContact},
+        supplieContactWay = #{supplieContactWay},
+        filing = #{filing},
+        <if test="filingTime != null and filingTime!= ''">filingTime = #{filingTime},</if>
+        networkDiskPath = #{networkDiskPath},
+        thirdMake = #{thirdMake},
+        <if test="yjwcsj != null and yjwcsj != ''">yjwcsj = #{yjwcsj},</if>
+        <if test="makeTimePlan != null and makeTimePlan!= ''">makeTimePlan = #{makeTimePlan},</if>
+        <if test="makeTime != null and makeTime!= ''">makeTime = #{makeTime},</if>
+        VTNo=#{VTNo,jdbcType=VARCHAR},
+        remark = #{remark},
+        UPDATE_BY_=#{UPDATE_BY_},
+        UPDATE_TIME_=#{UPDATE_TIME_}
+        where id = #{id}
+    </update>
+    <!---->
+    <select id="queryById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            service_enginineering_wgjzlsj.*,
+            os_user.FULLNAME_,
+            act_ru_task.ID_   AS taskId,
+            bpm_inst.INST_ID_ AS instId
+        FROM service_enginineering_wgjzlsj
+            LEFT JOIN os_user ON service_enginineering_wgjzlsj.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+            LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE service_enginineering_wgjzlsj.id = #{id}
+    </select>
+
+    <select id="queryNodeRemark" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+      select tmp2.* from (
+            select INST_ID_,max(COMPLETE_TIME_) as maxTime from
+            (
+                SELECT
+                bpm_inst.INST_ID_,
+                bpm_node_jump.COMPLETE_TIME_
+                FROM
+                bpm_node_jump
+                LEFT JOIN bpm_inst ON bpm_node_jump.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+                WHERE
+                bpm_inst.INST_ID_ IN
+                <foreach collection="instIdSet" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+                </foreach>
+                and bpm_node_jump.NODE_NAME_=#{nodeName}
+            )tmp1
+        GROUP BY INST_ID_
+        )tmp11
+        join (
+            SELECT
+            bpm_inst.INST_ID_,
+            bpm_node_jump.REMARK_,
+            bpm_node_jump.COMPLETE_TIME_
+            FROM
+            bpm_node_jump
+            LEFT JOIN bpm_inst ON bpm_node_jump.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+            WHERE
+            bpm_inst.INST_ID_ IN
+            <foreach collection="instIdSet" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            and bpm_node_jump.NODE_NAME_=#{nodeName}
+        ) tmp2 on tmp11.INST_ID_ = tmp2.INST_ID_ and tmp11.maxTime = tmp2.COMPLETE_TIME_
+    </select>
+    <!---->
+    <delete id="deleteData" parameterType="java.util.Map">
+        delete from service_enginineering_wgjzlsj
+        where id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <select id="queryByMaterialCodeAndSupplier" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT service_enginineering_wgjzlsj.*
+        FROM
+            service_enginineering_wgjzlsj
+            LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+            LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+            service_enginineering_wgjzlsj.materialCode = #{materialCode}
+            AND service_enginineering_wgjzlsj.supplier = #{supplier}
+            AND service_enginineering_wgjzlsj.dataType = #{dataType}
+            AND bpm_inst.STATUS_ IN ('RUNNING', 'SUCCESS_END')
+    </select>
+    <!--李文光大改未涉及-->
+    <select id="queryDepartmentReport" parameterType="java.util.Map" resultType="java.util.Map">
+        select a.total, a.materialDepartment, a.dataType,
+        (case when b.total is null then 0 else b.total end) ysjTotal,
+        ROUND((case when b.total is null then 0 else b.total end)/(case when a.total = 0 then 1 else a.total end)*100, 2) ysjLv,
+        (case when c.total is null then 0 else c.total end) yzzTotal,
+        ROUND((case when c.total is null then 0 else c.total end)/(case when b.total is null then 1 else b.total end)*100,2) yzzLv,
+        (case when d.total is null then 0 else d.total end) firstToal,
+        (case when e.total is null then 0 else e.total end) secondTotal,
+        (case when f.total is null then 0 else f.total end) thirdTotal
+        from(
+        SELECT
+        count(1) total, materialDepartmentId,dataType,materialDepartment
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null)
+        GROUP BY materialDepartmentId,dataType
+        ) a
+        left join (
+        SELECT
+        count(1) total, materialDepartmentId,dataType,materialDepartment
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and filing = 'yes'
+        GROUP BY materialDepartmentId,dataType
+        ) b on a.materialDepartmentId = b.materialDepartmentId and a.dataType=b.dataType
+        left join (
+        SELECT
+        count(1) total, materialDepartmentId,dataType,materialDepartment
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and thirdMake = 'yes'
+        and filing = 'yes'
+        GROUP BY materialDepartmentId,dataType
+        ) c on a.materialDepartmentId = c.materialDepartmentId and a.dataType=c.dataType
+        left join(
+        SELECT
+        count(1) total, materialDepartmentId,dataType,materialDepartment
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and responseLevel =
+        'first'
+        GROUP BY materialDepartmentId,dataType
+        ) d on a.materialDepartmentId = d.materialDepartmentId and a.dataType=d.dataType
+        left join (
+        SELECT
+        count(1) total, materialDepartmentId,dataType,materialDepartment
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and responseLevel =
+        'second'
+        GROUP BY materialDepartmentId,dataType
+        ) e on a.materialDepartmentId = e.materialDepartmentId and a.dataType=e.dataType
+        left join (
+        SELECT
+        count(1) total, materialDepartmentId,dataType,materialDepartment
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and responseLevel =
+        'third'
+        GROUP BY materialDepartmentId,dataType
+        ) f on a.materialDepartmentId = f.materialDepartmentId and a.dataType=f.dataType
+        <where>
+            <if test="materialDepartment != null and materialDepartment != ''">
+                a.materialDepartment like concat('%', #{materialDepartment},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!--李文光大改未涉及-->
+    <select id="queryDepartmentReportCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(*) from (SELECT
+        count(1) total, materialDepartment
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null)
+        GROUP BY materialDepartmentId,dataType) a
+        <where>
+            <if test="materialDepartment != null and materialDepartment != ''">
+                a.materialDepartment like concat('%', #{materialDepartment},'%')
+            </if>
+        </where>
+    </select>
+    <!--李文光大改未涉及-->
+    <select id="querySupplierReport" parameterType="java.util.Map" resultType="java.util.Map">
+        select a.total, a.supplier, a.dataType,
+        (case when b.total is null then 0 else b.total end) ysjTotal,
+        ROUND((case when b.total is null then 0 else b.total end)/(case when a.total = 0 then 1 else a.total end)*100, 2) ysjLv,
+        (case when c.total is null then 0 else c.total end) yzzTotal,
+        ROUND((case when c.total is null then 0 else c.total end)/(case when b.total is null then 1 else b.total end)*100,2) yzzLv,
+        (case when d.total is null then 0 else d.total end) firstToal,
+        (case when e.total is null then 0 else e.total end) secondTotal,
+        (case when f.total is null then 0 else f.total end) thirdTotal
+        from(SELECT
+        count(1) total, supplier,dataType
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null)
+        GROUP BY supplier,dataType) a
+        left join (SELECT
+        count(1) total, supplier,dataType
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and filing = 'yes'
+        GROUP BY supplier,dataType) b on a.supplier = b.supplier and a.dataType=b.dataType
+        left join (SELECT
+        count(1) total, supplier,dataType
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and thirdMake = 'yes'
+        and filing = 'yes'
+        GROUP BY supplier,dataType) c on a.supplier = c.supplier and a.dataType=c.dataType
+        left join(SELECT
+        count(1) total, supplier,dataType
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and responseLevel =
+        'first'
+        GROUP BY supplier,dataType) d on a.supplier = d.supplier and a.dataType=d.dataType
+        left join (SELECT
+        count(1) total, supplier,dataType
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and responseLevel =
+        'second'
+        GROUP BY supplier,dataType) e on a.supplier = e.supplier and a.dataType=e.dataType
+        left join (SELECT
+        count(1) total, supplier,dataType
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null) and responseLevel =
+        'third'
+        GROUP BY supplier,dataType) f on a.supplier = f.supplier and a.dataType=f.dataType
+        <where>
+            <if test="supplier != null and supplier != ''">
+                a.supplier like concat('%', #{supplier},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!--李文光大改未涉及-->
+    <select id="querySupplierReportCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(*) from (SELECT
+        count(1) total, supplier
+        FROM
+        service_enginineering_wgjzlsj
+        LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ ='' OR bpm_inst.STATUS_ is null)
+        GROUP BY supplier,dataType) a
+        <where>
+            <if test="supplier != null and supplier != ''">
+                a.supplier like concat('%', #{supplier},'%')
+            </if>
+        </where>
+    </select>
+    <!--李文光大改未涉及-->
+    <select id="queryWgjzlsjChart" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            b.ysjNum,
+            c.wsjNum,
+            d.yzzNum,
+            e.wzzNum,
+            ROUND(b.ysjNum / (CASE WHEN a.total = 0
+                THEN 1
+                              ELSE a.total END) * 100, 2)  ysjl,
+            ROUND(d.yzzNum / (CASE WHEN b.ysjNum = 0
+                THEN 1
+                              ELSE b.ysjNum END) * 100, 2) yzzl
+        FROM
+            (SELECT count(*) total
+             FROM service_enginineering_wgjzlsj
+                 LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+             WHERE
+                 (bpm_inst.STATUS_ = 'RUNNING' OR bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = '' OR bpm_inst.STATUS_ IS NULL)) a,
+            (SELECT count(*) ysjNum
+             FROM
+                 service_enginineering_wgjzlsj
+                 LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+             WHERE
+                 (bpm_inst.STATUS_ = 'RUNNING' OR bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = '' OR bpm_inst.STATUS_ IS NULL) AND
+                 filing = 'yes') b,
+            (SELECT count(*) wsjNum
+             FROM
+                 service_enginineering_wgjzlsj
+                 LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+             WHERE
+                 (bpm_inst.STATUS_ = 'RUNNING' OR bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = '' OR bpm_inst.STATUS_ IS NULL) AND
+                 filing = 'no') c,
+            (SELECT count(*) yzzNum
+             FROM
+                 service_enginineering_wgjzlsj
+                 LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+             WHERE
+                 (bpm_inst.STATUS_ = 'RUNNING' OR bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = '' OR bpm_inst.STATUS_ IS NULL) AND
+                 filing = 'yes' AND thirdMake = 'yes') d,
+            (SELECT count(*) wzzNum
+             FROM
+                 service_enginineering_wgjzlsj
+                 LEFT JOIN bpm_inst ON service_enginineering_wgjzlsj.id = bpm_inst.BUS_KEY_
+             WHERE
+                 (bpm_inst.STATUS_ = 'RUNNING' OR bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = '' OR bpm_inst.STATUS_ IS NULL) AND
+                 filing = 'yes' AND (thirdMake = 'no' OR thirdMake = '' OR thirdMake IS NULL)) e
+    </select>
+    <!---->
+    <select id="getSeq" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_enginineering_wgjzlsj_seq_id
+        WHERE service_enginineering_wgjzlsj_seq_id.KEY_ = #{key}
+              AND
+              service_enginineering_wgjzlsj_seq_id.DATE_ = #{date}
+    </select>
+    <!---->
+    <insert id="insertSeq" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_enginineering_wgjzlsj_seq_id(
+        id,
+        KEY_,
+        DATE_,
+        INIT_VAL_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{KEY_,jdbcType=VARCHAR},
+        #{DATE_,jdbcType=VARCHAR},
+        #{INIT_VAL_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateSeq" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_enginineering_wgjzlsj_seq_id
+        set
+        KEY_=#{KEY_,jdbcType=VARCHAR},
+        DATE_=#{DATE_,jdbcType=VARCHAR},
+        INIT_VAL_=#{INIT_VAL_,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+    <!--李文光大改未涉及-->
+    <select id="queryApiList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            service_enginineering_wgjzlsj.id,
+            businessNo,
+            dataType,
+            materialCode,
+            materialName,
+            materialDescription,
+            materialDepartment,
+            office,
+            orderNo,
+            designModel,
+            supplier,
+            supplierContact,
+            submitDate,
+            yjwcsj,
+            cpsPrincipal,
+            fwgcPrincipal,
+            firstDeadline,
+            secondDeadline,
+            filingTime,
+            makeTime,
+            responseLevel,
+            networkDiskPath,
+            service_enginineering_wgjzlsj.CREATE_TIME_,
+            service_enginineering_wgjzlsj.CREATE_BY_,
+            os_user.FULLNAME_ creator
+        FROM
+            service_enginineering_wgjzlsj
+            LEFT JOIN os_user ON service_enginineering_wgjzlsj.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+            materialCode LIKE CONCAT('%', #{searchValue}, '%')
+    </select>
+</mapper>

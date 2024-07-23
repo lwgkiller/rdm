@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectMemOutDao">
+	<insert id="createProjectMemberOut" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO project_memberInfo_out
+		(
+			CREATE_BY_,
+			CREATE_TIME_,
+			id,
+			projectId,
+			userTask,
+			userDeptName,
+			userRole,
+			userName
+		)
+		VALUES 
+		(
+			#{createBy,jdbcType=VARCHAR},
+			#{createTime,jdbcType=TIMESTAMP},
+			#{id,jdbcType=VARCHAR},
+			#{projectId,jdbcType=VARCHAR},
+			#{userTask,jdbcType=CLOB},
+			#{userDeptName,jdbcType=VARCHAR},
+			#{userRole,jdbcType=VARCHAR},
+			#{userName,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<select id="getMemberOutById"   parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT * FROM project_memberInfo_out
+		WHERE 
+		id=#{id}
+	</select>
+	
+	<!--<select id="query" parameterType="java.util.Map" resultMap="XcmgProjectMemOut">
+		SELECT * FROM project_memberInfo_out
+		<where>
+			<if test="@Ognl@isNotEmpty(whereSql)">
+				${whereSql}
+			</if>
+		</where>
+		<if test="@Ognl@isNotEmpty(orderBySql)">
+			ORDER BY ${orderBySql}
+		</if>
+		<if test="@Ognl@isEmpty(orderBySql)">
+			ORDER BY id DESC
+		</if>
+	</select>-->
+	
+	<update id="updateMemberOut" parameterType="com.alibaba.fastjson.JSONObject">
+		UPDATE project_memberInfo_out
+		SET
+		projectId=#{projectId,jdbcType=VARCHAR},
+		userTask=#{userTask,jdbcType=CLOB},
+		userRole=#{userRole,jdbcType=VARCHAR},
+		userDeptName=#{userDeptName,jdbcType=VARCHAR},
+		UPDATE_BY_=#{updateBy,jdbcType=VARCHAR},
+		UPDATE_TIME_=#{updateTime,jdbcType=TIMESTAMP},
+		userName=#{userName,jdbcType=VARCHAR}
+		WHERE
+		id=#{id}
+	</update>
+	
+	<delete id="removeMemberOutById" parameterType="java.lang.String">
+		DELETE FROM project_memberInfo_out
+		WHERE
+		id=#{id}
+	</delete>
+	
+	<delete id="delMemberOutByProjectId" parameterType="java.lang.String">
+	    DELETE FROM project_memberInfo_out
+	    WHERE
+	    projectId=#{projectId}
+	</delete>    
+	
+	<select id="getMemberOutByProjectId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+			project_memberInfo_out.*
+		FROM
+			project_memberInfo_out
+	    WHERE projectId=#{projectId}
+	</select>
+	
+</mapper>

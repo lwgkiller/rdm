@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.ManageImproveDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="manageImproveListQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT manage_ImproveSuggest_Apply.*,
+        bpm_inst.STATUS_ as taskStatus,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        manage_ImproveSuggest_Apply
+        LEFT JOIN bpm_inst on manage_ImproveSuggest_Apply.id = bpm_inst.BUS_KEY_
+        <where>
+            <if test="suggestionApplynum !=null and suggestionApplynum !=''">
+                AND manage_ImproveSuggest_Apply.suggestionApplynum like concat('%',#{suggestionApplynum},'%')
+            </if>
+            <if test="coreTypeId !=null and coreTypeId !=''">
+                AND manage_ImproveSuggest_Apply.coreTypeId like concat('%',#{coreTypeId},'%')
+            </if>
+            <if test="subTypeId !=null and subTypeId !=''">
+                AND manage_ImproveSuggest_Apply.subTypeId like concat('%',#{subTypeId},'%')
+            </if>
+            <if test="businessRequest !=null and businessRequest !=''">
+                AND manage_ImproveSuggest_Apply.businessRequest like concat('%',#{businessRequest},'%')
+            </if>
+            <if test="problemType !=null and problemType !=''">
+                AND manage_ImproveSuggest_Apply.problemType like concat('%',#{problemType},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+
+
+        </where>
+        order by CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countManageImproveQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        manage_ImproveSuggest_Apply
+        left join bpm_inst on manage_ImproveSuggest_Apply.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="suggestionApplynum !=null and suggestionApplynum !=''">
+                AND suggestionApplynum like concat('%',#{suggestionApplynum},'%')
+            </if>
+            <if test="coreTypeId !=null and coreTypeId !=''">
+                AND coreTypeId like concat('%',#{coreTypeId},'%')
+            </if>
+            <if test="subTypeId !=null and subTypeId !=''">
+                AND subTypeId like concat('%',#{subTypeId},'%')
+            </if>
+            <if test="businessRequest !=null and businessRequest !=''">
+                AND businessRequest like concat('%',#{businessRequest},'%')
+            </if>
+            <if test="problemType !=null and problemType !=''">
+                AND problemType like concat('%',#{problemType},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+
+            <if test="roleName !=null and roleName !=''">
+
+                AND (bpm_inst.STATUS_ != 'DRAFTED' OR manage_ImproveSuggest_Apply.CREATE_BY_ = #{currentUserId} or bpm_inst.STATUS_ is null)
+
+            </if>
+        </where>
+    </select>
+
+    <select id="getManageImproveDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            manage_ImproveSuggest_Apply.*,
+            bpm_inst.STATUS_  AS taskStatus,
+            bpm_inst.INST_ID_ AS instId
+        FROM manage_ImproveSuggest_Apply
+            LEFT JOIN bpm_inst ON manage_ImproveSuggest_Apply.id = bpm_inst.BUS_KEY_
+        WHERE manage_ImproveSuggest_Apply.id = #{manageImproveId}
+    </select>
+
+    <insert id="addFiles" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into manage_ImproveSuggest_ApplyFile(
+          id,
+          belongId,
+          fileName,
+          fileSize,
+          filetype,
+          CREATE_BY_,
+          creator,
+          CREATE_TIME_
+        ) values(
+          #{id,jdbcType=VARCHAR},
+          #{belongId,jdbcType=VARCHAR},
+          #{fileName,jdbcType=VARCHAR},
+          #{fileSize,jdbcType=VARCHAR},
+          #{filetype,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{creator,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="queryManageImproveFileList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select manage_ImproveSuggest_ApplyFile.* from manage_ImproveSuggest_ApplyFile
+        where belongId IN
+        <foreach collection="belongIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="filetype">
+            AND manage_ImproveSuggest_ApplyFile.filetype = #{filetype}
+        </if>
+    </select>
+
+    <delete id="delManageImproveFileById" parameterType="java.lang.String">
+        delete from manage_ImproveSuggest_ApplyFile
+        where id =#{id}
+    </delete>
+
+    <delete id="delFileByBelongId" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from manage_ImproveSuggest_ApplyFile
+        where belongId IN
+        <foreach collection="belongIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteManageImproveTb" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from manage_ImproveSuggest_ApplyFile
+        where id IN
+        <foreach collection="belongIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="subTypeList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        manage_improvesuggest_processcategory
+        <where>
+            <if test="coreTypeId != null and coreTypeId != ''">
+                manage_improvesuggest_processcategory.coreTypeName = #{coreTypeId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="createManageImprove" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO manage_ImproveSuggest_Apply (
+            id,
+            suggestionApplynum,
+            coreTypeId,
+            subTypeId,
+            businessRequest,
+            problemType,
+            problemDescription,
+            improveSuggestion,
+            improveDepartmentId,
+            improveDepartment,
+            applicationUnitId,
+            applicationUnit,
+            CREATE_TIME_,
+            creator,
+            CREATE_BY_
+        )VALUES(
+            #{id,jdbcType=VARCHAR},
+            #{suggestionApplynum,jdbcType=VARCHAR},
+            #{coreTypeId,jdbcType=VARCHAR},
+            #{subTypeId,jdbcType=VARCHAR},
+            #{businessRequest,jdbcType=VARCHAR},
+            #{problemType,jdbcType=VARCHAR},
+            #{problemDescription,jdbcType=VARCHAR},
+            #{improveSuggestion,jdbcType=VARCHAR},
+            #{improveDepartmentId,jdbcType=VARCHAR},
+            #{improveDepartment,jdbcType=VARCHAR},
+            #{applicationUnitId,jdbcType=VARCHAR},
+            #{applicationUnit,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{creator,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR}
+        );
+    </insert>
+    <update id="updateManageImprove" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE manage_ImproveSuggest_Apply
+        SET suggestionApplynum = #{suggestionApplynum,jdbcType=VARCHAR},
+        coreTypeId = #{coreTypeId,jdbcType=VARCHAR},
+        subTypeId =#{subTypeId,jdbcType=VARCHAR},
+        businessRequest =#{businessRequest,jdbcType=VARCHAR},
+        problemType =#{problemType,jdbcType=VARCHAR},
+        problemDescription=#{problemDescription,jdbcType=VARCHAR},
+        improveSuggestion =#{improveSuggestion,jdbcType=VARCHAR},
+        improveDepartmentId =#{improveDepartmentId,jdbcType=VARCHAR},
+        improveDepartment =#{improveDepartment,jdbcType=VARCHAR},
+        canOrNot =#{canOrNot,jdbcType=VARCHAR},
+        noReason =#{noReason,jdbcType=VARCHAR},
+        responseManId =#{responseManId,jdbcType=VARCHAR},
+        responsManName =#{responsManName,jdbcType=VARCHAR},
+        doneFlag =#{doneFlag,jdbcType=VARCHAR},
+        <if test="planFinishTime != null and planFinishTime != ''">
+            planFinishTime=#{planFinishTime,jdbcType=TIMESTAMP},
+        </if>
+        applicationUnitId = #{applicationUnitId,jdbcType=VARCHAR},
+        applicationUnit = #{applicationUnit,jdbcType=VARCHAR}
+        WHERE id = #{id}
+    </update>
+
+    <select id="queryNowYearMaxNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            SUBSTR( suggestionApplynum, -3 ) AS num
+        FROM
+            manage_ImproveSuggest_Apply
+        WHERE
+            suggestionApplynum IS NOT NULL
+            AND suggestionApplynum != ''
+            AND SUBSTR( suggestionApplynum, 8, 4 ) = #{year}
+        ORDER BY num DESC
+        limit 1
+    </select>
+
+    <delete id="deleteManageImprove" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from manage_ImproveSuggest_Apply
+        where id IN
+        <foreach collection="belongIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>

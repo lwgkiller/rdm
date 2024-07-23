@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.info.core.dao.QbgzDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryQbgz" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        qbgz_baseinfo.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId
+        FROM
+        qbgz_baseinfo
+        LEFT JOIN os_rel_inst ON qbgz_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = qbgz_baseinfo.CREATE_BY_
+        left join bpm_inst on qbgz_baseinfo.qbgzId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND (qbgz_baseinfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="companyName != null and companyName != ''">
+            and qbgz_baseinfo.companyName = #{companyName}
+        </if>
+        <if test="projectName != null and projectName != ''">
+            and qbgz_baseinfo.projectName = #{projectName}
+        </if>
+        <if test="qbgzType != null and qbgzType != ''">
+            and qbgz_baseinfo.qbgzType = #{qbgzType}
+        </if>
+        <if test="qbNum != null and qbNum != ''">
+            and qbgz_baseinfo.qbNum like concat('%', #{qbNum},'%')
+        </if>
+	<if test="qbName != null and qbName != ''">
+            and qbgz_baseinfo.qbName like concat('%', #{qbName}, '%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countQbgzList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        qbgz_baseinfo
+        LEFT JOIN os_rel_inst ON qbgz_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on qbgz_baseinfo.qbgzId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            AND (qbgz_baseinfo.CREATE_BY_ = #{currentUserId}
+            or bpm_inst.STATUS_ != 'DRAFTED')
+            <if test="companyName != null and companyName != ''">
+                and qbgz_baseinfo.companyName = #{companyName}
+            </if>
+            <if test="projectName != null and projectName != ''">
+                and qbgz_baseinfo.projectName = #{projectName}
+            </if>
+            <if test="qbgzType != null and qbgzType != ''">
+                and qbgz_baseinfo.qbgzType = #{qbgzType}
+            </if>
+            <if test="qbNum != null and qbNum != ''">
+                and qbgz_baseinfo.qbNum = #{qbNum}
+            </if>
+	    <if test="qbName != null and qbName != ''">
+                and qbgz_baseinfo.qbName like concat('%', #{qbName}, '%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="createQbgz" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into qbgz_baseinfo(
+            qbgzId
+            ,qbNum
+            ,qbLevel
+            ,companyName
+            ,projectName
+            ,qbgzType
+            ,deptName
+            ,qbName
+            ,qbContent
+            ,qbComment
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{qbgzId,jdbcType=VARCHAR},
+            #{qbNum,jdbcType=VARCHAR},
+            #{qbLevel,jdbcType=VARCHAR},
+            #{companyName,jdbcType=VARCHAR},
+            #{projectName,jdbcType=VARCHAR},
+            #{qbgzType,jdbcType=VARCHAR},
+            #{deptName,jdbcType=VARCHAR},
+            #{qbName,jdbcType=VARCHAR},
+            #{qbContent,jdbcType=VARCHAR},
+            #{qbComment,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateQbgz" parameterType="com.alibaba.fastjson.JSONObject">
+        update qbgz_baseinfo
+        set
+            qbLevel=#{qbLevel,jdbcType=VARCHAR},
+            companyName=#{companyName,jdbcType=VARCHAR},
+            projectName=#{projectName,jdbcType=VARCHAR},
+            qbgzType=#{qbgzType,jdbcType=VARCHAR},
+            qbName=#{qbName,jdbcType=VARCHAR},
+            qbContent=#{qbContent,jdbcType=VARCHAR},
+            qbComment=#{qbComment,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=VARCHAR}
+        where
+            qbgzId=#{qbgzId}
+    </update>
+
+
+    <select id="queryQbgzById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select qbgz_baseinfo.*,
+        bpm_inst.INST_ID_ as instId
+        from qbgz_baseinfo
+        left join bpm_inst on qbgz_baseinfo.qbgzId=bpm_inst.BUS_KEY_
+        where qbgzId=#{qbgzId}
+    </select>
+
+    <select id="queryQbgzFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        qbgz_fileinfo
+        WHERE
+        belongId IN
+        <foreach collection="qbgzIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into qbgz_fileinfo(
+        fileId
+        ,fileName
+        ,belongId
+        ,fileSize
+        ,note
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{note,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteQbgzFile" parameterType="java.util.Map">
+        delete from qbgz_fileinfo
+        <where>
+            <if test="fileId != null and fileId != ''">
+                fileId=#{fileId}
+            </if>
+            <if test="qbgzIds != null and qbgzIds !=''">
+                AND belongId IN
+                <foreach collection="qbgzIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteQbgz" parameterType="java.util.Map">
+        delete from qbgz_baseinfo
+        <where>
+            <if test="qbgzIds != null and qbgzIds !=''">
+                qbgzId IN
+                <foreach collection="qbgzIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="isLD" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        os_group.SN_
+        from os_group
+        LEFT JOIN os_rel_inst ON os_group.GROUP_ID_ = os_rel_inst.PARTY1_
+        LEFT JOIN os_dimension ON os_group.DIM_ID_=os_dimension.DIM_ID_
+        where
+        os_rel_inst.PARTY2_=#{currentUserId}
+        and os_dimension.DIM_KEY_='GW'
+    </select>
+    <select id="queryProvide" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        qbgz_baseinfo.deptName,
+        count( * ) AS countNumber,
+        bpm_inst.STATUS_ as status
+        FROM
+        qbgz_baseinfo
+        left join bpm_inst on qbgz_baseinfo.qbgzId=bpm_inst.BUS_KEY_
+        <where>
+            bpm_inst.STATUS_ !='DRAFTED'
+            <if test="timeFrom != null and timeFrom != ''">
+                and qbgz_baseinfo.CREATE_TIME_ &gt;= #{timeFrom}
+            </if>
+            <if test="timeTo != null and timeTo != ''">
+                AND qbgz_baseinfo.CREATE_TIME_ &lt;= #{timeTo}
+            </if>
+        </where>
+        GROUP BY
+        qbgz_baseinfo.deptName
+    </select>
+    <select id="queryType" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        qbgz_baseinfo.companyName,
+        count( * ) AS countNumber,
+        bpm_inst.STATUS_ as status
+        FROM
+        qbgz_baseinfo
+        left join bpm_inst on qbgz_baseinfo.qbgzId=bpm_inst.BUS_KEY_
+        <where>
+            bpm_inst.STATUS_ !='DRAFTED'
+            <if test="timeFrom != null and timeFrom != ''">
+                and qbgz_baseinfo.CREATE_TIME_ &gt;= #{timeFrom}
+            </if>
+            <if test="timeTo != null and timeTo != ''">
+                AND qbgz_baseinfo.CREATE_TIME_ &lt;= #{timeTo}
+            </if>
+        </where>
+        GROUP BY
+        qbgz_baseinfo.companyName
+    </select>
+    <select id="queryMaxQbgzNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            qbgz_baseinfo
+        WHERE
+            qbgz_baseinfo.CREATE_TIME_ &gt;= #{applyTimeStart}
+            AND qbNum IS NOT NULL
+            AND qbNum != ''
+        ORDER BY
+            SUBSTR( qbNum, 6) + '' DESC
+            LIMIT 1
+    </select>
+    <update id="updateNumber" parameterType="java.util.Map">
+        update qbgz_baseinfo
+        set
+          qbNum=#{qbNum,jdbcType=VARCHAR}
+        where
+          qbgzId=#{qbgzId}
+    </update>
+</mapper>

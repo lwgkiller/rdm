@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectDeliveryApprovalDao">
+    <select id="queryDeliveryApproval" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            project_fileinfo.*,
+            project_stage_leveldelivery.deliveryName,
+            os_user.FULLNAME_ AS creator,
+            project_stage_leveldelivery.fileType AS approvalSolutionId,
+            project_fileapply.id AS fileapplyId,
+            bpm_inst.STATUS_ AS instStatus,
+            act_ru_task.NAME_ as currentProcessTask
+        FROM
+            project_fileinfo
+            LEFT JOIN project_stage_leveldelivery ON project_fileinfo.deliveryId = project_stage_leveldelivery.deliveryId
+            LEFT JOIN project_fileapply ON FIND_IN_SET(project_fileinfo.id,project_fileapply.fileIds)
+        LEFT JOIN bpm_inst ON project_fileapply.id = bpm_inst.BUS_KEY_
+            LEFT JOIN act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+            LEFT JOIN os_user ON os_user.USER_ID_ = project_fileinfo.CREATE_BY_
+        WHERE
+            project_fileinfo.projectId = #{projectId}
+          and (project_fileinfo.isPDMFile != '1' or project_fileinfo.isPDMFile is null)
+        <if test="stageId != null and stageId != ''">
+            AND project_fileinfo.pid = #{stageId}
+        </if>
+        <if test="isFolder != null and isFolder != ''">
+            AND project_fileinfo.isFolder=#{isFolder}
+        </if>
+        <if test="fileId != null and fileId != ''">
+            AND project_fileinfo.id=#{fileId}
+        </if>
+        <if test="creatorId != null and creatorId != ''">
+            and project_fileinfo.CREATE_BY_=#{creatorId}
+        </if>
+        ORDER BY project_fileinfo.deliveryId,id
+    </select>
+</mapper>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitYearScoreDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select T.* from(
+            SELECT
+            B.FULLNAME_ as userName,
+            (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+            od on od.DIM_ID_ = oi.DIM1_
+            where od.DIM_KEY_ = 'ZJ' and oi.PARTY2_ = A.userId limit 1) duty,
+            (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+            od on od.DIM_ID_ = oi.DIM1_
+            where od.DIM_KEY_ = 'GW' and oi.PARTY2_ = A.userId limit 1) post,
+            (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+            od on od.DIM_ID_ = oi.DIM1_
+            where od.DIM_KEY_ = '_ADMIN' and oi.PARTY2_ = A.userId limit 1) deptName,
+            A.*
+            from portrait_orgscore A
+            left join os_user B on A.userId = B.USER_ID_
+            left join OS_REL_INST C on B.USER_ID_ = C.PARTY2_
+            where  C.REL_TYPE_ID_ = 1
+            AND C.PARTY1_ in
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+            <if test="userId != null and userId != ''">
+                AND A.userId = #{userId}
+            </if>
+        ) T
+        where 1=1
+        <if test="reportYear != null and reportYear != ''">
+            and T.year = #{reportYear}
+        </if>
+        <if test="userName != null and userName != ''">
+            and T.userName like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and T.deptName like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="duty != null and duty != ''">
+            and T.duty like CONCAT('%',#{duty},'%')
+        </if>
+        <if test="post != null and post != ''">
+            and T.post like CONCAT('%',#{post},'%')
+        </if>
+        order by T.yearTotalScore desc
+    </select>
+    <insert id="batchInsertOrgScore" parameterType="java.util.Map">
+        INSERT INTO portrait_orgscore (
+            userId,
+            year,
+            techScore,
+            teamWorkScore,
+            workScore,
+            employeeScore
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.userId,jdbcType=VARCHAR},
+            #{reportYear,jdbcType=VARCHAR},
+            #{item.techScore,jdbcType=FLOAT},
+            #{item.teamWorkScore,jdbcType=FLOAT},
+            #{item.workScore,jdbcType=FLOAT},
+            #{item.employeeScore,jdbcType=FLOAT}
+            )
+        </foreach>
+    </insert>
+    <!--先根据年份 删除掉表中数据-->
+    <delete id="delByYear" parameterType="java.lang.String" >
+        delete from portrait_orgscore where year = #{reportYear}
+    </delete>
+    <!--根据条件查找分数排名-->
+    <select id="getScoreRank" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            portrait_orgscore A
+            where A.`year` = #{reportYear}
+            and ${scoreType} > 0
+            order by ${scoreType} desc
+    </select>
+    <!--批量更新-->
+    <update id="updateYearScore" parameterType="com.alibaba.fastjson.JSONObject">
+        update portrait_orgScore
+        <set>
+            <if test="yearTechScore != null and yearTechScore != ''">
+                yearTechScore=#{yearTechScore,jdbcType=FLOAT},
+            </if>
+            <if test="yearTeamWorkScore != null and yearTeamWorkScore != ''">
+                yearTeamWorkScore=#{yearTeamWorkScore,jdbcType=VARCHAR},
+            </if>
+            <if test="yearEmployeeScore != null and yearEmployeeScore != ''">
+                yearEmployeeScore=#{yearEmployeeScore,jdbcType=VARCHAR},
+            </if>
+            <if test="yearWorkScore != null and yearWorkScore != ''">
+                yearWorkScore=#{yearWorkScore,jdbcType=FLOAT},
+            </if>
+        </set>
+        WHERE
+        userId = #{userId}
+        and year = #{reportYear}
+    </update>
+    <!--更新总得分-->
+    <update id="calculateTotalScore" parameterType="java.lang.String">
+        UPDATE portrait_orgscore
+            SET yearTotalScore = ( yearTechScore  + yearTeamWorkScore + yearWorkScore + yearEmployeeScore  )
+        WHERE
+            YEAR = #{reportYear}
+    </update>
+</mapper>

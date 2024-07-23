@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.world.core.dao.OverseaSalesCustomizationDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="queryWhereModelListQuery">
+        <if test="@Ognl@isNotEmpty(productGroup)">
+            AND business.productGroup = #{productGroup}
+        </if>
+        <if test="@Ognl@isNotEmpty(salsesModel)">
+            AND business.salsesModel like CONCAT('%',#{salsesModel},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(engine)">
+            AND business.engine like CONCAT('%',#{engine},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(ratedPower)">
+            AND business.ratedPower like CONCAT('%',#{ratedPower},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(bucketCapacity)">
+            AND business.bucketCapacity like CONCAT('%',#{bucketCapacity},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(operatingMass)">
+            AND business.operatingMass like CONCAT('%',#{operatingMass},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(responsibleUser)">
+            AND business.responsibleUser like CONCAT('%',#{responsibleUser},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(groupId)">
+            AND business.groupIds like CONCAT('%',#{groupId},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(designModel)">
+            AND business.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCode)">
+            AND business.materialCode = #{materialCode}
+        </if>
+        <if test="@Ognl@isNotEmpty(saleArea)">
+            AND business.saleArea like CONCAT('%',#{saleArea},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(saleCountry)">
+            AND business.saleCountry like CONCAT('%',#{saleCountry},'%')
+        </if>
+    </sql>
+    <sql id="queryWhereConfigTreeQuery">
+        <if test="@Ognl@isNotEmpty(mainId)">
+            AND business.mainId = #{mainId}
+        </if>
+    </sql>
+    <!---->
+    <select id="modelListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*
+        FROM
+        overseasales_customization_models as business
+        <where>
+            <include refid="queryWhereModelListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countModelListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        overseasales_customization_models as business
+        <where>
+            <include refid="queryWhereModelListQuery"/>
+        </where>
+    </select>
+    <!---->
+    <select id="getModelDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM overseasales_customization_models AS business
+        WHERE business.id = #{id}
+    </select>
+    <!---->
+    <insert id="insertModel" parameterType="java.util.Map">
+        insert into overseasales_customization_models(
+        id,
+        orderNo,
+        productGroup,
+        salsesModel,
+        engine,
+        ratedPower,
+        bucketCapacity,
+        operatingMass,
+        responsibleUserId,
+        responsibleUser,
+        groupIds,
+        fileName,
+        productTypeSpectrumId,
+        designModel,
+        materialCode,
+        saleArea,
+        saleCountry,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{orderNo,jdbcType=INTEGER},
+        #{productGroup,jdbcType=VARCHAR},
+        #{salsesModel,jdbcType=VARCHAR},
+        #{engine,jdbcType=VARCHAR},
+        #{ratedPower,jdbcType=VARCHAR},
+        #{bucketCapacity,jdbcType=VARCHAR},
+        #{operatingMass,jdbcType=VARCHAR},
+        #{responsibleUserId,jdbcType=VARCHAR},
+        #{responsibleUser,jdbcType=VARCHAR},
+        #{groupIds,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{productTypeSpectrumId,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{saleArea,jdbcType=VARCHAR},
+        #{saleCountry,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateModel" parameterType="java.util.Map">
+        UPDATE overseasales_customization_models
+        SET
+        orderNo=#{orderNo,jdbcType=INTEGER},
+        productGroup=#{productGroup,jdbcType=VARCHAR},
+        salsesModel=#{salsesModel,jdbcType=VARCHAR},
+        engine=#{engine,jdbcType=VARCHAR},
+        ratedPower=#{ratedPower,jdbcType=VARCHAR},
+        bucketCapacity=#{bucketCapacity,jdbcType=VARCHAR},
+        operatingMass=#{operatingMass,jdbcType=VARCHAR},
+        responsibleUserId=#{responsibleUserId,jdbcType=VARCHAR},
+        responsibleUser=#{responsibleUser,jdbcType=VARCHAR},
+        groupIds=#{groupIds,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        productTypeSpectrumId=#{productTypeSpectrumId,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        saleArea=#{saleArea,jdbcType=VARCHAR},
+        saleCountry=#{saleCountry,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteModel" parameterType="java.util.Map">
+        delete from overseasales_customization_models
+        <where>
+            <if test="@Ognl@isNotEmpty(ids)">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(ids)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="configTreeQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*
+        FROM
+        overseasales_customization_configs as business
+        <where>
+            <include refid="queryWhereConfigTreeQuery"/>
+        </where>
+        ORDER BY orderNo,nodeName
+    </select>
+    <!---->
+    <insert id="insertConfigNode" parameterType="java.util.Map">
+        insert into overseasales_customization_configs(
+        id,
+        mainId,
+        nodeName,
+        nodeDesc,
+        referencePrice,
+        isPriceCal,
+        isChecked,
+        isRequired,
+        nodeType,
+        nodePath,
+        nodeDepth,
+        combinNodeIds,
+        combinNodeNames,
+        excluNodeIds,
+        excluNodeNames,
+        PARENT_ID_,
+        orderNo,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{nodeName,jdbcType=VARCHAR},
+        #{nodeDesc,jdbcType=VARCHAR},
+        #{referencePrice,jdbcType=VARCHAR},
+        #{isPriceCal,jdbcType=VARCHAR},
+        #{isChecked,jdbcType=VARCHAR},
+        #{isRequired,jdbcType=VARCHAR},
+        #{nodeType,jdbcType=VARCHAR},
+        #{nodePath,jdbcType=VARCHAR},
+        #{nodeDepth,jdbcType=INTEGER},
+        #{combinNodeIds,jdbcType=VARCHAR},
+        #{combinNodeNames,jdbcType=VARCHAR},
+        #{excluNodeIds,jdbcType=VARCHAR},
+        #{excluNodeNames,jdbcType=VARCHAR},
+        #{PARENT_ID_,jdbcType=VARCHAR},
+        #{orderNo,jdbcType=INTEGER},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateConfigNode" parameterType="java.util.Map">
+        UPDATE overseasales_customization_configs
+        SET
+        mainId=#{mainId,jdbcType=VARCHAR},
+        nodeName=#{nodeName,jdbcType=VARCHAR},
+        nodeDesc=#{nodeDesc,jdbcType=VARCHAR},
+        referencePrice=#{referencePrice,jdbcType=VARCHAR},
+        isPriceCal=#{isPriceCal,jdbcType=VARCHAR},
+        isChecked=#{isChecked,jdbcType=VARCHAR},
+        isRequired=#{isRequired,jdbcType=VARCHAR},
+        nodeType=#{nodeType,jdbcType=VARCHAR},
+        nodePath=#{nodePath,jdbcType=VARCHAR},
+        nodeDepth=#{nodeDepth,jdbcType=VARCHAR},
+        combinNodeIds=#{combinNodeIds,jdbcType=VARCHAR},
+        combinNodeNames=#{combinNodeNames,jdbcType=VARCHAR},
+        excluNodeIds=#{excluNodeIds,jdbcType=VARCHAR},
+        excluNodeNames=#{excluNodeNames,jdbcType=VARCHAR},
+        PARENT_ID_=#{PARENT_ID_,jdbcType=VARCHAR},
+        orderNo=#{orderNo,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteConfigNode" parameterType="java.util.Map">
+        delete from overseasales_customization_configs
+        <where>
+            <if test="@Ognl@isNotEmpty(mainIds)">
+                AND mainId IN
+                <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(id)">
+                AND id = #{id}
+            </if>
+            <if test="@Ognl@isEmpty(mainIds) and @Ognl@isEmpty(id)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="getFileListInfos" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from overseasales_customization_fileinfo
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND businessId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(businessTypes)">
+                AND businessType IN
+                <foreach collection="businessTypes" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds) and @Ognl@isEmpty(businessTypes)">
+                AND 1=2
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertFileInfos" parameterType="java.util.Map">
+        insert into overseasales_customization_fileinfo(
+        id,
+        businessId,
+        businessType,
+        fileName,
+        fileSize,
+        fileDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{businessId,jdbcType=VARCHAR},
+        #{businessType,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <delete id="deleteileInfos" parameterType="java.util.Map">
+        delete from overseasales_customization_fileinfo
+        <where>
+            <if test="@Ognl@isNotEmpty(id)">
+                AND id=#{id}
+            </if>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND businessId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+</mapper>

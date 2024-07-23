@@ -1,0 +1,976 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardDao">
+    <delete id="deleteStandard" parameterType="java.util.Map">
+        delete from standard_source
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_source.TENANT_ID_=#{TENANT_ID_}
+        </if>
+    </delete>
+
+    <insert id="insertStandard" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO standard_source (
+        id,
+        standardNumber,
+        standardName,
+        systemId,
+        standardStatus,
+        replaceId,
+        beReplacedById,
+        standardCategoryId,
+        belongDepId,
+        fileName,
+        publisherId,
+        publishTime,
+        stoperId,
+        stopTime,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_,
+        borrowFromId,
+        sendSupplier,
+        cbbh,
+        yzxcd,
+        banci
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{standardNumber,jdbcType=VARCHAR},
+        #{standardName,jdbcType=VARCHAR},
+        #{systemId,jdbcType=VARCHAR},
+        #{standardStatus,jdbcType=VARCHAR},
+        #{replaceId,jdbcType=VARCHAR},
+        #{beReplacedById,jdbcType=VARCHAR},
+        #{standardCategoryId,jdbcType=VARCHAR},
+        #{belongDepId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{publisherId,jdbcType=VARCHAR},
+        #{publishTime,jdbcType=TIMESTAMP},
+        #{stoperId,jdbcType=VARCHAR},
+        #{stopTime,jdbcType=TIMESTAMP},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR},
+        #{borrowFromId,jdbcType=VARCHAR},
+        #{sendSupplier,jdbcType=VARCHAR},
+        #{cbbh,jdbcType=VARCHAR},
+        #{yzxcd,jdbcType=VARCHAR},
+        #{banci,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateStandard" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE standard_source SET
+        standardNumber=#{standardNumber,jdbcType=VARCHAR},
+        standardName=#{standardName,jdbcType=VARCHAR},
+        systemId=#{systemId,jdbcType=VARCHAR},
+        standardStatus=#{standardStatus,jdbcType=VARCHAR},
+        replaceId=#{replaceId,jdbcType=VARCHAR},
+        beReplacedById=#{beReplacedById,jdbcType=VARCHAR},
+        standardCategoryId=#{standardCategoryId,jdbcType=VARCHAR},
+        belongDepId=#{belongDepId,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        publisherId=#{publisherId,jdbcType=VARCHAR},
+        publishTime=#{publishTime,jdbcType=TIMESTAMP},
+        stoperId=#{stoperId,jdbcType=VARCHAR},
+        stopTime=#{stopTime,jdbcType=TIMESTAMP},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        borrowFromId=#{borrowFromId,jdbcType=VARCHAR},
+        sendSupplier=#{sendSupplier,jdbcType=VARCHAR},
+        cbbh=#{cbbh,jdbcType=VARCHAR},
+        yzxcd=#{yzxcd,jdbcType=VARCHAR},
+        banci=#{banci,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+
+    <select id="queryStandardList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_source.*,
+        standard_system.systemName,
+        standard_system.systemNumber,
+        standard_system.systemCategoryId,
+        standard_systemcategory.systemCategoryName,
+        standard_category.categoryName,
+        standard_belongdep.belongDepName,
+        s1.standardNumber AS replaceNumber,
+        <if test="belongbj != null and belongbj != ''">
+            user3.USER_ID_ AS userId,
+            user3.FULLNAME_ AS userName,
+            keydesign_jsbz.belongbj,
+        </if>
+        s2.standardNumber AS beReplaceNumber
+        FROM
+        standard_source
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_systemcategory ON standard_system.systemCategoryId = standard_systemcategory.systemCategoryId
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        LEFT JOIN standard_belongdep ON standard_source.belongDepId = standard_belongdep.id
+        LEFT JOIN standard_source s1 ON standard_source.replaceId = s1.id
+        LEFT JOIN standard_source s2 ON standard_source.beReplacedById = s2.id
+        LEFT JOIN os_user user2 ON standard_source.stoperId = user2.USER_ID_
+        <if test="belongbj != null and belongbj != ''">
+            LEFT JOIN keydesign_jsbz ON standard_source.id = keydesign_jsbz.standardId
+            LEFT JOIN os_user user3 ON keydesign_jsbz.CREATE_BY_ = user3.USER_ID_
+        </if>
+        <where>
+            <!--todo:增加按照ids的查询(老李mark暂留)-->
+            <if test="outList != null and outList !=''">
+                AND standard_source.id IN
+                <foreach collection="outList" index="index" item="item" open="(" separator="," close=")">
+                    #{item.outReferId}
+                </foreach>
+            </if>
+            <if test="standardNumber != null and standardNumber != ''">
+                standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <!--马天宇-->
+            <if test="belongbj != null and belongbj != ''">
+                AND standard_source.id in (
+                select keydesign_jsbz.standardId from keydesign_jsbz
+                where keydesign_jsbz.belongbj = #{belongbj}
+                )
+                and keydesign_jsbz.belongbj = #{belongbj}
+            </if>
+            <!--零部件试验id侵入-->
+            <if test="componentTestId != null and componentTestId != ''">
+                AND standard_source.id in (
+                select component_test_plan_standardinfo.standardId from component_test_plan_standardinfo
+                where component_test_plan_standardinfo.mainId = #{componentTestId}
+                )
+            </if>
+            <if test="belongId != null and belongId != ''">
+                AND standard_source.id in (
+                select standard_collect.standardId from standard_collect
+                where standard_collect.belongId = #{belongId}
+                )
+            </if>
+            <if test="standardName != null and standardName != ''">
+                AND standard_source.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="systemIds != null and systemIds != ''">
+                AND standard_source.systemId in
+                <foreach collection="systemIds" index="index" item="systemId" open="(" separator="," close=")">
+                    #{systemId}
+                </foreach>
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_source.standardStatus=#{standardStatus}
+            </if>
+            <if test="replaceNumber != null and replaceNumber != ''">
+                AND s1.standardNumber like CONCAT('%',#{replaceNumber},'%')
+            </if>
+            <if test="beReplaceNumber != null and beReplaceNumber != ''">
+                AND s2.standardNumber like CONCAT('%',#{beReplaceNumber},'%')
+            </if>
+            <if test="standardCategoryId != null and standardCategoryId != ''">
+                AND standard_source.standardCategoryId=#{standardCategoryId}
+            </if>
+            <if test="belongDepId != null and belongDepId != ''">
+                AND standard_source.belongDepId=#{belongDepId}
+            </if>
+            <if test="publishTimeFrom != null and publishTimeFrom != ''">
+                AND standard_source.publishTime &gt;= #{publishTimeFrom}
+            </if>
+            <if test="publishTimeTo != null and publishTimeTo != ''">
+                AND standard_source.publishTime &lt;= #{publishTimeTo}
+            </if>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                AND standard_system.systemCategoryId=#{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <if test="publisherId != null and publisherId != ''">
+                AND FIND_IN_SET(#{publisherId},standard_source.publisherId)
+            </if>
+            <if test="whetherIsBorrow != null and whetherIsBorrow != ''">
+                <choose>
+                    <when test='whetherIsBorrow=="yes"'>
+                        AND (standard_source.borrowFromId is not null AND standard_source.borrowFromId !="")
+                    </when>
+                    <when test='whetherIsBorrow=="no"'>
+                        AND (standard_source.borrowFromId is null OR standard_source.borrowFromId ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="sendSupplier != null and sendSupplier != ''">
+                <choose>
+                    <when test='sendSupplier=="true"'>
+                        AND (standard_source.sendSupplier is not null AND standard_source.sendSupplier !="false")
+                    </when>
+                    <when test='sendSupplier=="false"'>
+                        AND (standard_source.sendSupplier is null OR standard_source.sendSupplier ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="fieldId != null and fieldId !=''">
+                AND standard_source.id in (
+                select standard_field_relation.standardId from standard_field_relation
+                where standard_field_relation.fieldId = #{fieldId}
+                )
+            </if>
+            <if test="banci != null and banci != ''">
+                AND standard_source.banci=#{banci}
+            </if>
+            AND (
+            concat(standard_system.visibleGroupIds, ',') regexp concat(replace(#{userGroupIds},',',',|'),',')
+            OR standard_system.visibleGroupIds is null
+            OR standard_system.visibleGroupIds = ''
+            OR standard_source.CREATE_BY_ = #{currentUserId}
+            )
+            <if test="yearDoCheckStatus != null and yearDoCheckStatus !=''">
+                <choose>
+                    <when test="yearDoCheckStatus == '已完成'">
+                        AND standard_source.id in
+                        (
+                        SELECT standard_docheckbaseinfo.standardId
+                        FROM standard_docheckbaseinfo
+                        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+                        WHERE
+                        bpm_inst.STATUS_ = 'SUCCESS_END' AND YEAR ( standard_docheckbaseinfo.CREATE_TIME_ ) =
+                        #{currentYear}
+                        )
+                    </when>
+                    <when test="yearDoCheckStatus == '进行中'">
+                        AND standard_source.id in (
+                        SELECT standard_docheckbaseinfo.standardId
+                        FROM standard_docheckbaseinfo
+                        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+                        WHERE
+                        bpm_inst.STATUS_ = 'RUNNING' AND YEAR ( standard_docheckbaseinfo.CREATE_TIME_ ) = #{currentYear}
+                        )
+                    </when>
+                    <when test="yearDoCheckStatus == '未开始'">
+                        AND standard_source.id not in (
+                        SELECT standard_docheckbaseinfo.standardId
+                        FROM standard_docheckbaseinfo
+                        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+                        WHERE
+                        (bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = 'RUNNING')
+                        AND YEAR ( standard_docheckbaseinfo.CREATE_TIME_ ) = #{currentYear}
+                        )
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <choose>
+            <when test="sortField != null and sortField != '' and sortOrder != null and sortOrder != ''">
+                ORDER BY ${sortField} ${sortOrder}
+            </when>
+            <otherwise>
+                ORDER BY standard_system.systemNumber asc,standard_source.standardNumber asc
+            </otherwise>
+        </choose>
+        <if test='startIndex != null and startIndex != "" and pageSize != null and pageSize != ""'>
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <select id="queryUserBelongGroups" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            os_rel_inst
+        WHERE
+            REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.PARTY2_ = #{userId}
+    </select>
+
+    <select id="countStandardList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        standard_source
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_source s1 ON standard_source.replaceId = s1.id
+        LEFT JOIN standard_source s2 ON standard_source.beReplacedById = s2.id
+        <where>
+            <if test="standardNumber != null and standardNumber != ''">
+                standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <!--马天宇-->
+            <if test="belongbj != null and belongbj != ''">
+                AND standard_source.id in (
+                select keydesign_jsbz.standardId from keydesign_jsbz
+                where keydesign_jsbz.belongbj = #{belongbj}
+                )
+            </if>
+            <!--零部件试验id侵入-->
+            <if test="componentTestId != null and componentTestId != ''">
+                AND standard_source.id in (
+                select component_test_plan_standardinfo.standardId from component_test_plan_standardinfo
+                where component_test_plan_standardinfo.mainId = #{componentTestId}
+                )
+            </if>
+            <if test="belongId != null and belongId != ''">
+                AND standard_source.id in (
+                select standard_collect.standardId from standard_collect
+                where standard_collect.belongId = #{belongId}
+                )
+            </if>
+            <if test="standardName != null and standardName != ''">
+                AND standard_source.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="systemIds != null and systemIds != ''">
+                AND standard_source.systemId in
+                <foreach collection="systemIds" index="index" item="systemId" open="(" separator="," close=")">
+                    #{systemId}
+                </foreach>
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_source.standardStatus=#{standardStatus}
+            </if>
+            <if test="replaceNumber != null and replaceNumber != ''">
+                AND s1.standardNumber like CONCAT('%',#{replaceNumber},'%')
+            </if>
+            <if test="beReplaceNumber != null and beReplaceNumber != ''">
+                AND s2.standardNumber like CONCAT('%',#{beReplaceNumber},'%')
+            </if>
+            <if test="standardCategoryId != null and standardCategoryId != ''">
+                AND standard_source.standardCategoryId=#{standardCategoryId}
+            </if>
+            <if test="belongDepId != null and belongDepId != ''">
+                AND standard_source.belongDepId=#{belongDepId}
+            </if>
+            <if test="publishTimeFrom != null and publishTimeFrom != ''">
+                AND standard_source.publishTime &gt;= #{publishTimeFrom}
+            </if>
+            <if test="publishTimeTo != null and publishTimeTo != ''">
+                AND standard_source.publishTime &lt;= #{publishTimeTo}
+            </if>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                AND standard_system.systemCategoryId=#{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <if test="publisherId != null and publisherId != ''">
+                AND FIND_IN_SET(#{publisherId},standard_source.publisherId)
+            </if>
+            <if test="whetherIsBorrow != null and whetherIsBorrow != ''">
+                <choose>
+                    <when test='whetherIsBorrow=="yes"'>
+                        AND (standard_source.borrowFromId is not null AND standard_source.borrowFromId !="")
+                    </when>
+                    <when test='whetherIsBorrow=="no"'>
+                        AND (standard_source.borrowFromId is null OR standard_source.borrowFromId ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="sendSupplier != null and sendSupplier != ''">
+                <choose>
+                    <when test='sendSupplier=="true"'>
+                        AND (standard_source.sendSupplier is not null AND standard_source.sendSupplier !="false")
+                    </when>
+                    <when test='sendSupplier=="false"'>
+                        AND (standard_source.sendSupplier is null OR standard_source.sendSupplier ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="fieldId != null and fieldId !=''">
+                AND standard_source.id in (
+                select standard_field_relation.standardId from standard_field_relation
+                where standard_field_relation.fieldId = #{fieldId}
+                )
+            </if>
+            <if test="banci != null and banci != ''">
+                AND standard_source.banci=#{banci}
+            </if>
+            AND (
+            concat(standard_system.visibleGroupIds, ',') regexp concat(replace(#{userGroupIds},',',',|'),',')
+            OR standard_system.visibleGroupIds is null
+            OR standard_system.visibleGroupIds = ''
+            OR standard_source.CREATE_BY_ = #{currentUserId}
+            )
+            <if test="yearDoCheckStatus != null and yearDoCheckStatus !=''">
+                <choose>
+                    <when test="yearDoCheckStatus == '已完成'">
+                        AND standard_source.id in
+                        (
+                        SELECT standard_docheckbaseinfo.standardId
+                        FROM standard_docheckbaseinfo
+                        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+                        WHERE
+                        bpm_inst.STATUS_ = 'SUCCESS_END' AND YEAR ( standard_docheckbaseinfo.CREATE_TIME_ ) =
+                        #{currentYear}
+                        )
+                    </when>
+                    <when test="yearDoCheckStatus == '进行中'">
+                        AND standard_source.id in (
+                        SELECT standard_docheckbaseinfo.standardId
+                        FROM standard_docheckbaseinfo
+                        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+                        WHERE
+                        bpm_inst.STATUS_ = 'RUNNING' AND YEAR ( standard_docheckbaseinfo.CREATE_TIME_ ) = #{currentYear}
+                        )
+                    </when>
+                    <when test="yearDoCheckStatus == '未开始'">
+                        AND standard_source.id not in (
+                        SELECT standard_docheckbaseinfo.standardId
+                        FROM standard_docheckbaseinfo
+                        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+                        WHERE
+                        (bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = 'RUNNING')
+                        AND YEAR ( standard_docheckbaseinfo.CREATE_TIME_ ) = #{currentYear}
+                        )
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryStandard" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_source.*,
+        standard_system.systemName,
+        standard_system.systemNumber,
+        standard_system.systemCategoryId,
+        standard_systemcategory.systemCategoryName,
+        standard_category.categoryName,
+        standard_belongdep.belongDepName,
+        s1.standardNumber AS replaceNumber,
+        s2.standardNumber AS beReplaceNumber,
+        user2.FULLNAME_ AS stoperName
+        FROM
+        standard_source
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_systemcategory ON standard_system.systemCategoryId = standard_systemcategory.systemCategoryId
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        LEFT JOIN standard_belongdep ON standard_source.belongDepId = standard_belongdep.id
+        LEFT JOIN standard_source s1 ON standard_source.replaceId = s1.id
+        LEFT JOIN standard_source s2 ON standard_source.beReplacedById = s2.id
+        LEFT JOIN os_user user2 ON standard_source.stoperId = user2.USER_ID_
+        <where>
+            <if test="id != null and id != ''">
+                standard_source.id =#{id}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+
+
+    <insert id="batchInsertStandard" parameterType="java.util.List">
+        INSERT INTO standard_source (
+        id,
+        standardNumber,
+        standardName,
+        systemId,
+        standardStatus,
+        replaceId,
+        beReplacedById,
+        standardCategoryId,
+        belongDepId,
+        publisherId,
+        publishTime,
+        stoperId,
+        stopTime,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_,
+        sendSupplier,
+        cbbh,
+        yzxcd,
+        banci
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.standardNumber,jdbcType=VARCHAR},
+            #{item.standardName,jdbcType=VARCHAR},
+            #{item.systemId,jdbcType=VARCHAR},
+            #{item.standardStatus,jdbcType=VARCHAR},
+            #{item.replaceId,jdbcType=VARCHAR},
+            #{item.beReplacedById,jdbcType=VARCHAR},
+            #{item.standardCategoryId,jdbcType=VARCHAR},
+            #{item.belongDepId,jdbcType=VARCHAR},
+            #{item.publisherId,jdbcType=VARCHAR},
+            #{item.publishTime,jdbcType=TIMESTAMP},
+            #{item.stoperId,jdbcType=VARCHAR},
+            #{item.stopTime,jdbcType=TIMESTAMP},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.TENANT_ID_,jdbcType=VARCHAR},
+            #{item.sendSupplier,jdbcType=VARCHAR},
+            #{item.cbbh,jdbcType=VARCHAR},
+            #{item.yzxcd,jdbcType=VARCHAR},
+            #{item.banci,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+
+    <select id="queryStandardIdNumber" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_source.id,
+        standard_source.standardNumber
+        FROM
+        standard_source
+        <where>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <if test="standardNumber != null and standardNumber != ''">
+                AND standard_source.standardNumber=#{standardNumber}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertStandardRecord" parameterType="java.util.Map">
+        INSERT INTO standard_checkRecord(
+        id,
+        checkCategoryId,
+        standardId,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{checkCategoryId,jdbcType=VARCHAR},
+        #{standardId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <select id="queryUserList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            os_user.USER_NO_ as userNo,
+            os_user.USER_ID_ as userId,
+            os_user.FULLNAME_ as userName
+        FROM
+            os_user
+    </select>
+    <select id="queryStandardBorrowList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_source.id,
+        standard_source.standardName,
+        standard_source.standardNumber,
+        standard_systemcategory.systemCategoryName,
+        standard_system.systemName
+        FROM
+        standard_source
+        left join standard_system on standard_source.systemId=standard_system.id
+        left join standard_systemcategory on standard_system.systemCategoryId=standard_systemcategory.systemCategoryId
+        WHERE
+        standard_source.borrowFromId in
+        <foreach collection="borrowFromIdList" index="index" item="borrowFromId" open="(" separator="," close=")">
+            #{borrowFromId}
+        </foreach>
+    </select>
+    <update id="batchUpdateBorrowedList" parameterType="java.util.Map">
+        UPDATE standard_source SET
+        standardNumber=#{standardNumber,jdbcType=VARCHAR},
+        standardName=#{standardName,jdbcType=VARCHAR},
+        standardStatus=#{standardStatus,jdbcType=VARCHAR},
+        replaceId=#{replaceId,jdbcType=VARCHAR},
+        beReplacedById=#{beReplacedById,jdbcType=VARCHAR},
+        standardCategoryId=#{standardCategoryId,jdbcType=VARCHAR},
+        belongDepId=#{belongDepId,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        publisherId=#{publisherId,jdbcType=VARCHAR},
+        publishTime=#{publishTime,jdbcType=TIMESTAMP},
+        stoperId=#{stoperId,jdbcType=VARCHAR},
+        stopTime=#{stopTime,jdbcType=TIMESTAMP},
+        sendSupplier=#{sendSupplier,jdbcType=VARCHAR},
+        cbbh=#{cbbh,jdbcType=VARCHAR},
+        yzxcd=#{yzxcd,jdbcType=VARCHAR},
+        banci=#{banci,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    <select id="queryStandardById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_source.*,
+            GROUP_CONCAT(user1.FULLNAME_)  AS publisherName,
+            standard_system.systemCategoryId
+        FROM
+            standard_source
+            left join standard_system on standard_source.systemId=standard_system.id
+            LEFT JOIN os_user user1 ON  FIND_IN_SET(user1.USER_ID_,standard_source.publisherId)
+        where
+        standard_source.id =#{standardId}
+          GROUP BY standard_source.id
+    </select>
+
+    <select id="queryPublicStandard" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_publicSource.*,
+        os_user.FULLNAME_ as creator
+        FROM
+        standard_publicSource
+        left join os_user on standard_publicSource.CREATE_BY_=os_user.USER_ID_
+        <where>
+            <if test="id != null and id != ''">
+                standard_publicSource.id =#{id}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryPublicStandardList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_publicSource.*,
+        os_user.FULLNAME_ as creator
+        FROM
+        standard_publicSource
+        left join os_user on standard_publicSource.CREATE_BY_=os_user.USER_ID_
+        <where>
+            <if test="standardNumber != null and standardNumber != ''">
+                standard_publicSource.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <if test="standardName != null and standardName != ''">
+                AND standard_publicSource.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_publicSource.standardStatus=#{standardStatus}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND standard_publicSource.companyName like CONCAT('%',#{companyName},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sortField != null and sortField != '' and sortOrder != null and sortOrder != ''">
+                ORDER BY ${sortField} ${sortOrder}
+            </when>
+            <otherwise>
+                ORDER BY standard_publicSource.publishTime desc
+            </otherwise>
+        </choose>
+        <if test='startIndex != null and startIndex != "" and pageSize != null and pageSize != ""'>
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <select id="countPublicStandardList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        standard_publicSource
+        <where>
+            <if test="standardNumber != null and standardNumber != ''">
+                standard_publicSource.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <if test="standardName != null and standardName != ''">
+                AND standard_publicSource.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_publicSource.standardStatus=#{standardStatus}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND standard_publicSource.companyName like CONCAT('%',#{companyName},'%')
+            </if>
+        </where>
+    </select>
+
+    <delete id="deletePublicStandard" parameterType="java.util.Map">
+        delete from standard_publicSource
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="insertPublicStandard" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO standard_publicSource (
+        id,
+        standardNumber,
+        standardName,
+        standardStatus,
+        companyName,
+        fileName,
+        publishTime,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{standardNumber,jdbcType=VARCHAR},
+        #{standardName,jdbcType=VARCHAR},
+        #{standardStatus,jdbcType=VARCHAR},
+        #{companyName,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{publishTime,jdbcType=TIMESTAMP},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updatePublicStandard" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE standard_publicSource SET
+        standardNumber=#{standardNumber,jdbcType=VARCHAR},
+        standardName=#{standardName,jdbcType=VARCHAR},
+        standardStatus=#{standardStatus,jdbcType=VARCHAR},
+        companyName=#{companyName,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        publishTime=#{publishTime,jdbcType=TIMESTAMP},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+
+    <select id="queryFzsjbzList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_source.*,
+        standard_system.systemName,
+        standard_system.systemNumber,
+        standard_system.systemCategoryId,
+        standard_systemcategory.systemCategoryName,
+        standard_category.categoryName,
+        standard_belongdep.belongDepName,
+        s1.standardNumber AS replaceNumber,
+        s2.standardNumber AS beReplaceNumber
+        FROM
+        standard_source
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_systemcategory ON standard_system.systemCategoryId = standard_systemcategory.systemCategoryId
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        LEFT JOIN standard_belongdep ON standard_source.belongDepId = standard_belongdep.id
+        LEFT JOIN standard_source s1 ON standard_source.replaceId = s1.id
+        LEFT JOIN standard_source s2 ON standard_source.beReplacedById = s2.id
+        LEFT JOIN os_user user2 ON standard_source.stoperId = user2.USER_ID_
+        <where>
+            standard_source.id in (
+            select standard_field_relation.standardId from standard_field_relation
+            where standard_field_relation.fieldId = '737378762977449228'
+            )
+            <if test="standardNumber != null and standardNumber != ''">
+                AND standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <if test="standardName != null and standardName != ''">
+                AND standard_source.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="systemIds != null and systemIds != ''">
+                AND standard_source.systemId in
+                <foreach collection="systemIds" index="index" item="systemId" open="(" separator="," close=")">
+                    #{systemId}
+                </foreach>
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_source.standardStatus=#{standardStatus}
+            </if>
+            <if test="replaceNumber != null and replaceNumber != ''">
+                AND s1.standardNumber like CONCAT('%',#{replaceNumber},'%')
+            </if>
+            <if test="beReplaceNumber != null and beReplaceNumber != ''">
+                AND s2.standardNumber like CONCAT('%',#{beReplaceNumber},'%')
+            </if>
+            <if test="standardCategoryId != null and standardCategoryId != ''">
+                AND standard_source.standardCategoryId=#{standardCategoryId}
+            </if>
+            <if test="belongDepId != null and belongDepId != ''">
+                AND standard_source.belongDepId=#{belongDepId}
+            </if>
+            <if test="publishTimeFrom != null and publishTimeFrom != ''">
+                AND standard_source.publishTime &gt;= #{publishTimeFrom}
+            </if>
+            <if test="publishTimeTo != null and publishTimeTo != ''">
+                AND standard_source.publishTime &lt;= #{publishTimeTo}
+            </if>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                AND standard_system.systemCategoryId=#{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <if test="publisherId != null and publisherId != ''">
+                AND FIND_IN_SET(#{publisherId},standard_source.publisherId)
+            </if>
+            <if test="whetherIsBorrow != null and whetherIsBorrow != ''">
+                <choose>
+                    <when test='whetherIsBorrow=="yes"'>
+                        AND (standard_source.borrowFromId is not null AND standard_source.borrowFromId !="")
+                    </when>
+                    <when test='whetherIsBorrow=="no"'>
+                        AND (standard_source.borrowFromId is null OR standard_source.borrowFromId ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="sendSupplier != null and sendSupplier != ''">
+                <choose>
+                    <when test='sendSupplier=="true"'>
+                        AND (standard_source.sendSupplier is not null AND standard_source.sendSupplier !="false")
+                    </when>
+                    <when test='sendSupplier=="false"'>
+                        AND (standard_source.sendSupplier is null OR standard_source.sendSupplier ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="banci != null and banci != ''">
+                AND standard_source.banci=#{banci}
+            </if>
+            AND (
+            concat(standard_system.visibleGroupIds, ',') regexp concat(replace(#{userGroupIds},',',',|'),',')
+            OR standard_system.visibleGroupIds is null
+            OR standard_system.visibleGroupIds = ''
+            OR standard_source.CREATE_BY_ = #{currentUserId}
+            )
+        </where>
+        <choose>
+            <when test="sortField != null and sortField != '' and sortOrder != null and sortOrder != ''">
+                ORDER BY ${sortField} ${sortOrder}
+            </when>
+            <otherwise>
+                ORDER BY standard_system.systemNumber asc,standard_source.standardNumber asc
+            </otherwise>
+        </choose>
+        <if test='startIndex != null and startIndex != "" and pageSize != null and pageSize != ""'>
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <select id="countFzsjbzList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        standard_source
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_source s1 ON standard_source.replaceId = s1.id
+        LEFT JOIN standard_source s2 ON standard_source.beReplacedById = s2.id
+        <where>
+            standard_source.id in (
+            select standard_field_relation.standardId from standard_field_relation
+            where standard_field_relation.fieldId = '737378762977449228'
+            )
+            <if test="standardNumber != null and standardNumber != ''">
+                AND standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <if test="standardName != null and standardName != ''">
+                AND standard_source.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="systemIds != null and systemIds != ''">
+                AND standard_source.systemId in
+                <foreach collection="systemIds" index="index" item="systemId" open="(" separator="," close=")">
+                    #{systemId}
+                </foreach>
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_source.standardStatus=#{standardStatus}
+            </if>
+            <if test="replaceNumber != null and replaceNumber != ''">
+                AND s1.standardNumber like CONCAT('%',#{replaceNumber},'%')
+            </if>
+            <if test="beReplaceNumber != null and beReplaceNumber != ''">
+                AND s2.standardNumber like CONCAT('%',#{beReplaceNumber},'%')
+            </if>
+            <if test="standardCategoryId != null and standardCategoryId != ''">
+                AND standard_source.standardCategoryId=#{standardCategoryId}
+            </if>
+            <if test="belongDepId != null and belongDepId != ''">
+                AND standard_source.belongDepId=#{belongDepId}
+            </if>
+            <if test="publishTimeFrom != null and publishTimeFrom != ''">
+                AND standard_source.publishTime &gt;= #{publishTimeFrom}
+            </if>
+            <if test="publishTimeTo != null and publishTimeTo != ''">
+                AND standard_source.publishTime &lt;= #{publishTimeTo}
+            </if>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                AND standard_system.systemCategoryId=#{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <if test="publisherId != null and publisherId != ''">
+                AND FIND_IN_SET(#{publisherId},standard_source.publisherId)
+            </if>
+            <if test="whetherIsBorrow != null and whetherIsBorrow != ''">
+                <choose>
+                    <when test='whetherIsBorrow=="yes"'>
+                        AND (standard_source.borrowFromId is not null AND standard_source.borrowFromId !="")
+                    </when>
+                    <when test='whetherIsBorrow=="no"'>
+                        AND (standard_source.borrowFromId is null OR standard_source.borrowFromId ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="sendSupplier != null and sendSupplier != ''">
+                <choose>
+                    <when test='sendSupplier=="true"'>
+                        AND (standard_source.sendSupplier is not null AND standard_source.sendSupplier !="false")
+                    </when>
+                    <when test='sendSupplier=="false"'>
+                        AND (standard_source.sendSupplier is null OR standard_source.sendSupplier ="")
+                    </when>
+                </choose>
+            </if>
+            <if test="banci != null and banci != ''">
+                AND standard_source.banci=#{banci}
+            </if>
+            AND (
+            concat(standard_system.visibleGroupIds, ',') regexp concat(replace(#{userGroupIds},',',',|'),',')
+            OR standard_system.visibleGroupIds is null
+            OR standard_system.visibleGroupIds = ''
+            OR standard_source.CREATE_BY_ = #{currentUserId}
+            )
+        </where>
+    </select>
+    <insert id="createCollect" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_collect(
+            standardId
+            ,belongId
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{standardId,jdbcType=VARCHAR},
+            #{belongId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteCollect" parameterType="java.util.Map">
+        delete from standard_collect
+        where
+        standardId=#{standardId}
+        and
+        belongId = #{belongId}
+    </delete>
+
+    <select id="queryCollect" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        standard_collect
+        WHERE
+        belongId=#{belongId}
+
+    </select>
+    <select id="getCurrentSystemStandardSeqNum" parameterType="java.util.Map" resultType="java.lang.String">
+        SELECT
+            standard_source.standardNumber
+        FROM
+            standard_source
+                LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+                LEFT JOIN standard_systemcategory ON standard_system.systemCategoryId = standard_systemcategory.systemCategoryId
+                LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+                LEFT JOIN standard_belongdep ON standard_source.belongDepId = standard_belongdep.id
+                LEFT JOIN standard_source s1 ON standard_source.replaceId = s1.id
+                LEFT JOIN standard_source s2 ON standard_source.beReplacedById = s2.id
+                LEFT JOIN os_user user2 ON standard_source.stoperId = user2.USER_ID_
+        WHERE
+            standard_system.systemCategoryId = 'GL'
+          and standard_source.standardStatus='enable'
+          and right(standard_source.standardNumber,4) = DATE_FORMAT(NOW(), '%Y')
+          and standard_system.id = #{systemId}
+    </select>
+</mapper>

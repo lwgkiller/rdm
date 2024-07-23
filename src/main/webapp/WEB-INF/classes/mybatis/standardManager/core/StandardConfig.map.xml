@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardConfigDao">
+    <select id="queryStandardCategoryByName" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_category.*
+        FROM
+        standard_category
+        <where>
+            <if test="standardCategoryName != null and standardCategoryName != ''">
+                standard_category.categoryName=#{standardCategoryName}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryStandardCategory" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_category.*,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator
+        FROM
+        standard_category
+        LEFT JOIN os_user AS os_user1 ON standard_category.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON standard_category.UPDATE_BY_ = os_user2.USER_ID_
+        <where>
+            <if test="ids != null and ids != ''">
+                standard_category.id in
+                <foreach collection="ids" index="index" item="id" separator="," open="(" close=")">
+                     #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_category.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        order by CONVERT(standard_category.categoryName using GBK) ASC
+    </select>
+
+    <update id="updateStandardCategory" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE standard_category SET
+        categoryCode=#{categoryCode,jdbcType=VARCHAR},
+        categoryName=#{categoryName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+
+    <insert id="saveStandardCategory"  parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_category
+        (id,categoryCode,categoryName,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{categoryCode,jdbcType=VARCHAR},
+        #{categoryName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <delete id="delStandardCategoryByIds" parameterType="java.lang.String">
+        delete from standard_category
+        <where>
+            <if test="ids != null and ids != ''">
+                standard_category.id in
+                <foreach collection="ids" index="index" item="id" separator="," open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_category.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryUsingCategoryIds" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT DISTINCT
+        standard_source.standardCategoryId
+        FROM
+        standard_source
+        <where>
+            <if test="ids != null and ids != ''">
+                standard_source.standardCategoryId in
+                <foreach collection="ids" index="index" item="id" separator="," open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryStandardBelongDep" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_belongdep.*,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator
+        FROM
+        standard_belongdep
+        LEFT JOIN os_user AS os_user1 ON standard_belongdep.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON standard_belongdep.UPDATE_BY_ = os_user2.USER_ID_
+        <where>
+            <if test="ids != null and ids != ''">
+                standard_belongdep.id in
+                <foreach collection="ids" index="index" item="id" separator="," open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_belongdep.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        ORDER BY CONVERT(standard_belongdep.belongDepName using GBK) asc
+    </select>
+
+    <update id="updateStandardBelongDep" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE standard_belongdep SET
+        belongDepName=#{belongDepName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+
+    <insert id="saveStandardBelongDep"  parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_belongdep
+        (id,belongDepName,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{belongDepName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <delete id="delStandardBelongDepByIds" parameterType="java.lang.String">
+        delete from standard_belongdep
+        <where>
+            <if test="ids != null and ids != ''">
+                standard_belongdep.id in
+                <foreach collection="ids" index="index" item="id" separator="," open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_belongdep.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryUsingBelongDepIds" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT DISTINCT
+        standard_source.belongDepId
+        FROM
+        standard_source
+        <where>
+            <if test="ids != null and ids != ''">
+                standard_source.belongDepId in
+                <foreach collection="ids" index="index" item="id" separator="," open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryStandardTemplateList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_templateFile.*,
+        os_user.FULLNAME_ AS creator
+        FROM
+        standard_templateFile
+        LEFT JOIN os_user ON standard_templateFile.CREATE_BY_ = os_user.USER_ID_
+        <where>
+        <if test="templateName != null and templateName != ''">
+            standard_templateFile.templateName like CONCAT ('%',#{templateName},'%')
+        </if>
+        <if test="id != null and id != ''">
+            AND standard_templateFile.id=#{id}
+        </if>
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_templateFile.TENANT_ID_=#{TENANT_ID_}
+        </if>
+        </where>
+        order by standard_templateFile.CREATE_TIME_ desc
+    </select>
+
+    <select id="queryStandardTemplateByName" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_templateFile.*
+        FROM
+        standard_templateFile
+        WHERE
+            standard_templateFile.templateName = #{templateName}
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_templateFile.TENANT_ID_=#{TENANT_ID_}
+        </if>
+    </select>
+
+    <insert id="createStandardTemplate" parameterType="java.util.Map">
+        INSERT INTO standard_templateFile
+		(
+		id,
+		templateName,
+		relativePath,
+		downloadNum,
+		description,
+		size,
+		CREATE_BY_,
+		CREATE_TIME_,
+		TENANT_ID_
+		)
+		VALUES
+		(
+		#{id,jdbcType=VARCHAR},
+		#{templateName,jdbcType=VARCHAR},
+		#{relativePath,jdbcType=VARCHAR},
+		#{downloadNum,jdbcType=SMALLINT},
+		#{description,jdbcType=VARCHAR},
+		#{size,jdbcType=VARCHAR},
+		#{CREATE_BY_,jdbcType=VARCHAR},
+		#{CREATE_TIME_,jdbcType=TIMESTAMP},
+		#{TENANT_ID_,jdbcType=VARCHAR}
+		)
+    </insert>
+
+    <update id="updateStandardTemplate" parameterType="java.util.Map">
+        UPDATE standard_templateFile SET
+		templateName=#{templateName,jdbcType=VARCHAR},
+		relativePath=#{relativePath,jdbcType=VARCHAR},
+		downloadNum=#{downloadNum,jdbcType=SMALLINT},
+		description=#{description,jdbcType=VARCHAR},
+		size=#{size,jdbcType=VARCHAR},
+		CREATE_BY_=#{CREATE_BY_,jdbcType=VARCHAR},
+		CREATE_TIME_=#{CREATE_TIME_,jdbcType=TIMESTAMP},
+		TENANT_ID_=#{TENANT_ID_,jdbcType=VARCHAR}
+		WHERE
+		id=#{id}
+    </update>
+
+    <delete id="deleteStandardTemplate" parameterType="java.util.Map">
+        delete from standard_templateFile
+        where
+            id=#{id}
+            AND templateName=#{templateName}
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_templateFile.TENANT_ID_=#{TENANT_ID_}
+        </if>
+    </delete>
+
+    <update id="updateTemplateDownloadNum" parameterType="java.util.Map">
+        update standard_templateFile
+        set downloadNum=downloadNum+1
+        where id=#{id}
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_templateFile.TENANT_ID_=#{TENANT_ID_}
+        </if>
+    </update>
+
+</mapper>

@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.RjzzDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryRjzzList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        rjzz_baseinfo.*,
+        os_group.NAME_ AS applyUserDeptName,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId
+        FROM
+        rjzz_baseinfo
+        LEFT JOIN os_rel_inst ON rjzz_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = rjzz_baseinfo.CREATE_BY_
+        left join bpm_inst on rjzz_baseinfo.rjzzId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="rjzzNum != null and rjzzNum != ''">
+            AND rjzz_baseinfo.rjzzNum like CONCAT('%',#{rjzzNum},'%')
+        </if>
+        <if test="rjmqc != null and rjmqc != ''">
+            AND rjzz_baseinfo.rjmqc like CONCAT('%',#{rjmqc},'%')
+        </if>
+        <if test="applyUserId != null and applyUserId != ''">
+            AND rjzz_baseinfo.CREATE_BY_ = #{applyUserId}
+        </if>
+        <if test="applyDepId != null and applyDepId != ''">
+            AND os_group.GROUP_ID_ = #{applyDepId}
+        </if>
+        <if test="status != null and status != ''">
+            AND bpm_inst.STATUS_ = #{status}
+        </if>
+        <if test="CREATE_TIME_StartTime != null and CREATE_TIME_StartTime != ''">
+            AND rjzz_baseinfo.CREATE_TIME_ &gt;= #{CREATE_TIME_StartTime}
+        </if>
+        <if test="CREATE_TIME_EndTime != null and CREATE_TIME_EndTime != ''">
+            AND rjzz_baseinfo.CREATE_TIME_ &lt;= #{CREATE_TIME_EndTime}
+        </if>
+        <if test="djTimeStartTime != null and djTimeStartTime != ''">
+            AND rjzz_baseinfo.djTime &gt;= #{djTimeStartTime}
+        </if>
+        <if test="djTimeEndTime != null and djTimeEndTime != ''">
+            AND rjzz_baseinfo.djTime &lt;= #{djTimeEndTime}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='other'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR rjzz_baseinfo.CREATE_BY_ = #{currentUserId})
+                </when>
+            </choose>
+        </if>
+        <!--todo:增加按照ids的查询(老李mark暂留)-->
+        <if test="outList != null and outList !=''">
+            AND rjzzId IN
+            <foreach collection="outList" index="index" item="item" open="(" separator="," close=")">
+                #{item.outReferId}
+            </foreach>
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countRjzzList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        rjzz_baseinfo
+        LEFT JOIN os_rel_inst ON rjzz_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on rjzz_baseinfo.rjzzId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="rjzzNum != null and rjzzNum != ''">
+                AND rjzz_baseinfo.rjzzNum like CONCAT('%',#{rjzzNum},'%')
+            </if>
+            <if test="rjmqc != null and rjmqc != ''">
+                AND rjzz_baseinfo.rjmqc like CONCAT('%',#{rjmqc},'%')
+            </if>
+            <if test="applyUserId != null and applyUserId != ''">
+                AND rjzz_baseinfo.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="applyDepId != null and applyDepId != ''">
+                AND os_group.GROUP_ID_ = #{applyDepId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="CREATE_TIME_StartTime != null and CREATE_TIME_StartTime != ''">
+                AND rjzz_baseinfo.CREATE_TIME_ &gt;= #{CREATE_TIME_StartTime}
+            </if>
+            <if test="CREATE_TIME_EndTime != null and CREATE_TIME_EndTime != ''">
+                AND rjzz_baseinfo.CREATE_TIME_ &lt;= #{CREATE_TIME_EndTime}
+            </if>
+            <if test="djTimeStartTime != null and djTimeStartTime != ''">
+                AND rjzz_baseinfo.djTime &gt;= #{djTimeStartTime}
+            </if>
+            <if test="djTimeEndTime != null and djTimeEndTime != ''">
+                AND rjzz_baseinfo.djTime &lt;= #{djTimeEndTime}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR rjzz_baseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+            <if test="outList != null and outList !=''">
+                AND rjzzId IN
+                <foreach collection="outList" index="index" item="item" open="(" separator="," close=")">
+                    #{item.outReferId}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryMaxRjzzNum_Obsoleted" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            rjzz_baseinfo
+        WHERE
+            rjzz_baseinfo.CREATE_TIME_ &gt;= #{applyTimeStart}
+            AND rjzzNum IS NOT NULL
+            AND rjzzNum != ''
+        ORDER BY
+            rjzzNum DESC
+        LIMIT 1
+    </select>
+
+    <select id="queryMaxRjzzNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            rjzz_baseinfo
+        WHERE
+            rjzz_baseinfo.rjzzNum LIKE CONCAT('%', #{rjzzNum}, '%')
+            AND rjzzNum IS NOT NULL
+            AND rjzzNum != ''
+        ORDER BY
+            rjzzNum DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insertRjzz" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into rjzz_baseinfo(
+            rjzzId
+            ,rjzzNum
+            ,rjmqc
+            ,rjmjc
+            ,rjbbh
+            ,rjflh
+            ,zpsm
+            ,wcTime
+            ,fbzt
+            ,ddsj
+            ,zzqr
+            ,lxfs
+            ,rjgn
+            ,jstd
+            ,yjhj
+            ,rjhj
+            ,bjyy
+            ,dmhs
+            ,yycp
+            ,rjkfIds
+            ,rjkfNames
+            ,djTime
+            ,djNum
+            ,zsNum
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{rjzzId,jdbcType=VARCHAR},
+            #{rjzzNum,jdbcType=VARCHAR},
+            #{rjmqc,jdbcType=VARCHAR},
+            #{rjmjc,jdbcType=VARCHAR},
+            #{rjbbh,jdbcType=VARCHAR},
+            #{rjflh,jdbcType=VARCHAR},
+            #{zpsm,jdbcType=VARCHAR},
+            #{wcTime,jdbcType=TIMESTAMP},
+            #{fbzt,jdbcType=VARCHAR},
+            #{ddsj,jdbcType=VARCHAR},
+            #{zzqr,jdbcType=VARCHAR},
+            #{lxfs,jdbcType=VARCHAR},
+            #{rjgn,jdbcType=VARCHAR},
+            #{jstd,jdbcType=VARCHAR},
+            #{yjhj,jdbcType=VARCHAR},
+            #{rjhj,jdbcType=VARCHAR},
+            #{bjyy,jdbcType=VARCHAR},
+            #{dmhs,jdbcType=VARCHAR},
+            #{yycp,jdbcType=VARCHAR},
+            #{rjkfIds,jdbcType=VARCHAR},
+            #{rjkfNames,jdbcType=VARCHAR},
+            #{djTime,jdbcType=TIMESTAMP},
+            #{djNum,jdbcType=VARCHAR},
+            #{zsNum,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateRjzz" parameterType="com.alibaba.fastjson.JSONObject">
+        update rjzz_baseinfo
+        set
+            rjzzNum=#{rjzzNum,jdbcType=VARCHAR},
+            rjmqc=#{rjmqc,jdbcType=VARCHAR},
+            rjmjc=#{rjmjc,jdbcType=VARCHAR},
+            rjbbh=#{rjbbh,jdbcType=VARCHAR},
+            rjflh=#{rjflh,jdbcType=VARCHAR},
+            zpsm=#{zpsm,jdbcType=VARCHAR},
+            wcTime=#{wcTime,jdbcType=TIMESTAMP},
+            fbzt=#{fbzt,jdbcType=VARCHAR},
+            ddsj=#{ddsj,jdbcType=VARCHAR},
+            zzqr=#{zzqr,jdbcType=VARCHAR},
+            lxfs=#{lxfs,jdbcType=VARCHAR},
+            rjgn=#{rjgn,jdbcType=VARCHAR},
+            jstd=#{jstd,jdbcType=VARCHAR},
+            yjhj=#{yjhj,jdbcType=VARCHAR},
+            rjhj=#{rjhj,jdbcType=VARCHAR},
+            bjyy=#{bjyy,jdbcType=VARCHAR},
+            dmhs=#{dmhs,jdbcType=VARCHAR},
+            yycp=#{yycp,jdbcType=VARCHAR},
+            rjkfIds=#{rjkfIds,jdbcType=VARCHAR},
+            rjkfNames=#{rjkfNames,jdbcType=VARCHAR},
+            djTime=#{djTime,jdbcType=TIMESTAMP},
+            djNum=#{djNum,jdbcType=VARCHAR},
+            zsNum=#{zsNum,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            rjzzId=#{rjzzId}
+    </update>
+
+
+    <update id="updateRjzzNum" parameterType="java.util.Map">
+        update rjzz_baseinfo
+        set
+          rjzzNum=#{rjzzNum,jdbcType=VARCHAR}
+        where
+          rjzzId=#{rjzzId}
+    </update>
+
+    <select id="queryRjzzById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            rjzz_baseinfo.*,
+            os_user.FULLNAME_,
+            bpm_inst.INST_ID_ AS instId
+        FROM rjzz_baseinfo
+            LEFT JOIN os_user ON rjzz_baseinfo.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN bpm_inst ON rjzz_baseinfo.rjzzId = bpm_inst.BUS_KEY_
+        WHERE rjzz_baseinfo.rjzzId = #{rjzzId}
+    </select>
+
+    <select id="queryRjzzFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        rjzz_fileinfo.*
+        FROM
+        rjzz_fileinfo
+        WHERE
+        rjzz_fileinfo.rjzzId IN
+        <foreach collection="rjzzIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <insert id="addRjzzFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into rjzz_fileinfo(
+        id
+        ,rjzzId
+        ,fileName
+        ,fileSize
+        ,fjlx
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{rjzzId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fjlx,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        now()
+        )
+    </insert>
+
+    <delete id="deleteRjzzFile" parameterType="java.util.Map">
+        delete from rjzz_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="rjzzIds != null and rjzzIds !=''">
+                AND rjzzId IN
+                <foreach collection="rjzzIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteRjzz" parameterType="java.util.Map">
+        delete from rjzz_baseinfo
+        <where>
+            <if test="rjzzIds != null and rjzzIds !=''">
+                rjzzId IN
+                <foreach collection="rjzzIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryUserInfos" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM os_user
+    </select>
+
+    <update id="updaterjkfId" parameterType="java.util.Map">
+        update rjzz_baseinfo
+        set
+            CREATE_BY_=#{CREATE_BY_,jdbcType=VARCHAR}
+        where
+            rjzzId=#{rjzzId}
+    </update>
+</mapper>

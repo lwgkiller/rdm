@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgjssjk.core.dao.JssbDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryExport" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jssb_baseinfo.*,
+        jssb_jszb.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        jssb_baseinfo
+        LEFT JOIN os_rel_inst ON jssb_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = jssb_baseinfo.CREATE_BY_
+        left join bpm_inst on jssb_baseinfo.jssbId=bpm_inst.BUS_KEY_
+        left join jssb_jszb on jssb_baseinfo.jssbId=jssb_jszb.belongId
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (jssb_baseinfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="jsName != null and jsName != ''">
+            and jssb_baseinfo.jsName like CONCAT('%',#{jsName},'%')
+        </if>
+        <if test="direction != null and direction != ''">
+            and jssb_baseinfo.direction = #{direction}
+        </if>
+        <if test="publishTimeStart !=null and publishTimeStart !=''">
+            AND jssb_baseinfo.sbTime &gt;= #{publishTimeStart}
+        </if>
+        <if test="publishTimeEnd !=null and publishTimeEnd !=''">
+            AND jssb_baseinfo.sbTime &lt;= #{publishTimeEnd}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="queryJssb" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jssb_baseinfo.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        jssb_baseinfo
+        LEFT JOIN os_rel_inst ON jssb_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = jssb_baseinfo.CREATE_BY_
+        left join bpm_inst on jssb_baseinfo.jssbId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="jsName != null and jsName != ''">
+            and jssb_baseinfo.jsName like CONCAT('%',#{jsName},'%')
+        </if>
+        <if test="direction != null and direction != ''">
+            and jssb_baseinfo.direction = #{direction}
+        </if>
+        <if test="publishTimeStart !=null and publishTimeStart !=''">
+            AND jssb_baseinfo.sbTime &gt;= #{publishTimeStart}
+        </if>
+        <if test="publishTimeEnd !=null and publishTimeEnd !=''">
+            AND jssb_baseinfo.sbTime &lt;= #{publishTimeEnd}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgld' or roleName =='jssbgly'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR jssb_baseinfo.CREATE_BY_ = #{currentUserId})
+                </when>
+                <when test="roleName =='deptRespUser'">
+                    AND (
+                    (bpm_inst.STATUS_ != 'DRAFTED' AND jssb_baseinfo.sbDepId = #{deptId})
+                    OR
+                    jssb_baseinfo.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND (
+                    (bpm_inst.STATUS_ != 'DRAFTED' AND jssb_baseinfo.direction = #{zyStr})
+                    OR
+                    jssb_baseinfo.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+            </choose>
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countJssbList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        jssb_baseinfo
+        LEFT JOIN os_rel_inst ON jssb_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on jssb_baseinfo.jssbId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="jsName != null and jsName != ''">
+                and jssb_baseinfo.jsName like CONCAT('%',#{jsName},'%')
+            </if>
+            <if test="direction != null and direction != ''">
+                and jssb_baseinfo.direction = #{direction}
+            </if>
+            <if test="publishTimeStart !=null and publishTimeStart !=''">
+                AND jssb_baseinfo.sbTime &gt;= #{publishTimeStart}
+            </if>
+            <if test="publishTimeEnd !=null and publishTimeEnd !=''">
+                AND jssb_baseinfo.sbTime &lt;= #{publishTimeEnd}
+            </if>
+        </where>
+    </select>
+    <insert id="createJssb" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jssb_baseinfo(
+            jssbId
+            ,jsName
+            ,sbDepId
+            ,sbDep
+            ,sbResId
+            ,sbRes
+            ,sbTime
+            ,startTime
+            ,needTime
+            ,direction
+            ,jsms
+            ,intro
+            ,innovate
+            ,corepart
+            ,property
+            ,szrId
+            ,szr
+            ,szrCheck
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{jssbId,jdbcType=VARCHAR},
+            #{jsName,jdbcType=VARCHAR},
+            #{sbDepId,jdbcType=VARCHAR},
+            #{sbDep,jdbcType=VARCHAR},
+            #{sbResId,jdbcType=VARCHAR},
+            #{sbRes,jdbcType=VARCHAR},
+            #{sbTime,jdbcType=TIMESTAMP},
+            #{startTime,jdbcType=TIMESTAMP},
+            #{needTime,jdbcType=TIMESTAMP},
+            #{direction,jdbcType=TIMESTAMP},
+            #{jsms,jdbcType=VARCHAR},
+            #{intro,jdbcType=VARCHAR},
+            #{innovate,jdbcType=VARCHAR},
+            #{corepart,jdbcType=VARCHAR},
+            #{property,jdbcType=VARCHAR},
+            #{szrId,jdbcType=VARCHAR},
+            #{szr,jdbcType=VARCHAR},
+            #{szrCheck,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateJssb" parameterType="com.alibaba.fastjson.JSONObject">
+        update jssb_baseinfo
+        <set>
+            jsName=#{jsName,jdbcType=VARCHAR},
+            sbDepId=#{sbDepId,jdbcType=VARCHAR},
+            sbDep=#{sbDep,jdbcType=VARCHAR},
+            sbResId=#{sbResId,jdbcType=VARCHAR},
+            sbRes=#{sbRes,jdbcType=VARCHAR},
+            sbTime=#{sbTime,jdbcType=TIMESTAMP},
+            startTime=#{startTime,jdbcType=TIMESTAMP},
+            needTime=#{needTime,jdbcType=TIMESTAMP},
+            direction=#{direction,jdbcType=TIMESTAMP},
+            jsms=#{jsms,jdbcType=VARCHAR},
+            intro=#{intro,jdbcType=VARCHAR},
+            innovate=#{innovate,jdbcType=VARCHAR},
+            corepart=#{corepart,jdbcType=VARCHAR},
+            property=#{property,jdbcType=VARCHAR},
+            szrId=#{szrId,jdbcType=VARCHAR},
+            szr=#{szr,jdbcType=VARCHAR},
+            szrCheck=#{szrCheck,jdbcType=VARCHAR},
+            jdView=#{jdView,jdbcType=VARCHAR},
+            spView=#{spView,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        jssbId=#{jssbId}
+    </update>
+
+
+    <select id="queryJssbById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        jssb_baseinfo.*,
+        bpm_inst.INST_ID_ as instId
+        from jssb_baseinfo
+        left join os_user on jssb_baseinfo.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on jssb_baseinfo.jssbId=bpm_inst.BUS_KEY_
+        where jssb_baseinfo.jssbId=#{jssbId}
+    </select>
+
+    <select id="queryJssbFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        jssb_file
+        WHERE
+        belongId=#{jssbId}
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jssb_file(
+        fileId
+        ,fileName
+        ,belongId
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteJssbFile" parameterType="java.util.Map">
+        delete from jssb_file
+        <where>
+            <if test="fileId != null and fileId !=''">
+                fileId=#{fileId}
+            </if>
+            <if test="jssbId != null and jssbId !=''">
+                belongId=#{jssbId}
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteJssb" parameterType="java.util.Map">
+        delete from jssb_baseinfo
+        <where>
+            <if test="jssbId != null and jssbId !=''">
+                jssbId=#{jssbId}
+            </if>
+        </where>
+    </delete>
+    <select id="queryJszbList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from jssb_jszb
+        where
+            belongId=#{jssbId}
+        order by item
+    </select>
+
+
+
+    <insert id="createJszb" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO jssb_jszb (
+        jszbId,
+        item,
+        target,
+        company,
+        nowLevel,
+        bestLevel,
+        toLevel,
+        note,
+        belongId,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{jszbId,jdbcType=VARCHAR},
+        #{item,jdbcType=VARCHAR},
+        #{target,jdbcType=VARCHAR},
+        #{company,jdbcType=VARCHAR},
+        #{nowLevel,jdbcType=VARCHAR},
+        #{bestLevel,jdbcType=VARCHAR},
+        #{toLevel,jdbcType=VARCHAR},
+        #{note,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateJszb" parameterType="com.alibaba.fastjson.JSONObject">
+        update jssb_jszb
+        <set>
+            item =#{item,jdbcType=VARCHAR},
+            target=#{target,jdbcType=VARCHAR},
+            company=#{company,jdbcType=VARCHAR},
+            nowLevel=#{nowLevel,jdbcType=VARCHAR},
+            bestLevel=#{bestLevel,jdbcType=VARCHAR},
+            toLevel=#{toLevel,jdbcType=VARCHAR},
+            note=#{note,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </set>
+        where
+        jszbId=#{jszbId}
+    </update>
+
+    <delete id="deleteDetail" parameterType="java.util.Map">
+        delete from jssb_jszb
+        <where>
+            <if test="jszbId != null and jszbId !=''">
+                jszbId=#{jszbId}
+            </if>
+            <if test="jssbId != null and jssbId !=''">
+                belongId=#{jssbId}
+            </if>
+        </where>
+    </delete>
+    <select id="queryBelongId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        environmental_rjfile.fileId,
+        environmental_rjfile.fileName
+        from environmental_rjfile
+        where environmental_rjfile.belongId=#{belongId}
+    </select>
+
+</mapper>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectPlanDao">
+
+	<insert id="createProjectPlan" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO project_plan
+		(
+		actualEndTime,
+		actualStartTime,
+		CREATE_BY_,
+		CREATE_TIME_,
+		id,
+		money,
+		planEndTime,
+		planStartTime,
+		projectId,
+		stageId,
+		deductScore
+		)
+		VALUES 
+		(
+		#{actualEndTime,jdbcType=TIMESTAMP},
+		#{actualStartTime,jdbcType=TIMESTAMP},
+		 #{createBy,jdbcType=VARCHAR},
+		 #{createTime,jdbcType=TIMESTAMP},
+		  #{id,jdbcType=VARCHAR},
+		  #{money,jdbcType=NUMERIC},
+		  #{planEndTime,jdbcType=TIMESTAMP},
+		  #{planStartTime,jdbcType=TIMESTAMP},
+		  #{projectId,jdbcType=VARCHAR},
+		  #{stageId,jdbcType=VARCHAR},
+		  #{deductScore,jdbcType=DOUBLE}
+		  )
+	</insert>
+	
+	<select id="getPlanById"   parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT * FROM project_plan 
+		WHERE 
+		id=#{id}
+	</select>
+	
+	<!--<select id="query" parameterType="java.util.Map" resultMap="XcmgProjectPlan">
+		SELECT * FROM project_plan
+		<where>
+			<if test="@Ognl@isNotEmpty(whereSql)">
+				${whereSql}
+			</if>
+		</where>
+		<if test="@Ognl@isNotEmpty(orderBySql)">
+			ORDER BY ${orderBySql}
+		</if>
+		<if test="@Ognl@isEmpty(orderBySql)">
+			ORDER BY id DESC
+		</if>
+	</select>-->
+
+	<delete id="delPlanByProjectId">
+	    DELETE FROM project_plan
+	    WHERE
+	    projectId=#{projectId}
+	</delete>    
+	
+	<select id="getPlanByProjectId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+			project_plan.*,
+			project_stageDivide.stageNo,
+			project_stageDivide.stageName,
+			project_stageDivide.stagePercent
+		FROM
+			project_plan
+			left join project_stageDivide
+			on project_plan.stageId=project_stageDivide.stageId
+	    WHERE projectId=#{projectId}
+	    order by project_stageDivide.stageNo
+	</select>
+	
+</mapper>

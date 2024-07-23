@@ -1,0 +1,2550 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.ExportPartsAtlasDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryDemandList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+        (
+        SELECT
+        service_engineering_exportpartsatlas_demandapply.*,
+        IFNULL( machineNumberTotal.totalNumber, 0 ) AS totalNumber,
+        IFNULL( machineNumberDone.doneNumber, 0 ) AS doneNumber,
+        CASE WHEN ( machineNumberTotal.totalNumber - IFNULL( machineNumberDone.doneNumber, 0 ) ) &lt;= 0
+        THEN 'yes' ELSE 'no'
+        END finishStatus
+        FROM
+        service_engineering_exportpartsatlas_demandapply
+        LEFT JOIN ( SELECT demandId, sum( needNumber ) AS totalNumber FROM
+        service_engineering_exportpartsatlas_demanddetails GROUP BY demandId )
+        machineNumberTotal ON service_engineering_exportpartsatlas_demandapply.id = machineNumberTotal.demandId
+        LEFT JOIN ( SELECT demandId, count( 1 ) AS doneNumber FROM service_engineering_exportpartsatlas_machinetask
+        GROUP BY demandId )
+        machineNumberDone ON service_engineering_exportpartsatlas_demandapply.id = machineNumberDone.demandId
+        <where>
+            <if test="demandNo !=null and demandNo !=''">
+                service_engineering_exportpartsatlas_demandapply.demandNo LIKE CONCAT ( '%', #{demandNo}, '%' )
+            </if>
+            <if test="exportCountryName !=null and exportCountryName !=''">
+                AND service_engineering_exportpartsatlas_demandapply.exportCountryName LIKE CONCAT ( '%',
+                #{exportCountryName}, '%' )
+            </if>
+            <if test="creatorName !=null and creatorName !=''">
+                AND service_engineering_exportpartsatlas_demandapply.creatorName LIKE CONCAT ( '%', #{creatorName}, '%'
+                )
+            </if>
+            <if test="applyDateBegin !=null and applyDateBegin !=''">
+                AND service_engineering_exportpartsatlas_demandapply.CREATE_TIME_ >= #{applyDateBegin}
+            </if>
+            <if test="applyDateEnd !=null and applyDateEnd !=''">
+                AND service_engineering_exportpartsatlas_demandapply.CREATE_TIME_ &lt;= #{applyDateEnd}
+            </if>
+        </where>
+        ) tmp
+        <where>
+            <if test="finishStatus !=null and finishStatus !=''">
+                finishStatus = #{finishStatus}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryDemandListByDetailNo" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_demanddetails.*,
+        service_engineering_exportpartsatlas_demandapply.demandNo,
+        service_engineering_exportpartsatlas_demandapply.exportCountryName
+        FROM
+        service_engineering_exportpartsatlas_demanddetails
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply ON
+        service_engineering_exportpartsatlas_demanddetails.demandId =
+        service_engineering_exportpartsatlas_demandapply.id
+        <where>
+            <if test="detailNo !=null and detailNo !=''">
+                service_engineering_exportpartsatlas_demanddetails.detailNo = #{detailNo}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryDemandListTotal" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        (
+        SELECT
+        service_engineering_exportpartsatlas_demandapply.*,
+        IFNULL( machineNumberTotal.totalNumber, 0 ) AS totalNumber,
+        IFNULL( machineNumberDone.doneNumber, 0 ) AS doneNumber,
+        CASE WHEN ( machineNumberTotal.totalNumber - IFNULL( machineNumberDone.doneNumber, 0 ) ) = 0
+        THEN 'yes' ELSE 'no'
+        END finishStatus
+        FROM
+        service_engineering_exportpartsatlas_demandapply
+        LEFT JOIN ( SELECT demandId, sum( needNumber ) AS totalNumber FROM
+        service_engineering_exportpartsatlas_demanddetails GROUP BY demandId )
+        machineNumberTotal ON service_engineering_exportpartsatlas_demandapply.id = machineNumberTotal.demandId
+        LEFT JOIN ( SELECT demandId, count( 1 ) AS doneNumber FROM service_engineering_exportpartsatlas_machinetask
+        GROUP BY demandId )
+        machineNumberDone ON service_engineering_exportpartsatlas_demandapply.id = machineNumberDone.demandId
+        <where>
+            <if test="demandNo !=null and demandNo !=''">
+                service_engineering_exportpartsatlas_demandapply.demandNo LIKE CONCAT ( '%', #{demandNo}, '%' )
+            </if>
+            <if test="exportCountryName !=null and exportCountryName !=''">
+                AND service_engineering_exportpartsatlas_demandapply.exportCountryName LIKE CONCAT ( '%',
+                #{exportCountryName}, '%' )
+            </if>
+            <if test="creatorName !=null and creatorName !=''">
+                AND service_engineering_exportpartsatlas_demandapply.creatorName LIKE CONCAT ( '%', #{creatorName}, '%'
+                )
+            </if>
+            <if test="applyDateBegin !=null and applyDateBegin !=''">
+                AND service_engineering_exportpartsatlas_demandapply.CREATE_TIME_ >= #{applyDateBegin}
+            </if>
+            <if test="applyDateEnd !=null and applyDateEnd !=''">
+                AND service_engineering_exportpartsatlas_demandapply.CREATE_TIME_ &lt;= #{applyDateEnd}
+            </if>
+        </where>
+        ) tmp
+        <where>
+            <if test="finishStatus !=null and finishStatus !=''">
+                finishStatus = #{finishStatus}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryAllDemandInfos" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_exportpartsatlas_demandapply
+    </select>
+
+    <select id="queryDemandDetailInfos" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_demanddetails.*,
+        service_engineering_exportpartsatlas_demandapply.demandNo
+        FROM
+        service_engineering_exportpartsatlas_demanddetails
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply
+        ON service_engineering_exportpartsatlas_demanddetails.demandId =
+        service_engineering_exportpartsatlas_demandapply.id
+        <where>
+            <if test="demandNos !=null and demandNos !=''">
+                service_engineering_exportpartsatlas_demandapply.demandNo IN
+                <foreach collection="demandNos" open="(" separator="," close=")" item="item" index="index">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryAllMachineTasks" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_machinetask.*,
+        service_engineering_exportpartsatlas_demandapply.demandNo,
+        service_engineering_exportpartsatlas_demanddetails.detailNo
+        FROM
+        service_engineering_exportpartsatlas_machinetask
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply ON
+        service_engineering_exportpartsatlas_machinetask.demandId =
+        service_engineering_exportpartsatlas_demandapply.id
+        LEFT JOIN service_engineering_exportpartsatlas_demanddetails ON
+        service_engineering_exportpartsatlas_machinetask.demandDetailId =
+        service_engineering_exportpartsatlas_demanddetails.id
+        <where>
+            <if test="filterZf != null and filterZf =='yes'">
+                (
+                service_engineering_exportpartsatlas_machinetask.taskStatus is null
+                or service_engineering_exportpartsatlas_machinetask.taskStatus = ''
+                or service_engineering_exportpartsatlas_machinetask.taskStatus !='08ZF'
+                )
+            </if>
+            <if test="machineCode != null and machineCode !=''">
+                AND service_engineering_exportpartsatlas_machinetask.machineCode = #{machineCode}
+            </if>
+            <if test="machineCodeList != null and machineCodeList !=''">
+                AND service_engineering_exportpartsatlas_machinetask.machineCode IN
+                <foreach collection="machineCodeList" open="(" close=")" separator="," index="index" item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="demandDetailId != null and demandDetailId !=''">
+                AND service_engineering_exportpartsatlas_machinetask.demandDetailId = #{demandDetailId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_demandapply(
+            id,
+            demandNo,
+            exportCountryName,
+            creatorName,
+            sourceDeptName,
+            saleDirection,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{demandNo,jdbcType=VARCHAR},
+            #{exportCountryName,jdbcType=VARCHAR},
+            #{creatorName,jdbcType=VARCHAR},
+            #{sourceDeptName,jdbcType=VARCHAR},
+            #{saleDirection,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_demandapply
+        set
+        exportCountryName = #{exportCountryName,jdbcType=VARCHAR},
+        sourceDeptName = #{sourceDeptName,jdbcType=VARCHAR},
+        saleDirection = #{saleDirection,jdbcType=VARCHAR}
+        where
+        id = #{id}
+    </update>
+
+    <insert id="insertDemandDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_demanddetails(
+        id,
+        demandId,
+        matCode,
+        designType,
+        saleType,
+        needNumber,
+        languages,
+        needTime,
+        detailNo,
+        field_l1i12__c,
+        field_8M8qH__c,
+        field_7p01H__c,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+            #{id,jdbcType=VARCHAR},
+            #{demandId,jdbcType=VARCHAR},
+            #{matCode,jdbcType=VARCHAR},
+            #{designType,jdbcType=VARCHAR},
+            #{saleType,jdbcType=VARCHAR},
+            #{needNumber,jdbcType=VARCHAR},
+            #{languages,jdbcType=VARCHAR},
+            #{needTime,jdbcType=VARCHAR},
+            #{detailNo,jdbcType=VARCHAR},
+            #{field_l1i12__c,jdbcType=VARCHAR},
+            #{field_8M8qH__c,jdbcType=VARCHAR},
+            #{field_7p01H__c,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <insert id="batchInsertDemandDetails" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_demanddetails(
+        id,
+        demandId,
+        matCode,
+        designType,
+        saleType,
+        needNumber,
+        languages,
+        needTime,
+        detailNo,
+        field_l1i12__c,
+        field_8M8qH__c,
+        field_7p01H__c,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        <foreach collection="list" open="" close="" separator="," item="item" index="index">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.demandId,jdbcType=VARCHAR},
+            #{item.matCode,jdbcType=VARCHAR},
+            #{item.designType,jdbcType=VARCHAR},
+            #{item.saleType,jdbcType=VARCHAR},
+            #{item.needNumber,jdbcType=VARCHAR},
+            #{item.languages,jdbcType=VARCHAR},
+            #{item.needTime,jdbcType=VARCHAR},
+            #{item.detailNo,jdbcType=VARCHAR},
+            #{item.field_l1i12__c,jdbcType=VARCHAR},
+            #{item.field_8M8qH__c,jdbcType=VARCHAR},
+            #{item.field_7p01H__c,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="batchInsertDispatchDetails" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_dispatchdetails(
+        id,
+        dispatchId,
+        detailNo,
+        demandNo,
+        matCode,
+        designType,
+        saleType,
+        languages,
+        needNumber,
+        departurestartTime,
+        vehicleNumber,
+        cardisPose,
+        departureendTime,
+        destination,
+        actualdepartureCountry,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        <foreach collection="list" open="" close="" separator="," item="item" index="index">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.dispatchId,jdbcType=VARCHAR},
+            #{item.detailNo,jdbcType=VARCHAR},
+            #{item.demandNo,jdbcType=VARCHAR},
+            #{item.matCode,jdbcType=VARCHAR},
+            #{item.designType,jdbcType=VARCHAR},
+            #{item.saleType,jdbcType=VARCHAR},
+            #{item.languages,jdbcType=VARCHAR},
+            #{item.needNumber,jdbcType=VARCHAR},
+            #{item.departurestartTime,jdbcType=VARCHAR},
+            #{item.vehicleNumber,jdbcType=VARCHAR},
+            #{item.cardisPose,jdbcType=VARCHAR},
+            #{item.departureendTime,jdbcType=VARCHAR},
+            #{item.destination,jdbcType=VARCHAR},
+            #{item.actualdepartureCountry,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="insertDetailConfig" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_configInfo(
+        id,
+        demandId,
+        demandDetailId,
+        dispatchId,
+        dispatchDetailId,
+        configNo,
+        configDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+            (
+            #{id,jdbcType=VARCHAR},
+            #{demandId,jdbcType=VARCHAR},
+            #{demandDetailId,jdbcType=VARCHAR},
+            #{dispatchId,jdbcType=VARCHAR},
+            #{dispatchDetailId,jdbcType=VARCHAR},
+            #{configNo,jdbcType=VARCHAR},
+            #{configDesc,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <insert id="batchInsertDetailConfigs" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_configInfo(
+        id,
+        demandId,
+        demandDetailId,
+        dispatchId,
+        dispatchDetailId,
+        configNo,
+        configDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        <foreach collection="list" open="" close="" separator="," item="item" index="index">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.demandId,jdbcType=VARCHAR},
+            #{item.demandDetailId,jdbcType=VARCHAR},
+            #{item.dispatchId,jdbcType=VARCHAR},
+            #{item.dispatchDetailId,jdbcType=VARCHAR},
+            #{item.configNo,jdbcType=VARCHAR},
+            #{item.configDesc,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <select id="queryDetailConfigs" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_configinfo.*,
+        service_engineering_exportpartsatlas_demanddetails.detailNo
+        FROM
+        service_engineering_exportpartsatlas_configinfo
+        LEFT JOIN service_engineering_exportpartsatlas_demanddetails
+        ON service_engineering_exportpartsatlas_configinfo.demandDetailId =
+        service_engineering_exportpartsatlas_demanddetails.id
+        <where>
+            <if test="demandId !=null and demandId !=''">
+                service_engineering_exportpartsatlas_configinfo.demandId = #{demandId}
+            </if>
+            <if test="demandDetailId !=null and demandDetailId !=''">
+                AND demandDetailId = #{demandDetailId}
+            </if>
+            <if test="demandDetailIds !=null and demandDetailIds !=''">
+                AND demandDetailId IN
+                <foreach collection="demandDetailIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dispatchId !=null and dispatchId !=''">
+                AND dispatchId = #{dispatchId}
+            </if>
+            <if test="dispatchDetailId !=null and dispatchDetailId !=''">
+                AND dispatchDetailId = #{dispatchDetailId}
+            </if>
+            <if test="dispatchDetailIds !=null and dispatchDetailIds !=''">
+                AND dispatchDetailId IN
+                <foreach collection="dispatchDetailIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by configNo
+    </select>
+    <!--@lwgkiller:增加了fwpId,dispatchTime字段,用来从已作废的相同车号里捞值，重新写回新纪录-->
+    <insert id="batchInsertMachineTasks" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_machinetask(
+        id,
+        demandId,
+        demandDetailId,
+        relDemandUserName,
+        relDemandTime,
+        machineCode,
+        inTime,
+        exchangeScene,
+        taskStatus,
+        fwpId,
+        dispatchTime,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        <foreach collection="list" open="" close="" separator="," item="item" index="index">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.demandId,jdbcType=VARCHAR},
+            #{item.demandDetailId,jdbcType=VARCHAR},
+            #{item.relDemandUserName,jdbcType=VARCHAR},
+            #{item.relDemandTime,jdbcType=VARCHAR},
+            #{item.machineCode,jdbcType=VARCHAR},
+            #{item.inTime,jdbcType=VARCHAR},
+            #{item.exchangeScene,jdbcType=VARCHAR},
+            #{item.taskStatus,jdbcType=VARCHAR},
+            #{item.fwpId,jdbcType=VARCHAR},
+            #{item.dispatchTime,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getDemandInfoById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_exportpartsatlas_demandapply
+        WHERE
+            id = #{id}
+    </select>
+
+    <select id="getDemandInfoByNo" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_exportpartsatlas_demandapply
+        WHERE
+            demandNo = #{no}
+    </select>
+
+    <select id="getDemandDetailList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            service_engineering_exportpartsatlas_demanddetails.*,
+            IFNULL(tmp.machineNum, 0) AS machineNum
+        FROM
+            service_engineering_exportpartsatlas_demanddetails
+            LEFT JOIN (
+                          SELECT
+                              demandDetailId,
+                              count(1) AS machineNum
+                          FROM service_engineering_exportpartsatlas_machinetask
+                          WHERE service_engineering_exportpartsatlas_machinetask.demandId = #{demandId}
+                          GROUP BY demandDetailId
+                      ) tmp
+                ON service_engineering_exportpartsatlas_demanddetails.id = tmp.demandDetailId
+        WHERE
+            demandId = #{demandId}
+    </select>
+
+    <select id="getMachineList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_machinetask.*
+        FROM
+        service_engineering_exportpartsatlas_machinetask
+        <where>
+            <if test="demandId != null and demandId !=''">
+                demandId = #{demandId}
+            </if>
+            <if test="demandDetailId != null and demandDetailId !=''">
+                AND demandDetailId = #{demandDetailId}
+            </if>
+            <if test="dispatchId != null and dispatchId !=''">
+                AND dispatchId = #{dispatchId}
+            </if>
+            <if test="dispatchDetailId != null and dispatchDetailId !=''">
+                AND dispatchDetailId = #{dispatchDetailId}
+            </if>
+        </where>
+    </select>
+    <!--@lwgkiller:增加了和service_engineering_exportpartsatlas_fpwdispatch表的关联-->
+    <select id="queryAtlasTaskList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_machinetask.*,
+        service_engineering_exportpartsatlas_demandapply.demandNo,
+        service_engineering_exportpartsatlas_demanddetails.matCode,
+        service_engineering_exportpartsatlas_demanddetails.designType,
+        service_engineering_exportpartsatlas_demanddetails.saleType,
+        service_engineering_exportpartsatlas_demanddetails.languages,
+        service_engineering_exportpartsatlas_demanddetails.needTime,
+        service_engineering_exportpartsatlas_dispatchapply.dispatchNo,
+        service_engineering_exportpartsatlas_dispatchapply.departTime,
+        fwp.pin AS machineCodeFWP,
+        fwp.demandNo AS demandNoFWP,
+        fwp.dispatchNo AS dispatchNoFWP,
+        fwp.languages as languagesFPW,
+        fwp.dispatchTimeFPW
+        FROM
+        service_engineering_exportpartsatlas_machinetask
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply ON
+        service_engineering_exportpartsatlas_machinetask.demandId =
+        service_engineering_exportpartsatlas_demandapply.id
+        LEFT JOIN service_engineering_exportpartsatlas_demanddetails ON
+        service_engineering_exportpartsatlas_demanddetails.id =
+        service_engineering_exportpartsatlas_machinetask.demandDetailId
+        LEFT JOIN service_engineering_exportpartsatlas_dispatchapply ON
+        service_engineering_exportpartsatlas_machinetask.dispatchId =
+        service_engineering_exportpartsatlas_dispatchapply.id
+        LEFT JOIN service_engineering_exportpartsatlas_dispatchdetails ON
+        service_engineering_exportpartsatlas_dispatchdetails.id =
+        service_engineering_exportpartsatlas_machinetask.dispatchDetailId
+        LEFT JOIN service_engineering_exportpartsatlas_fpwdispatch AS fwp ON fwp.id =
+        service_engineering_exportpartsatlas_machinetask.fwpId
+        <where>
+            <if test="demandNo != null and demandNo !=''">
+                service_engineering_exportpartsatlas_demandapply.demandNo like concat('%', #{demandNo},'%')
+            </if>
+            <if test="verifyDemandNo != null and verifyDemandNo !=''">
+                AND service_engineering_exportpartsatlas_demandapply.demandNo = #{verifyDemandNo}
+            </if>
+            <if test="matCode != null and matCode !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.matCode like concat('%', #{matCode},'%')
+            </if>
+            <if test="verifyMatCode != null and verifyMatCode !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.matCode = #{verifyMatCode}
+            </if>
+            <if test="notStatus != null and notStatus !=''">
+                AND service_engineering_exportpartsatlas_machinetask.taskStatus NOT IN
+                <foreach collection="notStatus" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="taskStatus != null and taskStatus !=''">
+                AND service_engineering_exportpartsatlas_machinetask.taskStatus IN
+                <foreach collection="taskStatus" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="designType != null and designType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.designType like concat('%', #{designType},'%')
+            </if>
+            <if test="verifyDesignType != null and verifyDesignType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.designType = #{verifyDesignType}
+            </if>
+            <if test="saleType != null and saleType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.saleType like concat('%', #{saleType},'%')
+            </if>
+            <if test="verifySaleType != null and verifySaleType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.saleType = #{verifySaleType}
+            </if>
+            <if test="languages != null and languages !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.languages like concat('%', #{languages},'%')
+            </if>
+            <if test="machineCode != null and machineCode !=''">
+                AND service_engineering_exportpartsatlas_machinetask.machineCode like concat('%', #{machineCode},'%')
+            </if>
+            <if test="taskUserName != null and taskUserName !=''">
+                AND service_engineering_exportpartsatlas_machinetask.taskUserName like concat('%', #{taskUserName},'%')
+            </if>
+            <if test="taskUserId != null and taskUserId !=''">
+                AND service_engineering_exportpartsatlas_machinetask.taskUserId = #{taskUserId}
+            </if>
+            <if test="idList !=null and idList !=''">
+                AND service_engineering_exportpartsatlas_machinetask.id IN
+                <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="filterHasRel !=null and filterHasRel !='' and filterHasRel=='yes'">
+                AND ((service_engineering_exportpartsatlas_machinetask.dispatchId is null or
+                service_engineering_exportpartsatlas_machinetask.dispatchId='')
+                AND (service_engineering_exportpartsatlas_machinetask.dispatchDetailId is null or
+                service_engineering_exportpartsatlas_machinetask.dispatchDetailId=''))
+            </if>
+            <if test="@Ognl@isNotEmpty(signYear)">
+                AND (service_engineering_exportpartsatlas_machinetask.dispatchTime like CONCAT('%',#{signYear},'%') or
+                fwp.dispatchTimeFPW like CONCAT('%',#{signYear},'%'))
+            </if>
+            <if test="@Ognl@isNotEmpty(demandNoFWP)">
+                AND fwp.demandNo like CONCAT('%',#{demandNoFWP},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(dispatchNoFWP)">
+                AND fwp.dispatchNo like CONCAT('%',#{dispatchNoFWP},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(designModelFWP)">
+                AND fwp.designModel like CONCAT('%',#{designModelFWP},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(saleModelFWP)">
+                AND fwp.salesModel like CONCAT('%',#{saleModelFWP},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(materialCodeFWP)">
+                AND fwp.materialCode like CONCAT('%',#{materialCodeFWP},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(isFWP)">
+                AND (service_engineering_exportpartsatlas_machinetask.fwpId is not null and
+                service_engineering_exportpartsatlas_machinetask.fwpId != '')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!--@lwgkiller:增加了和service_engineering_exportpartsatlas_fpwdispatch表的关联-->
+    <select id="countAtlasTaskList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        service_engineering_exportpartsatlas_machinetask
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply ON
+        service_engineering_exportpartsatlas_machinetask.demandId =
+        service_engineering_exportpartsatlas_demandapply.id
+        LEFT JOIN service_engineering_exportpartsatlas_demanddetails ON
+        service_engineering_exportpartsatlas_demanddetails.id =
+        service_engineering_exportpartsatlas_machinetask.demandDetailId
+        LEFT JOIN service_engineering_exportpartsatlas_dispatchapply ON
+        service_engineering_exportpartsatlas_machinetask.dispatchId =
+        service_engineering_exportpartsatlas_dispatchapply.id
+        LEFT JOIN service_engineering_exportpartsatlas_dispatchdetails ON
+        service_engineering_exportpartsatlas_dispatchdetails.id =
+        service_engineering_exportpartsatlas_machinetask.dispatchDetailId
+        LEFT JOIN service_engineering_exportpartsatlas_fpwdispatch AS fwp ON fwp.id =
+        service_engineering_exportpartsatlas_machinetask.fwpId
+        <where>
+            <if test="demandNo != null and demandNo !=''">
+                service_engineering_exportpartsatlas_demandapply.demandNo like concat('%', #{demandNo},'%')
+            </if>
+            <if test="verifyDemandNo != null and verifyDemandNo !=''">
+                AND service_engineering_exportpartsatlas_demandapply.demandNo = #{verifyDemandNo}
+            </if>
+            <if test="matCode != null and matCode !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.matCode like concat('%', #{matCode},'%')
+            </if>
+            <if test="verifyMatCode != null and verifyMatCode !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.matCode = #{verifyMatCode}
+            </if>
+            <if test="notStatus != null and notStatus !=''">
+                AND service_engineering_exportpartsatlas_machinetask.taskStatus NOT IN
+                <foreach collection="notStatus" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="taskStatus != null and taskStatus !=''">
+                AND service_engineering_exportpartsatlas_machinetask.taskStatus IN
+                <foreach collection="taskStatus" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="designType != null and designType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.designType like concat('%', #{designType},'%')
+            </if>
+            <if test="verifyDesignType != null and verifyDesignType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.designType = #{verifyDesignType}
+            </if>
+            <if test="saleType != null and saleType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.saleType like concat('%', #{saleType},'%')
+            </if>
+            <if test="verifySaleType != null and verifySaleType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.saleType = #{verifySaleType}
+            </if>
+            <if test="languages != null and languages !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.languages like concat('%', #{languages},'%')
+            </if>
+            <if test="machineCode != null and machineCode !=''">
+                AND service_engineering_exportpartsatlas_machinetask.machineCode like concat('%', #{machineCode},'%')
+            </if>
+            <if test="taskUserName != null and taskUserName !=''">
+                AND service_engineering_exportpartsatlas_machinetask.taskUserName like concat('%', #{taskUserName},'%')
+            </if>
+            <if test="taskUserId != null and taskUserId !=''">
+                AND service_engineering_exportpartsatlas_machinetask.taskUserId = #{taskUserId}
+            </if>
+            <if test="idList !=null and idList !=''">
+                AND service_engineering_exportpartsatlas_machinetask.id IN
+                <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="filterHasRel !=null and filterHasRel !='' and filterHasRel=='yes'">
+                AND ((service_engineering_exportpartsatlas_machinetask.dispatchId is null or
+                service_engineering_exportpartsatlas_machinetask.dispatchId='')
+                AND (service_engineering_exportpartsatlas_machinetask.dispatchDetailId is null or
+                service_engineering_exportpartsatlas_machinetask.dispatchDetailId=''))
+            </if>
+            <if test="@Ognl@isNotEmpty(signYear)">
+                AND (service_engineering_exportpartsatlas_machinetask.dispatchTime like CONCAT('%',#{signYear},'%') or
+                fwp.dispatchTimeFPW like CONCAT('%',#{signYear},'%'))
+            </if>
+            <if test="@Ognl@isNotEmpty(demandNoFWP)">
+                AND fwp.demandNo like CONCAT('%',#{demandNoFWP},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(dispatchNoFWP)">
+                AND fwp.dispatchNo like CONCAT('%',#{dispatchNoFWP},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(isFWP)">
+                AND (service_engineering_exportpartsatlas_machinetask.fwpId is not null and
+                service_engineering_exportpartsatlas_machinetask.fwpId != '')
+            </if>
+        </where>
+    </select>
+
+    <select id="queryStatusHisList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            service_engineering_exportpartsatlas_statushis
+        WHERE
+            busKeyId = #{busKeyId}
+            AND scene = #{scene}
+        ORDER BY
+            CREATE_TIME_ DESC
+    </select>
+
+    <update id="updateTaskStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_machinetask
+        set taskStatus = #{changeStatus}
+        <if test="taskUserId !=null">
+            ,taskUserId = #{taskUserId}
+        </if>
+        <if test="taskUserName !=null">
+            ,taskUserName = #{taskUserName}
+        </if>
+        <if test="atlasFilePath !=null">
+            ,atlasFilePath = #{atlasFilePath}
+        </if>
+        <if test="fileDesc !=null">
+            ,fileDesc = #{fileDesc}
+        </if>
+        <where>
+            <if test="originalStatus != null and originalStatus !=''">
+                taskStatus= #{originalStatus}
+            </if>
+            <if test="idList != null and idList !=''">
+                AND id IN
+                <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </update>
+
+    <insert id="batchInsertTaskStatusHis" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_statushis(
+        id,
+        busKeyId,
+        statusDesc,
+        scene,
+        creatorName,
+        optionDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        <foreach collection="list" open="" close="" separator="," item="item" index="index">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.busKeyId,jdbcType=VARCHAR},
+            #{item.statusDesc,jdbcType=VARCHAR},
+            #{item.scene,jdbcType=VARCHAR},
+            #{item.creatorName,jdbcType=VARCHAR},
+            #{item.optionDesc,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <select id="queryModelMadeList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_modelmade.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        service_engineering_exportpartsatlas_modelmade
+        LEFT JOIN bpm_inst ON service_engineering_exportpartsatlas_modelmade.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <if test="modelMadeNum != null and modelMadeNum !=''">
+                service_engineering_exportpartsatlas_modelmade.modelMadeNum like CONCAT('%', #{modelMadeNum},'%')
+            </if>
+            <if test="matCode != null and matCode !=''">
+                service_engineering_exportpartsatlas_modelmade.matCode like CONCAT('%', #{matCode},'%')
+            </if>
+            <if test="designType != null and designType !=''">
+                AND service_engineering_exportpartsatlas_modelmade.designType like CONCAT('%', #{designType},'%')
+            </if>
+            <if test="applyUserId != null and applyUserId !=''">
+                AND service_engineering_exportpartsatlas_modelmade.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="modelOwnerId != null and modelOwnerId !=''">
+                AND service_engineering_exportpartsatlas_modelmade.modelOwnerId = #{modelOwnerId}
+            </if>
+            <if test="jxzzrId != null and jxzzrId !=''">
+                AND service_engineering_exportpartsatlas_modelmade.jxzzrId = #{jxzzrId}
+            </if>
+            <if test="status != null and status !=''">
+                AND (
+                bpm_inst.STATUS_ IN
+                <foreach collection="status" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+                OR bpm_inst.STATUS_ is null OR bpm_inst.STATUS_=''
+                )
+            </if>
+            <if test="statusBlank != null and statusBlank !='' and statusBlank=='no'">
+                AND
+                bpm_inst.STATUS_ IN
+                <foreach collection="status" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="statusBlank != null and statusBlank !='' and statusBlank =='yes'">
+                AND (bpm_inst.STATUS_ is null OR bpm_inst.STATUS_='')
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR service_engineering_exportpartsatlas_modelmade.CREATE_BY_
+                        = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+            <if test="taskName != null and taskName !=''">
+                AND act_ru_task.NAME_ = #{taskName}
+            </if>
+        </where>
+
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countQueryModelMadeList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        service_engineering_exportpartsatlas_modelmade
+        LEFT JOIN bpm_inst ON service_engineering_exportpartsatlas_modelmade.id = bpm_inst.BUS_KEY_
+        <where>
+            <if test="modelMadeNum != null and modelMadeNum !=''">
+                service_engineering_exportpartsatlas_modelmade.modelMadeNum like CONCAT('%', #{modelMadeNum},'%')
+            </if>
+            <if test="matCode != null and matCode !=''">
+                service_engineering_exportpartsatlas_modelmade.matCode like CONCAT('%', #{matCode},'%')
+            </if>
+            <if test="designType != null and designType !=''">
+                AND service_engineering_exportpartsatlas_modelmade.designType like CONCAT('%', #{designType},'%')
+            </if>
+            <if test="applyUserId != null and applyUserId !=''">
+                AND service_engineering_exportpartsatlas_modelmade.CREATE_BY_ = #{applyUserId}
+            </if>
+            <if test="modelOwnerId != null and modelOwnerId !=''">
+                AND service_engineering_exportpartsatlas_modelmade.modelOwnerId = #{modelOwnerId}
+            </if>
+            <if test="status != null and status !='' and status!='blank'">
+                AND
+                bpm_inst.STATUS_ IN
+                <foreach collection="status" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="status != null and status !='' and status =='blank'">
+                AND (bpm_inst.STATUS_ is null OR bpm_inst.STATUS_='')
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR service_engineering_exportpartsatlas_modelmade.CREATE_BY_
+                        = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+    <select id="countQueryModelMadeWaitList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        (
+        SELECT *
+        FROM
+        (SELECT
+        service_engineering_exportpartsatlas_demanddetails.*,
+        service_engineering_exportpartsatlas_demandapply.demandNo
+        FROM
+        service_engineering_exportpartsatlas_demanddetails
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply on
+        service_engineering_exportpartsatlas_demanddetails.demandId =
+        service_engineering_exportpartsatlas_demandapply.id
+        <where>
+            matCode NOT IN
+            ( SELECT
+            distinct matCode
+            FROM
+            service_engineering_exportpartsatlas_modelmade
+            LEFT JOIN bpm_inst ON service_engineering_exportpartsatlas_modelmade.id = bpm_inst.BUS_KEY_
+            WHERE
+            bpm_inst.STATUS_ != 'DISCARD_END' or STATUS_ is null
+            )
+            <if test="demandNo != null and demandNo !=''">
+                AND service_engineering_exportpartsatlas_demandapply.demandNo = #{demandNo}
+            </if>
+            <if test="matCode != null and matCode !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.matCode = #{matCode}
+            </if>
+            <if test="designType != null and designType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.designType = #{designType}
+            </if>
+            <if test="saleType != null and saleType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.saleType = #{saleType}
+            </if>
+            <if test="languages != null and languages !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.languages = #{languages}
+            </if>
+        </where>
+        ORDER BY service_engineering_exportpartsatlas_demanddetails.needTime asc
+        ) AS M
+        GROUP BY M.matCode
+        ) AS num
+    </select>
+    <select id="queryModelMadeWaitList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+        (SELECT
+        service_engineering_exportpartsatlas_demanddetails.*,
+        service_engineering_exportpartsatlas_demandapply.demandNo
+        FROM
+        service_engineering_exportpartsatlas_demanddetails
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply on
+        service_engineering_exportpartsatlas_demanddetails.demandId =
+        service_engineering_exportpartsatlas_demandapply.id
+        <where>
+            matCode NOT IN
+            ( SELECT
+            distinct matCode
+            FROM
+            service_engineering_exportpartsatlas_modelmade
+            LEFT JOIN bpm_inst ON service_engineering_exportpartsatlas_modelmade.id = bpm_inst.BUS_KEY_
+            WHERE
+            bpm_inst.STATUS_ != 'DISCARD_END' or STATUS_ is null
+            )
+            <if test="demandNo != null and demandNo !=''">
+                AND service_engineering_exportpartsatlas_demandapply.demandNo = #{demandNo}
+            </if>
+            <if test="matCode != null and matCode !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.matCode = #{matCode}
+            </if>
+            <if test="designType != null and designType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.designType = #{designType}
+            </if>
+            <if test="saleType != null and saleType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.saleType = #{saleType}
+            </if>
+            <if test="languages != null and languages !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.languages = #{languages}
+            </if>
+        </where>
+        ORDER BY service_engineering_exportpartsatlas_demanddetails.needTime asc
+        ) AS M
+        GROUP BY M.matCode
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getModelMadeDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            service_engineering_exportpartsatlas_modelmade.*,
+            bpm_inst.INST_ID_ AS instId
+        FROM
+            service_engineering_exportpartsatlas_modelmade
+            LEFT JOIN bpm_inst ON service_engineering_exportpartsatlas_modelmade.id = bpm_inst.BUS_KEY_
+        WHERE
+            id = #{id}
+    </select>
+
+    <insert id="insertModelMade" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_modelmade(
+            id,
+            matCode,
+            designType,
+            modelOwnerId,
+            modelOwnerName,
+            jxzzrId,
+            jxzzrName,
+            gyfzrId,
+            gyfzrName,
+            creator,
+            fwgcPersonId,
+            fwgcPersonName,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{matCode,jdbcType=VARCHAR},
+            #{designType,jdbcType=VARCHAR},
+            #{modelOwnerId,jdbcType=VARCHAR},
+            #{modelOwnerName,jdbcType=VARCHAR},
+            #{jxzzrId,jdbcType=VARCHAR},
+            #{jxzzrName,jdbcType=VARCHAR},
+            #{gyfzrId,jdbcType=VARCHAR},
+            #{gyfzrName,jdbcType=VARCHAR},
+            #{creator,jdbcType=VARCHAR},
+            #{fwgcPersonId,jdbcType=VARCHAR},
+            #{fwgcPersonName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateModelMade" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_modelmade
+        set
+        modelOwnerId = #{modelOwnerId},
+        modelOwnerName = #{modelOwnerName},
+        matCode = #{matCode},
+        designType = #{designType},
+        jxzzrId = #{jxzzrId},
+        jxzzrName = #{jxzzrName},
+        gyfzrId = #{gyfzrId},
+        gyfzrName = #{gyfzrName},
+        fwgcPersonId = #{fwgcPersonId},
+        fwgcPersonName = #{fwgcPersonName},
+        saleModel = #{saleModel},
+        sfckjx = #{sfckjx},
+        yjckqy = #{yjckqy},
+        cpyjsssj = #{cpyjsssj},
+        xyzxq = #{xyzxq},
+        zzStartTime = #{zzStartTime},
+        zzEndTime = #{zzEndTime},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+
+    <update id="updateModelMadeNum" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_modelmade
+        set
+        modelMadeNum = #{modelMadeNum}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteModelMade" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_exportpartsatlas_modelmade
+        where
+        service_engineering_exportpartsatlas_modelmade.id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryDispatchList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+        (
+        SELECT
+        service_engineering_exportpartsatlas_dispatchapply.*,
+        IFNULL( machineNumberTotal.totalNumber, 0 ) AS totalNumber,
+        IFNULL( machineNumberDone.doneNumber, 0 ) AS doneNumber,
+        CASE WHEN ( machineNumberTotal.totalNumber - IFNULL( machineNumberDone.doneNumber, 0 ) ) &lt;= 0
+        THEN 'yes' ELSE 'no'
+        END finishStatus
+        FROM
+        service_engineering_exportpartsatlas_dispatchapply
+        LEFT JOIN ( SELECT dispatchId, sum( needNumber ) AS totalNumber FROM
+        service_engineering_exportpartsatlas_dispatchdetails GROUP BY dispatchId
+        ) machineNumberTotal ON service_engineering_exportpartsatlas_dispatchapply.id = machineNumberTotal.dispatchId
+        LEFT JOIN ( SELECT dispatchId, count( 1 ) AS doneNumber FROM service_engineering_exportpartsatlas_machinetask
+        GROUP BY dispatchId )
+        machineNumberDone ON service_engineering_exportpartsatlas_dispatchapply.id = machineNumberDone.dispatchId
+        <where>
+            <if test="dispatchNo !=null and dispatchNo !=''">
+                service_engineering_exportpartsatlas_dispatchapply.dispatchNo LIKE CONCAT ( '%', #{dispatchNo}, '%' )
+            </if>
+            <if test="creatorName !=null and creatorName !=''">
+                AND service_engineering_exportpartsatlas_dispatchapply.creatorName LIKE CONCAT ( '%', #{creatorName},
+                '%' )
+            </if>
+            <if test="applyDateBegin !=null and applyDateBegin !=''">
+                AND service_engineering_exportpartsatlas_dispatchapply.CREATE_TIME_ >= #{applyDateBegin}
+            </if>
+            <if test="applyDateEnd !=null and applyDateEnd !=''">
+                AND service_engineering_exportpartsatlas_dispatchapply.CREATE_TIME_ &lt;= #{applyDateEnd}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (service_engineering_exportpartsatlas_dispatchapply.dispatchStatus = 'commit' OR
+                        service_engineering_exportpartsatlas_dispatchapply.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ) tmp
+        <where>
+            <if test="finishStatus !=null and finishStatus !=''">
+                finishStatus = #{finishStatus}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryDispatchListTotal" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        (
+        SELECT
+        service_engineering_exportpartsatlas_dispatchapply.*,
+        IFNULL( machineNumberTotal.totalNumber, 0 ) AS totalNumber,
+        IFNULL( machineNumberDone.doneNumber, 0 ) AS doneNumber,
+        CASE WHEN ( machineNumberTotal.totalNumber - IFNULL( machineNumberDone.doneNumber, 0 ) ) = 0
+        THEN 'yes' ELSE 'no'
+        END finishStatus
+        FROM
+        service_engineering_exportpartsatlas_dispatchapply
+        LEFT JOIN ( SELECT dispatchId, sum( needNumber ) AS totalNumber FROM
+        service_engineering_exportpartsatlas_dispatchdetails GROUP BY dispatchId
+        ) machineNumberTotal ON service_engineering_exportpartsatlas_dispatchapply.id = machineNumberTotal.dispatchId
+        LEFT JOIN ( SELECT dispatchId, count( 1 ) AS doneNumber FROM service_engineering_exportpartsatlas_machinetask
+        GROUP BY dispatchId )
+        machineNumberDone ON service_engineering_exportpartsatlas_dispatchapply.id = machineNumberDone.dispatchId
+        <where>
+            <if test="dispatchNo !=null and dispatchNo !=''">
+                service_engineering_exportpartsatlas_dispatchapply.dispatchNo LIKE CONCAT ( '%', #{dispatchNo}, '%' )
+            </if>
+            <if test="creatorName !=null and creatorName !=''">
+                AND service_engineering_exportpartsatlas_dispatchapply.creatorName LIKE CONCAT ( '%', #{creatorName},
+                '%' )
+            </if>
+            <if test="applyDateBegin !=null and applyDateBegin !=''">
+                AND service_engineering_exportpartsatlas_dispatchapply.CREATE_TIME_ >= #{applyDateBegin}
+            </if>
+            <if test="applyDateEnd !=null and applyDateEnd !=''">
+                AND service_engineering_exportpartsatlas_dispatchapply.CREATE_TIME_ &lt;= #{applyDateEnd}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (service_engineering_exportpartsatlas_dispatchapply.dispatchStatus = 'commit' OR
+                        service_engineering_exportpartsatlas_dispatchapply.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ) tmp
+        <where>
+            <if test="finishStatus !=null and finishStatus !=''">
+                finishStatus = #{finishStatus}
+            </if>
+        </where>
+    </select>
+
+    <select id="getDispatchDetailList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            service_engineering_exportpartsatlas_dispatchdetails.*,
+            IFNULL(tmp.machineNum, 0) AS machineNum
+        FROM
+            service_engineering_exportpartsatlas_dispatchdetails
+            LEFT JOIN (
+                          SELECT
+                              dispatchDetailId,
+                              count(1) AS machineNum
+                          FROM service_engineering_exportpartsatlas_machinetask
+                          WHERE service_engineering_exportpartsatlas_machinetask.dispatchId = #{dispatchId}
+                          GROUP BY dispatchDetailId
+                      ) tmp
+                ON service_engineering_exportpartsatlas_dispatchdetails.id = tmp.dispatchDetailId
+        WHERE
+            dispatchId = #{dispatchId}
+    </select>
+
+    <select id="getDispatchInfoById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_exportpartsatlas_dispatchapply
+        WHERE
+            id = #{id}
+    </select>
+
+    <insert id="insertDispatch" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_dispatchapply(
+            id,
+            dispatchNo,
+            creatorName,
+            dispatchStatus,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{dispatchNo,jdbcType=VARCHAR},
+            #{creatorName,jdbcType=VARCHAR},
+            #{dispatchStatus,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <insert id="insertDispatchApi" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_dispatchapply(
+            id,
+            dispatchNo,
+            creatorName,
+            dispatchStatus,
+            exportCountryName,
+            region,
+            salesMan,
+            dispatchDesc,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{dispatchNo,jdbcType=VARCHAR},
+            #{creatorName,jdbcType=VARCHAR},
+            #{dispatchStatus,jdbcType=VARCHAR},
+            #{exportCountryName,jdbcType=VARCHAR},
+            #{region,jdbcType=VARCHAR},
+            #{salesMan,jdbcType=VARCHAR},
+            #{dispatchDesc,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateDispatch" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_dispatchapply
+        set
+        dispatchNo = #{dispatchNo,jdbcType=VARCHAR},
+        dispatchStatus = #{dispatchStatus,jdbcType=VARCHAR},
+        UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <update id="updateDispatchApi" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_dispatchapply
+        set
+        dispatchNo = #{dispatchNo,jdbcType=VARCHAR},
+        creatorName = #{creatorName,jdbcType=VARCHAR},
+        dispatchStatus = #{dispatchStatus,jdbcType=VARCHAR},
+        exportCountryName = #{exportCountryName,jdbcType=VARCHAR},
+        dispatchDesc = #{dispatchDesc,jdbcType=VARCHAR},
+        region=#{region,jdbcType=VARCHAR},
+        salesMan=#{salesMan,jdbcType=VARCHAR},
+        UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <insert id="insertDispatchDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_dispatchdetails(
+            id,
+            dispatchId,
+            detailNo,
+            demandNo,
+            matCode,
+            designType,
+            saleType,
+            needNumber,
+            languages,
+            departurestartTime,
+            vehicleNumber,
+            cardisPose,
+            departureendTime,
+            destination,
+            actualdepartureCountry,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{dispatchId,jdbcType=VARCHAR},
+            #{detailNo,jdbcType=VARCHAR},
+            #{demandNo,jdbcType=VARCHAR},
+            #{matCode,jdbcType=VARCHAR},
+            #{designType,jdbcType=VARCHAR},
+            #{saleType,jdbcType=VARCHAR},
+            #{needNumber,jdbcType=VARCHAR},
+            #{languages,jdbcType=VARCHAR},
+            #{departurestartTime,jdbcType=VARCHAR},
+            #{vehicleNumber,jdbcType=VARCHAR},
+            #{cardisPose,jdbcType=VARCHAR},
+            #{departureendTime,jdbcType=VARCHAR},
+            #{destination,jdbcType=VARCHAR},
+            #{actualdepartureCountry,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateDispatchDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_dispatchdetails
+        set
+          dispatchId= #{dispatchId,jdbcType=VARCHAR},
+          detailNo=#{detailNo,jdbcType=VARCHAR},
+          demandNo=#{demandNo,jdbcType=VARCHAR},
+          matCode=#{matCode,jdbcType=VARCHAR},
+          designType=#{designType,jdbcType=VARCHAR},
+          saleType=#{saleType,jdbcType=VARCHAR},
+          needNumber=#{needNumber,jdbcType=VARCHAR},
+          languages=#{languages,jdbcType=VARCHAR},
+          departurestartTime=#{departurestartTime,jdbcType=VARCHAR},
+          vehicleNumber=#{vehicleNumber,jdbcType=VARCHAR},
+          cardisPose=#{cardisPose,jdbcType=VARCHAR},
+          departureendTime=#{departureendTime,jdbcType=VARCHAR},
+          destination=#{destination,jdbcType=VARCHAR},
+          actualdepartureCountry=#{actualdepartureCountry,jdbcType=VARCHAR},
+          UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+          UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <update id="updateDispatchDetailApi" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_dispatchdetails
+        set
+          dispatchId= #{dispatchId,jdbcType=VARCHAR},
+          detailNo=#{detailNo,jdbcType=VARCHAR},
+          demandNo=#{demandNo,jdbcType=VARCHAR},
+          matCode=#{matCode,jdbcType=VARCHAR},
+          designType=#{designType,jdbcType=VARCHAR},
+          saleType=#{saleType,jdbcType=VARCHAR},
+          needNumber=#{needNumber,jdbcType=VARCHAR},
+          languages=#{languages,jdbcType=VARCHAR},
+          departurestartTime=#{departurestartTime,jdbcType=VARCHAR},
+          vehicleNumber=#{vehicleNumber,jdbcType=VARCHAR},
+          cardisPose=#{cardisPose,jdbcType=VARCHAR},
+          departureendTime=#{departureendTime,jdbcType=VARCHAR},
+          destination=#{destination,jdbcType=VARCHAR},
+          actualdepartureCountry=#{actualdepartureCountry,jdbcType=VARCHAR},
+          UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+          UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <update id="updateDispatchDetailConfig" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_configInfo
+        set
+          demandId= #{demandId,jdbcType=VARCHAR},
+          demandDetailId=#{demandDetailId,jdbcType=VARCHAR},
+          dispatchId=#{dispatchId,jdbcType=VARCHAR},
+          dispatchDetailId=#{dispatchDetailId,jdbcType=VARCHAR},
+          configDesc=#{configDesc,jdbcType=VARCHAR},
+          UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+          UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="delConfigDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_exportpartsatlas_configInfo
+        <where>
+            <if test="id != null and id !=''">
+                id =#{id}
+            </if>
+            <if test="ids != null and ids !=''">
+                AND id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dispatchDetailIds != null and dispatchDetailIds !=''">
+                AND dispatchDetailId IN
+                <foreach collection="dispatchDetailIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="getDispatchDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_exportpartsatlas_dispatchdetails
+        WHERE
+            id = #{id}
+    </select>
+
+    <select id="getAllDemandDetailList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_demanddetails.*,
+        service_engineering_exportpartsatlas_demandapply.demandNo,
+        service_engineering_exportpartsatlas_demandapply.exportCountryName
+        FROM
+        service_engineering_exportpartsatlas_demanddetails
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply ON
+        service_engineering_exportpartsatlas_demanddetails.demandId =
+        service_engineering_exportpartsatlas_demandapply.id
+        <where>
+            <if test="demandNo != null and demandNo !=''">
+                service_engineering_exportpartsatlas_demandapply.demandNo like concat('%',#{demandNo},'%')
+            </if>
+            <if test="matCode != null and matCode !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.matCode like concat('%', #{matCode},'%')
+            </if>
+            <if test="designType != null and designType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.designType like concat('%',#{designType},'%')
+            </if>
+            <if test="saleType != null and saleType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.saleType like concat('%',#{saleType},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countAllDemandDetailList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM
+        service_engineering_exportpartsatlas_demanddetails
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply ON
+        service_engineering_exportpartsatlas_demanddetails.demandId =
+        service_engineering_exportpartsatlas_demandapply.id
+        <where>
+            <if test="demandNo != null and demandNo !=''">
+                service_engineering_exportpartsatlas_demandapply.demandNo like concat('%',#{demandNo},'%')
+            </if>
+            <if test="matCode != null and matCode !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.matCode like concat('%', #{matCode},'%')
+            </if>
+            <if test="designType != null and designType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.designType like concat('%',#{designType},'%')
+            </if>
+            <if test="saleType != null and saleType !=''">
+                AND service_engineering_exportpartsatlas_demanddetails.saleType like concat('%',#{saleType},'%')
+            </if>
+        </where>
+    </select>
+    <delete id="delDispatchDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_exportpartsatlas_dispatchdetails
+        <where>
+            <if test="id != null and id !=''">
+                id =#{id}
+            </if>
+            <if test="ids != null and ids !=''">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="delDispatchDetailByDispatchId" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_exportpartsatlas_dispatchdetails
+        <where>
+            dispatchId = #{dispatchId}
+        </where>
+    </delete>
+
+    <update id="updateMachineTaskByDispatch" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_machinetask
+        <set>
+            <if test="dispatchId != null ">
+                dispatchId = #{dispatchId},
+            </if>
+            <if test="dispatchDetailId != null ">
+                dispatchDetailId = #{dispatchDetailId},
+            </if>
+            relDispatchUserName = #{relDispatchUserName},
+            <if test="relDispatchTime != null ">
+                relDispatchTime = #{relDispatchTime},
+            </if>
+            <if test="changeApply != null ">
+                changeApply = #{changeApply}
+            </if>
+        </set>
+        where
+        id =#{id}
+    </update>
+
+    <select id="queryAbnormalList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_taskabnormal.*,
+        service_engineering_exportpartsatlas_machinetask.machineCode
+        FROM
+        service_engineering_exportpartsatlas_taskabnormal
+        left join service_engineering_exportpartsatlas_machinetask on
+        service_engineering_exportpartsatlas_taskabnormal.machinetaskId =
+        service_engineering_exportpartsatlas_machinetask.id
+        <where>
+            <if test="machinetaskId !=null and machinetaskId !=''">
+                service_engineering_exportpartsatlas_taskabnormal.machinetaskId = #{machinetaskId}
+            </if>
+            <if test="machinetaskIds !=null and machinetaskIds !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.machinetaskId IN
+                <foreach collection="machinetaskIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="abnormalNum !=null and abnormalNum !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.abnormalNum like CONCAT('%', #{abnormalNum},'%')
+            </if>
+            <if test="id !=null and id !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.id = #{id}
+            </if>
+            <if test="machineCode !=null and machineCode !=''">
+                AND service_engineering_exportpartsatlas_machinetask.machineCode like CONCAT('%', #{machineCode},'%')
+            </if>
+            <if test="expectTime !=null and expectTime !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.expectTime = #{expectTime}
+            </if>
+            <if test="reasonDesc !=null and reasonDesc !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.reasonDesc like CONCAT('%', #{reasonDesc},'%')
+            </if>
+            <if test="creatorName !=null and creatorName !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.creatorName like CONCAT('%', #{creatorName},'%')
+            </if>
+            <if test="abnormalStatus !=null and abnormalStatus !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.abnormalStatus = #{abnormalStatus}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countAbnormalList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        service_engineering_exportpartsatlas_taskabnormal
+        left join service_engineering_exportpartsatlas_machinetask on
+        service_engineering_exportpartsatlas_taskabnormal.machinetaskId =
+        service_engineering_exportpartsatlas_machinetask.id
+        <where>
+            <if test="machinetaskId !=null and machinetaskId !=''">
+                service_engineering_exportpartsatlas_taskabnormal.machinetaskId = #{machinetaskId}
+            </if>
+            <if test="machinetaskIds !=null and machinetaskIds !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.machinetaskId IN
+                <foreach collection="machinetaskIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="abnormalNum !=null and abnormalNum !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.abnormalNum like CONCAT('%', #{abnormalNum},'%')
+            </if>
+            <if test="id !=null and id !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.id = #{id}
+            </if>
+            <if test="machineCode !=null and machineCode !=''">
+                AND service_engineering_exportpartsatlas_machinetask.machineCode like CONCAT('%', #{machineCode},'%')
+            </if>
+            <if test="expectTime !=null and expectTime !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.expectTime = #{expectTime}
+            </if>
+            <if test="reasonDesc !=null and reasonDesc !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.reasonDesc like CONCAT('%', #{reasonDesc},'%')
+            </if>
+            <if test="creatorName !=null and creatorName !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.creatorName like CONCAT('%', #{creatorName},'%')
+            </if>
+            <if test="abnormalStatus !=null and abnormalStatus !=''">
+                AND service_engineering_exportpartsatlas_taskabnormal.abnormalStatus = #{abnormalStatus}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertTaskAbnormal" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_taskabnormal(
+            id,
+            abnormalNum,
+            machinetaskId,
+            reasonDesc,
+            expectTime,
+            abnormalStatus,
+            creatorName,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{abnormalNum,jdbcType=VARCHAR},
+            #{machinetaskId,jdbcType=VARCHAR},
+            #{reasonDesc,jdbcType=VARCHAR},
+            #{expectTime,jdbcType=VARCHAR},
+            #{abnormalStatus,jdbcType=VARCHAR},
+            #{creatorName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateTaskAbnormal" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_taskabnormal
+        set
+        abnormalStatus = #{abnormalStatus},
+        reasonDesc = #{reasonDesc},
+        expectTime = #{expectTime},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="delTaskAbnormal" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_exportpartsatlas_taskabnormal
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="delStatusHis" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_exportpartsatlas_statushis
+        <where>
+            <if test="busKeyIds != null and busKeyIds != ''">
+                busKeyId in
+                <foreach collection="busKeyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <insert id="insertChangeNotice" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_changenotice(
+            id,
+            changeType,
+            changeTitle,
+            changeDesc,
+            changeConfirm,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{changeType,jdbcType=VARCHAR},
+            #{changeTitle,jdbcType=VARCHAR},
+            #{changeDesc,jdbcType=VARCHAR},
+            #{changeConfirm,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateDemandDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_demanddetails
+        set
+        needNumber = #{needNumber},
+        languages = #{languages},
+        needTime = #{needTime},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+
+    <update id="updateChangeNoticeConfirm" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_changenotice
+        set
+        changeConfirm = #{changeConfirm},
+        confirmUserName = #{confirmUserName},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+
+    <select id="queryChangeNoticeList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        service_engineering_exportpartsatlas_changenotice.*
+        FROM
+        service_engineering_exportpartsatlas_changenotice
+        <where>
+            <if test="id !=null and id !=''">
+                service_engineering_exportpartsatlas_changenotice.id = #{id}
+            </if>
+            <if test="changeType !=null and changeType !=''">
+                AND service_engineering_exportpartsatlas_changenotice.changeType = #{changeType}
+            </if>
+            <if test="changeTitle !=null and changeTitle !=''">
+                AND service_engineering_exportpartsatlas_changenotice.changeTitle like CONCAT('%', #{changeTitle},'%')
+            </if>
+            <if test="changeConfirm !=null and changeConfirm !=''">
+                AND service_engineering_exportpartsatlas_changenotice.changeConfirm = #{changeConfirm}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryChangeNoticeTotal" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        select count(*)
+        FROM
+        service_engineering_exportpartsatlas_changenotice
+        <where>
+            <if test="id !=null and id !=''">
+                service_engineering_exportpartsatlas_changenotice.id = #{id}
+            </if>
+            <if test="changeType !=null and changeType !=''">
+                AND service_engineering_exportpartsatlas_changenotice.changeType = #{changeType}
+            </if>
+            <if test="changeTitle !=null and changeTitle !=''">
+                AND service_engineering_exportpartsatlas_changenotice.changeTitle like CONCAT('%', #{changeTitle},'%')
+            </if>
+            <if test="changeConfirm !=null and changeConfirm !=''">
+                AND service_engineering_exportpartsatlas_changenotice.changeConfirm = #{changeConfirm}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateTask2Zf" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_machinetask
+        set
+        taskStatus = #{changeStatus}
+        ,demandId = #{demandId}
+        ,demandDetailId = #{demandDetailId}
+        ,dispatchId = #{dispatchId}
+        ,dispatchDetailId = #{dispatchDetailId}
+        ,UPDATE_BY_ = #{UPDATE_BY_}
+        ,UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id IN
+        <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateTask2UnBind" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_machinetask
+        set
+        demandId = #{demandId}
+        ,demandDetailId = #{demandDetailId}
+        ,dispatchId = #{dispatchId}
+        ,dispatchDetailId = #{dispatchDetailId}
+        ,UPDATE_BY_ = #{UPDATE_BY_}
+        ,UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id IN
+        <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
+    <select id="queryDispatchDetailsByDetailNo" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        B.departTime
+        FROM
+        service_engineering_exportpartsatlas_dispatchdetails A
+        LEFT JOIN service_engineering_exportpartsatlas_dispatchapply B ON A.dispatchId = B.id
+        <where>
+            <if test="detailNo != null and detailNo !=''">
+                A.detailNo = #{detailNo}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateTaskStatusApi" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_machinetask
+        set
+        dispatchId = #{dispatchId},
+        dispatchDetailId = #{dispatchDetailId},
+        dispatchTime = #{departTime},
+        relDispatchTime = #{relDispatchTime},
+        relDispatchUserName = #{relDispatchUserName},
+        changeApply = #{changeApply}
+        where
+        id = #{id}
+    </update>
+
+    <update id="updateReDispatchTimeApi" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_machinetask
+        set
+        <if test="reDispatchTime != null and reDispatchTime !=''">
+            reDispatchTime = #{reDispatchTime},
+        </if>
+        <if test="reOperationDispatchTime != null and reOperationDispatchTime !=''">
+            reOperationDispatchTime = #{reOperationDispatchTime},
+        </if>
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        machineCode IN
+        <foreach collection="machineCodes" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+    </update>
+
+    <select id="exportDemandMessage" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *,
+        LEFT ( A.needTime, 10 ) AS needDate,
+        CASE
+        WHEN ( machineNumberTotal.totalNumber - IFNULL( machineNumberDone.doneNumber, 0 ) ) &lt;= 0 THEN
+        'yes' ELSE 'no'
+        END finishStatus
+        FROM
+        service_engineering_exportpartsatlas_demanddetails A
+        LEFT JOIN service_engineering_exportpartsatlas_demandapply B ON A.demandId = B.id
+        LEFT JOIN ( SELECT demandDetailId, GROUP_CONCAT( configNo ) AS configNos, GROUP_CONCAT( configDesc ) AS
+        configDescs FROM
+        service_engineering_exportpartsatlas_configinfo GROUP BY demandDetailId ) C ON A.id = C.demandDetailId
+        LEFT JOIN ( SELECT demandId, sum( needNumber ) AS totalNumber FROM
+        service_engineering_exportpartsatlas_demanddetails GROUP BY demandId )
+        machineNumberTotal ON B.id = machineNumberTotal.demandId
+        LEFT JOIN ( SELECT demandId, count( 1 ) AS doneNumber FROM service_engineering_exportpartsatlas_machinetask
+        GROUP BY demandId )
+        machineNumberDone ON B.id = machineNumberDone.demandId
+        <where>
+            <if test="demandNo !=null and demandNo !=''">
+                B.demandNo LIKE CONCAT ( '%', #{demandNo}, '%' )
+            </if>
+            <if test="exportCountryName !=null and exportCountryName !=''">
+                AND B.exportCountryName LIKE CONCAT ( '%', #{exportCountryName}, '%' )
+            </if>
+            <if test="creatorName !=null and creatorName !=''">
+                AND B.creatorName LIKE CONCAT ( '%', #{creatorName}, '%' )
+            </if>
+            <if test="applyDateBegin !=null and applyDateBegin !=''">
+                AND B.CREATE_TIME_ &gt;= #{applyDateBegin}
+            </if>
+            <if test="applyDateEnd !=null and applyDateEnd !=''">
+                AND B.CREATE_TIME_ &lt;= #{applyDateEnd}
+            </if>
+            <if test="finishStatus == 'no'">
+                ( machineNumberTotal.totalNumber - IFNULL( machineNumberDone.doneNumber, 0 ) ) &gt; 0
+            </if>
+            <if test="finishStatus == 'yes'">
+                ( machineNumberTotal.totalNumber - IFNULL( machineNumberDone.doneNumber, 0 ) ) &lt; 0
+            </if>
+        </where>
+    </select>
+
+    <update id="batchAtlasDispatchTime" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update service_engineering_exportpartsatlas_machinetask
+                <set>
+                    <if test="item.departTime != null and item.departTime != ''">dispatchTime=#{item.departTime},</if>
+                </set>
+                where machineCode = #{item.machineCode}
+            </foreach>
+        </if>
+    </update>
+
+    <select id="getCarIsExist" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_exportpartsatlas_machinetask
+        WHERE machineCode = #{machineCode}
+        LIMIT 1
+    </select>
+    <!--@lwgkiller:以下成品库功能相关-->
+    <!---->
+    <select id="queryDispatchFPWList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*,machinetask.taskStatus
+        FROM
+        service_engineering_exportpartsatlas_fpwdispatch as business
+        LEFT JOIN service_engineering_exportpartsatlas_machinetask as machinetask
+        ON business.id = machinetask.fwpId
+        AND
+        (machinetask.taskStatus is not null
+        and machinetask.taskStatus != ''
+        and machinetask.taskStatus !='08ZF')
+        <where>
+            <if test="@Ognl@isNotEmpty(exportingCountry)">
+                AND business.exportingCountry = #{exportingCountry}
+            </if>
+            <if test="@Ognl@isNotEmpty(materialCode)">
+                AND business.materialCode = #{materialCode}
+            </if>
+            <if test="@Ognl@isNotEmpty(designModel)">
+                AND business.designModel = #{designModel}
+            </if>
+            <if test="@Ognl@isNotEmpty(salesModel)">
+                AND business.salesModel = #{salesModel}
+            </if>
+            <if test="@Ognl@isNotEmpty(pin)">
+                AND business.pin = #{pin}
+            </if>
+            <if test="@Ognl@isNotEmpty(demandNo)">
+                AND business.demandNo = #{demandNo}
+            </if>
+            <if test="@Ognl@isNotEmpty(dispatchNo)">
+                AND business.dispatchNo = #{dispatchNo}
+            </if>
+            <if test="@Ognl@isNotEmpty(languages)">
+                AND business.languages like CONCAT('%',#{languages},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(dispatchTimeFPW)">
+                AND business.dispatchTimeFPW = #{dispatchTimeFPW}
+            </if>
+            <if test="@Ognl@isNotEmpty(startTime)">
+                AND business.CREATE_TIME_ >= #{startTime}
+            </if>
+            <if test="@Ognl@isNotEmpty(endTime)">
+                AND business.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+            <if test="@Ognl@isNotEmpty(signYear)">
+                AND LEFT(business.dispatchTimeFPW,4) = #{signYear}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="queryDispatchFPWListTotal" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        service_engineering_exportpartsatlas_fpwdispatch as business
+        LEFT JOIN service_engineering_exportpartsatlas_machinetask as machinetask
+        ON business.id = machinetask.fwpId
+        AND
+        (machinetask.taskStatus is not null
+        and machinetask.taskStatus != ''
+        and machinetask.taskStatus !='08ZF')
+        <where>
+            <if test="@Ognl@isNotEmpty(exportingCountry)">
+                AND business.exportingCountry = #{exportingCountry}
+            </if>
+            <if test="@Ognl@isNotEmpty(materialCode)">
+                AND business.materialCode = #{materialCode}
+            </if>
+            <if test="@Ognl@isNotEmpty(designModel)">
+                AND business.designModel = #{designModel}
+            </if>
+            <if test="@Ognl@isNotEmpty(salesModel)">
+                AND business.salesModel = #{salesModel}
+            </if>
+            <if test="@Ognl@isNotEmpty(pin)">
+                AND business.pin = #{pin}
+            </if>
+            <if test="@Ognl@isNotEmpty(demandNo)">
+                AND business.demandNo = #{demandNo}
+            </if>
+            <if test="@Ognl@isNotEmpty(dispatchNo)">
+                AND business.dispatchNo = #{dispatchNo}
+            </if>
+            <if test="@Ognl@isNotEmpty(language)">
+                AND business.languages like CONCAT('%',#{languages},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(dispatchTimeFPW)">
+                AND business.dispatchTimeFPW = #{dispatchTimeFPW}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <delete id="deleteDispatchFPW" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_exportpartsatlas_fpwdispatch
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="insertDispatchFPW" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_fpwdispatch(
+        id,
+        exportingCountry,
+        materialCode,
+        designModel,
+        salesModel,
+        pin,
+        demandNo,
+        dispatchNo,
+        detailNo,
+        languages,
+        dispatchTimeFPW,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{exportingCountry,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{salesModel,jdbcType=VARCHAR},
+        #{pin,jdbcType=VARCHAR},
+        #{demandNo,jdbcType=VARCHAR},
+        #{dispatchNo,jdbcType=VARCHAR},
+        #{detailNo,jdbcType=VARCHAR},
+        #{languages,jdbcType=VARCHAR},
+        #{dispatchTimeFPW,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <select id="getDispatchFWPDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_exportpartsatlas_fpwdispatch
+        WHERE
+            id = #{id}
+    </select>
+    <!--冗余一些方法，由于本模块过于复杂，为了减小通用方法本身的耦合性，减小整体风险和维护成本，只能适当的牺牲冗余，用高内聚小模块的增量换取整体的低耦合-->
+    <update id="updateMachineTaskByDispatchFWP" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_machinetask
+        set
+        fwpId = #{fwpId},
+        dispatchTime = #{dispatchTime},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+    <insert id="insertMachineTaskByDispatchFWP" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_exportpartsatlas_machinetask(
+        id,
+        taskStatus,
+        fwpId,
+        machineCode,
+        dispatchTime,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{taskStatus,jdbcType=VARCHAR},
+        #{fwpId,jdbcType=VARCHAR},
+        #{machineCode,jdbcType=VARCHAR},
+        #{dispatchTime,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="batchUpdateMachineTaskWhichDispatchFWPCreate" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update service_engineering_exportpartsatlas_machinetask
+                <set>
+                    <if test="@Ognl@isNotEmpty(item.demandId)">
+                        demandId = #{item.demandId},
+                    </if>
+                    <if test="@Ognl@isNotEmpty(item.demandDetailId)">
+                        demandDetailId = #{item.demandDetailId},
+                    </if>
+                    <if test="@Ognl@isNotEmpty(item.relDemandUserName)">
+                        relDemandUserName = #{item.relDemandUserName},
+                    </if>
+                    <if test="@Ognl@isNotEmpty(item.relDemandTime)">
+                        relDemandTime = #{item.relDemandTime},
+                    </if>
+                    <if test="@Ognl@isNotEmpty(item.inTime)">
+                        inTime = #{item.inTime},
+                    </if>
+                    <if test="@Ognl@isNotEmpty(item.exchangeScene)">
+                        exchangeScene = #{item.exchangeScene},
+                    </if>
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+
+    <delete id="delDemandDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_exportpartsatlas_demanddetails
+        where
+        id = #{id}
+    </delete>
+
+    <!--mh查操保手册状态列 四个字段匹配 2023年5月22日18:55:16 张婉莹 去掉国家筛选掉作废的-->
+    <select id="queryManualStatusList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            service_engineering_maintenance_manualdemand.id,
+            service_engineering_maintenance_manualdemand.businessStatus
+        FROM
+            service_engineering_maintenance_manualdemand
+            LEFT JOIN bpm_inst
+                ON service_engineering_maintenance_manualdemand.id = bpm_inst.BUS_KEY_
+        WHERE
+            1 = 1
+            AND service_engineering_maintenance_manualdemand.demandListNo = #{demandNo}
+            AND service_engineering_maintenance_manualdemand.salesModel = #{salesModel}
+            AND service_engineering_maintenance_manualdemand.materialCode = #{materialCode}
+            AND bpm_inst.STATUS_ != "DISCARD_END"
+    </select>
+
+
+    <update id="updateStatusDesc" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_exportpartsatlas_fpwdispatch
+        set statusDesc = #{statusDesc,jdbcType=VARCHAR}
+        where
+        id = #{id}
+    </update>
+
+    <!--mh以下机型制作子表相关-->
+    <insert id="insertChangeRel" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_modelmade_changeRel(
+            id,
+            applyId,
+            sourcelCode,
+            partDesc,
+            num,
+            newCode,
+            num2,
+            mainChangeDesc,
+            partPersonId,
+            partPerson,
+            remark,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{sourcelCode,jdbcType=VARCHAR},
+            #{partDesc,jdbcType=VARCHAR},
+            #{num,jdbcType=VARCHAR},
+            #{newCode,jdbcType=VARCHAR},
+            #{num2,jdbcType=VARCHAR},
+            #{mainChangeDesc,jdbcType=VARCHAR},
+            #{partPersonId,jdbcType=VARCHAR},
+            #{partPerson,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateChangeRel" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_modelmade_changeRel
+        set
+        sourcelCode = #{sourcelCode},
+        partDesc = #{partDesc},
+        num = #{num},
+        newCode = #{newCode},
+        mainChangeDesc = #{mainChangeDesc},
+        partPersonId = #{partPersonId},
+        partPerson = #{partPerson},
+        num2 = #{num2},
+        remark = #{remark},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteChangeRel" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_modelmade_changeRel
+        where
+        service_engineering_modelmade_changeRel.id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryChangeRelList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_modelmade_changeRel
+        WHERE
+            applyId = #{applyId}
+    </select>
+    <!---->
+    <insert id="batchInsertChangeRel" parameterType="java.util.List">
+        insert into service_engineering_modelmade_changeRel(
+        id,
+        applyId,
+        sourcelCode,
+        partDesc,
+        newCode,
+        mainChangeDesc,
+        partPersonId,
+        partPerson,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" open="" close="" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.applyId,jdbcType=VARCHAR},
+            #{item.sourcelCode,jdbcType=VARCHAR},
+            #{item.partDesc,jdbcType=VARCHAR},
+            #{item.newCode,jdbcType=VARCHAR},
+            #{item.mainChangeDesc,jdbcType=VARCHAR},
+            #{item.partPersonId,jdbcType=VARCHAR},
+            #{item.partPerson,jdbcType=VARCHAR},
+            #{item.remark,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+
+    <insert id="insertWgjtczl" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_modelmade_wgjtczl(
+            id,
+            applyId,
+            belongParts,
+            materialName,
+            wgjCode,
+            materialDesc,
+            xxyfPersonName,
+            xxyfPersonId,
+            fwgcPersonName,
+            fwgcPersonId,
+            remark,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{belongParts,jdbcType=VARCHAR},
+            #{materialName,jdbcType=VARCHAR},
+            #{wgjCode,jdbcType=VARCHAR},
+            #{materialDesc,jdbcType=VARCHAR},
+            #{xxyfPersonName,jdbcType=VARCHAR},
+            #{xxyfPersonId,jdbcType=VARCHAR},
+            #{fwgcPersonName,jdbcType=VARCHAR},
+            #{fwgcPersonId,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateWgjtczl" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_modelmade_wgjtczl
+        set
+        belongParts = #{belongParts},
+        materialName = #{materialName},
+        wgjCode = #{wgjCode},
+        materialDesc = #{materialDesc},
+        xxyfPersonName = #{xxyfPersonName},
+        xxyfPersonId = #{xxyfPersonId},
+        fwgcPersonName = #{fwgcPersonName},
+        fwgcPersonId = #{fwgcPersonId},
+        remark = #{remark},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteWgjtczl" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_modelmade_wgjtczl
+        where
+        service_engineering_modelmade_wgjtczl.id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryWgjtczlList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_modelmade_wgjtczl
+        WHERE
+            applyId = #{applyId}
+    </select>
+    <!---->
+    <insert id="batchInsertWgjtczl" parameterType="java.util.List">
+        insert into service_engineering_modelmade_wgjtczl(
+        id,
+        applyId,
+        belongParts,
+        materialName,
+        wgjCode,
+        materialDesc,
+        xxyfPersonName,
+        xxyfPersonId,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" open="" close="" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.applyId,jdbcType=VARCHAR},
+            #{item.belongParts,jdbcType=VARCHAR},
+            #{item.materialName,jdbcType=VARCHAR},
+            #{item.wgjCode,jdbcType=VARCHAR},
+            #{item.materialDesc,jdbcType=VARCHAR},
+            #{item.xxyfPersonName,jdbcType=VARCHAR},
+            #{item.xxyfPersonId,jdbcType=VARCHAR},
+            #{item.remark,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+
+    <insert id="insertWxzyj" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_modelmade_wxzyj(
+            id,
+            applyId,
+            zzjName,
+            zzjCode,
+            zzjDesc,
+            wxjName,
+            wxjCode,
+            wxjDesc,
+            zcBom,
+            remark,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{zzjName,jdbcType=VARCHAR},
+            #{zzjCode,jdbcType=VARCHAR},
+            #{zzjDesc,jdbcType=VARCHAR},
+            #{wxjName,jdbcType=VARCHAR},
+            #{wxjCode,jdbcType=VARCHAR},
+            #{wxjDesc,jdbcType=VARCHAR},
+            #{zcBom,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateWxzyj" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_modelmade_wxzyj
+        set
+        zzjName = #{zzjName},
+        zzjCode = #{zzjCode},
+        zzjDesc = #{zzjDesc},
+        wxjName = #{wxjName},
+        wxjCode = #{wxjCode},
+        wxjDesc = #{wxjDesc},
+        zcBom = #{zcBom},
+        remark = #{remark},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteWxzyj" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_modelmade_wxzyj
+        where
+        service_engineering_modelmade_wxzyj.id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryWxzyjList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_modelmade_wxzyj
+        WHERE
+            applyId = #{applyId}
+    </select>
+    <!---->
+    <insert id="batchInsertWxzyj" parameterType="java.util.List">
+        insert into service_engineering_modelmade_wxzyj(
+        id,
+        applyId,
+        zzjName,
+        zzjCode,
+        zzjDesc,
+        wxjName,
+        wxjCode,
+        wxjDesc,
+        zcBom,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" open="" close="" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.applyId,jdbcType=VARCHAR},
+            #{item.zzjName,jdbcType=VARCHAR},
+            #{item.zzjCode,jdbcType=VARCHAR},
+            #{item.zzjDesc,jdbcType=VARCHAR},
+            #{item.wxjName,jdbcType=VARCHAR},
+            #{item.wxjCode,jdbcType=VARCHAR},
+            #{item.wxjDesc,jdbcType=VARCHAR},
+            #{item.zcBom,jdbcType=VARCHAR},
+            #{item.remark,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+
+    <insert id="insertGyhjmx" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_modelmade_gyhjmx(
+            id,
+            applyId,
+            fxCode,
+            fxDesc,
+            gyhjCode,
+            gyhjDesc,
+            zxCode,
+            zxDesc,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{fxCode,jdbcType=VARCHAR},
+            #{fxDesc,jdbcType=VARCHAR},
+            #{gyhjCode,jdbcType=VARCHAR},
+            #{gyhjDesc,jdbcType=VARCHAR},
+            #{zxCode,jdbcType=VARCHAR},
+            #{zxDesc,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateGyhjmx" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_modelmade_gyhjmx
+        set
+        fxCode = #{fxCode},
+        fxDesc = #{fxDesc},
+        gyhjCode = #{gyhjCode},
+        gyhjDesc = #{gyhjDesc},
+        zxCode = #{zxCode},
+        zxDesc = #{zxDesc},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteGyhjmx" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from service_engineering_modelmade_gyhjmx
+        where
+        service_engineering_modelmade_gyhjmx.id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryGyhjmxList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_modelmade_gyhjmx
+        WHERE
+            applyId = #{applyId}
+    </select>
+    <!---->
+    <insert id="batchInsertGyhjmx" parameterType="java.util.List">
+        insert into service_engineering_modelmade_gyhjmx(
+        id,
+        applyId,
+        fxCode,
+        fxDesc,
+        gyhjCode,
+        gyhjDesc,
+        zxCode,
+        zxDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" open="" close="" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.applyId,jdbcType=VARCHAR},
+            #{item.fxCode,jdbcType=VARCHAR},
+            #{item.fxDesc,jdbcType=VARCHAR},
+            #{item.gyhjCode,jdbcType=VARCHAR},
+            #{item.gyhjDesc,jdbcType=VARCHAR},
+            #{item.zxCode,jdbcType=VARCHAR},
+            #{item.zxDesc,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.GsClhbOverviewDao">
+
+
+    <select id="queryNumByDept" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environmental_gsvehicle.cxId,
+        environmental_gsvehicle.cpjxxh,
+        environmental_gsvehicle.applyId,
+        environmental_gsvehicle.applyName,
+        environmental_gsvehicle.deptId,
+        environmental_gsvehicle.deptName,
+        environmental_gsvehicle.oldCxId,
+        bpm_inst.STATUS_ AS STATUS
+        from
+        environmental_gsvehicle
+        LEFT JOIN os_rel_inst ON environmental_gsvehicle.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_gsvehicle.CREATE_BY_
+        LEFT JOIN bpm_inst ON environmental_gsvehicle.cxId = bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="startTime != null and startTime != ''">
+                AND environmental_gsvehicle.CREATE_TIME_ &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND environmental_gsvehicle.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryDelayByDept" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        COUNT(*) as delayNum,
+        environmental_gsvehicle.cxId,
+        environmental_gsvehicle.deptId,
+        environmental_gsvehicle.deptName,
+        environmental_gsvehicle.CREATE_TIME_,
+        bpm_inst.STATUS_ AS STATUS
+        from
+        environmental_gsvehicle
+        LEFT JOIN os_rel_inst ON environmental_gsvehicle.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_gsvehicle.CREATE_BY_
+        LEFT JOIN bpm_inst ON environmental_gsvehicle.cxId = bpm_inst.BUS_KEY_
+        where
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+			and DATE_SUB(CURDATE(), INTERVAL 30 DAY) >= date(environmental_gsvehicle.CREATE_TIME_)
+			and bpm_inst.STATUS_ ='RUNNING'
+			GROUP BY environmental_gsvehicle.deptId
+    </select>
+
+    <select id="queryYearNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        	count(*) as yearNum,
+        	DATE_FORMAT(environmental_gsvehicle.CREATE_TIME_,'%Y年') as yearName
+        FROM
+        	environmental_gsvehicle
+        	LEFT JOIN os_rel_inst ON environmental_gsvehicle.CREATE_BY_ = os_rel_inst.PARTY2_
+        	LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        	LEFT JOIN os_user ON os_user.USER_ID_ = environmental_gsvehicle.CREATE_BY_
+        	LEFT JOIN bpm_inst ON environmental_gsvehicle.cxId = bpm_inst.BUS_KEY_
+        WHERE
+        	os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        	AND os_rel_inst.DIM1_ = '1'
+        	AND bpm_inst.STATUS_='SUCCESS_END'
+        group BY
+        	YEAR ( environmental_gsvehicle.CREATE_TIME_)
+    </select>
+
+    <select id="queryMonthNum1" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        	count(*) as monthNum,
+        	DATE_FORMAT(environmental_gsvehicle.CREATE_TIME_,'%Y-%m') as monthName
+        FROM
+        	environmental_gsvehicle
+        	LEFT JOIN os_rel_inst ON environmental_gsvehicle.CREATE_BY_ = os_rel_inst.PARTY2_
+        	LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        	LEFT JOIN os_user ON os_user.USER_ID_ = environmental_gsvehicle.CREATE_BY_
+        	LEFT JOIN bpm_inst ON environmental_gsvehicle.cxId = bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND bpm_inst.STATUS_='SUCCESS_END'
+        and DATE_FORMAT(environmental_gsvehicle.CREATE_TIME_,'%Y-%m')
+        >=DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 12 month),'%Y-%m')
+        group BY
+        DATE_FORMAT( environmental_gsvehicle.CREATE_TIME_,'%Y-%m' )
+    </select>
+    <select id="queryMonthNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count(*) as monthNum,
+        finishTime as monthName
+        FROM
+        (
+        SELECT
+        cxId,
+        DATE_FORMAT( finishTime,'%Y-%m' ) as finishTime,
+        createTime
+        FROM
+        (
+        SELECT
+        bpm_inst.BUS_KEY_ AS cxId,
+        bpm_node_jump.NODE_NAME_ AS nodeName,
+        bpm_node_jump.COMPLETE_TIME_ AS finishTime,
+        environmental_gsvehicle.CREATE_TIME_ as createTime
+        FROM
+        bpm_node_jump
+        LEFT JOIN bpm_inst ON bpm_node_jump.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+        left join environmental_gsvehicle on environmental_gsvehicle.cxId=bpm_inst.BUS_KEY_
+        WHERE
+        bpm_inst.STATUS_ = 'SUCCESS_END'
+        AND bpm_inst.DEF_ID_ = '1318860366413039117'
+        ORDER BY
+        cxId,
+        bpm_node_jump.COMPLETE_TIME_ DESC
+        ) tmp
+        where
+        1=1
+        <if test="startTime != null and startTime != ''">
+            AND createTime &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND createTime&lt;= #{endTime}
+        </if>
+        GROUP BY cxId
+        ORDER BY finishTime DESC
+        )total
+        group BY
+        monthName
+    </select>
+
+
+    <select id="queryNumByBrand" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+	count( * ) AS modelNum,
+	brand
+	FROM
+	(
+	SELECT
+	environmental_gsvehicle.fdjzzs AS brand,
+	environmental_gsvehicle.cpjxxh AS model
+	FROM
+	environmental_gsvehicle
+	LEFT JOIN os_rel_inst ON environmental_gsvehicle.CREATE_BY_ = os_rel_inst.PARTY2_
+	LEFT JOIN bpm_inst ON environmental_gsvehicle.cxId = bpm_inst.BUS_KEY_
+	WHERE
+	os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+	AND os_rel_inst.DIM1_ = '1'
+	AND bpm_inst.STATUS_ = 'SUCCESS_END'
+	GROUP BY
+	environmental_gsvehicle.fdjzzs,
+	environmental_gsvehicle.cpjxxh
+	) tmp
+	GROUP BY
+	brand
+	ORDER BY
+	modelNum DESC
+    </select>
+</mapper>

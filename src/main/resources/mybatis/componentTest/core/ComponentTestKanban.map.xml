@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.componentTest.core.dao.ComponentTestKanbanDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="isInst !=null and isInst !='' and isInst =='no' ">
+            AND bpm_inst.INST_ID_ IS NULL
+            AND component_test_kanban.businessStatus IS NULL
+        </if>
+        <if test="testNo !=null and testNo !=''">
+            AND component_test_kanban.testNo like CONCAT('%',#{testNo},'%')
+        </if>
+        <if test="componentCategory !=null and componentCategory !=''">
+            AND component_test_kanban.componentCategory = #{componentCategory}
+        </if>
+        <if test="componentName !=null and componentName !=''">
+            AND component_test_kanban.componentName like CONCAT('%',#{componentName},'%')
+        </if>
+        <if test="componentModel !=null and componentModel !=''">
+            AND component_test_kanban.componentModel like CONCAT('%',#{componentModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND component_test_kanban.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="sampleType !=null and sampleType !=''">
+            AND component_test_kanban.sampleType = #{sampleType}
+        </if>
+        <if test="machineModel !=null and machineModel !=''">
+            AND component_test_kanban.machineModel like CONCAT('%',#{machineModel},'%')
+        </if>
+        <if test="machineName !=null and machineName !=''">
+            AND component_test_kanban.machineName like CONCAT('%',#{machineName},'%')
+        </if>
+        <if test="machineCompany !=null and machineCompany !=''">
+            AND component_test_kanban.machineCompany like CONCAT('%',#{machineCompany},'%')
+        </if>
+        <if test="supplierName !=null and supplierName !=''">
+            AND component_test_kanban.supplierName like CONCAT('%',#{supplierName},'%')
+        </if>
+        <if test="laboratory !=null and laboratory !=''">
+            AND component_test_kanban.laboratory like CONCAT('%',#{laboratory},'%')
+        </if>
+        <if test="testType !=null and testType !=''">
+            AND component_test_kanban.testType = #{testType}
+        </if>
+        <if test="applyUser !=null and applyUser !=''">
+            AND component_test_kanban.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="applyDep !=null and applyDep !=''">
+            AND component_test_kanban.applyDep like CONCAT('%',#{applyDep},'%')
+        </if>
+        <if test="testLeader !=null and testLeader !=''">
+            AND component_test_kanban.testLeader like CONCAT('%',#{testLeader},'%')
+        </if>
+        <if test="testCategory !=null and testCategory !=''">
+            AND component_test_kanban.testCategory = #{testCategory}
+        </if>
+        <if test="testStatus !=null and testStatus !=''">
+            AND component_test_kanban.testStatus = #{testStatus}
+        </if>
+        <if test="testContractStatus !=null and testContractStatus !=''">
+            AND component_test_kanban.testContractStatus = #{testContractStatus}
+        </if>
+        <if test="unqualifiedStatus !=null and unqualifiedStatus !=''">
+            AND component_test_kanban.unqualifiedStatus = #{unqualifiedStatus}
+        </if>
+        <if test="plannedTestMonthBegin != null and plannedTestMonthBegin != ''">
+            AND SUBSTRING(component_test_kanban.plannedTestMonth, 1, 7) &gt;= #{plannedTestMonthBegin}
+        </if>
+        <if test="plannedTestMonthEnd != null and plannedTestMonthEnd != ''">
+            AND SUBSTRING(component_test_kanban.plannedTestMonth, 1, 7) &lt;= #{plannedTestMonthEnd}
+        </if>
+        <if test="actualTestMonthBegin != null and actualTestMonthBegin != ''">
+            AND SUBSTRING(component_test_kanban.actualTestMonth, 1, 7) &gt;= #{actualTestMonthBegin}
+        </if>
+        <if test="actualTestMonthEnd != null and actualTestMonthEnd != ''">
+            AND SUBSTRING(component_test_kanban.actualTestMonth, 1, 7) &lt;= #{actualTestMonthEnd}
+        </if>
+        <if test="completeTestMonthBegin != null and completeTestMonthBegin != ''">
+            AND SUBSTRING(component_test_kanban.completeTestMonth, 1, 7) &gt;= #{completeTestMonthBegin}
+        </if>
+        <if test="completeTestMonthEnd != null and completeTestMonthEnd != ''">
+            AND SUBSTRING(component_test_kanban.completeTestMonth, 1, 7) &lt;= #{completeTestMonthEnd}
+        </if>
+        <if test="testResult !=null and testResult !=''">
+            AND component_test_kanban.testResult = #{testResult}
+        </if>
+        <if test="signYear != null and signYear != ''">
+            AND SUBSTRING(component_test_kanban.plannedTestMonth, 1, 7) &gt;= CONCAT(#{signYear}, '-01')
+            AND SUBSTRING(component_test_kanban.plannedTestMonth, 1, 7) &lt;= CONCAT(#{signYear}, '-12')
+        </if>
+        <if test="componentTestAbnormalTag !=null and componentTestAbnormalTag !=''">
+            AND (
+            component_test_kanban.testResult = '不合格' AND
+            component_test_kanban.unqualifiedStatus != '停止使用' AND
+            component_test_kanban.componentTestAbnormalTag = 'true'
+            )
+        </if>
+        <if test="ids !=null and ids.size > 0">
+            AND component_test_kanban.id IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="sampleSource !=null and sampleSource !=''">
+            AND component_test_kanban.sampleSource = #{sampleSource}
+        </if>
+        <if test="sampleProcessingMethod !=null and sampleProcessingMethod !=''">
+            AND component_test_kanban.sampleProcessingMethod = #{sampleProcessingMethod}
+        </if>
+        <if test="sampleStatus !=null and sampleStatus !=''">
+            AND component_test_kanban.sampleStatus = #{sampleStatus}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgld'">
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND (component_test_kanban.applyUserId = #{currentUserId} OR
+                    component_test_kanban.testLeaderId = #{currentUserId})
+                </when>
+            </choose>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        component_test_kanban.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        component_test_kanban
+        LEFT JOIN bpm_inst ON component_test_kanban.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM
+        component_test_kanban
+        LEFT JOIN bpm_inst ON component_test_kanban.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM component_test_kanban
+        WHERE component_test_kanban.id = #{businessId}
+    </select>
+    <!---->
+    <select id="getTestContractNameListByBusinessId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT component_test_plan_contractinfo.fileName
+        FROM component_test_plan_contractinfo
+            INNER JOIN component_test_kanban
+                ON component_test_plan_contractinfo.mainKanbanId = component_test_kanban.id
+        WHERE component_test_kanban.id = #{id}
+    </select>
+    <!---->
+    <select id="getTestReportNameListByBusinessId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT component_test_plan_reportinfo.fileName
+        FROM component_test_plan_reportinfo
+            INNER JOIN component_test_kanban
+                ON component_test_plan_reportinfo.mainKanbanId = component_test_kanban.id
+        WHERE component_test_kanban.id = #{id}
+    </select>
+    <!---->
+    <select id="getTestStandardIdListByBusinessId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT component_test_plan_standardinfo.standardId
+        FROM component_test_plan_standardinfo
+            INNER JOIN component_test_kanban
+                ON component_test_plan_standardinfo.mainId = component_test_kanban.id
+        WHERE component_test_kanban.id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from component_test_kanban
+        where id IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into component_test_kanban(
+        id,
+        testNo,
+        componentCategory,
+        componentName,
+        componentModel,
+        materialCode,
+        sampleType,
+        machineModel,
+        machineName,
+        machineCompany,
+        supplierName,
+        laboratory,
+        testType,
+        applyUserId,
+        applyUser,
+        applyDepId,
+        applyDep,
+        testCategory,
+        testStatus,
+        testProgress,
+        plannedTestMonth,
+        actualTestMonth,
+        completeTestMonth,
+        testResult,
+        nonconformingDescription,
+        testReport,
+        testContract,
+        testContractStatus,
+        testCost,
+        testRounds,
+        sampleSource,
+        sampleProcessingMethod,
+        sampleStatus,
+        receiverId,
+        receiver,
+        remark,
+        testLeaderId,
+        testLeader,
+        unqualifiedStatus,
+        componentTestAbnormalTag,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{testNo,jdbcType=VARCHAR},
+        #{componentCategory,jdbcType=VARCHAR},
+        #{componentName,jdbcType=VARCHAR},
+        #{componentModel,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{sampleType,jdbcType=VARCHAR},
+        #{machineModel,jdbcType=VARCHAR},
+        #{machineName,jdbcType=VARCHAR},
+        #{machineCompany,jdbcType=VARCHAR},
+        #{supplierName,jdbcType=VARCHAR},
+        #{laboratory,jdbcType=VARCHAR},
+        #{testType,jdbcType=VARCHAR},
+        #{applyUserId,jdbcType=VARCHAR},
+        #{applyUser,jdbcType=VARCHAR},
+        #{applyDepId,jdbcType=VARCHAR},
+        #{applyDep,jdbcType=VARCHAR},
+        #{testCategory,jdbcType=VARCHAR},
+        #{testStatus,jdbcType=VARCHAR},
+        #{testProgress,jdbcType=VARCHAR},
+        #{plannedTestMonth,jdbcType=VARCHAR},
+        #{actualTestMonth,jdbcType=VARCHAR},
+        #{completeTestMonth,jdbcType=VARCHAR},
+        #{testResult,jdbcType=VARCHAR},
+        #{nonconformingDescription,jdbcType=VARCHAR},
+        #{testReport,jdbcType=VARCHAR},
+        #{testContract,jdbcType=VARCHAR},
+        #{testContractStatus,jdbcType=VARCHAR},
+        #{testCost,jdbcType=VARCHAR},
+        #{testRounds,jdbcType=VARCHAR},
+        #{sampleSource,jdbcType=VARCHAR},
+        #{sampleProcessingMethod,jdbcType=VARCHAR},
+        #{sampleStatus,jdbcType=VARCHAR},
+        #{receiverId,jdbcType=VARCHAR},
+        #{receiver,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{testLeaderId,jdbcType=VARCHAR},
+        #{testLeader,jdbcType=VARCHAR},
+        #{unqualifiedStatus,jdbcType=VARCHAR},
+        #{componentTestAbnormalTag,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <insert id="updateBusiness" parameterType="java.util.Map">
+        UPDATE component_test_kanban
+        SET
+        testNo=#{testNo,jdbcType=VARCHAR},
+        componentCategory=#{componentCategory,jdbcType=VARCHAR},
+        componentName=#{componentName,jdbcType=VARCHAR},
+        componentModel=#{componentModel,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        sampleType=#{sampleType,jdbcType=VARCHAR},
+        machineModel=#{machineModel,jdbcType=VARCHAR},
+        machineName=#{machineName,jdbcType=VARCHAR},
+        machineCompany=#{machineCompany,jdbcType=VARCHAR},
+        supplierName=#{supplierName,jdbcType=VARCHAR},
+        laboratory=#{laboratory,jdbcType=VARCHAR},
+        testType=#{testType,jdbcType=VARCHAR},
+        applyUserId=#{applyUserId,jdbcType=VARCHAR},
+        applyUser=#{applyUser,jdbcType=VARCHAR},
+        applyDepId=#{applyDepId,jdbcType=VARCHAR},
+        applyDep=#{applyDep,jdbcType=VARCHAR},
+        testCategory=#{testCategory,jdbcType=VARCHAR},
+        testStatus=#{testStatus,jdbcType=VARCHAR},
+        testProgress=#{testProgress,jdbcType=VARCHAR},
+        plannedTestMonth=#{plannedTestMonth,jdbcType=VARCHAR},
+        actualTestMonth=#{actualTestMonth,jdbcType=VARCHAR},
+        completeTestMonth=#{completeTestMonth,jdbcType=VARCHAR},
+        testResult=#{testResult,jdbcType=VARCHAR},
+        nonconformingDescription=#{nonconformingDescription,jdbcType=VARCHAR},
+        testReport=#{testReport,jdbcType=VARCHAR},
+        testContract=#{testContract,jdbcType=VARCHAR},
+        testContractStatus=#{testContractStatus,jdbcType=VARCHAR},
+        testCost=#{testCost,jdbcType=VARCHAR},
+        testRounds=#{testRounds,jdbcType=VARCHAR},
+        sampleSource=#{sampleSource,jdbcType=VARCHAR},
+        sampleProcessingMethod=#{sampleProcessingMethod,jdbcType=VARCHAR},
+        sampleStatus=#{sampleStatus,jdbcType=VARCHAR},
+        receiverId=#{receiverId,jdbcType=VARCHAR},
+        receiver=#{receiver,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        testLeaderId=#{testLeaderId,jdbcType=VARCHAR},
+        testLeader=#{testLeader,jdbcType=VARCHAR},
+        unqualifiedStatus=#{unqualifiedStatus,jdbcType=VARCHAR},
+        componentTestAbnormalTag=#{componentTestAbnormalTag,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+    <!---->
+    <select id="queryTestContractFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from component_test_plan_contractinfo
+        where mainKanbanId IN
+        <foreach collection="mainKanbanIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <select id="queryTestReportFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from component_test_plan_reportinfo
+        where mainKanbanId IN
+        <foreach collection="mainKanbanIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <select id="queryTestMPTFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from component_test_plan_fileinfo
+        where mainKanbanId IN
+        <foreach collection="mainKanbanIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <delete id="deleteContractFile" parameterType="java.util.Map">
+        delete from component_test_plan_contractinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainKanbanId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteReportFile" parameterType="java.util.Map">
+        delete from component_test_plan_reportinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainKanbanId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteMPTFile" parameterType="java.util.Map">
+        delete from component_test_plan_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainKanbanId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="addContractFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into component_test_plan_contractinfo(
+        id,
+        mainKanbanId,
+        fileName,
+        fileSize,
+        fileDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{mainKanbanId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <insert id="updateContractFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE component_test_plan_contractinfo
+        SET
+        mainKanbanId=#{mainKanbanId,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        fileSize=#{fileSize,jdbcType=VARCHAR},
+        fileDesc=#{fileDesc,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+    <!---->
+    <insert id="addReportFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into component_test_plan_reportinfo(
+        id,
+        mainKanbanId,
+        fileName,
+        fileSize,
+        fileDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{mainKanbanId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <insert id="updateReportFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE component_test_plan_reportinfo
+        SET
+        mainKanbanId=#{mainKanbanId,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        fileSize=#{fileSize,jdbcType=VARCHAR},
+        fileDesc=#{fileDesc,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+    <!---->
+    <insert id="addMPTFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into component_test_plan_fileinfo(
+        id,
+        mainKanbanId,
+        fileName,
+        fileSize,
+        fileDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{mainKanbanId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!--以下标准相关-->
+    <select id="queryBindingStandardMsgList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        component_test_plan_standard_bindingmsg.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        component_test_plan_standard_bindingmsg
+        LEFT JOIN os_user ON os_user.USER_ID_ = component_test_plan_standard_bindingmsg.CREATE_BY_
+        <where>
+            <if test="mainId != null and mainId != ''">
+                mainId=#{mainId}
+            </if>
+            <if test="content != null and content != ''">
+                AND content like CONCAT('%',#{content},'%')
+            </if>
+            <if test="recId != null and recId != ''">
+                AND recId =#{recId}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countBindingStandardMsgList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        component_test_plan_standard_bindingmsg
+        <where>
+            <if test="mainId != null and mainId != ''">
+                mainId=#{mainId}
+            </if>
+
+            <if test="content != null and content != ''">
+                and content like CONCAT('%',#{content},'%')
+            </if>
+            <if test="recId != null and recId != ''">
+                and recId =#{recId}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <delete id="deleteBindingStandardMsgItem" parameterType="java.util.Map">
+        delete from component_test_plan_standard_bindingmsgitems
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="msgId != null and msgId != ''">
+                AND msgId=#{msgId}
+            </if>
+            <if test="msgIds != null and msgIds !=''">
+                AND msgId IN
+                <foreach collection="msgIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(msgId) and @Ognl@isEmpty(msgIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteBindingStandardMsg" parameterType="java.util.Map">
+        delete from component_test_plan_standard_bindingmsg
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="getBindingStandardMsg" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM component_test_plan_standard_bindingmsg
+        <where>
+            id =#{id}
+        </where>
+    </select>
+    <!---->
+    <select id="queryBindingStandardMsgItems" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM component_test_plan_standard_bindingmsgitems
+        <where>
+            msgId =#{msgId}
+        </where>
+    </select>
+    <!---->
+    <insert id="createBindingStandardMsg" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into component_test_plan_standard_bindingmsg(
+        id,
+        mainId,
+        content,
+        recId,
+        recName,
+        status,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{content,jdbcType=VARCHAR},
+        #{recId,jdbcType=VARCHAR},
+        #{recName,jdbcType=VARCHAR},
+        #{status,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <insert id="createBindingStandardMsgItem" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into component_test_plan_standard_bindingmsgitems(
+        id,
+        msgId,
+        standardId,
+        standardNumber,
+        defectStandardNumber,
+        defectStandardName,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{msgId,jdbcType=VARCHAR},
+        #{standardId,jdbcType=VARCHAR},
+        #{standardNumber,jdbcType=VARCHAR},
+        #{defectStandardNumber,jdbcType=VARCHAR},
+        #{defectStandardName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBindingStandardMsgItem" parameterType="com.alibaba.fastjson.JSONObject">
+        update component_test_plan_standard_bindingmsgitems
+        set
+        standardId=#{standardId,jdbcType=VARCHAR},
+        standardNumber=#{standardNumber,jdbcType=VARCHAR},
+        defectStandardNumber=#{defectStandardNumber,jdbcType=VARCHAR},
+        defectStandardName=#{defectStandardName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <update id="updateBindingStandardMsg" parameterType="com.alibaba.fastjson.JSONObject">
+        update component_test_plan_standard_bindingmsg
+        set
+        content=#{content,jdbcType=VARCHAR},
+        recId=#{recId,jdbcType=VARCHAR},
+        recName=#{recName,jdbcType=VARCHAR},
+        status=#{status,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <select id="queryBindingStandardList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        component_test_plan_standardinfo.*,
+        standard_source.standardNumber,
+        standard_source.standardName,
+        standard_category.categoryName
+        FROM
+        component_test_plan_standardinfo
+        LEFT JOIN standard_source ON standard_source.id = component_test_plan_standardinfo.standardId
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        WHERE
+        mainId=#{mainId}
+        <if test="standardNumber != null and standardNumber != ''">
+            AND standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+        </if>
+        <if test="standardName != null and standardName != ''">
+            and standard_source.standardName like CONCAT('%',#{standardName},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <insert id="createBindingStandard" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into component_test_plan_standardinfo(
+        id,
+        standardId,
+        mainId,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{standardId,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <delete id="deleteStandard" parameterType="java.util.Map">
+        delete from component_test_plan_standardinfo
+        <where>
+            <if test="standardId != null and standardId != '' and mainId != null and mainId != ''">
+                standardId=#{standardId} AND mainId=#{mainId}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(standardId) and @Ognl@isEmpty(mainId) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!--以上标准相关-->
+    <select id="getUserByFullName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM os_user
+        WHERE FULLNAME_ = #{fullName} AND STATUS_ = 'IN_JOB'
+    </select>
+    <!---->
+    <select id="getDeptByUserId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT os_group.*
+        FROM
+            os_rel_inst
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            AND os_rel_inst.PARTY2_ = #{userid}
+    </select>
+    <!---->
+    <select id="getSeq" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM component_test_kanban_seq_id
+        WHERE component_test_kanban_seq_id.KEY_ = #{key}
+              AND
+              component_test_kanban_seq_id.DATE_ = #{date}
+    </select>
+    <!---->
+    <insert id="insertSeq" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into component_test_kanban_seq_id(
+        id,
+        KEY_,
+        DATE_,
+        INIT_VAL_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{KEY_,jdbcType=VARCHAR},
+        #{DATE_,jdbcType=VARCHAR},
+        #{INIT_VAL_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateSeq" parameterType="com.alibaba.fastjson.JSONObject">
+        update component_test_kanban_seq_id
+        set
+        KEY_=#{KEY_,jdbcType=VARCHAR},
+        DATE_=#{DATE_,jdbcType=VARCHAR},
+        INIT_VAL_=#{INIT_VAL_,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+</mapper>

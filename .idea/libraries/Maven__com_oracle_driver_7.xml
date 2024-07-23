@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.oracle:driver:7">
+    <CLASSES>
+      <root url="jar://C:/XCMG_WAJI_Framework_JAVA/maven/.m2/repository/com/oracle/driver/7/driver-7.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://C:/XCMG_WAJI_Framework_JAVA/maven/.m2/repository/com/oracle/driver/7/driver-7-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://C:/XCMG_WAJI_Framework_JAVA/maven/.m2/repository/com/oracle/driver/7/driver-7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

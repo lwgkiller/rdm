@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitCultureDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ AS userName,
+        F.FULLNAME_ AS studentName,
+        G.NAME_ as deptName
+        FROM
+        portrait_culture A
+        LEFT JOIN os_user B ON A.teacherUserId = B.USER_ID_
+        LEFT JOIN os_rel_inst C  ON A.teacherUserId = C.PARTY2_
+        LEFT JOIN os_dimension D  ON C.DIM1_ = D.DIM_ID_
+        left join os_group G on C.PARTY1_ = G.GROUP_ID_
+        LEFT JOIN os_user F ON A.studentUserId = F.USER_ID_
+        where
+        C.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND D.DIM_KEY_ = '_ADMIN'
+        AND C.PARTY1_ in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="userId != null and userId != ''">
+            AND A.teacherUserId = #{userId}
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and G.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO portrait_culture (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            teacherUserId,
+            studentUserId,
+            conformDate,
+            score
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{teacherUserId,jdbcType=VARCHAR},
+            #{studentUserId,jdbcType=VARCHAR},
+            #{conformDate,jdbcType=TIMESTAMP},
+            #{score,jdbcType=FLOAT}
+        )
+    </insert>
+    <insert id="batchInsertCulture" parameterType="java.util.List">
+        INSERT INTO portrait_culture (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            teacherUserId,
+            studentUserId,
+            conformDate,
+            score,
+            async
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.teacherUserId,jdbcType=VARCHAR},
+            #{item.studentUserId,jdbcType=VARCHAR},
+            #{item.conformDate,jdbcType=INTEGER},
+            #{item.score,jdbcType=FLOAT},
+            #{item.async,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update portrait_culture
+        <set>
+            <if test="studentUserId != null and studentUserId != ''">
+                studentUserId=#{studentUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="conformDate != null and conformDate != ''">
+                conformDate=#{conformDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="score != null and score != ''">
+                score=#{score,jdbcType=FLOAT},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      select A.*,
+        B.FULLNAME_ AS userName,
+        C.FULLNAME_ AS studentName
+      from portrait_culture A
+        LEFT JOIN os_user B ON A.teacherUserId = B.USER_ID_
+        LEFT JOIN os_user C ON A.studentUserId = C.USER_ID_
+        where A.id = #{id}
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from  portrait_culture
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!--获取导师培养-->
+    <select id="getPersonCultureList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.util.Map">
+        SELECT
+            A.id,
+            A.conformDate,
+            A.score,
+            B.FULLNAME_ as teacherName,
+            C.FULLNAME_ as studentName
+        FROM
+            portrait_culture A
+        left join os_user B on A.teacherUserId = B.USER_ID_
+        left join os_user C on A.studentUserId = C.USER_ID_
+        where A.teacherUserId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.conformDate) = #{reportYear}
+        </if>
+    </select>
+    <!--删除所有同步数据-->
+    <delete id="delAllAsyncData">
+        delete from portrait_culture where async = '1';
+    </delete>
+</mapper>

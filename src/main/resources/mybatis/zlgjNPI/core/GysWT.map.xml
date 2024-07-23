@@ -1,0 +1,621 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.GysWTDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryZlgjList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        gyswt_baseInfo.*,
+        gyswt_typeAndUser.smallTypeName,
+        gyswt_typeAndUser.gfglgcsNames,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId
+        FROM
+        gyswt_baseInfo
+        left join gyswt_typeAndUser on gyswt_baseInfo.smallTypeId = gyswt_typeAndUser.smallTypeId
+        LEFT JOIN os_user ON os_user.USER_ID_ = gyswt_baseInfo.CREATE_BY_
+        left join bpm_inst on gyswt_baseInfo.wtId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        <where>
+            gyswt_baseInfo.bigTypeName = #{type}
+            <if test="smallTypeId != null and smallTypeId != ''">
+                AND gyswt_baseInfo.smallTypeId = #{smallTypeId}
+            </if>
+            <if test="bllbj != null and bllbj != ''">
+                AND gyswt_baseInfo.bllbj like CONCAT('%',#{bllbj},'%')
+            </if>
+            <if test="wtms != null and wtms != ''">
+                AND gyswt_baseInfo.wtms like CONCAT('%',#{wtms},'%')
+            </if>
+            <if test="jiXing != null and jiXing != ''">
+                AND gyswt_baseInfo.jiXing like CONCAT('%',#{jiXing},'%')
+            </if>
+            <if test="gfglgcsNames != null and gfglgcsNames != ''">
+                AND gyswt_typeAndUser.gfglgcsNames like CONCAT('%',#{gfglgcsNames},'%')
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR gyswt_baseInfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countZlgjList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        gyswt_baseInfo
+        left join gyswt_typeAndUser on gyswt_baseInfo.smallTypeId = gyswt_typeAndUser.smallTypeId
+        left join bpm_inst on gyswt_baseInfo.wtId=bpm_inst.BUS_KEY_
+        <where>
+            gyswt_baseInfo.bigTypeName = #{type}
+            <if test="smallTypeId != null and smallTypeId != ''">
+                AND gyswt_baseInfo.smallTypeId = #{smallTypeId}
+            </if>
+            <if test="bllbj != null and bllbj != ''">
+                AND gyswt_baseInfo.bllbj like CONCAT('%',#{bllbj},'%')
+            </if>
+            <if test="wtms != null and wtms != ''">
+                AND gyswt_baseInfo.wtms like CONCAT('%',#{wtms},'%')
+            </if>
+            <if test="jiXing != null and jiXing != ''">
+                AND gyswt_baseInfo.jiXing like CONCAT('%',#{jiXing},'%')
+            </if>
+            <if test="gfglgcsNames != null and gfglgcsNames != ''">
+                AND gyswt_typeAndUser.gfglgcsNames like CONCAT('%',#{gfglgcsNames},'%')
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR gyswt_baseInfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertZlgj" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into gyswt_baseInfo(
+            wtId
+            ,bigTypeName
+            ,smallTypeId
+            ,bllbj
+            ,lbjThXh
+            ,lbjgys
+            ,jiXing
+            ,cgs
+            ,blsl
+            ,fsqy
+            ,wtms
+            ,wtpcjc
+            ,xcczfa
+            ,gjyq
+            ,gzsplj
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{wtId,jdbcType=VARCHAR},
+            #{bigTypeName,jdbcType=VARCHAR},
+            #{smallTypeId,jdbcType=VARCHAR},
+            #{bllbj,jdbcType=VARCHAR},
+            #{lbjThXh,jdbcType=VARCHAR},
+            #{lbjgys,jdbcType=VARCHAR},
+            #{jiXing,jdbcType=VARCHAR},
+            #{cgs,jdbcType=VARCHAR},
+            #{blsl,jdbcType=VARCHAR},
+            #{fsqy,jdbcType=VARCHAR},
+            #{wtms,jdbcType=VARCHAR},
+            #{wtpcjc,jdbcType=VARCHAR},
+            #{xcczfa,jdbcType=VARCHAR},
+            #{gjyq,jdbcType=VARCHAR},
+            #{gzsplj,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateZlgj" parameterType="com.alibaba.fastjson.JSONObject">
+        update gyswt_baseInfo
+        set
+            bigTypeName=#{bigTypeName,jdbcType=VARCHAR},
+            smallTypeId=#{smallTypeId,jdbcType=VARCHAR},
+            bllbj=#{bllbj,jdbcType=VARCHAR},
+            lbjThXh=#{lbjThXh,jdbcType=VARCHAR},
+            lbjgys=#{lbjgys,jdbcType=VARCHAR},
+            jiXing=#{jiXing,jdbcType=VARCHAR},
+            cgs=#{cgs,jdbcType=VARCHAR},
+            blsl=#{blsl,jdbcType=VARCHAR},
+            fsqy=#{fsqy,jdbcType=VARCHAR},
+            wtms=#{wtms,jdbcType=VARCHAR},
+            wtpcjc=#{wtpcjc,jdbcType=VARCHAR},
+            xcczfa=#{xcczfa,jdbcType=VARCHAR},
+            gjyq=#{gjyq,jdbcType=VARCHAR},
+            gzsplj=#{gzsplj,jdbcType=VARCHAR},
+            gjxg=#{gjxg,jdbcType=VARCHAR},
+            gzr=#{gzr,jdbcType=VARCHAR},
+            sfyx=#{sfyx,jdbcType=VARCHAR},
+            sfgz=#{sfgz,jdbcType=VARCHAR},
+            sffgsp=#{sffgsp,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            wtId=#{wtId}
+    </update>
+
+    <insert id="addFileInfos" parameterType="java.util.Map">
+		INSERT INTO gyswt_fileInfo
+		(
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            fileName,
+            fileSize,
+            wtId,
+            jjfaId
+		)
+		VALUES
+		(
+			#{id,jdbcType=VARCHAR},
+			#{CREATE_BY_,jdbcType=VARCHAR},
+			#{CREATE_TIME_,jdbcType=TIMESTAMP},
+			#{fileName,jdbcType=VARCHAR},
+			#{fileSize,jdbcType=VARCHAR},
+			#{wtId,jdbcType=VARCHAR},
+			#{jjfaId,jdbcType=VARCHAR}
+		)
+	</insert>
+    <select id="getFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+        ztt.id,
+        ztt.fileName,
+        ztt.fileSize,
+        ztt.wtId,
+        ztt.jjfaId,
+        DATE_FORMAT(ztt.CREATE_TIME_,'%Y-%m-%d')  CREATE_TIME_,
+		os_user.FULLNAME_ AS creator
+		FROM
+        gyswt_fileInfo ztt
+		LEFT JOIN os_user ON ztt.CREATE_BY_ = os_user.USER_ID_
+		WHERE
+        <choose>
+            <when test="jjfaId != null and jjfaId !=''">
+                wtId = #{wtId} and jjfaId = #{jjfaId}
+            </when>
+            <otherwise>
+                wtId = #{wtId} and (jjfaId = '' or jjfaId is null)
+            </otherwise>
+        </choose>
+	</select>
+
+    <select id="queryZlgjById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+          gyswt_baseinfo.*,
+          gyswt_typeAndUser.gfglgcsNames,
+          bpm_inst.INST_ID_ as instId
+        from gyswt_baseInfo
+        left join bpm_inst on gyswt_baseInfo.wtId=bpm_inst.BUS_KEY_
+        left join gyswt_typeAndUser on gyswt_baseInfo.smallTypeId = gyswt_typeAndUser.smallTypeId
+        where
+        gyswt_baseInfo.wtId=#{wtId}
+    </select>
+
+    <select id="queryZlgjFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+        gyswt_fileInfo
+        WHERE
+            wtId IN
+        <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <delete id="deleteFileByIds" parameterType="java.util.Map">
+        delete from gyswt_fileInfo
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteZlgjFile" parameterType="java.util.Map">
+        delete from gyswt_fileInfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="wtIds != null and wtIds !=''">
+                AND wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="faIds != null and faIds !=''">
+                AND jjfaId IN
+                <foreach collection="faIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteZlgj" parameterType="java.util.Map">
+        delete from gyswt_baseInfo
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <insert id="addWtyy" parameterType="java.util.Map">
+         INSERT INTO gyswt_reason (
+            yyId,
+            wtId,
+            reason,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{yyId,jdbcType=VARCHAR},
+            #{wtId,jdbcType=VARCHAR},
+            #{reason,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updatWtyy" parameterType="java.util.Map">
+        update gyswt_reason
+        <set>
+            reason=#{reason,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        WHERE
+        yyId=#{yyId}
+    </update>
+    <delete id="delWtyy" parameterType="java.lang.String">
+        delete from gyswt_reason where yyId = #{yyId}
+    </delete>
+
+    <delete id="deleteWtyy" parameterType="java.util.Map">
+        delete from gyswt_reason
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getReasonList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        gyswt_reason
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                wtId = #{wtId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="addLscs" parameterType="java.util.Map">
+         INSERT INTO gyswt_lscs (
+            csId,
+            wtId,
+            yyId,
+            dcfa,
+            ddpc,
+            dhTime,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{csId,jdbcType=VARCHAR},
+            #{wtId,jdbcType=VARCHAR},
+            #{yyId,jdbcType=VARCHAR},
+            #{dcfa,jdbcType=VARCHAR},
+            #{ddpc,jdbcType=VARCHAR},
+            #{dhTime,jdbcType=TIMESTAMP},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updatLscs" parameterType="java.util.Map">
+        update gyswt_lscs
+        <set>
+            yyId=#{yyId,jdbcType=VARCHAR},
+            dcfa=#{dcfa,jdbcType=VARCHAR},
+            ddpc=#{ddpc,jdbcType=VARCHAR},
+            dhTime=#{dhTime,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        WHERE
+        csId=#{csId}
+    </update>
+    <delete id="delLscs" parameterType="java.lang.String">
+        delete from gyswt_lscs where csId = #{csId}
+    </delete>
+
+    <delete id="deleteLscs" parameterType="java.util.Map">
+        delete from gyswt_lscs
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getLscsList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        gyswt_lscs.*,
+        gyswt_reason.reason as reason
+        FROM
+        gyswt_lscs
+        left join gyswt_reason on gyswt_lscs.yyId=gyswt_reason.yyId
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                gyswt_lscs.wtId = #{wtId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="addGbyy" parameterType="java.util.Map">
+         INSERT INTO gyswt_gbyy (
+            gbyyId,
+            wtId,
+            yyId,
+            jcjg,
+            jielun,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{gbyyId,jdbcType=VARCHAR},
+            #{wtId,jdbcType=VARCHAR},
+            #{yyId,jdbcType=VARCHAR},
+            #{jcjg,jdbcType=VARCHAR},
+            #{jielun,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateGbyy" parameterType="java.util.Map">
+        update gyswt_gbyy
+        <set>
+            yyId=#{yyId,jdbcType=VARCHAR},
+            jcjg=#{jcjg,jdbcType=VARCHAR},
+            jielun=#{jielun,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        WHERE
+        gbyyId=#{gbyyId}
+    </update>
+    <delete id="delGbyy" parameterType="java.lang.String">
+        delete from gyswt_gbyy where gbyyId = #{gbyyId}
+    </delete>
+    <delete id="deleteGbyy" parameterType="java.util.Map">
+        delete from gyswt_gbyy
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getGbyyList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        gyswt_gbyy.*,
+        gyswt_reason.reason as reason
+        FROM
+        gyswt_gbyy
+        left join gyswt_reason on gyswt_gbyy.yyId= gyswt_reason.yyId
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                gyswt_gbyy.wtId = #{wtId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="addFayz" parameterType="java.util.Map">
+         INSERT INTO gyswt_fayz (
+            faId,
+            wtId,
+            yyId,
+            gjfa,
+            sjTime,
+            yzjg,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{faId,jdbcType=VARCHAR},
+            #{wtId,jdbcType=VARCHAR},
+            #{yyId,jdbcType=VARCHAR},
+            #{gjfa,jdbcType=VARCHAR},
+            #{sjTime,jdbcType=TIMESTAMP},
+            #{yzjg,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updatFayz" parameterType="java.util.Map">
+        update gyswt_fayz
+        <set>
+            yyId=#{yyId,jdbcType=VARCHAR},
+            yzjg=#{yzjg,jdbcType=VARCHAR},
+            gjfa=#{gjfa,jdbcType=VARCHAR},
+            sjTime=#{sjTime,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        WHERE
+        faId=#{faId}
+    </update>
+    <delete id="delFayz" parameterType="java.lang.String">
+        delete from gyswt_fayz where faId = #{faId}
+    </delete>
+    <delete id="deleteFayz" parameterType="java.util.Map">
+        delete from gyswt_fayz
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getFayzList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        gyswt_fayz.*,
+        gyswt_reason.reason as reason
+        FROM
+        gyswt_fayz
+        left join gyswt_reason on gyswt_fayz.yyId=gyswt_reason.yyId
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                gyswt_fayz.wtId = #{wtId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="addJjfa" parameterType="java.util.Map">
+         INSERT INTO gyswt_jjfa (
+            faId,
+            wtId,
+            yyId,
+            cqcs,
+            ddpch,
+            wcTime,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+            #{faId,jdbcType=VARCHAR},
+            #{wtId,jdbcType=VARCHAR},
+            #{yyId,jdbcType=VARCHAR},
+            #{cqcs,jdbcType=VARCHAR},
+            #{ddpch,jdbcType=VARCHAR},
+            #{wcTime,jdbcType=TIMESTAMP},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updatJjfa" parameterType="java.util.Map">
+        update gyswt_jjfa
+        <set>
+            yyId=#{yyId,jdbcType=VARCHAR},
+            cqcs=#{cqcs,jdbcType=VARCHAR},
+            ddpch=#{ddpch,jdbcType=VARCHAR},
+            wcTime=#{wcTime,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        WHERE
+        faId=#{faId}
+    </update>
+    <delete id="delJjfa" parameterType="java.lang.String">
+        delete from gyswt_jjfa where faId = #{faId}
+    </delete>
+    <delete id="deleteJjfa" parameterType="java.util.Map">
+        delete from gyswt_jjfa
+        <where>
+            <if test="wtIds != null and wtIds !=''">
+                wtId IN
+                <foreach collection="wtIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getJjfaList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        gyswt_jjfa.*,
+        gyswt_reason.reason as reason
+        FROM
+        gyswt_jjfa
+        left join gyswt_reason on gyswt_jjfa.yyId=gyswt_reason.yyId
+        <where>
+            <if test="wtId !=null and wtId !=''">
+                gyswt_jjfa.wtId = #{wtId}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="queryUserByRelType" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        distinct
+            os_user.USER_ID_,
+            os_user.FULLNAME_
+        FROM
+            os_user
+            LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = #{REL_TYPE_KEY_}
+    </select>
+
+    <select id="querySmallType" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.util.Map">
+        select *
+        from gyswt_typeanduser
+        <where>
+            <if test="bigTypeName != null and bigTypeName !=''">
+                bigTypeName = #{bigTypeName}
+            </if>
+            <if test="smallTypeId != null and smallTypeId !=''">
+                AND smallTypeId = #{smallTypeId}
+            </if>
+        </where>
+
+    </select>
+</mapper>

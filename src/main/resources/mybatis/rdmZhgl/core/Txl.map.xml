@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.TxlDao">
+	<sql id="pageSql">
+		<if test="pageSize != null and pageSize != '' ">
+			<if test="startIndex != null and startIndex != '' ">
+				limit ${startIndex}, ${pageSize}
+			</if>
+			<if test="startIndex == null or startIndex == '' ">
+				limit ${pageSize}
+			</if>
+		</if>
+	</sql>
+
+	<sql id="orderBy">
+		<if test="sortField != null and sortField != '' ">
+			<if test="sortOrder != null and sortOrder !='' ">
+				order by ${sortField} ${sortOrder}
+			</if>
+			<if test="sortOrder == null or sortOrder =='' ">
+				order by ${sortField} asc
+			</if>
+		</if>
+	</sql>
+
+	<select id="queryTxlList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from zhgl_txl
+        <where>
+            <if test="companyName != null and companyName != ''">
+				companyName = #{companyName}
+            </if>
+            <if test="deptNameLevelOne != null and deptNameLevelOne != ''">
+                AND deptNameLevelOne =#{deptNameLevelOne}
+            </if>
+			<if test="deptNameLevelTwo != null and deptNameLevelTwo != ''">
+				AND deptNameLevelTwo =#{deptNameLevelTwo}
+			</if>
+			<if test="txlName != null and txlName != ''">
+				AND txlName LIKE CONCAT('%',#{txlName},'%')
+			</if>
+			<if test="txlZj != null and txlZj != ''">
+				AND txlZj LIKE CONCAT('%',#{txlZj},'%')
+			</if>
+			<if test="txlSj != null and txlSj != ''">
+				AND txlSj LIKE CONCAT('%',#{txlSj},'%')
+			</if>
+        </where>
+		<include refid="orderBy"/>
+		<include refid="pageSql"/>
+    </select>
+
+	<select id="countTxlList" parameterType="java.util.Map" resultType="java.lang.Integer">
+		select count(*)
+		from zhgl_txl
+		<where>
+			<if test="companyName != null and companyName != ''">
+				companyName = #{companyName}
+			</if>
+			<if test="deptNameLevelOne != null and deptNameLevelOne != ''">
+				AND deptNameLevelOne =#{deptNameLevelOne}
+			</if>
+			<if test="deptNameLevelTwo != null and deptNameLevelTwo != ''">
+				AND deptNameLevelTwo =#{deptNameLevelTwo}
+			</if>
+			<if test="txlName != null and txlName != ''">
+				AND txlName LIKE CONCAT('%',#{txlName},'%')
+			</if>
+			<if test="txlZj != null and txlZj != ''">
+				AND txlZj LIKE CONCAT('%',#{txlZj},'%')
+			</if>
+			<if test="txlSj != null and txlSj != ''">
+				AND txlSj LIKE CONCAT('%',#{txlSj},'%')
+			</if>
+		</where>
+	</select>
+
+    <insert id="insertTxl" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO zhgl_txl
+		(
+			id
+			,companyName
+			,deptNameLevelOne
+			,deptNameLevelTwo
+			,txlName
+			,txlZj
+			,txlSj
+			,office
+			,CREATE_BY_
+			,CREATE_TIME_
+		)
+		VALUES
+		(
+		#{id,jdbcType=VARCHAR},
+		#{companyName,jdbcType=VARCHAR},
+		#{deptNameLevelOne,jdbcType=VARCHAR},
+		#{deptNameLevelTwo,jdbcType=VARCHAR},
+		#{txlName,jdbcType=VARCHAR},
+		#{txlZj,jdbcType=VARCHAR},
+		#{txlSj,jdbcType=VARCHAR},
+		#{office,jdbcType=VARCHAR},
+		#{CREATE_BY_,jdbcType=VARCHAR},
+		#{CREATE_TIME_,jdbcType=TIMESTAMP}
+		)
+	</insert>
+
+    <update id="updateTxl" parameterType="com.alibaba.fastjson.JSONObject">
+		UPDATE zhgl_txl SET
+		companyName=#{companyName,jdbcType=VARCHAR},
+		deptNameLevelOne=#{deptNameLevelOne,jdbcType=VARCHAR},
+		deptNameLevelTwo=#{deptNameLevelTwo,jdbcType=VARCHAR},
+		txlName=#{txlName,jdbcType=VARCHAR},
+		txlZj=#{txlZj,jdbcType=VARCHAR},
+		txlSj=#{txlSj,jdbcType=VARCHAR},
+		office=#{office,jdbcType=VARCHAR},
+		UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+		UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+		WHERE
+		id=#{id}
+	</update>
+
+    <delete id="deleteTxl" parameterType="java.util.Map">
+        delete from
+		zhgl_txl
+        <where>
+            <if test="ids != null and ids != ''">
+                id IN
+				<foreach collection="ids" index="index" item="item" open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+            </if>
+        </where>
+    </delete>
+
+	<select id="queryCompany" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT DISTINCT
+			companyName
+		FROM
+			zhgl_txldept
+		WHERE
+			companyName IS NOT NULL
+		AND companyName != ''
+		ORDER BY
+			id
+	</select>
+
+	<select id="queryDeptNameLevelOne" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT DISTINCT
+			deptNameLevelOne
+		FROM
+			zhgl_txldept
+		WHERE
+			companyName = #{companyName}
+		AND deptNameLevelOne IS NOT NULL
+		AND deptNameLevelOne != ''
+		ORDER BY
+			id
+	</select>
+
+	<select id="queryDeptNameLevelTwo" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT DISTINCT
+			deptNameLevelTwo
+		FROM
+			zhgl_txldept
+		WHERE
+			companyName = #{companyName}
+		AND deptNameLevelOne = #{deptNameLevelOne}
+		AND deptNameLevelTwo IS NOT NULL
+		AND deptNameLevelTwo != ''
+		ORDER BY
+			id
+	</select>
+
+	<select id="queryTxlById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+		select * from
+		zhgl_txl
+		where
+	  	id=#{id}
+	</select>
+</mapper>

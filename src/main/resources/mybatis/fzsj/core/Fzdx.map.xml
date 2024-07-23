@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.fzsj.core.dao.FzdxDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="fzfxxListQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT fzsj_nlzb_fzfxx.*,fzsj_nlzb_fzdx.fzdx,fzsj_nlzb_fzdx.type, fzsj_nlzb_fzfxx.principal principalId_name
+        FROM
+        fzsj_nlzb_fzfxx
+        left join fzsj_nlzb_fzdx on fzsj_nlzb_fzfxx.fzdxId = fzsj_nlzb_fzdx.id
+        <where>
+            <if test="fzdx !=null and fzdx !=''">
+                AND fzsj_nlzb_fzdx.fzdx like concat('%',#{fzdx},'%')
+            </if>
+            <if test="type !=null and type !=''">
+                AND fzsj_nlzb_fzdx.type = #{type}
+            </if>
+            <if test="fzdxId !=null and fzdxId !=''">
+                AND fzdxId = #{fzdxId}
+            </if>
+            <if test="field !=null and field !=''">
+                AND field like concat('%',#{field},'%')
+            </if>
+            <if test="fzfxx !=null and fzfxx !=''">
+                AND fzfxx like concat('%', #{fzfxx},'%')
+            </if>
+            <if test="principal !=null and principal !=''">
+                AND principal like concat('%', #{principal},'%')
+            </if>
+            <if test="principal !=null and principal !=''">
+                AND principal like concat('%', #{principal},'%')
+            </if>
+        </where>
+        order by CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countFzfxxQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        fzsj_nlzb_fzfxx
+        left join fzsj_nlzb_fzdx on fzsj_nlzb_fzfxx.fzdxId = fzsj_nlzb_fzdx.id
+        <where>
+            <if test="fzdx !=null and fzdx !=''">
+                AND fzsj_nlzb_fzdx.fzdx like concat('%',#{fzdx},'%')
+            </if>
+            <if test="type !=null and type !=''">
+                AND fzsj_nlzb_fzdx.type = #{type}
+            </if>
+            <if test="fzdxId !=null and fzdxId !=''">
+                AND fzdxId = #{fzdxId}
+            </if>
+            <if test="field !=null and field !=''">
+                AND field like concat('%',#{field},'%')
+            </if>
+            <if test="fzfxx !=null and fzfxx !=''">
+                AND fzfxx like concat('%', #{fzfxx},'%')
+            </if>
+            <if test="principal !=null and principal !=''">
+                AND principal like concat('%', #{principal},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="fzdxListQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_nlzb_fzdx
+        <where>
+            <if test="pid != null and pid != ''">
+                and pid = #{pid}
+            </if>
+        </where>
+    </select>
+
+    <insert id="createFzdx" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO projectmanager.fzsj_nlzb_fzdx (
+          id, pid, fzdx, type, path, CREATE_BY_, CREATE_TIME_
+        ) VALUES (
+          #{id}, #{pid}, #{fzdx}, #{type}, #{path}, #{CREATE_BY_}, #{CREATE_TIME_}
+        )
+    </insert>
+    <update id="updateFzzx" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE fzsj_nlzb_fzdx
+        SET pid = #{pid},
+            fzdx = #{fzdx},
+            type = #{type},
+            path = #{path},
+            UPDATE_BY_ = #{UPDATE_BY_},
+            UPDATE_TIME_ = #{UPDATE_TIME_}
+        WHERE id = #{id};
+    </update>
+
+    <select id="getFzdxById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_nlzb_fzdx where id = #{id}
+    </select>
+
+    <delete id="deleteFzdx" parameterType="java.lang.String">
+        delete from fzsj_nlzb_fzdx where path like concat(#{path},'%')
+    </delete>
+
+    <select id="selectFzdxByPath" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_nlzb_fzdx where path like concat(#{path},'%')
+    </select>
+
+    <insert id="createFzfxx" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO fzsj_nlzb_fzfxx (
+            id,
+            fzdxId,
+            field,
+            fzfxx,
+            demandData,
+            currentAblityLevel,
+            <if test="completionTime != null and completionTime != ''">
+              completionTime,
+            </if>
+            principalId,
+            principal,
+            creator,
+            CREATE_BY_,
+            CREATE_TIME_,
+            sdmAnalysisId,
+            sdmAnalysisType,
+            sdmAnalysisName
+        )
+        VALUES
+        (
+            #{id},
+            #{fzdxId},
+            #{field},
+            #{fzfxx},
+            #{demandData},
+            #{currentAblityLevel},
+            <if test="completionTime != null and completionTime != ''">
+                #{completionTime},
+            </if>
+            #{principalId},
+            #{principal},
+            #{creator},
+            #{CREATE_BY_},
+            #{CREATE_TIME_ },
+            #{sdmAnalysisId },
+            #{sdmAnalysisType },
+            #{sdmAnalysisName }
+        )
+    </insert>
+
+    <update id="updateFzfxx" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE fzsj_nlzb_fzfxx
+        SET fzdxId = #{fzdxId},
+            field = #{field},
+            fzfxx = #{fzfxx},
+            demandData = #{demandData},
+            currentAblityLevel = #{currentAblityLevel},
+            <if test="completionTime != null and completionTime != ''">
+                completionTime = #{completionTime},
+            </if>
+            principalId = #{principalId},
+            principal = #{principal},
+            UPDATE_BY_ = #{UPDATE_BY_},
+            UPDATE_TIME_ = #{UPDATE_TIME_},
+            sdmAnalysisId = #{sdmAnalysisId},
+            sdmAnalysisType = #{sdmAnalysisType},
+            sdmAnalysisName = #{sdmAnalysisName}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteFzfxxById" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from fzsj_nlzb_fzfxx where id in
+        <foreach collection="ids" index="index" open="(" close=")" item="item" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteFzfxxByFzdxId" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from fzsj_nlzb_fzfxx where fzdxId in
+        <foreach collection="fzdxIds" index="index" open="(" close=")" item="item" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+    <select id="getAnalysisObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from fzsj_nlzb_fzfxx where id = #{analysisId}
+    </select>
+</mapper>

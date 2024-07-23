@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectScoreDao">
+    <select id="queryUserProjectScore" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        scoreTmpDept.*,
+        project_member_role.roleId,
+        project_member_role.roleName,
+        project_baseinfo.projectName,
+        project_baseinfo.number,
+        project_baseinfo.cwddh,
+        project_level.levelId,
+        project_level.levelName,
+        bpm_inst.STATUS_ AS projectStatus,
+        project_category.categoryName,
+        projectDepGroup.NAME_ AS projectDepName
+        FROM
+        (
+            SELECT
+            scoreTmp.*,
+            dep_filter.depName,
+            dep_filter.depId
+            FROM
+            (
+                SELECT
+                project_user_stagescore.userId,
+                project_user_stagescore.projectId,
+                round( SUM( project_user_stagescore.stageScore ), 3 ) AS userProjectScore,
+                os_user.FULLNAME_ AS userName
+                FROM
+                project_user_stagescore
+                LEFT JOIN os_user ON project_user_stagescore.userId = os_user.USER_ID_
+                <where>
+                    <if test="userName != null and userName != ''">
+                        os_user.FULLNAME_ LIKE CONCAT( '%', #{userName}, '%' )
+                    </if>
+                    <if test="userId != null and userId != ''">
+                        AND project_user_stagescore.userId=#{userId}
+                    </if>
+                    <if test="startTime != null and startTime != ''">
+                        AND project_user_stagescore.CREATE_TIME_ &gt;= #{startTime}
+                    </if>
+                    <if test="endTime != null and endTime != ''">
+                        AND project_user_stagescore.CREATE_TIME_ &lt;= #{endTime}
+                    </if>
+                </where>
+                GROUP BY userId,projectId
+            ) scoreTmp
+            LEFT JOIN (
+                SELECT
+                os_rel_inst.PARTY2_ AS userId,
+                os_rel_inst.PARTY1_ AS depId,
+                os_group.NAME_ AS depName
+                FROM
+                os_rel_inst
+                LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+                WHERE
+                REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                AND DIM1_ = '1'
+            ) dep_filter ON scoreTmp.userId = dep_filter.userId
+            <where>
+                <if test="userDepId != null and userDepId != ''">
+                    dep_filter.depId IN
+                    <foreach collection="userDepId" index="index" item="id" open="(" separator="," close=")">
+                        #{id}
+                    </foreach>
+                </if>
+                <if test="deptIds !=null and deptIds != ''">
+                    AND dep_filter.depId IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+            </where>
+            ORDER BY depId,userId
+        ) scoreTmpDept
+        LEFT JOIN project_baseinfo ON scoreTmpDept.projectId = project_baseinfo.projectId
+        LEFT JOIN project_level ON project_baseinfo.levelId = project_level.levelId
+        LEFT JOIN project_category ON project_baseinfo.categoryId = project_category.categoryId
+        LEFT JOIN os_group projectDepGroup ON project_baseinfo.mainDepId = projectDepGroup.GROUP_ID_
+        LEFT JOIN bpm_inst ON project_baseinfo.projectId = bpm_inst.BUS_KEY_
+        LEFT JOIN project_memberinfo ON ( project_memberinfo.projectId = scoreTmpDept.projectId AND project_memberinfo.userId = scoreTmpDept.userId )
+        LEFT JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+        <where>
+            <if test="roleId != null and roleId != ''">
+                project_memberinfo.roleId = #{roleId}
+            </if>
+            <if test="projectName != null and projectName != ''">
+                AND project_baseinfo.projectName LIKE CONCAT( '%', #{projectName}, '%' )
+            </if>
+            <if test="projectNumber != null and projectNumber != ''">
+                AND project_baseinfo.number LIKE CONCAT( '%', #{projectNumber}, '%' )
+            </if>
+            <if test="levelId != null and levelId != ''">
+                AND project_level.levelId = #{levelId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="projectStartTime != null and projectStartTime != ''">
+                AND project_baseinfo.CREATE_TIME_ &gt;= #{projectStartTime}
+            </if>
+            <if test="projectEndTime != null and projectEndTime != ''">
+                AND project_baseinfo.CREATE_TIME_ &lt;= #{projectEndTime}
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                AND project_baseinfo.categoryId=#{categoryId}
+            </if>
+        </where>
+        ORDER BY
+        depId,userId,projectId
+        <if test="pageSize !=null and pageSize !=''">
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <delete id="deleteScoreByPid" parameterType="java.lang.String">
+        delete from project_user_stagescore
+        where projectId=#{projectId}
+    </delete>
+
+    <delete id="deleteScoreByPidUserIds" parameterType="java.util.Map">
+        delete from project_user_stagescore
+        where
+        projectId=#{projectId}
+        AND userId IN
+        <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryUserProjectStageScore" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            project_stagedivide.stageName,
+            project_user_stagescore.stageRoleRatio,
+            project_user_stagescore.stageScore,
+            project_user_stagescore.CREATE_TIME_ as scoreGetTime,
+            project_member_role.roleName
+        FROM
+            project_user_stagescore
+            LEFT JOIN project_stagedivide ON project_user_stagescore.stageId = project_stagedivide.stageId
+            LEFT JOIN project_member_role ON project_user_stagescore.roleId = project_member_role.roleId
+        WHERE
+            project_user_stagescore.projectId = #{projectId}
+            AND project_user_stagescore.userId = #{userId}
+            <if test="startTime != null and startTime != ''">
+                AND project_user_stagescore.CREATE_TIME_ &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND project_user_stagescore.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+        ORDER BY scoreGetTime
+    </select>
+
+    <select id="queryStageScoreByEndTime" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        project_user_stagescore.projectId,
+        sum( project_user_stagescore.stageScore ) AS stageScore
+        FROM
+        project_user_stagescore
+        WHERE
+        project_user_stagescore.projectId in
+        <foreach collection="projectIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        AND project_user_stagescore.CREATE_TIME_ &lt;= #{queryEndTime}
+        GROUP BY
+        project_user_stagescore.projectId
+    </select>
+
+    <update id="updateScoreUserId" parameterType="java.util.Map">
+        update project_user_stagescore
+        set userId = #{currentUserId,jdbcType=VARCHAR}
+        where id IN( select * from(
+          select id from project_user_stagescore
+          where
+          projectId=#{projectId}
+          AND
+          userId = #{originalUserId}
+        )tmp
+        )
+    </update>
+
+    <insert id="insertUserStageEvaluate" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into project_user_stage_evaluate(
+            id,
+            projectId,
+            stageId,
+            userId,
+            gznr,
+            gzzl,
+            cxnl,
+            zdx,
+            gsnr,
+            kfx,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        VALUES
+		(
+		#{id,jdbcType=VARCHAR},
+		#{projectId,jdbcType=VARCHAR},
+		#{stageId,jdbcType=VARCHAR},
+		#{userId,jdbcType=VARCHAR},
+		#{gznr,jdbcType=VARCHAR},
+		#{gzzl,jdbcType=VARCHAR},
+		#{cxnl,jdbcType=VARCHAR},
+		#{zdx,jdbcType=VARCHAR},
+		#{gsnr,jdbcType=VARCHAR},
+		#{kfx,jdbcType=VARCHAR},
+		#{CREATE_BY_,jdbcType=VARCHAR},
+		#{CREATE_TIME_,jdbcType=TIMESTAMP}
+		)
+    </insert>
+
+    <update id="updateUserStageEvaluate" parameterType="com.alibaba.fastjson.JSONObject">
+      update project_user_stage_evaluate
+      set
+        gznr=#{gznr,jdbcType=VARCHAR},
+        gzzl=#{gzzl,jdbcType=VARCHAR},
+        cxnl=#{cxnl,jdbcType=VARCHAR},
+        zdx=#{zdx,jdbcType=VARCHAR},
+        gsnr=#{gsnr,jdbcType=VARCHAR},
+        kfx=#{kfx,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+
+    <delete id="delUserStageEvaluate" parameterType="com.alibaba.fastjson.JSONObject">
+      delete from project_user_stage_evaluate
+      where
+      id=#{id}
+    </delete>
+
+    <delete id="delSomeUserStageEvaluate" parameterType="java.util.Map">
+        delete from project_user_stage_evaluate
+        where
+        projectId=#{projectId}
+        AND userId IN
+        <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryMemFinalRatio" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_user_stagescore.projectId,
+            project_user_stagescore.userId,
+            format(sum( project_user_stagescore.stageRoleRatio * project_stagedivide.stagePercent / 100 ),2) as roleRatio
+        FROM
+            project_user_stagescore
+            LEFT JOIN project_stagedivide ON project_user_stagescore.stageId = project_stagedivide.stageId
+        WHERE
+            project_user_stagescore.projectId = #{projectId}
+        GROUP BY
+            project_user_stagescore.userId
+    </select>
+
+    <update id="updateMemFinalRatio" parameterType="java.util.Map">
+        <foreach collection="dataList" item="item" index="index" separator=";">
+            update project_memberinfo
+            set
+            finalRoleRatio = #{item.roleRatio}
+            where
+            projectId = #{item.projectId}
+            and userId = #{item.userId}
+        </foreach>
+    </update>
+</mapper>

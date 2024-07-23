@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.presaleDocuments.core.dao.PresaleDocumentsFileDao">
+    <!---->
+    <select id="getFileListInfos" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        pre_sale_documents_file_info.*,
+        os_user.FULLNAME_ AS CREATE_BY_NAME,
+        DATE_FORMAT(pre_sale_documents_file_info.CREATE_TIME_,"%Y-%m-%d %T") as createTime
+        FROM pre_sale_documents_file_info
+        LEFT JOIN os_user ON pre_sale_documents_file_info.CREATE_BY_=os_user.USER_ID_
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND businessId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(businessTypes)">
+                AND businessType IN
+                <foreach collection="businessTypes" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds) and @Ognl@isEmpty(businessTypes)">
+                AND 1=2
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertFileInfos" parameterType="java.util.Map">
+        insert into pre_sale_documents_file_info(
+        id,
+        businessId,
+        businessType,
+        fileName,
+        fileSize,
+        fileDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{businessId,jdbcType=VARCHAR},
+        #{businessType,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <delete id="deleteFileInfos" parameterType="java.util.Map">
+        delete from pre_sale_documents_file_info
+        <where>
+            <if test="@Ognl@isNotEmpty(id)">
+                AND id=#{id}
+            </if>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND businessId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+</mapper>

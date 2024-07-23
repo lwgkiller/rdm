@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://esb.primeton.com/sap-adaptor" xmlns:soapenc11="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://esb.primeton.com/sap-adaptor" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://esb.primeton.com/sap-adaptor/rfc" xmlns:soapenc12="http://www.w3.org/2003/05/soap-encoding">
+  <wsdl:types>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor/rfc">
+															<xsd:complexType name="ArrayOfOUT_DATA">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="OUT_DATA" nillable="true" type="ns1:OUT_DATA"/>
+				</xsd:sequence>
+			</xsd:complexType>
+																	<xsd:complexType name="OUT_DATA">
+				<xsd:sequence>
+									<xsd:element minOccurs="0" name="KOSTL" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="KTEXT" nillable="true" type="xsd:string"/>
+								</xsd:sequence>
+			</xsd:complexType>
+																</xsd:schema>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor">
+			<xsd:element name="ZWJGDZC_GET_KOSTL">
+				<xsd:complexType>
+					<xsd:sequence>
+																		<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfOUT_DATA" nillable="true" type="ns1:ArrayOfOUT_DATA"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="ZWJGDZC_GET_KOSTLResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+																<xsd:element maxOccurs="1" minOccurs="1" name="ERRORCODE" nillable="true" type="xsd:string"/>
+																									<xsd:element maxOccurs="1" minOccurs="1" name="ERRORMSG" nillable="true" type="xsd:string"/>
+																					<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfOUT_DATA" nillable="true" type="ns1:ArrayOfOUT_DATA"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="ZWJGDZC_GET_KOSTLResponse">
+    <wsdl:part name="parameters" element="tns:ZWJGDZC_GET_KOSTLResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="ZWJGDZC_GET_KOSTLRequest">
+    <wsdl:part name="parameters" element="tns:ZWJGDZC_GET_KOSTL">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="xgwjj.sap.ZWJGDZC_GET_KOSUPLIERPortType">
+    <wsdl:operation name="ZWJGDZC_GET_KOSTL">
+      <wsdl:input name="ZWJGDZC_GET_KOSTLRequest" message="tns:ZWJGDZC_GET_KOSTLRequest">
+    </wsdl:input>
+      <wsdl:output name="ZWJGDZC_GET_KOSTLResponse" message="tns:ZWJGDZC_GET_KOSTLResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="xgwjj.sap.ZWJGDZC_GET_KOSUPLIERHttpBinding" type="tns:xgwjj.sap.ZWJGDZC_GET_KOSUPLIERPortType">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="ZWJGDZC_GET_KOSTL">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="ZWJGDZC_GET_KOSTLRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="ZWJGDZC_GET_KOSTLResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="xgwjj.sap.ZWJGDZC_GET_KOSUPLIER">
+    <wsdl:port name="xgwjj.sap.ZWJGDZC_GET_KOSUPLIERHttpPort" binding="tns:xgwjj.sap.ZWJGDZC_GET_KOSUPLIERHttpBinding">
+      <wsdlsoap:address location="HTTP://10.15.8.175:9091/xgwjj.sap.ZWJGDZC_GET_KOSUPLIER"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

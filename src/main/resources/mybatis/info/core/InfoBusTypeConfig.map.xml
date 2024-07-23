@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.info.core.dao.InfoBusTypeConfigDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,B.FULLNAME_ as updateName
+        FROM
+        info_bustypeconfig A
+        LEFT JOIN os_user B on A.UPDATE_BY_ = B.USER_ID_
+        WHERE
+        1=1
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="getDicBusType" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+	        A.id as value,A.busTypeName as text
+        FROM
+	        info_bustypeconfig A
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+         INSERT INTO info_bustypeconfig (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            busTypeName
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{busTypeName,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="update" parameterType="java.util.Map">
+        update info_bustypeconfig
+        <set>
+            <if test="busTypeName != null and busTypeName != ''">
+                infoTypeName=#{infoTypeName,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="del" parameterType="java.lang.String">
+        delete from info_bustypeconfig
+        where
+        id=#{id}
+    </delete>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from info_bustypeconfig
+        where id = #{id}
+    </select>
+    <select id="getObjectByName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from info_bustypeconfig
+        where busTypeName = #{busTypeName}
+    </select>
+</mapper>

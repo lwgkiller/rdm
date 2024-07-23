@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.meeting.core.dao.HyglOverviewDao">
+    <!--按会议类型统计数量-->
+    <select id="queryMeetingType" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count( * ) as countNum,
+        hygl_meetingtype.value AS meetingModel
+        FROM
+        hygl_baseinfo
+        LEFT JOIN hygl_meetingtype ON hygl_baseinfo.meetingModelId = hygl_meetingtype.id
+        <where>
+            <if test="startTime != null and startTime != ''">
+                AND hygl_baseinfo.meetingTime &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND hygl_baseinfo.meetingTime &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY hygl_meetingtype.value
+    </select>
+
+    <!--任务分解进度风险-->
+    <select id="queryMeetingDelay" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT count(*) as countNum, os_group.NAME_ as deptName
+        FROM hygl_planinfo
+        LEFT JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        LEFT JOIN bpm_inst ON hygl_planinfo.id = bpm_inst.BUS_KEY_
+        where (hygl_planinfo.finishTime is null or hygl_planinfo.finishTime = '')
+        and (hygl_planinfo.meetingPlanEndTime is not null and hygl_planinfo.meetingPlanEndTime != '')
+        and str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d') &lt; CURDATE()
+        and hygl_baseinfo.recordStatus = '已提交'
+        and bpm_inst.STATUS_ = 'RUNNING'
+        <if test="startTime != null and startTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        GROUP BY os_group.NAME_
+    </select>
+
+    <!--任务分解进度风险-->
+    <select id="queryMeetingDelayLevel" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT count(*) as countNum, os_group.NAME_ as deptName
+        FROM hygl_planinfo
+        LEFT JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        LEFT JOIN bpm_inst ON hygl_planinfo.id = bpm_inst.BUS_KEY_
+        where (hygl_planinfo.finishTime is null or hygl_planinfo.finishTime = '')
+        and (hygl_planinfo.meetingPlanEndTime is not null and hygl_planinfo.meetingPlanEndTime != '')
+        and str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d') &lt; CURDATE()
+        and hygl_baseinfo.recordStatus = '已提交'
+        and bpm_inst.STATUS_ = 'RUNNING'
+        <if test="startTime != null and startTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        <if test="qw != null and qw != ''">
+            AND DATEDIFF(CURDATE(),str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d')) &lt;= 7
+        </if>
+        <if test="yb != null and yb != ''">
+            AND DATEDIFF(CURDATE(),str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d')) &gt; 7
+            AND DATEDIFF(CURDATE(),str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d')) &lt;= 14
+        </if>
+        <if test="yz != null and yz != ''">
+            AND DATEDIFF(CURDATE(),str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d')) &gt; 14
+        </if>
+        GROUP BY os_group.NAME_
+    </select>
+
+    <!--zrbm任务分解进度风险-->
+    <select id="queryZRMeetingDelay" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count(*) AS countNum,
+        dep_filter.zzrDepName AS deptName
+        FROM
+        hygl_planinfo
+        LEFT JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        LEFT JOIN bpm_inst ON hygl_planinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN (
+        SELECT
+        os_rel_inst.PARTY2_ AS zzrUserId,
+        os_rel_inst.PARTY1_ AS zzrDepId,
+        os_group.NAME_ AS zzrDepName
+        FROM
+        os_rel_inst
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND DIM1_ = '1'
+        ) dep_filter ON hygl_planinfo.meetingPlanRespUserIds = dep_filter.zzrUserId
+        WHERE
+        ( hygl_planinfo.meetingPlanEndTime IS NOT NULL AND hygl_planinfo.meetingPlanEndTime != '')
+        and str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d') &lt; CURDATE()
+        and bpm_inst.STATUS_ = 'RUNNING'
+        <if test="startTime != null and startTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        GROUP BY dep_filter.zzrDepName
+    </select>
+
+    <!--zrbm任务分解进度风险-->
+    <select id="queryZRMeetingDelayLevel" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count(*) AS countNum,
+        dep_filter.zzrDepName AS deptName
+        FROM
+        hygl_planinfo
+        LEFT JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        LEFT JOIN bpm_inst ON hygl_planinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN (
+        SELECT
+        os_rel_inst.PARTY2_ AS zzrUserId,
+        os_rel_inst.PARTY1_ AS zzrDepId,
+        os_group.NAME_ AS zzrDepName
+        FROM
+        os_rel_inst
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND DIM1_ = '1'
+        ) dep_filter ON hygl_planinfo.meetingPlanRespUserIds = dep_filter.zzrUserId
+        WHERE
+        ( hygl_planinfo.meetingPlanEndTime IS NOT NULL AND hygl_planinfo.meetingPlanEndTime != '')
+        and str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d') &lt; CURDATE()
+        and bpm_inst.STATUS_ = 'RUNNING'
+        <if test="startTime != null and startTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        <if test="qw != null and qw != ''">
+            AND DATEDIFF(CURDATE(),str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d')) &lt;= 7
+        </if>
+        <if test="yb != null and yb != ''">
+            AND DATEDIFF(CURDATE(),str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d')) &gt; 7
+            AND DATEDIFF(CURDATE(),str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d')) &lt;= 14
+        </if>
+        <if test="yz != null and yz != ''">
+            AND DATEDIFF(CURDATE(),str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d')) &gt; 14
+        </if>
+        GROUP BY dep_filter.zzrDepName
+    </select>
+
+    <!--任务分解完成情况-->
+    <select id="queryRwfjList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT count(*) as countNum, os_group.NAME_ as deptName
+        FROM hygl_planinfo
+        LEFT JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+        left join bpm_inst on hygl_planinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        where 1=1
+        <if test="total != null and total != ''">
+            and (bpm_inst.STATUS_ != 'DRAFTED' and bpm_inst.STATUS_ != 'DISCARD_END')
+        </if>
+        <if test="unfinish != null and unfinish != ''">
+        and bpm_inst.STATUS_ = 'RUNNING'
+        </if>
+        <if test="finish != null and finish != ''">
+        and bpm_inst.STATUS_ = 'SUCCESS_END'
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        GROUP BY os_group.NAME_
+    </select>
+
+    <select id="queryZRRwfjList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT count(*) as countNum, dep_filter.zzrDepName AS deptName
+        FROM hygl_planinfo
+        LEFT JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+        left join bpm_inst on hygl_planinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        LEFT JOIN (
+        SELECT
+        os_rel_inst.PARTY2_ AS zzrUserId,
+        os_rel_inst.PARTY1_ AS zzrDepId,
+        os_group.NAME_ AS zzrDepName
+        FROM
+        os_rel_inst
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND DIM1_ = '1'
+        ) dep_filter ON hygl_planinfo.meetingPlanRespUserIds = dep_filter.zzrUserId
+        where
+        ( hygl_planinfo.meetingPlanEndTime IS NOT NULL AND hygl_planinfo.meetingPlanEndTime != '')
+        <if test="total != null and total != ''">
+            and (bpm_inst.STATUS_ != 'DRAFTED' and bpm_inst.STATUS_ != 'DISCARD_END')
+        </if>
+        <if test="unfinish != null and unfinish != ''">
+            and bpm_inst.STATUS_ = 'RUNNING'
+        </if>
+        <if test="finish != null and finish != ''">
+            and bpm_inst.STATUS_ = 'SUCCESS_END'
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND hygl_planinfo.CREATE_TIME_ &lt;= #{endTime}
+        </if>
+        GROUP BY dep_filter.zzrDepName
+    </select>
+
+    <select id="queryMeetingByDept" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count( * ) as countNum,
+        os_group.NAME_ as deptName
+        FROM
+        hygl_baseinfo
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        where
+        hygl_baseinfo.recordStatus!= '草稿'
+        <if test="startTime != null and startTime != ''">
+            AND hygl_baseinfo.meetingTime &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND hygl_baseinfo.meetingTime &lt;= #{endTime}
+        </if>
+        GROUP BY os_group.NAME_
+    </select>
+
+</mapper>
+

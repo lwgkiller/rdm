@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.materielextend.core.dao.MaterielApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="queryMaterielApplyById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            materiel_apply.*,
+            os_group.NAME_    AS applyUserDepName,
+            os_user.FULLNAME_ AS applyUserName,
+            os_user.MOBILE_   AS applyUserMobile
+        FROM
+            materiel_apply
+            LEFT JOIN os_group ON materiel_apply.sqUserDepId = os_group.GROUP_ID_
+            LEFT JOIN os_user ON materiel_apply.sqUserId = os_user.USER_ID_
+        WHERE
+            materiel_apply.applyNo = #{applyNo}
+    </select>
+    <!--查询用户的物料扩充角色-->
+    <select id="queryMaterielOpRoles" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_group.*,
+        os_rel_inst.PARTY2_ as userId
+        FROM
+        os_rel_inst
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_dimension.DIM_KEY_ = 'WLKC'
+        <if test="userId !=null and userId !=''">
+            AND os_rel_inst.PARTY2_=#{userId}
+        </if>
+    </select>
+
+    <select id="queryUserInfosByIds" parameterType="java.util.List" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_user.FULLNAME_ AS userName,
+        os_user.USER_ID_ AS userId,
+        os_user.MOBILE_ AS mobile
+        FROM
+        os_user
+        WHERE
+        os_user.USER_ID_ IN
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <select id="queryMaterielApplyList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        materiel_apply.*,
+        os_user.FULLNAME_ AS applyUserName,
+        os_user.MOBILE_ AS applyUserMobile,
+        os_group.NAME_ AS applyUserDepName
+        FROM
+        materiel_apply
+        LEFT JOIN os_user ON materiel_apply.sqUserId = os_user.USER_ID_
+        LEFT JOIN os_group ON materiel_apply.sqUserDepId = os_group.GROUP_ID_
+        <where>
+            <if test='applyNo != null and applyNo !=""'>
+                materiel_apply.applyNo like CONCAT('%',#{applyNo},'%')
+            </if>
+            <if test='applyUserName != null and applyUserName !=""'>
+                AND os_user.FULLNAME_ like CONCAT('%',#{applyUserName},'%')
+            </if>
+            <if test='wlhm != null and wlhm !=""'>
+                AND materiel_apply.applyNo IN(
+                select materiel_detailinfo.applyNo from materiel_detailinfo where materiel_detailinfo.wlhm=#{wlhm}
+                )
+            </if>
+            <if test="urgent != null and urgent != ''">
+                <choose>
+                    <when test="urgent == 'yes'">
+                        AND materiel_apply.urgent='yes'
+                    </when>
+                    <when test="urgent != 'yes'">
+                        AND (materiel_apply.urgent !='yes' or materiel_apply.urgent is null or materiel_apply.urgent ='')
+                    </when>
+                </choose>
+            </if>
+            <if test="applyStatus != null and applyStatus != ''">
+                AND materiel_apply.applyStatus=#{applyStatus}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND materiel_apply.sqCommitTime &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND materiel_apply.sqCommitTime &lt;= #{endTime}
+            </if>
+            <if test='opRoleName != null and opRoleName !=""'>
+                <choose>
+                    <when test='opRoleName=="SQRKC"'>
+                        AND materiel_apply.sqUserId=#{currentUserId}
+                    </when>
+                    <when test='opRoleName=="GYKC"'>
+                        AND materiel_apply.gyStatus='01'
+                    </when>
+                    <when test='opRoleName=="GFKC"'>
+                        AND materiel_apply.gfStatus='01'
+                    </when>
+                    <when test='opRoleName=="CGKC"'>
+                        AND materiel_apply.cgStatus='01'
+                    </when>
+                    <when test='opRoleName=="CWKC"'>
+                        AND materiel_apply.cwStatus='01'
+                    </when>
+                    <when test='opRoleName=="WLKC"'>
+                        AND materiel_apply.wlStatus='01'
+                    </when>
+                    <when test='opRoleName=="ZZKC"'>
+                        AND materiel_apply.zzStatus='01'
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <if test='sortField != null and sortField != ""'>
+            <choose>
+                <when test='sortOrder != null and sortOrder !=""'>
+                    ORDER BY ${sortField} ${sortOrder}
+                </when>
+                <otherwise>
+                    ORDER BY ${sortField}
+                </otherwise>
+            </choose>
+        </if>
+        <if test='startIndex !=null and startIndex != "" and pageSize != null and pageSize != ""'>
+            LIMIT ${startIndex},${pageSize}
+        </if>
+    </select>
+    <!---->
+    <select id="queryMaterielApplyListTotal" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        materiel_apply
+        LEFT JOIN os_user ON materiel_apply.sqUserId = os_user.USER_ID_
+        <where>
+            <if test='applyNo != null and applyNo !=""'>
+                materiel_apply.applyNo like CONCAT('%',#{applyNo},'%')
+            </if>
+            <if test='applyUserName != null and applyUserName !=""'>
+                AND os_user.FULLNAME_ like CONCAT('%',#{applyUserName},'%')
+            </if>
+            <if test='wlhm != null and wlhm !=""'>
+                AND materiel_apply.applyNo IN(
+                select materiel_detailinfo.applyNo from materiel_detailinfo where materiel_detailinfo.wlhm=#{wlhm}
+                )
+            </if>
+            <if test="urgent != null and urgent != ''">
+                <choose>
+                    <when test="urgent == 'yes'">
+                        AND materiel_apply.urgent='yes'
+                    </when>
+                    <when test="urgent != 'yes'">
+                        AND (materiel_apply.urgent !='yes' or materiel_apply.urgent is null or materiel_apply.urgent ='')
+                    </when>
+                </choose>
+            </if>
+            <if test="applyStatus != null and applyStatus != ''">
+                AND materiel_apply.applyStatus=#{applyStatus}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND materiel_apply.sqCommitTime &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND materiel_apply.sqCommitTime &lt;= #{endTime}
+            </if>
+            <if test='opRoleName != null and opRoleName !=""'>
+                <choose>
+                    <when test='opRoleName=="SQRKC"'>
+                        AND materiel_apply.sqUserId=#{currentUserId}
+                    </when>
+                    <when test='opRoleName=="GYKC"'>
+                        AND materiel_apply.gyStatus='01'
+                    </when>
+                    <when test='opRoleName=="GFKC"'>
+                        AND materiel_apply.sqUserId='01'
+                    </when>
+                    <when test='opRoleName=="CGKC"'>
+                        AND materiel_apply.sqUserId='01'
+                    </when>
+                    <when test='opRoleName=="CWKC"'>
+                        AND materiel_apply.sqUserId='01'
+                    </when>
+                    <when test='opRoleName=="WLKC"'>
+                        AND materiel_apply.sqUserId='01'
+                    </when>
+                    <when test='opRoleName=="ZZKC"'>
+                        AND materiel_apply.sqUserId='01'
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <delete id="batchDeleteApplyByIds" parameterType="java.util.List">
+        DELETE
+        FROM
+        materiel_apply
+        WHERE
+        materiel_apply.applyNo IN
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <update id="updateApplyerMobile" parameterType="java.util.Map">
+        update os_user
+        set
+        MOBILE_=#{mobile,jdbcType=VARCHAR}
+        where
+        USER_ID_=#{userId}
+    </update>
+
+    <insert id="addMaterielApply" parameterType="java.util.Map">
+        insert into materiel_apply(
+        applyNo,
+        sqUserDepId,
+        sqUserId,
+        <if test="sqCommitTime != null and sqCommitTime != ''">
+            sqCommitTime,
+        </if>
+        gyStatus,
+        gyCommitUserId,
+        cgStatus,
+        cgCommitUserId,
+        gfStatus,
+        gfCommitUserId,
+        cwStatus,
+        cwCommitUserId,
+        wlStatus,
+        wlCommitUserId,
+        zzStatus,
+        zzCommitUserId,
+        applyStatus,
+        urgent
+        )
+        values(
+        #{applyNo,jdbcType=VARCHAR},
+        #{sqUserDepId,jdbcType=VARCHAR},
+        #{sqUserId,jdbcType=VARCHAR},
+        <if test="sqCommitTime != null and sqCommitTime != ''">
+            #{sqCommitTime,jdbcType=VARCHAR},
+        </if>
+        #{gyStatus,jdbcType=VARCHAR},
+        #{gyCommitUserId,jdbcType=VARCHAR},
+        #{cgStatus,jdbcType=VARCHAR},
+        #{cgCommitUserId,jdbcType=VARCHAR},
+        #{gfStatus,jdbcType=VARCHAR},
+        #{gfCommitUserId,jdbcType=VARCHAR},
+        #{cwStatus,jdbcType=VARCHAR},
+        #{cwCommitUserId,jdbcType=VARCHAR},
+        #{wlStatus,jdbcType=VARCHAR},
+        #{wlCommitUserId,jdbcType=VARCHAR},
+        #{zzStatus,jdbcType=VARCHAR},
+        #{zzCommitUserId,jdbcType=VARCHAR},
+        #{applyStatus,jdbcType=VARCHAR},
+        #{urgent,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateMaterielApply" parameterType="java.util.Map">
+        update materiel_apply SET
+        <foreach collection="params.entrySet()" separator="," item="value" index="key">
+            <if test="key!='applyNoVal'">
+                <![CDATA[${key}=#{value}]]>
+            </if>
+        </foreach>
+        <![CDATA[WHERE applyNo=#{params.applyNoVal}]]>
+    </update>
+
+    <select id="queryMaterielsByApplyNos" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        materiel_detailinfo.*,
+        os_user.FULLNAME_ AS markErrorUserName,
+        userDeptTemp.userName AS sqUserName,
+        userDeptTemp.deptName AS sqDeptName
+        FROM
+        materiel_detailinfo
+        LEFT JOIN os_user ON materiel_detailinfo.markErrorUserId = os_user.USER_ID_
+        LEFT JOIN materiel_apply ON materiel_detailinfo.applyNo = materiel_apply.applyNo
+        LEFT JOIN (
+        SELECT
+        os_group.NAME_ AS deptName,
+        userId2DeptId.userId,
+        os_user.FULLNAME_ AS userName,
+        userId2DeptId.deptId
+        FROM ( SELECT PARTY1_ AS deptId, PARTY2_ AS userId FROM os_rel_inst WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND
+        os_rel_inst.DIM1_ = '1' ) AS userId2DeptId
+        LEFT JOIN os_group ON userId2DeptId.deptId = os_group.GROUP_ID_
+        LEFT JOIN os_user ON userId2DeptId.userId = os_user.USER_ID_
+        ) AS userDeptTemp ON materiel_apply.sqUserId = userDeptTemp.userId
+        WHERE
+        materiel_detailinfo.applyNo in
+        <foreach collection="applyNoList" index="index" item="applyNo" separator="," open="(" close=")">
+            #{applyNo}
+        </foreach>
+    </select>
+
+    <update id="updateApplyFailConfirm" parameterType="java.lang.String">
+        update materiel_apply
+        set applyStatus='successConfirm'
+        where applyNo=#{applyNo}
+    </update>
+
+    <select id="queryFailEndApplyBySQR" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            materiel_apply
+        WHERE
+            sqUserId = #{sqrId}
+            AND applyStatus = 'failEnd'
+    </select>
+
+    <select id="queryUserInfoByCertNo" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            os_user.USER_ID_,
+            os_group.GROUP_ID_
+        FROM
+            os_user
+            LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            AND os_user.CERT_NO_ = #{certNo}
+    </select>
+    <select id="queryCodeList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        material_list
+        <where>
+            <if test="codeName != null and codeName != ''">
+                codeName like CONCAT('%',#{codeName},'%')
+            </if>
+            <if test="codeAllName != null and codeAllName != ''">
+                codeName =#{codeAllName}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countCodeList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        material_list
+        <where>
+            <if test="codeName != null and codeName != ''">
+                codeName like CONCAT('%',#{codeName},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

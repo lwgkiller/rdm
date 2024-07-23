@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.HgxSafeArchiveDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+
+        <if test="safeCode !=null and safeCode !=''">
+            AND zzz.safeCode like CONCAT('%',#{safeCode},'%')
+        </if>
+        <if test="fileName !=null and fileName !=''">
+            AND zzz.fileName like CONCAT('%',#{fileName},'%')
+        </if>
+        <if test="safeType !=null and safeType !=''">
+            AND zzz.safeType like CONCAT('%',#{safeType},'%')
+        </if>
+        <if test="region !=null and region !=''">
+            AND zzz.region like CONCAT('%',#{region},'%')
+        </if>
+        <if test="creatorName != null and creatorName != ''">
+            AND zzz.creatorName like CONCAT('%',#{creatorName},'%')
+        </if>
+
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_maintenance_manualfile_standard_safe_archive AS zzz
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM
+        service_engineering_maintenance_manualfile_standard_safe_archive AS zzz
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            service_engineering_maintenance_manualfile_standard_safe_archive
+        WHERE
+            id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.lang.String">
+        delete from service_engineering_maintenance_manualfile_standard_safe_archive
+        where id = #{id}
+    </delete>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_maintenance_manualfile_standard_safe_archive(
+        id,
+        safeCode,
+        fileName,
+        safeType,
+        region,
+        version,
+        topicId,
+        topicName,
+        standardId,
+        standardName,
+        remark,
+        creatorName,
+        versionStatus,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{safeCode,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{safeType,jdbcType=VARCHAR},
+        #{region,jdbcType=VARCHAR},
+        #{version,jdbcType=VARCHAR},
+        #{topicId,jdbcType=VARCHAR},
+        #{topicName,jdbcType=VARCHAR},
+        #{standardId,jdbcType=VARCHAR},
+        #{standardName,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{creatorName,jdbcType=VARCHAR},
+        #{versionStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update service_engineering_maintenance_manualfile_standard_safe_archive
+        set
+        safeCode=#{safeCode,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        safeType=#{safeType,jdbcType=VARCHAR},
+        region=#{region,jdbcType=VARCHAR},
+        version=#{version,jdbcType=VARCHAR},
+        topicId=#{topicId,jdbcType=VARCHAR},
+        topicName=#{topicName,jdbcType=VARCHAR},
+        standardId=#{standardId,jdbcType=VARCHAR},
+        standardName=#{standardName,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        1=1
+        <if test="id !=null and id !=''">
+            AND id=#{id}
+        </if>
+        <if test="picCode !=null and picCode !=''">
+            AND picCode=#{picCode}
+        </if>
+
+    </update>
+
+
+    <select id="queryStandardRelList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+        a.id,
+	    a.relStandardId,
+	    b.*,
+	    case when standardIdNumber in (select standardIdNumber from
+        service_engineering_maintenance_manualfile_topic_standard) then "贯标中"
+        else "未贯标" end as isApplied
+       FROM
+	    manualfile_standard_safe_standard_rel a
+	   LEFT JOIN service_engineering_maintenance_manualfile_standard_archive_base b ON a.relStandardId = b.id
+       WHERE
+	    a.applyId = #{applyId}
+    </select>
+
+
+    <insert id="insertStandardRel" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into manualfile_standard_safe_standard_rel(
+        id
+        ,applyId
+        ,relStandardId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{applyId,jdbcType=VARCHAR}
+        ,#{relStandardId,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateStandardRel" parameterType="com.alibaba.fastjson.JSONObject">
+        update manualfile_standard_safe_standard_rel
+        set
+        relStandardId=#{relStandardId,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteStandardRel" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from manualfile_standard_safe_standard_rel
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+    <select id="queryTopicRelList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+        a.id,
+	    a.relTopicId,
+	    b.*
+       FROM
+	    manualfile_standard_safe_topic_rel a
+	   LEFT JOIN service_engineering_maintenance_manualfile_topic_module b ON a.relTopicId = b.id
+       WHERE
+	    a.applyId = #{applyId}
+    </select>
+
+
+    <insert id="insertTopicRel" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into manualfile_standard_safe_topic_rel(
+        id
+        ,applyId
+        ,relTopicId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{applyId,jdbcType=VARCHAR}
+        ,#{relTopicId,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateTopicRel" parameterType="com.alibaba.fastjson.JSONObject">
+        update manualfile_standard_safe_topic_rel
+        set
+        relTopicId=#{relTopicId,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteTopicRel" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from manualfile_standard_safe_topic_rel
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <update id="updateVersion" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_maintenance_manualfile_standard_safe_archive
+        set
+        versionStatus=#{versionStatus,jdbcType=VARCHAR}
+        WHERE
+        <if test="id != null and id != ''">
+            id = #{id}
+        </if>
+    </update>
+
+
+</mapper>

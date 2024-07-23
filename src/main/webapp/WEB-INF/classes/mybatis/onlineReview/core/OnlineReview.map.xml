@@ -1,0 +1,593 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.onlineReview.core.dao.OnlineReviewDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryOnlineReview" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        onlineReview_baseInfo.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        onlineReview_baseInfo
+        LEFT JOIN os_rel_inst ON onlineReview_baseInfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = onlineReview_baseInfo.CREATE_BY_
+        left join bpm_inst on onlineReview_baseInfo.id=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (onlineReview_baseInfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="noticeNo != null and noticeNo != ''">
+            and onlineReview_baseInfo.noticeNo like CONCAT('%',#{noticeNo},'%')
+        </if>
+        <if test="saleNum != null and saleNum != ''">
+            and onlineReview_baseInfo.saleNum like CONCAT('%',#{saleNum},'%')
+        </if>
+        <if test="saleArea != null and saleArea != ''">
+            and onlineReview_baseInfo.saleArea like CONCAT('%',#{saleArea},'%')
+        </if>
+        <if test="saleCountry != null and saleCountry != ''">
+            and onlineReview_baseInfo.saleCountry like CONCAT('%',#{saleCountry},'%')
+        </if>
+        <if test="designModel != null and designModel != ''">
+            and onlineReview_baseInfo.id in (select belongId
+                                             from onlinereview_model
+                                             where designModel like CONCAT('%',#{designModel},'%'))
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countOnlineReview" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        onlineReview_baseInfo
+        LEFT JOIN os_rel_inst ON onlineReview_baseInfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = onlineReview_baseInfo.CREATE_BY_
+        left join bpm_inst on onlineReview_baseInfo.id=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (onlineReview_baseInfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="noticeNo != null and noticeNo != ''">
+            and onlineReview_baseInfo.noticeNo like CONCAT('%',#{noticeNo},'%')
+        </if>
+        <if test="saleNum != null and saleNum != ''">
+            and onlineReview_baseInfo.saleNum like CONCAT('%',#{saleNum},'%')
+        </if>
+        <if test="saleArea != null and saleArea != ''">
+            and onlineReview_baseInfo.saleArea like CONCAT('%',#{saleArea},'%')
+        </if>
+        <if test="saleCountry != null and saleCountry != ''">
+            and onlineReview_baseInfo.saleCountry like CONCAT('%',#{saleCountry},'%')
+        </if>
+        <if test="designModel != null and designModel != ''">
+            and onlineReview_baseInfo.id in (select belongId
+            from onlinereview_model
+            where designModel like CONCAT('%',#{designModel},'%'))
+        </if>
+    </select>
+
+    <insert id="createOnlineReview" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into onlineReview_baseInfo (id,
+                                           noticeNo,
+                                           company,
+                                           respId,
+                                           respName,
+                                           saleArea,
+                                           saleCountry,
+                                           saleNum,
+                                           contractType,
+                                           CREATE_BY_,
+                                           CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{noticeNo,jdbcType=VARCHAR},
+                #{company,jdbcType=VARCHAR},
+                #{respId,jdbcType=VARCHAR},
+                #{respName,jdbcType=VARCHAR},
+                #{saleArea,jdbcType=VARCHAR},
+                #{saleCountry,jdbcType=VARCHAR},
+                #{saleNum,jdbcType=VARCHAR},
+                #{contractType,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateOnlineReview" parameterType="com.alibaba.fastjson.JSONObject">
+        update onlineReview_baseInfo
+        <set>
+            noticeNo=#{noticeNo,jdbcType=VARCHAR},
+            company=#{company,jdbcType=VARCHAR},
+            respId=#{respId,jdbcType=VARCHAR},
+            respName=#{respName,jdbcType=VARCHAR},
+            saleArea=#{saleArea,jdbcType=VARCHAR},
+            saleCountry=#{saleCountry,jdbcType=VARCHAR},
+            saleNum=#{saleNum,jdbcType=VARCHAR},
+            contractType=#{contractType,jdbcType=VARCHAR},
+            CREATE_BY_=#{CREATE_BY_,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <select id="queryTime" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT onlineReview_time.*, onlineReview_timename.timeType,
+               onlineReview_timename.timeName
+        FROM onlineReview_time
+                 LEFT JOIN onlineReview_timename ON onlineReview_timename.timeId = onlineReview_time.timeId
+        where belongId = #{belongId}
+        order by onlineReview_timename.sn
+    </select>
+
+    <select id="queryCzqTime" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT onlineReview_time.finishTime,
+               onlinereview_model.designModel,
+               onlinereview_baseinfo.saleNum,
+               onlineReview_timename.timeName,
+               os_user.USER_ID_ AS userId
+        FROM onlineReview_time
+                 LEFT JOIN onlineReview_timename ON onlineReview_timename.timeId = onlineReview_time.timeId
+                 LEFT JOIN onlinereview_model ON onlineReview_time.belongId = onlinereview_model.id
+                 LEFT JOIN onlinereview_baseinfo ON onlinereview_model.belongId = onlinereview_baseinfo.id
+                 LEFT JOIN os_user ON os_user.USER_ID_ = onlineReview_time.respId
+        WHERE onlineReview_time.timeId = 'czqjmx'
+          AND str_to_date(onlineReview_time.finishTime, '%Y-%m-%d') = CURDATE()
+          and onlinereview_model.id not in (SELECT belongId from onlinereview_file WHERE fileType = 'czq')
+    </select>
+
+    <select id="queryTimeName" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT onlineReview_timename.*, os_user.FULLNAME_ AS respId_name
+        FROM onlineReview_timename
+                 LEFT JOIN os_user ON os_user.USER_ID_ = onlineReview_timename.respId
+        order by onlineReview_timename.sn
+    </select>
+
+    <insert id="createTime" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into onlineReview_time (id,
+                                       timeId,
+                                       respId,
+                                       respId_name,
+                                       finishTime,
+                                       note,
+                                       belongId,
+                                       CREATE_BY_,
+                                       CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{timeId,jdbcType=VARCHAR},
+                #{respId,jdbcType=VARCHAR},
+                #{respId_name,jdbcType=VARCHAR},
+                #{finishTime,jdbcType=VARCHAR},
+                #{note,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateTime" parameterType="com.alibaba.fastjson.JSONObject">
+        update onlineReview_time
+        <set>
+            timeId=#{timeId,jdbcType=VARCHAR},
+            respId=#{respId,jdbcType=VARCHAR},
+            respId_name=#{respId_name,jdbcType=VARCHAR},
+            finishTime=#{finishTime,jdbcType=VARCHAR},
+            note=#{note,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <update id="updateOneTime" parameterType="com.alibaba.fastjson.JSONObject">
+        update onlineReview_time
+        <set>
+            finishTime=#{finishTime,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteTime" parameterType="java.util.Map">
+        delete from onlineReview_time
+        where
+        <if test="id != null and id != ''">
+            id=#{id}
+        </if>
+        <if test="ids != null and ids !=''">
+            belongId IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </delete>
+
+    <select id="queryConfig" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT onlineReview_config.*, os_user.FULLNAME_ AS userName
+        FROM onlineReview_config
+                 LEFT JOIN os_user ON onlineReview_config.CREATE_BY_ = os_user.USER_ID_
+        where onlineReview_config.belongId = #{belongId}
+    </select>
+
+    <insert id="createConfig" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into onlineReview_config (id,
+                                         configMsg,
+                                         risk,
+                                         control,
+                                         finishTime,
+                                         changeCode,
+                                         configType,
+                                         respId,
+                                         respId_name,
+                                         belongId,
+                                         CREATE_BY_,
+                                         CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{configMsg,jdbcType=VARCHAR},
+                #{risk,jdbcType=VARCHAR},
+                #{control,jdbcType=VARCHAR},
+                #{finishTime,jdbcType=VARCHAR},
+                #{changeCode,jdbcType=VARCHAR},
+                #{configType,jdbcType=VARCHAR},
+                #{respId,jdbcType=VARCHAR},
+                #{respId_name,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateConfig" parameterType="com.alibaba.fastjson.JSONObject">
+        update onlineReview_config
+        <set>
+            configMsg=#{configMsg,jdbcType=VARCHAR},
+            configType=#{configType,jdbcType=VARCHAR},
+            risk=#{risk,jdbcType=VARCHAR},
+            control=#{control,jdbcType=VARCHAR},
+            finishTime=#{finishTime,jdbcType=VARCHAR},
+            changeCode=#{changeCode,jdbcType=VARCHAR},
+            respId=#{respId,jdbcType=VARCHAR},
+            respId_name=#{respId_name,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteConfig" parameterType="java.util.Map">
+        delete from onlineReview_config
+        where
+        <if test="id != null and id != ''">
+            id=#{id}
+        </if>
+        <if test="ids != null and ids !=''">
+            belongId IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </delete>
+
+    <select id="queryModel" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT onlineReview_model.*,
+        os_group.GROUP_ID_ AS deptId,
+        os_group.NAME_ AS deptName
+        FROM onlineReview_model
+        LEFT JOIN os_rel_inst ON onlineReview_model.jszgId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        where belongId = #{belongId}
+        and os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="timeRisk != null and timeRisk != ''">
+            and (timeRisk='不满足' or timeRisk is null or timeRisk = '')
+        </if>
+    </select>
+
+    <insert id="createModel" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into onlineReview_model (id,
+                                        saleModel,
+                                        designModelId,
+                                        designModel,
+                                        materielCode,
+                                        num,
+                                        jszgId,
+                                        jszgName,
+                                        gyzgId,
+                                        gyzgName,
+                                        jhyId,
+                                        jhyName,
+                                        manualStatus,
+                                        zxdChange,
+                                        gybom,
+                                        needTime,
+                                        planTime,
+                                        jsNum,
+                                        gzOption,
+                                        gzReason,
+                                        yzOption,
+                                        yzReason,
+                                        colorChange,
+                                        colorNum,
+                                        colorPart,
+                                        inventoryChange,
+                                        changeNum,
+                                        initialConfig,
+                                        pfRequire,
+                                        rzRequire,
+                                        ljLanguage,
+                                        cbLanguage,
+                                        zxdLanguage,
+                                        ybLanguage,
+                                        bsLanguage,
+                                        nameplate,
+                                        gps,
+                                        oilRequire,
+                                        jjRequire,
+                                        other,
+                                        transportMode,
+                                        transportType,
+                                        packageMode,
+                                        location,
+                                        planRequire,
+                                        specialRequire,
+                                        package,
+                                        jstz,
+                                        periodFile,
+                                        sourceFile,
+                                        belongId,
+                                        timeRisk,
+                                        CREATE_BY_,
+                                        CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{saleModel,jdbcType=VARCHAR},
+                #{designModelId,jdbcType=VARCHAR},
+                #{designModel,jdbcType=VARCHAR},
+                #{materielCode,jdbcType=VARCHAR},
+                #{num,jdbcType=VARCHAR},
+                #{jszgId,jdbcType=VARCHAR},
+                #{jszgName,jdbcType=VARCHAR},
+                #{gyzgId,jdbcType=VARCHAR},
+                #{gyzgName,jdbcType=VARCHAR},
+                #{jhyId,jdbcType=VARCHAR},
+                #{jhyName,jdbcType=VARCHAR},
+                #{manualStatus,jdbcType=VARCHAR},
+                #{zxdChange,jdbcType=VARCHAR},
+                #{gybom,jdbcType=VARCHAR},
+                #{needTime,jdbcType=VARCHAR},
+                #{planTime,jdbcType=VARCHAR},
+                #{jsNum,jdbcType=VARCHAR},
+                #{gzOption,jdbcType=VARCHAR},
+                #{gzReason,jdbcType=VARCHAR},
+                #{yzOption,jdbcType=VARCHAR},
+                #{yzReason,jdbcType=VARCHAR},
+                #{colorChange,jdbcType=VARCHAR},
+                #{colorNum,jdbcType=VARCHAR},
+                #{colorPart,jdbcType=VARCHAR},
+                #{inventoryChange,jdbcType=VARCHAR},
+                #{changeNum,jdbcType=VARCHAR},
+                #{initialConfig,jdbcType=VARCHAR},
+                #{pfRequire,jdbcType=VARCHAR},
+                #{rzRequire,jdbcType=VARCHAR},
+                #{ljLanguage,jdbcType=VARCHAR},
+                #{cbLanguage,jdbcType=VARCHAR},
+                #{zxdLanguage,jdbcType=VARCHAR},
+                #{ybLanguage,jdbcType=VARCHAR},
+                #{bsLanguage,jdbcType=VARCHAR},
+                #{nameplate,jdbcType=VARCHAR},
+                #{gps,jdbcType=VARCHAR},
+                #{oilRequire,jdbcType=VARCHAR},
+                #{jjRequire,jdbcType=VARCHAR},
+                #{other,jdbcType=VARCHAR},
+                #{transportMode,jdbcType=VARCHAR},
+                #{transportType,jdbcType=VARCHAR},
+                #{packageMode,jdbcType=VARCHAR},
+                #{location,jdbcType=VARCHAR},
+                #{planRequire,jdbcType=VARCHAR},
+                #{specialRequire,jdbcType=VARCHAR},
+                #{allConfig,jdbcType=VARCHAR},
+                #{package,jdbcType=VARCHAR},
+                #{jstz,jdbcType=VARCHAR},
+                #{periodFile,jdbcType=VARCHAR},
+                #{sourceFile,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{timeRisk,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateModel" parameterType="com.alibaba.fastjson.JSONObject">
+        update onlineReview_model
+        <set>
+            saleModel=#{saleModel,jdbcType=VARCHAR},
+            designModelId=#{designModelId,jdbcType=VARCHAR},
+            designModel=#{designModel,jdbcType=VARCHAR},
+            materielCode=#{materielCode,jdbcType=VARCHAR},
+            num=#{num,jdbcType=VARCHAR},
+            jszgId=#{jszgId,jdbcType=VARCHAR},
+            jszgName=#{jszgName,jdbcType=VARCHAR},
+            gyzgId=#{gyzgId,jdbcType=VARCHAR},
+            gyzgName=#{gyzgName,jdbcType=VARCHAR},
+            jhyId=#{jhyId,jdbcType=VARCHAR},
+            jhyName=#{jhyName,jdbcType=VARCHAR},
+            manualStatus=#{manualStatus,jdbcType=VARCHAR},
+            zxdChange=#{zxdChange,jdbcType=VARCHAR},
+            gybom=#{gybom,jdbcType=VARCHAR},
+            needTime=#{needTime,jdbcType=VARCHAR},
+            jsNum=#{jsNum,jdbcType=VARCHAR},
+            gzOption=#{gzOption,jdbcType=VARCHAR},
+            gzReason=#{gzReason,jdbcType=VARCHAR},
+            yzOption=#{yzOption,jdbcType=VARCHAR},
+            yzReason=#{yzReason,jdbcType=VARCHAR},
+            colorChange=#{colorChange,jdbcType=VARCHAR},
+            colorNum=#{colorNum,jdbcType=VARCHAR},
+            colorPart=#{colorPart,jdbcType=VARCHAR},
+            inventoryChange=#{inventoryChange,jdbcType=VARCHAR},
+            changeNum=#{changeNum,jdbcType=VARCHAR},
+            initialConfig=#{initialConfig,jdbcType=VARCHAR},
+            pfRequire=#{pfRequire,jdbcType=VARCHAR},
+            rzRequire=#{rzRequire,jdbcType=VARCHAR},
+            ljLanguage=#{ljLanguage,jdbcType=VARCHAR},
+            cbLanguage=#{cbLanguage,jdbcType=VARCHAR},
+            zxdLanguage=#{zxdLanguage,jdbcType=VARCHAR},
+            ybLanguage=#{ybLanguage,jdbcType=VARCHAR},
+            bsLanguage=#{bsLanguage,jdbcType=VARCHAR},
+            nameplate=#{nameplate,jdbcType=VARCHAR},
+            gps=#{gps,jdbcType=VARCHAR},
+            oilRequire=#{oilRequire,jdbcType=VARCHAR},
+            jjRequire=#{jjRequire,jdbcType=VARCHAR},
+            other=#{other,jdbcType=VARCHAR},
+            transportMode=#{transportMode,jdbcType=VARCHAR},
+            transportType=#{transportType,jdbcType=VARCHAR},
+            packageMode=#{packageMode,jdbcType=VARCHAR},
+            location=#{location,jdbcType=VARCHAR},
+            planRequire=#{planRequire,jdbcType=VARCHAR},
+            specialRequire=#{specialRequire,jdbcType=VARCHAR},
+            allConfig=#{allConfig,jdbcType=VARCHAR},
+            package=#{package,jdbcType=VARCHAR},
+            jstz=#{jstz,jdbcType=VARCHAR},
+            periodFile=#{periodFile,jdbcType=VARCHAR},
+            sourceFile=#{sourceFile,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <update id="updatePlanTime" parameterType="com.alibaba.fastjson.JSONObject">
+        update onlineReview_model
+        <set>
+            planTime=#{planTime,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteModel" parameterType="java.util.Map">
+        delete from onlineReview_model
+        where
+        <if test="id != null and id != ''">
+            id=#{id}
+        </if>
+        <if test="ids != null and ids !=''">
+            belongId IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </delete>
+
+    <select id="queryOnlineReviewBaseById" parameterType="java.lang.String"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select onlineReview_baseInfo.*, bpm_inst.INST_ID_ as instId
+        from onlineReview_baseInfo
+                 left join os_user on onlineReview_baseInfo.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on onlineReview_baseInfo.id = bpm_inst.BUS_KEY_
+        where onlineReview_baseInfo.id = #{id}
+    </select>
+    <delete id="deleteOnlineReview" parameterType="java.util.Map">
+        delete
+        from onlineReview_baseInfo
+        where id = #{id}
+    </delete>
+    <select id="queryModelDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select onlineReview_model.*, bpm_inst.INST_ID_ as instId
+        from onlineReview_model
+                 left join os_user on onlineReview_model.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on onlineReview_model.id = bpm_inst.BUS_KEY_
+        where onlineReview_model.id = #{id}
+    </select>
+
+    <select id="getModel" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT designmodel, salemodel, productManagerId, productManagerName
+        FROM product_spectrum
+        where materialCode = #{materialCode}
+    </select>
+
+    <update id="updateTimeRisk" parameterType="com.alibaba.fastjson.JSONObject">
+        update onlineReview_model
+        <set>
+            timeRisk=#{timeRisk,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+
+    <select id="queryOnlineReviewFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        onlineReview_file
+        WHERE
+        belongId IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="fileType != null and fileType !='' ">
+            and fileType=#{fileType}
+        </if>
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into onlineReview_file (fileId, fileName, belongId, fileSize, fileType, CREATE_BY_, CREATE_TIME_)
+        values (#{fileId,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{fileType,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <delete id="deleteOnlineReviewFile" parameterType="java.util.Map">
+        delete from onlineReview_file
+        where
+        <if test="fileId != null and fileId != ''">
+            fileId=#{fileId}
+        </if>
+        <if test="ids != null and ids !=''">
+            AND belongId IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </delete>
+</mapper>

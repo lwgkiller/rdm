@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.ZlgjjysbDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="zlgjjysbListQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT zlgj_jysb.*,
+        bpm_inst.STATUS_ as taskStatus,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_,
+        bpm_inst.END_TIME_ as endTime
+        FROM
+        zlgj_jysb
+        left join bpm_inst on zlgj_jysb.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="projectName !=null and projectName !=''">
+                AND projectName like concat('%',#{projectName},'%')
+            </if>
+            <if test="applicationUnit !=null and applicationUnit !=''">
+                AND applicationUnit like concat('%',#{applicationUnit},'%')
+            </if>
+            <if test="creator !=null and creator !=''">
+                AND creator like concat('%',#{creator},'%')
+            </if>
+            <if test="suggestDepartment !=null and suggestDepartment !=''">
+                AND suggestDepartment like concat('%',#{suggestDepartment},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+            <if test="wtdl != null and wtdl != ''">
+                AND wtdl = #{wtdl}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR zlgj_jysb.CREATE_BY_ = #{currentUserId} or bpm_inst.STATUS_ is null)
+                </if>
+            </if>
+            <if test="endTimeStart !=null and endTimeStart !=''">
+                AND bpm_inst.END_TIME_ &gt;= #{endTimeStart}
+            </if>
+            <if test="endTimeEnd !=null and endTimeEnd !=''">
+                AND bpm_inst.END_TIME_ &lt;= #{endTimeEnd}
+            </if>
+        </where>
+        order by CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countZlgjjysbQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        zlgj_jysb
+        left join bpm_inst on zlgj_jysb.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="projectName !=null and projectName !=''">
+                AND projectName like concat('%',#{projectName},'%')
+            </if>
+            <if test="applicationUnit !=null and applicationUnit !=''">
+                AND applicationUnit like concat('%',#{applicationUnit},'%')
+            </if>
+            <if test="creator !=null and creator !=''">
+                AND creator like concat('%',#{creator},'%')
+            </if>
+            <if test="suggestDepartment !=null and suggestDepartment !=''">
+                AND suggestDepartment like concat('%',#{suggestDepartment},'%')
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                AND bpm_inst.STATUS_ = #{taskStatus}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <if test="roleName =='fgld' or roleName =='zlgcs' or roleName=='ptyg'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR zlgj_jysb.CREATE_BY_ = #{currentUserId} or bpm_inst.STATUS_ is null)
+                </if>
+            </if>
+            <if test="endTimeStart !=null and endTimeStart !=''">
+                AND bpm_inst.END_TIME_ &gt;= #{endTimeStart}
+            </if>
+            <if test="endTimeEnd !=null and endTimeEnd !=''">
+                AND bpm_inst.END_TIME_ &lt;= #{endTimeEnd}
+            </if>
+        </where>
+    </select>
+
+    <insert id="createZlgjjysb" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO zlgj_jysb (
+        id,
+        projectName,
+        phoneNumber,
+        applicationUnitId,
+        applicationUnit,
+        <if test="declareTime != null and declareTime != ''">
+            declareTime,
+        </if>
+        sectionChiefId,
+        sectionChief,
+        wtdl,
+        wtxl,
+        jxlb,
+        involvingModel,
+        problemDescription,
+        reasonAnalysis,
+        dcjyfa,
+        preliminaryAudit,
+        suggestDepartmentId,
+        suggestDepartment,
+        rating,
+        zlshshyj,
+        CREATE_BY_,
+        creator,
+        checkId,
+        checkName,
+        CREATE_TIME_
+        )
+        VALUES(
+        #{id},
+        #{projectName},
+        #{phoneNumber},
+        #{applicationUnitId},
+        #{applicationUnit},
+        <if test="declareTime != null and declareTime != ''">
+            #{declareTime},
+        </if>
+        #{sectionChiefId},
+        #{sectionChief},
+        #{wtdl},
+        #{wtxl},
+        #{jxlb},
+        #{involvingModel},
+        #{problemDescription},
+        #{reasonAnalysis},
+        #{dcjyfa},
+        #{preliminaryAudit},
+        #{suggestDepartmentId},
+        #{suggestDepartment},
+        #{rating},
+        #{zlshshyj},
+        #{CREATE_BY_},
+        #{creator},
+        #{checkId},
+        #{checkName},
+        #{CREATE_TIME_}
+        );
+    </insert>
+    <update id="updateZlgjjysb" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE zlgj_jysb
+        SET projectName = #{projectName},
+        phoneNumber = #{phoneNumber},
+        applicationUnitId = #{applicationUnitId},
+        applicationUnit = #{applicationUnit},
+        <if test="declareTime != null and declareTime != ''">
+            declareTime = #{declareTime},
+        </if>
+        sectionChiefId = #{sectionChiefId},
+        sectionChief = #{sectionChief},
+        wtdl = #{wtdl},
+        wtxl = #{wtxl},
+        checkId = #{checkId},
+        checkName = #{checkName},
+        jxlb = #{jxlb},
+        involvingModel = #{involvingModel},
+        problemDescription = #{problemDescription},
+        reasonAnalysis = #{reasonAnalysis},
+        dcjyfa = #{dcjyfa},
+        preliminaryAudit = #{preliminaryAudit},
+        suggestDepartmentId = #{suggestDepartmentId},
+        suggestDepartment = #{suggestDepartment},
+        rating = #{rating},
+        zlshshyj = #{zlshshyj},
+        UPDATE_BY_ = #{UPDATE_BY_},
+        UPDATE_TIME_ = #{UPDATE_TIME_},
+        ssqk = #{ssqk},
+        sswcTime = #{sswcTime,jdbcType=TIMESTAMP},
+        gjssqryj = #{gjssqryj}
+        WHERE id = #{id}
+    </update>
+
+    <select id="getZlgjjysbDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            zlgj_jysb.*,
+            bpm_inst.STATUS_  AS taskStatus,
+            bpm_inst.INST_ID_ AS instId
+        FROM zlgj_jysb
+            LEFT JOIN bpm_inst ON zlgj_jysb.id = bpm_inst.BUS_KEY_
+        WHERE id = #{zlgjjysbId}
+    </select>
+
+    <insert id="addFiles" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zlgj_jysb_file(
+          id,
+          fileName,
+          fileSize,
+          zlgjjysbId,
+          CREATE_BY_,
+          creator,
+          CREATE_TIME_
+        ) values(
+          #{id},
+          #{fileName},
+          #{fileSize},
+          #{zlgjjysbId},
+          #{CREATE_BY_},
+          #{creator},
+          #{CREATE_TIME_}
+        )
+    </insert>
+
+    <select id="queryZlgjjysbFileList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select zlgj_jysb_file.* from zlgj_jysb_file
+        where zlgjjysbId IN
+        <foreach collection="zlgjjysbIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <delete id="delZlgjjysbFileById" parameterType="java.lang.String">
+        delete from zlgj_jysb_file
+        where id =#{id}
+    </delete>
+
+    <delete id="delFileByZlgjjysbId" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from zlgj_jysb_file
+        where zlgjjysbId IN
+        <foreach collection="zlgjjysbIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteZlgjjysb" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from zlgj_jysb
+        where id IN
+        <foreach collection="zlgjjysbIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <insert id="createDcry" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO zlgj_jysb_dcbmsh (
+          id,
+          dcryId,
+          dcryName,
+          auditSuggest,
+          implementationStatus,
+          zlgjjysbId,
+          ssContent,
+          CREATE_BY_,
+          creator,
+          CREATE_TIME_
+        )
+        VALUES (
+          #{id},
+          #{dcryId},
+          #{dcryName},
+          #{auditSuggest},
+          #{implementationStatus},
+          #{zlgjjysbId},
+          #{ssContent},
+          #{CREATE_BY_},
+          #{creator},
+          #{CREATE_TIME_}
+        );
+    </insert>
+    <update id="updateDcry" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE zlgj_jysb_dcbmsh
+        SET dcryId = #{dcryId},
+            dcryName = #{dcryName},
+            auditSuggest = #{auditSuggest},
+            implementationStatus = #{implementationStatus},
+            zlgjjysbId = #{zlgjjysbId},
+            ssContent=#{ssContent},
+            creator = #{creator},
+            UPDATE_BY_ = #{UPDATE_BY_},
+            UPDATE_TIME_ = #{UPDATE_TIME_}
+        WHERE
+            id = #{id};
+    </update>
+
+    <select id="queryDcry" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            zlgj_jysb_dcbmsh.*,
+            zlgj_jysb_dcbmsh.dcryName dcryId_name
+        FROM zlgj_jysb_dcbmsh
+        WHERE zlgjjysbId = #{zlgjjysbId}
+    </select>
+
+    <delete id="deleteDcry" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from zlgj_jysb_dcbmsh where zlgjjysbId in
+        <foreach collection="zlgjjysbIds" separator="," index="index" item="item" open="(" close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteDcryById" parameterType="java.lang.String">
+        delete from  zlgj_jysb_dcbmsh where id =  #{id}
+    </delete>
+
+    <select id="getDjpdry" resultType="com.alibaba.fastjson.JSONObject" parameterType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        zlgj_jysb_pdry
+        <where>
+            <if test="jytcbm != null and jytcbm !=''">
+                jytcbm like concat('%', #{jytcbm} ,'%')
+            </if>
+            <if test="dl != null and dl !=''">
+                AND dl like concat('%', #{dl} ,'%')
+            </if>
+            <if test="jxlb != null and jxlb !=''">
+                AND jxlb like concat('%', #{jxlb} ,'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="judgeZlbzb" resultType="com.alibaba.fastjson.JSONObject" parameterType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.USER_ID_ as userId,
+        A.FULLNAME_ as userName,
+        C.GROUP_ID_ as groupId,
+        C.NAME_ as groupName
+        FROM
+        os_user A
+        LEFT JOIN os_rel_inst B ON A.USER_ID_ = B.PARTY2_
+        LEFT JOIN os_group C ON B.PARTY1_ = C.GROUP_ID_
+        WHERE
+        A.USER_ID_ = #{userId}
+    </select>
+
+    <select id="test" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        test
+    </select>
+
+</mapper>

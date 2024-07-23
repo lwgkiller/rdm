@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.KjlwDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryKjlwList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            kjlw_baseinfo.*,
+            os_group.NAME_ AS applyUserDeptName,
+            os_user.FULLNAME_ AS applyUserName,
+            act_ru_task.NAME_ as currentProcessTask,
+            act_ru_task.ID_ as taskId,
+            bpm_inst.STATUS_ as status,
+            bpm_inst.INST_ID_ as instId
+        FROM
+            kjlw_baseinfo
+            LEFT JOIN os_rel_inst ON kjlw_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN os_user ON os_user.USER_ID_ = kjlw_baseinfo.CREATE_BY_
+            left join bpm_inst on kjlw_baseinfo.kjlwId=bpm_inst.BUS_KEY_
+            left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="kjlwName != null and kjlwName != ''">
+                AND kjlw_baseinfo.kjlwName like CONCAT('%',#{kjlwName},'%')
+            </if>
+            <if test="writerId != null and writerId != ''">
+                AND kjlw_baseinfo.writerId like CONCAT('%',#{writerId},'%')
+            </if>
+            <if test="CREATE_TIME_StartTime != null and CREATE_TIME_StartTime != ''">
+                AND kjlw_baseinfo.CREATE_TIME_ &gt;= #{CREATE_TIME_StartTime}
+            </if>
+            <if test="CREATE_TIME_EndTime != null and CREATE_TIME_EndTime != ''">
+                AND kjlw_baseinfo.CREATE_TIME_ &lt;= #{CREATE_TIME_EndTime}
+            </if>
+            <if test="fbTimeStartTime != null and fbTimeStartTime != ''">
+                AND kjlw_baseinfo.fbTime &gt;= #{fbTimeStartTime}
+            </if>
+            <if test="fbTimeEndTime != null and fbTimeEndTime != ''">
+                AND kjlw_baseinfo.fbTime &lt;= #{fbTimeEndTime}
+            </if>
+            <if test="qkmc != null and qkmc != ''">
+                AND kjlw_baseinfo.qkmc like CONCAT('%',#{qkmc},'%')
+            </if>
+            <if test="kjlwNum != null and kjlwNum != ''">
+                AND kjlw_baseinfo.kjlwNum like CONCAT('%',#{kjlwNum},'%')
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR kjlw_baseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countKjlwList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        kjlw_baseinfo
+        LEFT JOIN os_rel_inst ON kjlw_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on kjlw_baseinfo.kjlwId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="kjlwName != null and kjlwName != ''">
+                AND kjlw_baseinfo.kjlwName like CONCAT('%',#{kjlwName},'%')
+            </if>
+            <if test="writerId != null and writerId != ''">
+                AND kjlw_baseinfo.writerId like CONCAT('%',#{writerId},'%')
+            </if>
+            <if test="CREATE_TIME_StartTime != null and CREATE_TIME_StartTime != ''">
+                AND kjlw_baseinfo.CREATE_TIME_ &gt;= #{CREATE_TIME_StartTime}
+            </if>
+            <if test="CREATE_TIME_EndTime != null and CREATE_TIME_EndTime != ''">
+                AND kjlw_baseinfo.CREATE_TIME_ &lt;= #{CREATE_TIME_EndTime}
+            </if>
+            <if test="fbTimeStartTime != null and fbTimeStartTime != ''">
+                AND kjlw_baseinfo.fbTime &gt;= #{fbTimeStartTime}
+            </if>
+            <if test="fbTimeEndTime != null and fbTimeEndTime != ''">
+                AND kjlw_baseinfo.fbTime &lt;= #{fbTimeEndTime}
+            </if>
+            <if test="qkmc != null and qkmc != ''">
+                AND kjlw_baseinfo.qkmc like CONCAT('%',#{qkmc},'%')
+            </if>
+            <if test="kjlwNum != null and kjlwNum != ''">
+                AND kjlw_baseinfo.kjlwNum like CONCAT('%',#{kjlwNum},'%')
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR kjlw_baseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryMaxKjlwNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            kjlw_baseinfo
+        WHERE
+            kjlw_baseinfo.CREATE_TIME_ &gt;= #{applyTimeStart}
+            AND kjlwNum IS NOT NULL
+            AND kjlwNum != ''
+        ORDER BY
+            kjlwNum desc
+            LIMIT 1
+    </select>
+
+    <insert id="insertKjlw" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into kjlw_baseinfo(
+            kjlwId
+            ,kjlwNum
+            ,kjlwName
+            ,writerId
+            ,writerName
+            ,qkmc
+            ,qNum
+            ,yema
+            ,fbTime
+            ,fbqk
+            ,lyxm
+            ,zynr
+            ,ifzlrz
+            ,cqmc
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{kjlwId,jdbcType=VARCHAR},
+            #{kjlwNum,jdbcType=VARCHAR},
+            #{kjlwName,jdbcType=VARCHAR},
+            #{writerId,jdbcType=VARCHAR},
+            #{writerName,jdbcType=VARCHAR},
+            #{qkmc,jdbcType=VARCHAR},
+            #{qNum,jdbcType=VARCHAR},
+            #{yema,jdbcType=VARCHAR},
+            #{fbTime,jdbcType=TIMESTAMP},
+            #{fbqk,jdbcType=VARCHAR},
+            #{lyxm,jdbcType=VARCHAR},
+            #{zynr,jdbcType=VARCHAR},
+            #{ifzlrz,jdbcType=VARCHAR},
+            #{cqmc,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateKjlw" parameterType="com.alibaba.fastjson.JSONObject">
+        update kjlw_baseinfo
+        set
+            kjlwNum=#{kjlwNum,jdbcType=VARCHAR},
+            kjlwName=#{kjlwName,jdbcType=VARCHAR},
+            writerId=#{writerId,jdbcType=VARCHAR},
+            writerName=#{writerName,jdbcType=VARCHAR},
+            qkmc=#{qkmc,jdbcType=VARCHAR},
+            qNum=#{qNum,jdbcType=VARCHAR},
+            yema=#{yema,jdbcType=TIMESTAMP},
+            fbTime=#{fbTime,jdbcType=VARCHAR},
+            fbqk=#{fbqk,jdbcType=VARCHAR},
+            lyxm=#{lyxm,jdbcType=VARCHAR},
+            zynr=#{zynr,jdbcType=VARCHAR},
+            ifzlrz=#{ifzlrz,jdbcType=VARCHAR},
+            cqmc=#{cqmc,jdbcType=VARCHAR},
+            ifshemi=#{ifshemi,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            kjlwId=#{kjlwId}
+    </update>
+
+
+    <update id="updateKjlwNum" parameterType="java.util.Map">
+        update kjlw_baseinfo
+        set
+          kjlwNum=#{kjlwNum,jdbcType=VARCHAR}
+        where
+          kjlwId=#{kjlwId}
+    </update>
+
+    <select id="queryKjlwById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select kjlw_baseinfo.*,os_user.FULLNAME_,bpm_inst.INST_ID_ as instId
+        from kjlw_baseinfo
+        left join os_user on kjlw_baseinfo.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on kjlw_baseinfo.kjlwId=bpm_inst.BUS_KEY_
+        where kjlw_baseinfo.kjlwId=#{kjlwId}
+    </select>
+
+    <select id="queryKjlwFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            kjlw_fileinfo.*
+        FROM
+            kjlw_fileinfo
+        WHERE
+            kjlw_fileinfo.kjlwId IN
+        <foreach collection="kjlwIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <insert id="addKjlwFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into kjlw_fileinfo(
+        id
+        ,kjlwId
+        ,fileName
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{kjlwId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        now()
+        )
+    </insert>
+
+    <delete id="deleteKjlwFile" parameterType="java.util.Map">
+        delete from kjlw_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="kjlwIds != null and kjlwIds !=''">
+                AND kjlwId IN
+                <foreach collection="kjlwIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteKjlw" parameterType="java.util.Map">
+        delete from kjlw_baseinfo
+        <where>
+            <if test="kjlwIds != null and kjlwIds !=''">
+                kjlwId IN
+                <foreach collection="kjlwIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+</mapper>

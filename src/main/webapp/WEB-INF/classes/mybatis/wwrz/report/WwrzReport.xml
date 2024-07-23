@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.wwrz.report.dao.WwrzReportDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="getReportData" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        SELECT
+            count(1) as totalNum
+        FROM
+            wwrz_files A
+        WHERE
+            A.fileType = 'report'
+            and A.reportType = '报告'
+            and YEAR(A.reportDate) = #{reportYear}
+    </select>
+    <select id="getReportTypeData" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.reportName,count(1) as totalNum
+        FROM
+        wwrz_files A
+        WHERE
+        A.fileType = 'report'
+        and A.reportType = '报告'
+        <if test="reportYearStart != null and reportYearStart != ''">
+            AND YEAR(A.reportDate) &gt;= #{reportYearStart}
+        </if>
+        <if test="reportYearEnd != null and reportYearEnd != ''">
+            AND YEAR(A.reportDate) &lt;= #{reportYearEnd}
+        </if>
+        group by A.reportName
+    </select>
+    <select id="getProjectDepts" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.deptId,
+        C.NAME_ as deptName
+        FROM
+        wwrz_baseinfo A
+        LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+        left join os_group C on A.deptId = C.GROUP_ID_
+        where (B.STATUS_ = 'SUCCESS_END' or B.STATUS_ = 'RUNNING')
+        <if test="reportYearStart != null and reportYearStart != ''">
+            AND YEAR(A.CREATE_TIME_) &gt;= #{reportYearStart}
+        </if>
+        <if test="reportYearEnd != null and reportYearEnd != ''">
+            AND YEAR(A.CREATE_TIME_) &lt;= #{reportYearEnd}
+        </if>
+        group by A.deptId
+    </select>
+    <select id="getDeptProjectData" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(1) as totalNum
+        FROM
+        wwrz_baseinfo A
+        LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+        where B.STATUS_ = #{STATUS_}
+        and A.deptId = #{deptId}
+        <if test="reportYearStart != null and reportYearStart != ''">
+            AND YEAR(A.CREATE_TIME_) &gt;= #{reportYearStart}
+        </if>
+        <if test="reportYearEnd != null and reportYearEnd != ''">
+            AND YEAR(A.CREATE_TIME_) &lt;= #{reportYearEnd}
+        </if>
+
+    </select>
+    <select id="getWwrzProjectData" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+            count(1) as totalNum
+        FROM
+            wwrz_baseinfo A
+            LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+            where (B.STATUS_ = 'RUNNING' or B.STATUS_ = 'SUCCESS_END')
+            and YEAR(A.CREATE_TIME_) = #{reportYear}
+            <if test="itemKey != null and itemKey != ''">
+                AND FIND_IN_SET(#{itemKey},A.items)
+            </if>
+    </select>
+    <select id="getSignContractProjectData" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="java.lang.Integer">
+        SELECT
+            count(1) as totalNum
+        FROM
+            wwrz_money A
+        WHERE
+            YEAR (A.CREATE_TIME_ ) = #{reportYear}
+            AND A.contractCode IS NOT NULL
+            AND A.contractCode != ''
+            <if test="itemKey != null and itemKey != ''">
+                AND FIND_IN_SET(#{itemKey},A.items)
+            </if>
+    </select>
+
+    <select id="getMoneyData" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Double">
+        SELECT IFNULL(SUM(A.money),0)  as money
+        FROM
+        wwrz_money A
+        WHERE
+        YEAR ( A.CREATE_TIME_ ) = #{reportYear}
+        <if test="itemKey != null and itemKey != ''">
+            AND FIND_IN_SET(#{itemKey},A.items)
+        </if>
+        <if test="isPayMoney != null and isPayMoney != ''">
+            AND A.paymentDate IS NOT NULL
+        </if>
+    </select>
+
+    <select id="getPlanData" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+            count( 1 ) AS totalNum
+        FROM
+            (
+        SELECT
+            A.id,
+            ( SELECT id FROM wwrz_baseinfo WHERE planId = A.id LIMIT 1 ) AS applyId
+        FROM
+            wwrz_testplan A
+        WHERE
+            A.planStatus = 'ysp'
+            AND A.yearMonth = #{yearMonth}
+            <if test="deptId != null and deptId != ''">
+                AND A.deptId = #{deptId}
+            </if>
+            ) T
+        WHERE 1=1
+        <if test="isApply != null and isApply != ''">
+            and T.applyId IS NOT NULL
+        </if>
+    </select>
+
+    <select id="getUnPlanData" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+            count(1) as totalNum
+        FROM
+            wwrz_baseinfo A
+            left join bpm_inst B on A.id = B.BUS_KEY_
+        WHERE
+
+            ( A.planId IS NULL OR A.planId = '' )
+            and (B.STATUS_ = 'RUNNING' or B.STATUS_ = 'SUCCESS_END')
+            and DATE_FORMAT(A.CREATE_TIME_,'%Y-%m') = #{yearMonth}
+            <if test="deptId != null and deptId != ''">
+                AND A.deptId = #{deptId}
+            </if>
+    </select>
+
+    <select id="getPlanDeptList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+            T.*,
+            G.NAME_ AS deptName
+        FROM
+            (
+        SELECT
+            A.deptId
+        FROM
+            wwrz_testplan A
+            where 1=1
+        <if test="reportYearMonthStart != null and reportYearMonthStart != ''">
+            AND A.yearMonth &gt;= #{reportYearMonthStart}
+        </if>
+        <if test="reportYearMonthEnd != null and reportYearMonthEnd != ''">
+            AND A.yearMonth &lt;= #{reportYearMonthEnd}
+        </if>
+        UNION ALL
+        SELECT
+            A.deptId
+        FROM
+            wwrz_baseinfo A
+            LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+        WHERE
+            ( B.STATUS_ = 'RUNNING' OR B.STATUS_ = 'SUCCESS_END' )
+        <if test="reportYearMonthStart != null and reportYearMonthStart != ''">
+            AND DATE_FORMAT(A.CREATE_TIME_,'%Y-%m') &gt;= #{reportYearMonthStart}
+        </if>
+        <if test="reportYearMonthEnd != null and reportYearMonthEnd != ''">
+            AND DATE_FORMAT(A.CREATE_TIME_,'%Y-%m') &lt;= #{reportYearMonthEnd}
+        </if>
+            ) T
+            LEFT JOIN os_group G ON T.deptId = G.GROUP_ID_
+        GROUP BY
+            T.deptId
+    </select>
+
+    <select id="getDeptPlanData" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count( 1 ) AS totalNum
+        FROM
+        (
+        SELECT
+        A.id,
+        ( SELECT id FROM wwrz_baseinfo WHERE planId = A.id LIMIT 1 ) AS applyId
+        FROM
+        wwrz_testplan A
+        WHERE
+        A.planStatus = 'ysp'
+        <if test="reportYearMonthStart != null and reportYearMonthStart != ''">
+            AND A.yearMonth &gt;= #{reportYearMonthStart}
+        </if>
+        <if test="reportYearMonthEnd != null and reportYearMonthEnd != ''">
+            AND A.yearMonth &lt;= #{reportYearMonthEnd}
+        </if>
+        <if test="deptId != null and deptId != ''">
+            AND A.deptId = #{deptId}
+        </if>
+        ) T
+        WHERE 1=1
+        <if test="isApply != null and isApply != ''">
+            and T.applyId IS NOT NULL
+        </if>
+    </select>
+
+    <select id="getUnDeptPlanData" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(1) as totalNum
+        FROM
+        wwrz_baseinfo A
+        left join bpm_inst B on A.id = B.BUS_KEY_
+        WHERE
+        ( A.planId IS NULL OR A.planId = '' )
+        and (B.STATUS_ = 'RUNNING' or B.STATUS_ = 'SUCCESS_END')
+        <if test="reportYearMonthStart != null and reportYearMonthStart != ''">
+            AND DATE_FORMAT(A.CREATE_TIME_,'%Y-%m') &gt;= #{reportYearMonthStart}
+        </if>
+        <if test="reportYearMonthEnd != null and reportYearMonthEnd != ''">
+            AND DATE_FORMAT(A.CREATE_TIME_,'%Y-%m') &lt;= #{reportYearMonthEnd}
+        </if>
+        <if test="deptId != null and deptId != ''">
+            AND A.deptId = #{deptId}
+        </if>
+    </select>
+
+</mapper>

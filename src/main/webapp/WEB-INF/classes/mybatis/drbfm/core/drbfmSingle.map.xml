@@ -1,0 +1,3408 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.drbfm.core.dao.DrbfmSingleDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="querySingleList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_baseinfo.*,
+        drbfm_total_struct.structName,
+        drbfm_total_baseInfo.analyseName,
+        drbfm_total_baseInfo.jixing,
+        drbfm_total_baseInfo.id as totalId,
+        parentStruct.structName AS parentStructName,
+        parentStruct.id as parentStructId,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_ AS instId,
+        os_user.FULLNAME_ AS creator,
+        drbfm_total_struct.analyseUserName,
+        drbfm_total_struct.structNumber
+        FROM
+        drbfm_single_baseinfo
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN drbfm_total_struct parentStruct ON drbfm_total_struct.parentId = parentStruct.id
+        LEFT JOIN bpm_inst ON drbfm_single_baseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_user ON drbfm_single_baseinfo.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="structType != null and structType != ''">
+                drbfm_single_baseinfo.structType like CONCAT('%',#{structType},'%')
+            </if>
+            <if test="analyseName != null and analyseName != ''">
+                and drbfm_total_baseInfo.analyseName like CONCAT('%',#{analyseName},'%')
+            </if>
+            <if test="structName != null and structName != ''">
+                and drbfm_total_struct.structName like CONCAT('%',#{structName},'%')
+            </if>
+            <if test="analyseUserName != null and analyseUserName != ''">
+                and drbfm_total_struct.analyseUserName like CONCAT('%',#{analyseUserName},'%')
+            </if>
+            <if test="jixing != null and jixing != ''">
+                and drbfm_total_baseInfo.jixing like CONCAT('%',#{jixing},'%')
+            </if>
+            <if test="creator != null and creator != ''">
+                and os_user.FULLNAME_ like CONCAT('%',#{creator},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                and bpm_inst.STATUS_ like CONCAT('%',#{instStatus},'%')
+            </if>
+            <if test="totalIds != null and totalIds !=''">
+                AND drbfm_total_baseInfo.id in
+                <foreach collection="totalIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="structIds != null and structIds !=''">
+                AND drbfm_single_baseinfo.structId in
+                <foreach collection="structIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="singleNumber != null and singleNumber !=''">
+                AND drbfm_single_baseinfo.singleNumber like CONCAT('%',#{singleNumber},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countSingleList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        drbfm_single_baseinfo
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN drbfm_total_struct parentStruct ON drbfm_total_struct.parentId = parentStruct.id
+        LEFT JOIN bpm_inst ON drbfm_single_baseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN os_user ON drbfm_single_baseinfo.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="structType != null and structType != ''">
+                drbfm_single_baseinfo.structType like CONCAT('%',#{structType},'%')
+            </if>
+            <if test="analyseName != null and analyseName != ''">
+                and drbfm_total_baseInfo.analyseName like CONCAT('%',#{analyseName},'%')
+            </if>
+            <if test="structName != null and structName != ''">
+                and drbfm_total_struct.structName like CONCAT('%',#{structName},'%')
+            </if>
+            <if test="analyseUserName != null and analyseUserName != ''">
+                and drbfm_total_struct.analyseUserName like CONCAT('%',#{analyseUserName},'%')
+            </if>
+            <if test="jixing != null and jixing != ''">
+                and drbfm_total_baseInfo.jixing like CONCAT('%',#{jixing},'%')
+            </if>
+            <if test="creator != null and creator != ''">
+                and os_user.FULLNAME_ like CONCAT('%',#{creator},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                and bpm_inst.STATUS_ like CONCAT('%',#{instStatus},'%')
+            </if>
+            <if test="totalIds != null and totalIds !=''">
+                AND drbfm_total_baseInfo.id in
+                <foreach collection="totalIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="structIds != null and structIds !=''">
+                AND drbfm_single_baseinfo.structId in
+                <foreach collection="structIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="singleNumber != null and singleNumber !=''">
+                AND drbfm_single_baseinfo.singleNumber like CONCAT('%',#{singleNumber},'%')
+            </if>
+        </where>
+    </select>
+    <insert id="createSingleBase" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_baseinfo(
+        id
+        ,singleNumber
+        ,structId
+        ,structType
+        ,checkUserId
+        ,checkUserName
+        ,innerCheckUserIds
+        ,innerCheckUserNames
+        ,outSHUserIds
+        ,outSHUserNames
+        ,riskAnalysisType
+        ,modelId
+        ,modelName
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{singleNumber,jdbcType=VARCHAR},
+        #{structId,jdbcType=VARCHAR},
+        #{structType,jdbcType=VARCHAR},
+        #{checkUserId,jdbcType=VARCHAR},
+        #{checkUserName,jdbcType=VARCHAR},
+        #{innerCheckUserIds,jdbcType=VARCHAR},
+        #{innerCheckUserNames,jdbcType=VARCHAR},
+        #{outSHUserIds,jdbcType=VARCHAR},
+        #{outSHUserNames,jdbcType=VARCHAR},
+        #{riskAnalysisType,jdbcType=VARCHAR},
+        #{modelId,jdbcType=VARCHAR},
+        #{modelName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateSingleBase" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_baseinfo
+        set
+            structId=#{structId,jdbcType=VARCHAR},
+            structType=#{structType,jdbcType=VARCHAR},
+            checkUserId=#{checkUserId,jdbcType=VARCHAR},
+            checkUserName=#{checkUserName,jdbcType=VARCHAR},
+            innerCheckUserIds=#{innerCheckUserIds,jdbcType=VARCHAR},
+            innerCheckUserNames=#{innerCheckUserNames,jdbcType=VARCHAR},
+            outSHUserIds=#{outSHUserIds,jdbcType=VARCHAR},
+            outSHUserNames=#{outSHUserNames,jdbcType=VARCHAR},
+            riskAnalysisType=#{riskAnalysisType,jdbcType=VARCHAR},
+            modelId=#{modelId,jdbcType=VARCHAR},
+            modelName=#{modelName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <select id="querySingleBaseById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_baseinfo.*,
+        drbfm_total_struct.structNumber,
+        drbfm_total_struct.structName,
+        drbfm_total_struct.belongTotalId,
+        drbfm_total_struct.pathIds,
+        drbfm_total_baseInfo.analyseName,
+        drbfm_total_baseInfo.jixing,
+        drbfm_total_baseInfo.id as totalBaseId,
+        drbfm_total_baseInfo.CREATE_BY_ as productOwnerId,
+        drbfm_total_baseInfo.femaType,
+        os_user.FULLNAME_ as productOwnerName,
+        project_baseinfo.projectName,
+        parentStruct.structName AS parentStructName,
+        drbfm_total_struct.analyseUserId,
+        drbfm_total_struct.analyseUserName,
+        bpm_inst.INST_ID_ as instId
+        FROM
+        drbfm_single_baseinfo
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        left join os_user on drbfm_total_baseInfo.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN drbfm_total_struct parentStruct ON drbfm_total_struct.parentId = parentStruct.id
+        LEFT JOIN project_baseinfo ON drbfm_total_baseinfo.projectId = project_baseinfo.projectId
+        left join bpm_inst on drbfm_single_baseinfo.id=bpm_inst.BUS_KEY_
+        where
+        drbfm_single_baseinfo.id=#{id}
+    </select>
+
+    <select id="querySingleBaseByStructId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_baseinfo.*
+        FROM
+        drbfm_single_baseinfo
+        left join bpm_inst on drbfm_single_baseinfo.id=bpm_inst.BUS_KEY_
+        where
+        drbfm_single_baseinfo.structId=#{structId}
+        and bpm_inst.STATUS_ != 'DISCARD_END'
+    </select>
+
+    <select id="getSingleDeptDemandList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        drbfm_single_deptDemand.*,
+        os_user.FULLNAME_ as creator
+        from drbfm_single_deptDemand
+        left join os_user on drbfm_single_deptDemand.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on drbfm_single_deptDemand.belongCollectFlowId=bpm_inst.BUS_KEY_
+        <where>
+            belongSingleId=#{belongSingleId}
+            <if test="deptNames != null and deptNames != ''">
+                and deptNames like CONCAT('%',#{deptNames},'%')
+            </if>
+            <if test="demandDesc != null and demandDesc != ''">
+                and demandDesc like CONCAT('%',#{demandDesc},'%')
+            </if>
+            and (
+            drbfm_single_deptDemand.demandType='自增' or
+            (drbfm_single_deptDemand.demandType='流程收集' and bpm_inst.STATUS_='SUCCESS_END')
+            )
+        </where>
+    </select>
+
+    <insert id="createDeptDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_deptDemand(
+        id
+        ,demandType
+        ,belongSingleId
+        ,belongCollectFlowId
+        ,demandDesc
+        ,deptIds
+        ,deptNames
+        ,demandReason
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{demandType,jdbcType=VARCHAR},
+        #{belongSingleId,jdbcType=VARCHAR},
+        #{belongCollectFlowId,jdbcType=VARCHAR},
+        #{demandDesc,jdbcType=VARCHAR},
+        #{deptIds,jdbcType=VARCHAR},
+        #{deptNames,jdbcType=VARCHAR},
+        #{demandReason,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateDeptDemand" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_deptDemand
+        set
+            demandDesc=#{demandDesc,jdbcType=VARCHAR},
+            deptIds=#{deptIds,jdbcType=VARCHAR},
+            deptNames=#{deptNames,jdbcType=VARCHAR},
+            demandReason=#{demandReason,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <select id="querySingleDeptDemandById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        drbfm_single_deptDemand
+        where
+        id=#{id}
+    </select>
+    <delete id="deleteDeptDemand" parameterType="java.util.Map">
+        delete from drbfm_single_deptDemand
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="id != null and id !=''">
+                AND id = #{id}
+            </if>
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND belongSingleId = #{belongSingleId}
+            </if>
+            <if test="demandCollectIds != null and demandCollectIds !=''">
+                AND belongCollectFlowId IN
+                <foreach collection="demandCollectIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="getFunctionList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_function.*,
+        GROUP_CONCAT(drbfm_total_struct.structName separator '-')  AS structName,
+        drbfm_single_deptDemand.demandDesc
+        FROM
+        drbfm_single_function
+        LEFT JOIN drbfm_single_deptDemand ON drbfm_single_deptDemand.id = drbfm_single_function.relDeptDemandId
+        left join drbfm_total_struct on   FIND_IN_SET(drbfm_total_struct.id,drbfm_single_function.interfaceRequestStructId)
+
+        <where>
+            drbfm_single_function.belongSingleId=#{belongSingleId}
+            AND (drbfm_single_function.belongCollectFlowId IS NULL OR drbfm_single_function.belongCollectFlowId ='')
+            <if test="relDimensionNames != null and relDimensionNames != ''">
+                and drbfm_single_function.relDimensionNames like CONCAT('%',#{relDimensionNames},'%')
+            </if>
+            <if test="functionDesc != null and functionDesc != ''">
+                and drbfm_single_function.functionDesc like CONCAT('%',#{functionDesc},'%')
+            </if>
+        </where>
+        group by drbfm_single_function.id
+        order by drbfm_single_function.relDimensionNames
+    </select>
+
+    <select id="getFunctionListByCollectId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_function.*,
+        GROUP_CONCAT(drbfm_total_struct.structName separator '-')  AS structName,
+        drbfm_single_deptDemand.demandDesc
+        FROM
+        drbfm_single_function
+        LEFT JOIN drbfm_single_deptDemand ON drbfm_single_deptDemand.id = drbfm_single_function.relDeptDemandId
+        left join drbfm_total_struct on   FIND_IN_SET(drbfm_total_struct.id,drbfm_single_function.interfaceRequestStructId)
+        <where>
+            drbfm_single_function.belongCollectFlowId=#{belongCollectFlowId}
+            <if test="relDimensionNames != null and relDimensionNames != ''">
+                and drbfm_single_function.relDimensionNames like CONCAT('%',#{relDimensionNames},'%')
+            </if>
+            <if test="functionDesc != null and functionDesc != ''">
+                and drbfm_single_function.functionDesc like CONCAT('%',#{functionDesc},'%')
+            </if>
+        </where>
+        group by drbfm_single_function.id
+
+    </select>
+
+    <select id="getFunctionListByJSId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_function.*,
+        GROUP_CONCAT(drbfm_total_struct.structName separator '-')  AS structName,
+        drbfm_single_deptDemand.demandDesc
+        FROM
+        drbfm_single_function
+        LEFT JOIN drbfm_single_deptDemand ON drbfm_single_deptDemand.id = drbfm_single_function.relDeptDemandId
+        left join drbfm_total_struct on   FIND_IN_SET(drbfm_total_struct.id,drbfm_single_function.interfaceRequestStructId)
+        <where>
+            drbfm_single_function.belongJSId=#{jsId}
+            <if test="relDimensionNames != null and relDimensionNames != ''">
+                and drbfm_single_function.relDimensionNames like CONCAT('%',#{relDimensionNames},'%')
+            </if>
+            <if test="functionDesc != null and functionDesc != ''">
+                and drbfm_single_function.functionDesc like CONCAT('%',#{functionDesc},'%')
+            </if>
+        </where>
+        group by drbfm_single_function.id
+
+    </select>
+
+    <select id="getFunctionCollectList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_function.*,
+        GROUP_CONCAT(drbfm_total_struct.structName separator '-')  AS structName,
+        drbfm_single_deptDemand.demandDesc
+        FROM
+        drbfm_single_interfacecollectflow
+        LEFT JOIN drbfm_single_function ON drbfm_single_interfacecollectflow.id = drbfm_single_function.belongCollectFlowId
+        LEFT JOIN drbfm_single_deptDemand ON drbfm_single_deptDemand.id = drbfm_single_function.relDeptDemandId
+        left join drbfm_total_struct on   FIND_IN_SET(drbfm_total_struct.id,drbfm_single_function.interfaceRequestStructId)
+        LEFT JOIN bpm_inst ON drbfm_single_interfacecollectflow.id = bpm_inst.BUS_KEY_
+        <where>
+            drbfm_single_function.id IS NOT NULL
+            AND drbfm_single_function.id != ''
+            AND bpm_inst.STATUS_ = 'SUCCESS_END'
+            AND drbfm_single_function.belongSingleId=#{belongSingleId}
+            <if test="relDimensionNames != null and relDimensionNames != ''">
+                and drbfm_single_function.relDimensionNames like CONCAT('%',#{relDimensionNames},'%')
+            </if>
+            <if test="functionDesc != null and functionDesc != ''">
+                and drbfm_single_function.functionDesc like CONCAT('%',#{functionDesc},'%')
+            </if>
+        </where>
+        group by drbfm_single_function.id
+
+    </select>
+
+    <insert id="createFunction" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_function(
+        id
+        ,belongSingleId
+        ,belongCollectFlowId
+        ,belongJSId
+        ,relDeptDemandId
+        ,relDimensionKeys
+        ,relDimensionNames
+        ,functionDesc
+        ,interfaceRequestStructId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{belongSingleId,jdbcType=VARCHAR},
+        #{belongCollectFlowId,jdbcType=VARCHAR},
+        #{belongJSId,jdbcType=VARCHAR},
+        #{relDeptDemandId,jdbcType=VARCHAR},
+        #{relDimensionKeys,jdbcType=VARCHAR},
+        #{relDimensionNames,jdbcType=VARCHAR},
+        #{functionDesc,jdbcType=VARCHAR},
+        #{interfaceRequestStructId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateFunction" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_function
+        set
+            relDeptDemandId=#{relDeptDemandId,jdbcType=VARCHAR},
+            belongCollectFlowId=#{belongCollectFlowId,jdbcType=VARCHAR},
+            belongJSId=#{belongJSId,jdbcType=VARCHAR},
+            relDimensionKeys=#{relDimensionKeys,jdbcType=VARCHAR},
+            relDimensionNames=#{relDimensionNames,jdbcType=VARCHAR},
+            functionDesc=#{functionDesc,jdbcType=VARCHAR},
+            interfaceRequestStructId=#{interfaceRequestStructId,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <select id="queryFunctionById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_function.*,
+        GROUP_CONCAT(drbfm_total_struct.structName separator '-')  AS structName,
+        drbfm_single_deptDemand.demandDesc
+        FROM
+        drbfm_single_function
+        LEFT JOIN drbfm_single_deptDemand ON drbfm_single_deptDemand.id = drbfm_single_function.relDeptDemandId
+        left join drbfm_total_struct on   FIND_IN_SET(drbfm_total_struct.id,drbfm_single_function.interfaceRequestStructId)
+        where
+        drbfm_single_function.id=#{id}
+        group by drbfm_single_function.id
+    </select>
+    <delete id="deleteFunction" parameterType="java.util.Map">
+        delete from drbfm_single_function
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND belongSingleId = #{belongSingleId}
+            </if>
+        </where>
+    </delete>
+
+    <select id="getRequestList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select T.* from (
+        SELECT
+        drbfm_single_request.id,
+        drbfm_single_request.belongSingleId,
+        drbfm_single_request.belongCollectFlowId,
+        drbfm_single_request.belongJSId,
+        drbfm_single_request.relFunctionId,
+        drbfm_single_request.requestDesc,
+        drbfm_single_request.requestChanges,
+        drbfm_single_request.relEffect,
+        drbfm_single_request.riskDesc,
+        drbfm_single_request.compareToJP,
+        drbfm_single_request.riskLevel,
+        drbfm_single_request.yanzhongduLevel,
+        drbfm_single_request.fashengduLevel,
+        drbfm_single_request.tanceduLevel,
+        drbfm_single_request.interfaceRequestStructId,
+        drbfm_single_request.CREATE_BY_,
+        drbfm_single_request.CREATE_TIME_,
+        drbfm_single_request.TENANT_ID_,
+        drbfm_single_request.UPDATE_BY_,
+        drbfm_single_request.UPDATE_TIME_,
+        CASE WHEN ( SELECT count( 1 ) FROM drbfm_single_sxms WHERE yqId = drbfm_single_request.id )= 0 THEN
+        "无"
+        WHEN drbfm_single_request.id IN ( SELECT DISTINCT yqId FROM drbfm_single_sxms WHERE needFxfx = "是" ) THEN
+        "是" ELSE "否"
+        END AS riskAnalysis,
+        GROUP_CONCAT(drbfm_total_struct.structName separator '-')  AS structName,
+        drbfm_single_function.functionDesc as relFunctionDesc,
+        drbfm_single_function.relDimensionKeys as relDimensionKeys,
+        drbfm_single_function.relDimensionNames as relDimensionNames
+        FROM
+        drbfm_single_request
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        left join drbfm_total_struct on   FIND_IN_SET(drbfm_total_struct.id,drbfm_single_request.interfaceRequestStructId)
+        <where>
+            drbfm_single_request.belongSingleId=#{belongSingleId}
+            AND (drbfm_single_request.belongCollectFlowId IS NULL OR drbfm_single_request.belongCollectFlowId = '')
+            <if test="requestDesc != null and requestDesc != ''">
+                and drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+            <if test="riskLevel != null and riskLevel != ''">
+                and drbfm_single_request.riskLevel = #{riskLevel}
+            </if>
+
+            <if test="relFunctionDesc != null and relFunctionDesc != ''">
+                and drbfm_single_function.functionDesc like CONCAT('%',#{relFunctionDesc},'%')
+            </if>
+        </where>
+        group by drbfm_single_request.id
+        )T where 1=1
+        <if test="riskAnalysis != null and riskAnalysis != ''">
+            and T.riskAnalysis = #{riskAnalysis}
+        </if>
+        order by T.relFunctionId
+    </select>
+    <select id="getFinalProcessList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_request.id,
+        drbfm_single_request.belongSingleId,
+        drbfm_single_request.belongCollectFlowId,
+        drbfm_single_request.belongJSId,
+        drbfm_single_request.relFunctionId,
+        drbfm_single_request.requestDesc,
+        drbfm_single_request.requestChanges,
+        drbfm_single_request.relEffect,
+        drbfm_single_request.riskDesc,
+        drbfm_single_request.compareToJP,
+        drbfm_single_request.riskLevel,
+        drbfm_single_request.yanzhongduLevel,
+        drbfm_single_request.fashengduLevel,
+        drbfm_single_request.tanceduLevel,
+        drbfm_single_request.interfaceRequestStructId,
+        drbfm_single_request.CREATE_BY_,
+        drbfm_single_request.CREATE_TIME_,
+        drbfm_single_request.TENANT_ID_,
+        drbfm_single_request.UPDATE_BY_,
+        drbfm_single_request.UPDATE_TIME_,
+        drbfm_single_sxms.sxmsName AS sxmsName,
+        drbfm_single_sxms.id AS relSxmsId,
+        CONCAT( drbfm_total_struct.structName, ": ", ss.sxmsName ) AS sxyyName,
+        drbfm_single_fxpg.id AS fxpgId,
+        drbfm_single_fxpg.csyxj,
+        drbfm_single_fxpg.riskLevelFinal,
+        drbfm_single_fxpg.gjyfcs,
+        drbfm_single_fxpg.gjtccs,
+        drbfm_single_function.relDimensionKeys as relDimensionKeys,
+        drbfm_single_function.relDimensionNames as relDimensionNames,
+        drbfm_single_function.functionDesc as relFunctionDesc
+        FROM
+        drbfm_single_request
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        LEFT JOIN drbfm_single_sxms  ON drbfm_single_request.id = drbfm_single_sxms.yqid
+        LEFT JOIN drbfm_single_sxms_relation ON drbfm_single_sxms.id = drbfm_single_sxms_relation.baseId
+        LEFT JOIN drbfm_single_sxms ss ON drbfm_single_sxms_relation.relId = ss.id
+        LEFT JOIN drbfm_single_fxpg ON ss.id = drbfm_single_fxpg.sxyyId and drbfm_single_sxms.id = drbfm_single_fxpg.sxmsId
+        LEFT JOIN drbfm_single_baseinfo  ON ss.partId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct  ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        <where>
+            drbfm_single_request.belongSingleId=#{belongSingleId}
+            AND (drbfm_single_request.belongCollectFlowId IS NULL OR drbfm_single_request.belongCollectFlowId = '')
+            <if test="csyxj != null and csyxj != ''">
+                and drbfm_single_fxpg.csyxj = #{csyxj}
+            </if>
+            <if test="riskLevelFinal != null and riskLevelFinal != ''">
+                and drbfm_single_fxpg.riskLevelFinal = #{riskLevelFinal}
+            </if>
+        </where>
+        ORDER BY
+        drbfm_single_sxms.sxmsName,
+        drbfm_single_function.functionDesc,
+        drbfm_single_request.requestDesc,
+        ss.sxmsName
+
+
+
+    </select>
+    <select id="getRequestListByJSId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_request.*,
+        drbfm_total_struct.structName,
+        drbfm_single_function.functionDesc as relFunctionDesc
+        FROM
+        drbfm_single_request
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        LEFT JOIN drbfm_total_struct ON drbfm_total_struct.id = drbfm_single_request.interfaceRequestStructId
+        <where>
+            drbfm_single_request.belongJSId=#{jsId}
+            <if test="requestDesc != null and requestDesc != ''">
+                and drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+            <if test="riskLevel != null and riskLevel != ''">
+                and drbfm_single_request.riskLevel = #{riskLevel}
+            </if>
+
+        </where>
+        order by drbfm_single_request.relFunctionId
+    </select>
+
+    <select id="getRequestListByCollectId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_request.*,
+        drbfm_total_struct.structName,
+        drbfm_single_function.functionDesc as relFunctionDesc
+        FROM
+        drbfm_single_request
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        LEFT JOIN drbfm_total_struct ON drbfm_total_struct.id = drbfm_single_request.interfaceRequestStructId
+        <where>
+            drbfm_single_request.belongCollectFlowId=#{belongCollectFlowId}
+            <if test="requestDesc != null and requestDesc != ''">
+                and drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+            <if test="riskLevel != null and riskLevel != ''">
+                and drbfm_single_request.riskLevel = #{riskLevel}
+            </if>
+
+        </where>
+        order by drbfm_single_request.relFunctionId
+    </select>
+
+    <select id="getRequestCollectList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_request.*,
+            drbfm_total_struct.structName,
+            drbfm_single_function.functionDesc as relFunctionDesc,
+            drbfm_change_dimension.relSxmsId
+        FROM
+            drbfm_single_interfacecollectflow
+            LEFT JOIN drbfm_single_request ON drbfm_single_interfacecollectflow.id = drbfm_single_request.belongCollectFlowId
+            LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+            LEFT JOIN drbfm_total_struct ON drbfm_total_struct.id = drbfm_single_request.interfaceRequestStructId
+            LEFT JOIN bpm_inst ON drbfm_single_interfacecollectflow.id = bpm_inst.BUS_KEY_
+            LEFT JOIN drbfm_change_dimension ON drbfm_change_dimension.yqid = drbfm_single_request.id
+        <where>
+            drbfm_single_request.id IS NOT NULL AND drbfm_single_request.id != ''
+            AND bpm_inst.STATUS_ = 'SUCCESS_END'
+            AND drbfm_single_request.belongSingleId=#{belongSingleId}
+            <if test="requestDesc != null and requestDesc != ''">
+                and drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+            <if test="riskLevel != null and riskLevel != ''">
+                and drbfm_single_request.riskLevel = #{riskLevel}
+            </if>
+
+        </where>
+        order by drbfm_single_request.relFunctionId
+    </select>
+
+    <insert id="createRequest" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_request(
+        id
+        ,belongSingleId
+        ,belongCollectFlowId
+        ,belongJSId
+        ,relFunctionId
+        ,relDimensionKeys
+        ,relDimensionNames
+        ,requestDesc
+        ,requestChanges
+        ,relEffect
+        ,riskDesc
+        ,compareToJP
+        ,riskLevel
+        ,interfaceRequestStructId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{belongSingleId,jdbcType=VARCHAR},
+        #{belongCollectFlowId,jdbcType=VARCHAR},
+        #{belongJSId,jdbcType=VARCHAR},
+        #{relFunctionId,jdbcType=VARCHAR},
+        #{relDimensionKeys,jdbcType=VARCHAR},
+        #{relDimensionNames,jdbcType=VARCHAR},
+        #{requestDesc,jdbcType=VARCHAR},
+        #{requestChanges,jdbcType=VARCHAR},
+        #{relEffect,jdbcType=VARCHAR},
+        #{riskDesc,jdbcType=VARCHAR},
+        #{compareToJP,jdbcType=VARCHAR},
+        #{riskLevel,jdbcType=VARCHAR},
+        #{interfaceRequestStructId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateRequest" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_request
+        set
+            belongCollectFlowId=#{belongCollectFlowId,jdbcType=VARCHAR},
+            belongJSId=#{belongJSId,jdbcType=VARCHAR},
+            relFunctionId=#{relFunctionId,jdbcType=VARCHAR},
+            relDimensionKeys=#{relDimensionKeys,jdbcType=VARCHAR},
+            relDimensionNames=#{relDimensionNames,jdbcType=VARCHAR},
+            requestDesc=#{requestDesc,jdbcType=VARCHAR},
+            requestChanges=#{requestChanges,jdbcType=VARCHAR},
+            relEffect=#{relEffect,jdbcType=VARCHAR},
+            riskDesc=#{riskDesc,jdbcType=VARCHAR},
+            compareToJP=#{compareToJP,jdbcType=VARCHAR},
+            riskLevel=#{riskLevel,jdbcType=VARCHAR},
+            interfaceRequestStructId=#{interfaceRequestStructId,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <select id="queryRequestById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_request.id,
+        drbfm_single_request.belongSingleId,
+        drbfm_single_request.belongCollectFlowId,
+        drbfm_single_request.belongJSId,
+        drbfm_single_request.relFunctionId,
+        drbfm_single_request.requestDesc,
+        drbfm_single_request.requestChanges,
+        drbfm_single_request.relEffect,
+        drbfm_single_request.riskDesc,
+        drbfm_single_request.compareToJP,
+        drbfm_single_request.riskLevel,
+        drbfm_single_request.yanzhongduLevel,
+        drbfm_single_request.fashengduLevel,
+        drbfm_single_request.tanceduLevel,
+        drbfm_single_request.interfaceRequestStructId,
+        drbfm_single_request.CREATE_BY_,
+        drbfm_single_request.CREATE_TIME_,
+        drbfm_single_request.TENANT_ID_,
+        drbfm_single_request.UPDATE_BY_,
+        drbfm_single_request.UPDATE_TIME_,
+        GROUP_CONCAT(drbfm_total_struct.structName separator '-')  AS structName,
+        drbfm_single_function.relDimensionKeys,
+        drbfm_single_function.relDimensionNames,
+        drbfm_single_function.functionDesc
+        FROM
+        drbfm_single_request
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        left join drbfm_total_struct on   FIND_IN_SET(drbfm_total_struct.id,drbfm_single_request.interfaceRequestStructId)
+        where
+        drbfm_single_request.id=#{id}
+    </select>
+    <delete id="deleteRequest" parameterType="java.util.Map">
+        delete from drbfm_single_request
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND belongSingleId = #{belongSingleId}
+            </if>
+        </where>
+    </delete>
+
+    <select id="getQuotaList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        B.quotaName AS replaceQuotaName,
+        C.requestDesc,
+        S.sxmsName,
+        drbfm_single_function.functionDesc,
+        T.maxlv
+        FROM
+        drbfm_single_quota A
+        LEFT JOIN drbfm_single_quota B ON B.id = A.replaceQuotaId
+        LEFT JOIN drbfm_single_sxms S on A.relSxmsId=S.id
+        LEFT JOIN drbfm_single_request C ON C.id = A.relRequestId
+        LEFT JOIN drbfm_single_function ON C.relFunctionId = drbfm_single_function.id
+        LEFT JOIN (
+        SELECT
+        sxyyId,
+        max( txlevel ) maxlv
+        FROM
+        (
+        SELECT
+        drbfm_single_fxpg.sxyyId,
+        drbfm_single_fxpg.fsd,
+        drbfm_single_fxpg.partId,
+        pg1.yzd,
+        CASE
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 8 THEN "4"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 6 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 9 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &gt;= 4 THEN "3"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 6 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 9 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &lt; 4 THEN "1"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 4 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 7 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &gt;= 5 THEN "3"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 4 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 7 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &lt; 5 THEN "1"
+        WHEN pg1.yzd IS NULL OR drbfm_single_fxpg.fsd IS NULL THEN "0" ELSE "2"
+        END AS txlevel
+        FROM
+        drbfm_single_fxpg
+        LEFT JOIN drbfm_single_fxpg pg1 ON drbfm_single_fxpg.sxmsId = pg1.sxmsId
+        WHERE
+        drbfm_single_fxpg.sxyyId IS NOT NULL
+        AND pg1.sxyyId IS NULL
+        ) r
+        GROUP BY
+        sxyyId
+        ) T ON A.relSxmsId = T.sxyyId
+        <where>
+            (A.belongCollectFlowId IS NULL OR A.belongCollectFlowId = '')
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND A.belongSingleId=#{belongSingleId}
+            </if>
+            <if test="validStatus !=null and validStatus !=''">
+                AND A.validStatus = #{validStatus}
+            </if>
+            <if test="quotaName !=null and quotaName !=''">
+                AND A.quotaName like CONCAT('%', #{quotaName},'%')
+            </if>
+            <if test="belongSingleIds != null and belongSingleIds !=''">
+                AND A.belongSingleId IN
+                <foreach collection="belongSingleIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by C.relFunctionId,C.id
+    </select>
+
+    <select id="getQuotaListByJSList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        B.quotaName AS replaceQuotaName,
+        C.requestDesc,
+        drbfm_single_function.functionDesc
+        FROM
+        drbfm_single_quota A
+        LEFT JOIN drbfm_single_quota B ON B.id = A.replaceQuotaId
+        LEFT JOIN drbfm_single_request C ON C.id = A.relRequestId
+        LEFT JOIN drbfm_single_function ON C.relFunctionId = drbfm_single_function.id
+        <where>
+            A.belongJSId = #{jsId}
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND A.belongSingleId=#{belongSingleId}
+            </if>
+            <if test="validStatus !=null and validStatus !=''">
+                AND A.validStatus = #{validStatus}
+            </if>
+            <if test="quotaName !=null and quotaName !=''">
+                AND A.quotaName like CONCAT('%', #{quotaName},'%')
+            </if>
+            <if test="belongSingleIds != null and belongSingleIds !=''">
+                AND A.belongSingleId IN
+                <foreach collection="belongSingleIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by C.relFunctionId,C.id
+    </select>
+
+    <select id="getQuotaCollectList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.quotaName AS replaceQuotaName,
+            C.requestDesc,
+            drbfm_single_function.functionDesc,
+            drbfm_total_struct.analyseUserId
+        FROM
+            drbfm_single_interfacecollectflow F
+            LEFT JOIN drbfm_single_quota A ON F.id = A.belongCollectFlowId
+            LEFT JOIN drbfm_single_quota B ON B.id = A.replaceQuotaId
+            LEFT JOIN drbfm_single_request C ON C.id = A.relRequestId
+            LEFT JOIN drbfm_single_function ON C.relFunctionId = drbfm_single_function.id
+            LEFT JOIN bpm_inst ON F.id = bpm_inst.BUS_KEY_
+            LEFT JOIN drbfm_total_struct ON F.structId = drbfm_total_struct.id
+        <where>
+            A.id IS NOT NULL
+            AND A.id != ''
+            AND bpm_inst.STATUS_ = 'SUCCESS_END'
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND A.belongSingleId=#{belongSingleId}
+            </if>
+            <if test="validStatus !=null and validStatus !=''">
+                AND A.validStatus = #{validStatus}
+            </if>
+            <if test="quotaName !=null and quotaName !=''">
+                AND A.quotaName like CONCAT('%', #{quotaName},'%')
+            </if>
+            <if test="belongSingleIds != null and belongSingleIds !=''">
+                AND A.belongSingleId IN
+                <foreach collection="belongSingleIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by C.relFunctionId,C.id
+    </select>
+
+    <insert id="createQuota" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_quota(
+        id
+        ,belongSingleId
+        ,belongCollectFlowId
+        ,belongJSId
+        ,relRequestId
+        ,relSxmsId
+        ,maxlvLock
+        ,quotaName
+        ,sjStandardValue
+        ,validStatus
+        ,replaceQuotaId
+        ,keyCTQ
+        ,sjStandardIds
+        ,sjStandardLock
+        ,testStandardIds
+        ,testStandardLock
+        ,evaluateStandardIds
+        ,evaluateStandardLock
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{belongSingleId,jdbcType=VARCHAR},
+        #{belongCollectFlowId,jdbcType=VARCHAR},
+        #{belongJSId,jdbcType=VARCHAR},
+        #{relRequestId,jdbcType=VARCHAR},
+        #{relSxmsId,jdbcType=VARCHAR},
+        #{maxlvLock,jdbcType=VARCHAR},
+        #{quotaName,jdbcType=VARCHAR},
+        #{sjStandardValue,jdbcType=VARCHAR},
+        #{validStatus,jdbcType=VARCHAR},
+        #{replaceQuotaId,jdbcType=VARCHAR},
+        #{keyCTQ,jdbcType=VARCHAR},
+        #{sjStandardIds,jdbcType=VARCHAR},
+        #{sjStandardLock,jdbcType=VARCHAR},
+        #{testStandardIds,jdbcType=VARCHAR},
+        #{testStandardLock,jdbcType=VARCHAR},
+        #{evaluateStandardIds,jdbcType=VARCHAR},
+        #{evaluateStandardLock,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateQuota" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_quota
+        set
+            belongCollectFlowId=#{belongCollectFlowId,jdbcType=VARCHAR},
+            belongJSId=#{belongJSId,jdbcType=VARCHAR},
+            relRequestId=#{relRequestId,jdbcType=VARCHAR},
+            relSxmsId=#{relSxmsId,jdbcType=VARCHAR},
+            maxlvLock=#{maxlvLock,jdbcType=VARCHAR},
+            quotaName=#{quotaName,jdbcType=VARCHAR},
+            sjStandardValue=#{sjStandardValue,jdbcType=VARCHAR},
+            validStatus=#{validStatus,jdbcType=VARCHAR},
+            replaceQuotaId=#{replaceQuotaId,jdbcType=VARCHAR},
+            keyCTQ=#{keyCTQ,jdbcType=VARCHAR},
+            sjStandardIds=#{sjStandardIds,jdbcType=VARCHAR},
+            sjStandardLock=#{sjStandardLock,jdbcType=VARCHAR},
+            testStandardIds=#{testStandardIds,jdbcType=VARCHAR},
+            testStandardLock=#{testStandardLock,jdbcType=VARCHAR},
+            evaluateStandardIds=#{evaluateStandardIds,jdbcType=VARCHAR},
+            evaluateStandardLock=#{evaluateStandardLock,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <select id="queryQuotaById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        B.quotaName AS replaceQuotaName,
+        C.requestDesc,
+        D.sxmsName
+        FROM
+        drbfm_single_quota A
+        LEFT JOIN drbfm_single_quota B ON B.id = A.replaceQuotaId
+        LEFT JOIN drbfm_single_request C ON C.id = A.relRequestId
+        LEFT JOIN drbfm_single_sxms D on A.relSxmsId = D.id
+        where
+        A.id=#{id}
+    </select>
+    <delete id="deleteQuota" parameterType="java.util.Map">
+        delete from drbfm_single_quota
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND belongSingleId = #{belongSingleId}
+            </if>
+        </where>
+    </delete>
+
+    <select id="getQuotaWithEvaluateList"  parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        drbfm_single_quota.*,
+        drbfm_single_request.requestDesc AS relRequestDesc,
+        drbfm_single_request.relFunctionId,
+        drbfm_single_request.requestChanges,
+        drbfm_single_request.relEffect,
+        drbfm_single_request.riskDesc,
+        drbfm_single_request.compareToJP,
+        drbfm_single_request.riskLevel,
+        drbfm_single_request.relDimensionNames,
+        drbfm_single_request.interfaceRequestStructId,
+        drbfm_single_quota_replace.quotaName AS replaceQuotaName,
+        drbfm_single_quotaEvaluate.overallResult,
+        drbfm_single_quotaEvaluate.resultDesc,
+        drbfm_single_quotaEvaluate.badReasonDesc,
+        drbfm_single_quotaEvaluate.badImproveDesc,
+        drbfm_single_quotaEvaluate.evaluateStatus,
+        T.maxlv
+        FROM
+        drbfm_single_quota
+        LEFT JOIN drbfm_single_request ON drbfm_single_quota.relRequestId = drbfm_single_request.id
+        LEFT JOIN drbfm_single_quota AS drbfm_single_quota_replace ON drbfm_single_quota.replaceQuotaId = drbfm_single_quota_replace.id
+        LEFT JOIN (
+        select * from drbfm_single_quotaEvaluate where drbfm_single_quotaEvaluate.evaluateStatus = '当前'
+        )drbfm_single_quotaEvaluate ON drbfm_single_quota.id = drbfm_single_quotaEvaluate.belongQuotaId
+        LEFT JOIN (
+        SELECT
+        sxyyId,
+        max( txlevel ) maxlv
+        FROM
+        (
+        SELECT
+        drbfm_single_fxpg.sxyyId,
+        drbfm_single_fxpg.fsd,
+        drbfm_single_fxpg.partId,
+        pg1.yzd,
+        CASE
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 8 THEN "4"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 6 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 9 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &gt;= 4 THEN "3"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 6 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 9 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &lt; 4 THEN "1"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 4 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 7 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &gt;= 5 THEN "3"
+        WHEN CONVERT ( pg1.yzd, UNSIGNED ) &gt; 4 AND CONVERT ( pg1.yzd, UNSIGNED ) &lt; 7 AND CONVERT ( drbfm_single_fxpg.fsd, UNSIGNED ) &lt; 5 THEN "1"
+        WHEN pg1.yzd IS NULL OR drbfm_single_fxpg.fsd IS NULL THEN "0" ELSE "2"
+        END AS txlevel
+        FROM
+        drbfm_single_fxpg
+        LEFT JOIN drbfm_single_fxpg pg1 ON drbfm_single_fxpg.sxmsId = pg1.sxmsId
+        WHERE
+        drbfm_single_fxpg.sxyyId IS NOT NULL
+        AND pg1.sxyyId IS NULL
+        ) r
+        GROUP BY
+        sxyyId
+        ) T ON drbfm_single_quota.relSxmsId = T.sxyyId
+        <where>
+            <if test="belongSingleId !=null and belongSingleId !=''">
+                drbfm_single_quota.belongSingleId = #{belongSingleId}
+            </if>
+            <if test="validStatus !=null and validStatus !=''">
+                AND drbfm_single_quota.validStatus = #{validStatus}
+            </if>
+            <if test="quotaName !=null and quotaName !=''">
+                AND drbfm_single_quota.quotaName like CONCAT('%', #{quotaName},'%')
+            </if>
+            <if test="overallResult !=null and overallResult !=''">
+                AND drbfm_single_quotaEvaluate.overallResult = #{overallResult}
+            </if>
+            <if test="belongSingleIds !=null and belongSingleIds !=''">
+                AND drbfm_single_quota.belongSingleId IN
+                <foreach collection="belongSingleIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by drbfm_single_quota.belongSingleId
+    </select>
+
+    <select id="getOneQuotaEvaluateList"  parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_quotaEvaluate.*,
+            os_user.FULLNAME_ AS updator
+        FROM
+            drbfm_single_quotaEvaluate
+            LEFT JOIN os_user ON drbfm_single_quotaEvaluate.UPDATE_BY_ = os_user.USER_ID_
+        WHERE
+            drbfm_single_quotaEvaluate.belongSingleId = #{belongSingleId}
+            AND drbfm_single_quotaEvaluate.belongQuotaId = #{belongQuotaId}
+        ORDER BY drbfm_single_quotaEvaluate.UPDATE_TIME_ desc
+    </select>
+
+    <update id="updateQuotaCTQ" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_quota
+        set
+            keyCTQ=#{keyCTQ,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <update id="updateQuotaStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_quota
+        set
+            validStatus=#{validStatus,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            stopTime=#{stopTime,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <insert id="createQuotaEvaluate" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_quotaEvaluate(
+        id
+        ,belongSingleId
+        ,belongQuotaId
+        ,overallResult
+        ,resultDesc
+        ,badReasonDesc
+        ,badImproveDesc
+        ,evaluateStatus
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        ,UPDATE_BY_
+        ,UPDATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{belongSingleId,jdbcType=VARCHAR},
+        #{belongQuotaId,jdbcType=VARCHAR},
+        #{overallResult,jdbcType=VARCHAR},
+        #{resultDesc,jdbcType=VARCHAR},
+        #{badReasonDesc,jdbcType=VARCHAR},
+        #{badImproveDesc,jdbcType=VARCHAR},
+        #{evaluateStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{UPDATE_BY_,jdbcType=VARCHAR},
+        #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateQuotaEvaluate" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_quotaEvaluate
+        set
+            overallResult=#{overallResult,jdbcType=VARCHAR},
+            resultDesc=#{resultDesc,jdbcType=VARCHAR},
+            badReasonDesc=#{badReasonDesc,jdbcType=VARCHAR},
+            badImproveDesc=#{badImproveDesc,jdbcType=VARCHAR},
+            evaluateStatus=#{evaluateStatus,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <delete id="deleteQuotaEvaluate" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_quotaEvaluate
+        <where>
+            <if test="id !=null and id !=''">
+                id = #{id}
+            </if>
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND belongSingleId = #{belongSingleId}
+            </if>
+        </where>
+    </delete>
+    
+    <select id="updateRequestRiskLevelFinal" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_fxpg
+        set
+        riskLevelFinal = #{riskLevelFinal},
+        gjyfcs =#{gjyfcs},
+        gjtccs =#{gjtccs}
+        where
+        id = #{id}
+    </select>
+
+    <delete id="deleteNextWork" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_nextWork
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND belongSingleId = #{belongSingleId}
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryNextWork" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_nextWork.*,
+        os_user.FULLNAME_ as creator
+        FROM
+        drbfm_single_nextWork
+        left join os_user on drbfm_single_nextWork.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="belongSingleId != null and belongSingleId !=''">
+                belongSingleId = #{belongSingleId}
+            </if>
+            <if test="relTestTaskId != null and relTestTaskId !=''">
+                AND relTestTaskId = #{relTestTaskId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="createNextWork" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_nextWork(
+            id,
+            belongSingleId,
+            relTestTaskId,
+            nextWorkContent,
+            respDeptIds,
+            respDeptNames,
+            finishFlag,
+            finishTime,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{belongSingleId,jdbcType=VARCHAR},
+        #{relTestTaskId,jdbcType=VARCHAR},
+        #{nextWorkContent,jdbcType=VARCHAR},
+        #{respDeptIds,jdbcType=VARCHAR},
+        #{respDeptNames,jdbcType=VARCHAR},
+        #{finishFlag,jdbcType=VARCHAR},
+        #{finishTime,jdbcType=TIMESTAMP},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateNextWork" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_nextWork
+        set
+            nextWorkContent=#{nextWorkContent,jdbcType=VARCHAR},
+            respDeptIds=#{respDeptIds,jdbcType=VARCHAR},
+            respDeptNames=#{respDeptNames,jdbcType=VARCHAR},
+            finishFlag=#{finishFlag,jdbcType=VARCHAR},
+            finishTime=#{finishTime,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <update id="updateStandard" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_quota
+        set
+        sjStandardIds=#{sjStandardIds,jdbcType=VARCHAR},
+        testStandardIds=#{testStandardIds,jdbcType=VARCHAR},
+        evaluateStandardIds=#{evaluateStandardIds,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <select id="querySingleByStruct" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select * from
+        drbfm_single_baseInfo
+        where
+        structId IN
+        <foreach collection="structIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <delete id="deleteSingleBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_baseInfo
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="id !=null and id !=''">
+                AND id =#{id}
+            </if>
+        </where>
+    </delete>
+
+    <select id="getDeptDemandCollectList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_deptDemandCollectFlow.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_ AS instId,
+        drbfm_total_struct.structName,
+        drbfm_total_baseInfo.jixing,
+        drbfm_single_baseinfo.structType,
+        drbfm_single_baseinfo.singleNumber,
+        os_user.FULLNAME_ AS creator
+        FROM
+        drbfm_single_deptDemandCollectFlow
+        LEFT JOIN drbfm_single_baseinfo ON drbfm_single_deptDemandCollectFlow.belongSingleId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN bpm_inst ON drbfm_single_deptDemandCollectFlow.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_user ON drbfm_single_deptDemandCollectFlow.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="structName != null and structName != ''">
+                drbfm_total_struct.structName like CONCAT('%',#{structName},'%')
+            </if>
+            <if test="demandFeedBackDeptName != null and demandFeedBackDeptName != ''">
+                and demandFeedBackDeptName like CONCAT('%',#{demandFeedBackDeptName},'%')
+            </if>
+            <if test="demandFeedBackUserName != null and demandFeedBackUserName != ''">
+                and demandFeedBackUserName like CONCAT('%',#{demandFeedBackUserName},'%')
+            </if>
+            <if test="jixing != null and jixing != ''">
+                AND drbfm_total_baseInfo.jixing like CONCAT('%',#{jixing},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_ = #{instStatus}
+            </if>
+            <if test="singleNumber != null and singleNumber != ''">
+                AND drbfm_single_baseinfo.singleNumber like CONCAT('%',#{singleNumber},'%')
+            </if>
+            <if test="creator != null and creator != ''">
+                AND os_user.FULLNAME_ like CONCAT('%',#{creator},'%')
+            </if>
+            <if test="belongSingleId != null and belongSingleId != ''">
+                AND drbfm_single_deptDemandCollectFlow.belongSingleId = #{belongSingleId}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countDeptDemandCollectList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select
+          count(*)
+        FROM
+        drbfm_single_deptDemandCollectFlow
+        LEFT JOIN drbfm_single_baseinfo ON drbfm_single_deptDemandCollectFlow.belongSingleId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN bpm_inst ON drbfm_single_deptDemandCollectFlow.id = bpm_inst.BUS_KEY_
+        <where>
+            <if test="structName != null and structName != ''">
+                drbfm_total_struct.structName like CONCAT('%',#{structName},'%')
+            </if>
+            <if test="demandFeedBackDeptName != null and demandFeedBackDeptName != ''">
+                and demandFeedBackDeptName like CONCAT('%',#{demandFeedBackDeptName},'%')
+            </if>
+            <if test="demandFeedBackUserName != null and demandFeedBackUserName != ''">
+                and demandFeedBackUserName like CONCAT('%',#{demandFeedBackUserName},'%')
+            </if>
+            <if test="jixing != null and jixing != ''">
+                AND drbfm_total_baseInfo.jixing like CONCAT('%',#{jixing},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_ = #{instStatus}
+            </if>
+            <if test="singleNumber != null and singleNumber != ''">
+                AND drbfm_single_baseinfo.singleNumber like CONCAT('%',#{singleNumber},'%')
+            </if>
+            <if test="creator != null and creator != ''">
+                AND os_user.FULLNAME_ like CONCAT('%',#{creator},'%')
+            </if>
+            <if test="belongSingleId != null and belongSingleId != ''">
+                AND drbfm_single_deptDemandCollectFlow.belongSingleId = #{belongSingleId}
+            </if>
+        </where>
+    </select>
+
+    <select id="getDeptDemandCollectJson" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_deptDemandCollectFlow.*,
+            drbfm_total_struct.structNumber,
+            drbfm_total_struct.structName,
+            drbfm_total_baseInfo.jixing,
+            drbfm_single_baseinfo.structType,
+            drbfm_single_baseinfo.singleNumber,
+            bpm_inst.INST_ID_ AS instId,
+            os_user.FULLNAME_ AS creator
+        FROM
+            drbfm_single_deptDemandCollectFlow
+            LEFT JOIN drbfm_single_baseinfo ON drbfm_single_deptDemandCollectFlow.belongSingleId = drbfm_single_baseinfo.id
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+            LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+            LEFT JOIN os_user ON drbfm_single_deptDemandCollectFlow.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN bpm_inst ON drbfm_single_deptDemandCollectFlow.id = bpm_inst.BUS_KEY_
+        WHERE
+            drbfm_single_deptDemandCollectFlow.id = #{id}
+    </select>
+
+    <insert id="createDemandCollectFlow" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_deptDemandCollectFlow(
+        id
+        ,belongSingleId
+        ,demandFeedBackUserId
+        ,demandFeedBackUserName
+        ,demandFeedBackDeptId
+        ,demandFeedBackDeptName
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{belongSingleId,jdbcType=VARCHAR},
+        #{demandFeedBackUserId,jdbcType=VARCHAR},
+        #{demandFeedBackUserName,jdbcType=VARCHAR},
+        #{demandFeedBackDeptId,jdbcType=VARCHAR},
+        #{demandFeedBackDeptName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <delete id="deleteDemandCollectFlow" parameterType="java.util.Map">
+        delete from drbfm_single_deptDemandCollectFlow
+        <where>
+            id IN
+            <foreach collection="demandCollectIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </delete>
+    <select id="getOneCollectDemandList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from drbfm_single_deptDemand
+        where
+        belongCollectFlowId=#{belongCollectFlowId}
+    </select>
+
+    <select id="getFunctionExport" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_function.*,
+        drbfm_total_struct.structName,
+        drbfm_single_deptDemand.demandDesc
+        FROM
+        drbfm_single_function
+        LEFT JOIN drbfm_single_deptDemand ON drbfm_single_deptDemand.id = drbfm_single_function.relDeptDemandId
+        LEFT JOIN drbfm_total_struct ON drbfm_total_struct.id = drbfm_single_function.interfaceRequestStructId
+        <where>
+            drbfm_single_function.belongSingleId=#{belongSingleId}
+            AND (drbfm_single_function.belongCollectFlowId IS NULL OR drbfm_single_function.belongCollectFlowId ='')
+            <if test="relDimensionNames != null and relDimensionNames != ''">
+                and drbfm_single_function.relDimensionNames like CONCAT('%',#{relDimensionNames},'%')
+            </if>
+            <if test="functionDesc != null and functionDesc != ''">
+                and drbfm_single_function.functionDesc like CONCAT('%',#{functionDesc},'%')
+            </if>
+        </where>
+        ORDER BY drbfm_single_function.relDimensionNames,drbfm_single_function.functionDesc,drbfm_single_deptDemand.demandDesc
+    </select>
+
+    <select id="getRequestExport" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_request.*,
+        drbfm_total_struct.structName,
+        drbfm_single_function.functionDesc as relFunctionDesc
+        FROM
+        drbfm_single_request
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        LEFT JOIN drbfm_total_struct ON drbfm_total_struct.id = drbfm_single_request.interfaceRequestStructId
+        <where>
+            drbfm_single_request.belongSingleId=#{belongSingleId}
+            AND (drbfm_single_request.belongCollectFlowId IS NULL OR drbfm_single_request.belongCollectFlowId = '')
+            <if test="requestDesc != null and requestDesc != ''">
+                and drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+            <if test="riskLevel != null and riskLevel != ''">
+                and drbfm_single_request.riskLevel = #{riskLevel}
+            </if>
+
+        </where>
+        ORDER BY drbfm_single_request.relDimensionNames,drbfm_single_function.functionDesc,drbfm_single_request.requestDesc
+    </select>
+
+    <select id="getQuotaExport" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        B.quotaName AS replaceQuotaName,
+        C.requestDesc,
+        drbfm_single_function.functionDesc
+        FROM
+        drbfm_single_quota A
+        LEFT JOIN drbfm_single_quota B ON B.id = A.replaceQuotaId
+        LEFT JOIN drbfm_single_request C ON C.id = A.relRequestId
+        LEFT JOIN drbfm_single_function ON C.relFunctionId = drbfm_single_function.id
+        <where>
+            (A.belongCollectFlowId IS NULL OR A.belongCollectFlowId = '')
+            <if test="belongSingleId != null and belongSingleId !=''">
+                AND A.belongSingleId=#{belongSingleId}
+            </if>
+            <if test="validStatus !=null and validStatus !=''">
+                AND A.validStatus = #{validStatus}
+            </if>
+            <if test="quotaName !=null and quotaName !=''">
+                AND A.quotaName like CONCAT('%', #{quotaName},'%')
+            </if>
+            <if test="belongSingleIds != null and belongSingleIds !=''">
+                AND A.belongSingleId IN
+                <foreach collection="belongSingleIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY drbfm_single_function.functionDesc,C.requestDesc,A.quotaName
+    </select>
+
+    <select id="queryTotalStructDetailById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.belongTotalId,
+            B.structNumber,
+            B.structName,
+            B.analyseUserId,
+            B.analyseUserName,
+            B.CREATE_BY_ AS cpzgId,
+			C.FULLNAME_ AS cpzgName,
+            B.CREATE_TIME_
+
+        FROM
+            drbfm_single_interfacecollectflow A
+            LEFT JOIN drbfm_total_struct B ON A.structId = B.id
+			LEFT JOIN os_user C ON B.CREATE_BY_ = C.USER_ID_
+        where
+            A.id=#{id}
+    </select>
+
+    <insert id="createSingleInterfaceCollectFlow" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_interfacecollectflow(
+        id
+        ,structId
+        ,interfaceFeedBackUserName
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{structId,jdbcType=VARCHAR},
+        #{interfaceFeedBackUserName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <select id="getInterfaceCollectList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_interfacecollectflow.*,
+        drbfm_total_struct.structName,
+        drbfm_total_baseInfo.analyseName,
+        drbfm_total_baseInfo.jixing,
+        drbfm_total_baseInfo.id as totalId,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_ AS instId,
+        os_user.FULLNAME_ AS creator,
+        drbfm_total_struct.analyseUserName,
+        drbfm_total_struct.analyseUserId,
+        drbfm_total_struct.structNumber,
+        drbfm_total_struct.CREATE_BY_ AS cpzgId,
+        A.FULLNAME_ AS cpzgName
+        FROM
+        drbfm_single_interfacecollectflow
+        LEFT JOIN drbfm_total_struct ON drbfm_single_interfacecollectflow.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN bpm_inst ON drbfm_single_interfacecollectflow.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_user ON drbfm_single_interfacecollectflow.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN os_user A ON drbfm_total_struct.CREATE_BY_ = A.USER_ID_
+        <where>
+            1=1
+            <if test="analyseName != null and analyseName != ''">
+                and drbfm_total_baseInfo.analyseName like CONCAT('%',#{analyseName},'%')
+            </if>
+            <if test="structName != null and structName != ''">
+                and drbfm_total_struct.structName like CONCAT('%',#{structName},'%')
+            </if>
+            <if test="analyseUserName != null and analyseUserName != ''">
+                and drbfm_total_struct.analyseUserName like CONCAT('%',#{analyseUserName},'%')
+            </if>
+            <if test="jixing != null and jixing != ''">
+                and drbfm_total_baseInfo.jixing like CONCAT('%',#{jixing},'%')
+            </if>
+            <if test="creator != null and creator != ''">
+                and os_user.FULLNAME_ like CONCAT('%',#{creator},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                and bpm_inst.STATUS_ like CONCAT('%',#{instStatus},'%')
+            </if>
+            <if test="totalIds != null and totalIds !=''">
+                AND drbfm_total_baseInfo.id in
+                <foreach collection="totalIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY drbfm_single_interfacecollectflow.CREATE_TIME_ DESC
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countInterfaceCollectList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        drbfm_single_interfacecollectflow
+        LEFT JOIN drbfm_total_struct ON drbfm_single_interfacecollectflow.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN bpm_inst ON drbfm_single_interfacecollectflow.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_user ON drbfm_single_interfacecollectflow.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="structType != null and structType != ''">
+                drbfm_single_baseinfo.structType like CONCAT('%',#{structType},'%')
+            </if>
+            <if test="analyseName != null and analyseName != ''">
+                and drbfm_total_baseInfo.analyseName like CONCAT('%',#{analyseName},'%')
+            </if>
+            <if test="structName != null and structName != ''">
+                and drbfm_total_struct.structName like CONCAT('%',#{structName},'%')
+            </if>
+            <if test="analyseUserName != null and analyseUserName != ''">
+                and drbfm_total_struct.analyseUserName like CONCAT('%',#{analyseUserName},'%')
+            </if>
+            <if test="jixing != null and jixing != ''">
+                and drbfm_total_baseInfo.jixing like CONCAT('%',#{jixing},'%')
+            </if>
+            <if test="creator != null and creator != ''">
+                and os_user.FULLNAME_ like CONCAT('%',#{creator},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                and bpm_inst.STATUS_ like CONCAT('%',#{instStatus},'%')
+            </if>
+            <if test="totalIds != null and totalIds !=''">
+                AND drbfm_total_baseInfo.id in
+                <foreach collection="totalIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="structIds != null and structIds !=''">
+                AND drbfm_single_baseinfo.structId in
+                <foreach collection="structIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="singleNumber != null and singleNumber !=''">
+                AND drbfm_single_baseinfo.singleNumber like CONCAT('%',#{singleNumber},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="getFunctionInterfaceList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_function.*,
+        drbfm_total_struct.structName,
+        drbfm_single_deptDemand.demandDesc
+        FROM
+        drbfm_single_function
+        LEFT JOIN drbfm_single_deptDemand ON drbfm_single_deptDemand.id = drbfm_single_function.relDeptDemandId
+        LEFT JOIN drbfm_total_struct ON drbfm_total_struct.id = drbfm_single_function.interfaceRequestStructId
+        <where>
+            drbfm_single_function.belongCollectFlowId=#{belongCollectFlowId}
+            <if test="relDimensionNames != null and relDimensionNames != ''">
+                and drbfm_single_function.relDimensionNames like CONCAT('%',#{relDimensionNames},'%')
+            </if>
+            <if test="functionDesc != null and functionDesc != ''">
+                and drbfm_single_function.functionDesc like CONCAT('%',#{functionDesc},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="getRequestInterfaceList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_request.*,
+        drbfm_total_struct.structName,
+        drbfm_single_function.functionDesc as relFunctionDesc
+        FROM
+        drbfm_single_request
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        LEFT JOIN drbfm_total_struct ON drbfm_total_struct.id = drbfm_single_request.interfaceRequestStructId
+        <where>
+            drbfm_single_request.belongCollectFlowId=#{belongCollectFlowId}
+            <if test="requestDesc != null and requestDesc != ''">
+                and drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+            <if test="riskLevel != null and riskLevel != ''">
+                and drbfm_single_request.riskLevel = #{riskLevel}
+            </if>
+        </where>
+        order by drbfm_single_request.relFunctionId
+    </select>
+
+    <select id="getQuotaInterfaceList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        B.quotaName AS replaceQuotaName,
+        C.requestDesc,
+        drbfm_single_function.functionDesc
+        FROM
+        drbfm_single_quota A
+        LEFT JOIN drbfm_single_quota B ON B.id = A.replaceQuotaId
+        LEFT JOIN drbfm_single_request C ON C.id = A.relRequestId
+        LEFT JOIN drbfm_single_function ON C.relFunctionId = drbfm_single_function.id
+        <where>
+            <if test="belongCollectFlowId != null and belongCollectFlowId !=''">
+                A.belongCollectFlowId=#{belongCollectFlowId}
+            </if>
+            <if test="belongSingleId != null and belongSingleId !=''">
+                A.belongSingleId=#{belongSingleId}
+            </if>
+            <if test="validStatus !=null and validStatus !=''">
+                AND A.validStatus = #{validStatus}
+            </if>
+            <if test="quotaName !=null and quotaName !=''">
+                AND A.quotaName like CONCAT('%', #{quotaName},'%')
+            </if>
+            <if test="belongSingleIds != null and belongSingleIds !=''">
+                AND A.belongSingleId IN
+                <foreach collection="belongSingleIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by C.relFunctionId,C.id
+    </select>
+
+    <select id="querySingleIdInterface" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_baseinfo.id,
+            bpm_inst.STATUS_
+        FROM
+            drbfm_single_interfacecollectflow
+        LEFT JOIN
+            drbfm_single_baseinfo ON drbfm_single_interfacecollectflow.structId = drbfm_single_baseinfo.structId
+        LEFT JOIN bpm_inst ON drbfm_single_baseinfo.id = bpm_inst.BUS_KEY_
+        WHERE
+            bpm_inst.STATUS_ != 'DISCARD_END'
+        AND drbfm_single_interfacecollectflow.id = #{id}
+    </select>
+
+    <select id="queryInstIdIdInterface" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            bpm_inst
+        WHERE
+            BUS_KEY_ = #{belongCollectFlowId}
+    </select>
+
+    <delete id="deleteInterfaceCollect" parameterType="java.util.Map">
+        delete from drbfm_single_interfacecollectflow
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteInterfaceFunction" parameterType="java.util.Map">
+        delete from drbfm_single_function
+        <where>
+            <if test="ids != null and ids !=''">
+                belongCollectFlowId IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteInterfaceRequest" parameterType="java.util.Map">
+        delete from drbfm_single_request
+        <where>
+            <if test="ids != null and ids !=''">
+                belongCollectFlowId IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteInterfaceQuota" parameterType="java.util.Map">
+        delete from drbfm_single_quota
+        <where>
+            <if test="ids != null and ids !=''">
+                belongCollectFlowId IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryStatusBySingleId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        act_ru_task.*
+        FROM
+        drbfm_single_baseinfo
+        LEFT JOIN bpm_inst ON drbfm_single_baseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        WHERE
+        drbfm_single_baseinfo.id = #{id}
+    </select>
+
+    <select id="checkSingleInterface" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT bpm_inst.*
+        FROM
+        drbfm_single_baseinfo
+        JOIN drbfm_single_interfacecollectflow ON drbfm_single_baseinfo.structId = drbfm_single_interfacecollectflow.structId
+        JOIN bpm_inst ON drbfm_single_interfacecollectflow.id = bpm_inst.BUS_KEY_
+        WHERE
+        drbfm_single_baseinfo.id = #{id}
+    </select>
+
+    <select id="getYanzhongduPage" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        drbfm_single_yanzhongdu
+        order by drbfm_single_yanzhongdu.yanzhongId
+    </select>
+
+    <select id="getFashengduPage" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        drbfm_single_fashengdu
+        order by drbfm_single_fashengdu.fashengId
+    </select>
+
+    <select id="getTanceduPage" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        drbfm_single_tancedu
+        order by drbfm_single_tancedu.tanceId
+    </select>
+
+    <update id="insertRiskLevelSOD" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_request
+        set
+        yanzhongduLevel=#{yanzhongduLevel,jdbcType=VARCHAR},
+        fashengduLevel=#{fashengduLevel,jdbcType=VARCHAR},
+        tanceduLevel=#{tanceduLevel,jdbcType=VARCHAR}
+        where
+         id=#{id}
+    </update>
+    <update id="insertRiskLevelSODFinal" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_fxpg
+        set
+        riskLevelFinalyzd=#{yanzhongduLevel,jdbcType=VARCHAR},
+        riskLevelFinalfsd=#{fashengduLevel,jdbcType=VARCHAR},
+        riskLevelFinaltcd=#{tanceduLevel,jdbcType=VARCHAR}
+        where
+         id=#{id}
+    </update>
+    <select id="querySODByRequestId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_request.yanzhongduLevel,
+        drbfm_single_request.fashengduLevel,
+        drbfm_single_request.tanceduLevel
+        FROM
+        drbfm_single_request
+         where
+       id=#{id}
+    </select>
+
+    <select id="querySODRiskLevelFinal" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_fxpg.riskLevelFinalyzd,
+        drbfm_single_fxpg.riskLevelFinalfsd,
+        drbfm_single_fxpg.riskLevelFinaltcd
+        FROM
+        drbfm_single_fxpg
+         where
+       id=#{id}
+    </select>
+
+    <select id="getFunctionListByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM drbfm_single_function
+        <where>
+            (belongCollectFlowId IS NULL OR belongCollectFlowId = '')
+            <if test="businessIds != null and businessIds.size() > 0">
+                AND belongSingleId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="getRequestListByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM drbfm_single_request
+        <where>
+            (belongCollectFlowId IS NULL OR belongCollectFlowId = '')
+            <if test="businessIds != null and businessIds.size() > 0">
+                AND belongSingleId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="getQuotaListByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM drbfm_single_quota
+        <where>
+            (belongCollectFlowId IS NULL OR belongCollectFlowId = '')
+            <if test="businessIds != null and businessIds.size() > 0">
+                AND belongSingleId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertFunctionArray" parameterType="java.util.Map">
+        insert into drbfm_single_function(
+        id
+        ,belongSingleId
+        ,belongCollectFlowId
+        ,relDeptDemandId
+        ,relDimensionKeys
+        ,relDimensionNames
+        ,functionDesc
+        ,interfaceRequestStructId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+        (
+        #{item.id,jdbcType=VARCHAR},
+        #{item.belongSingleId,jdbcType=VARCHAR},
+        #{item.belongCollectFlowId,jdbcType=VARCHAR},
+        #{item.relDeptDemandId,jdbcType=VARCHAR},
+        #{item.relDimensionKeys,jdbcType=VARCHAR},
+        #{item.relDimensionNames,jdbcType=VARCHAR},
+        #{item.functionDesc,jdbcType=VARCHAR},
+        #{item.interfaceRequestStructId,jdbcType=VARCHAR},
+        #{item.CREATE_BY_,jdbcType=VARCHAR},
+        #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+        </foreach>
+    </insert>
+
+    <insert id="insertRequestArray" parameterType="java.util.Map">
+        insert into drbfm_single_request(
+        id
+        ,belongSingleId
+        ,belongCollectFlowId
+        ,relFunctionId
+        ,relDimensionKeys
+        ,relDimensionNames
+        ,requestDesc
+        ,requestChanges
+        ,relEffect
+        ,riskDesc
+        ,compareToJP
+        ,riskLevel
+        ,interfaceRequestStructId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+        (
+        #{item.id,jdbcType=VARCHAR},
+        #{item.belongSingleId,jdbcType=VARCHAR},
+        #{item.belongCollectFlowId,jdbcType=VARCHAR},
+        #{item.relFunctionId,jdbcType=VARCHAR},
+        #{item.relDimensionKeys,jdbcType=VARCHAR},
+        #{item.relDimensionNames,jdbcType=VARCHAR},
+        #{item.requestDesc,jdbcType=VARCHAR},
+        #{item.requestChanges,jdbcType=VARCHAR},
+        #{item.relEffect,jdbcType=VARCHAR},
+        #{item.riskDesc,jdbcType=VARCHAR},
+        #{item.compareToJP,jdbcType=VARCHAR},
+        #{item.riskLevel,jdbcType=VARCHAR},
+        #{item.interfaceRequestStructId,jdbcType=VARCHAR},
+        #{item.CREATE_BY_,jdbcType=VARCHAR},
+        #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+        </foreach>
+    </insert>
+
+
+    <insert id="insertQuotaArray" parameterType="java.util.Map">
+        insert into drbfm_single_quota(
+        id
+        ,belongSingleId
+        ,belongCollectFlowId
+        ,relRequestId
+        ,quotaName
+        ,sjStandardValue
+        ,validStatus
+        ,replaceQuotaId
+        ,keyCTQ
+        ,sjStandardIds
+        ,sjStandardLock
+        ,testStandardIds
+        ,testStandardLock
+        ,maxlvLock,
+        ,evaluateStandardIds
+        ,evaluateStandardLock
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+        (
+        #{item.id,jdbcType=VARCHAR},
+        #{item.belongSingleId,jdbcType=VARCHAR},
+        #{item.belongCollectFlowId,jdbcType=VARCHAR},
+        #{item.relRequestId,jdbcType=VARCHAR},
+        #{item.quotaName,jdbcType=VARCHAR},
+        #{item.sjStandardValue,jdbcType=VARCHAR},
+        #{item.validStatus,jdbcType=VARCHAR},
+        #{item.replaceQuotaId,jdbcType=VARCHAR},
+        #{item.keyCTQ,jdbcType=VARCHAR},
+        #{item.sjStandardIds,jdbcType=VARCHAR},
+        #{item.sjStandardLock,jdbcType=VARCHAR},
+        #{item.testStandardIds,jdbcType=VARCHAR},
+        #{item.testStandardLock,jdbcType=VARCHAR},
+        #{item.maxlvLock,jdbcType=VARCHAR},
+        #{item.evaluateStandardIds,jdbcType=VARCHAR},
+        #{item.evaluateStandardLock,jdbcType=VARCHAR},
+        #{item.CREATE_BY_,jdbcType=VARCHAR},
+        #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+        </foreach>
+    </insert>
+
+    <select id="queryFunctionForQuotaExport" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_function.id,
+            drbfm_single_function.functionDesc,
+            drbfm_single_function.relDeptDemandId,
+            drbfm_single_deptdemand.demandDesc
+        FROM
+            drbfm_single_function
+            LEFT JOIN drbfm_single_deptdemand ON drbfm_single_function.relDeptDemandId = drbfm_single_deptdemand.id
+        WHERE
+            drbfm_single_function.id IN
+            <foreach collection="relFunctionIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+    <select id="querySingleForQuotaExport" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_function.id,
+        drbfm_single_function.functionDesc,
+        drbfm_single_function.relDeptDemandId,
+        drbfm_single_deptdemand.demandDesc
+        FROM
+        drbfm_single_function
+        LEFT JOIN drbfm_single_deptdemand ON drbfm_single_function.relDeptDemandId = drbfm_single_deptdemand.id
+        WHERE
+        drbfm_single_function.id IN
+        <foreach collection="relFunctionIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="querySingleBaseForQuotaExport" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_baseinfo.id,
+        drbfm_total_struct.structName,
+        drbfm_single_baseinfo.structType,
+        drbfm_single_nextwork.nextWorkContent,
+        drbfm_total_baseinfo.jixing,
+        drbfm_total_baseinfo.id as totalId
+        FROM
+        drbfm_single_baseinfo
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseinfo ON drbfm_total_baseinfo.id = drbfm_total_struct.belongTotalId
+        LEFT JOIN drbfm_single_nextwork ON drbfm_single_baseinfo.id = drbfm_single_nextwork.belongSingleId
+        WHERE
+        drbfm_single_baseinfo.id IN
+        <foreach collection="singleIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <insert id="insertSxms" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_sxms(
+        id
+        ,yqId
+        ,partId
+        ,sxmsName
+        ,needFxfx
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{yqId,jdbcType=VARCHAR}
+        ,#{partId,jdbcType=VARCHAR}
+        ,#{sxmsName,jdbcType=VARCHAR}
+        ,#{needFxfx,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <insert id="insertSxmsArray" parameterType="java.util.Map">
+        insert into drbfm_single_sxms(
+        id
+        ,yqId
+        ,partId
+        ,sxmsName
+        ,needFxfx
+        ,oldId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.yqId,jdbcType=VARCHAR},
+            #{item.partId,jdbcType=VARCHAR},
+            #{item.sxmsName,jdbcType=VARCHAR},
+            #{item.needFxfx,jdbcType=VARCHAR},
+            #{item.oldId,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateSxms" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_sxms
+        set
+        sxmsName=#{sxmsName,jdbcType=VARCHAR},
+        needFxfx=#{needFxfx,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <update id="batchUpdateSxmsFxfx" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_sxms
+        set
+        needFxfx=#{needFxfx,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        partId=#{partId}
+    </update>
+
+    <delete id="deleteSxms" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_sxms
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND yqId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteSxmsBySingleId" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_sxms
+        where partId = #{partId}
+    </delete>
+
+    <select id="querySxmsList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            drbfm_single_sxms
+        WHERE
+            yqId = #{yqId}
+    </select>
+
+    <select id="querySxmsListBySingleId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            drbfm_single_sxms
+        WHERE
+            partId = #{belongSingleId}
+        <if test="old != null and old !='yes'">
+            AND oldId is not null
+        </if>
+    </select>
+
+    <select id="querySelectSxmsList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_sxms.id,
+            drbfm_single_sxms.sxmsName,
+            drbfm_single_request.requestDesc,
+            drbfm_single_request.relDimensionNames,
+            drbfm_single_request.id AS rqId,
+            drbfm_total_struct.structName
+        FROM
+            drbfm_single_sxms
+            LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+            LEFT JOIN drbfm_single_request ON drbfm_single_sxms.yqId = drbfm_single_request.id
+          WHERE
+            partId = #{belongSingleId}
+        <if test="sxmsName != null and sxmsName != ''">
+            AND sxmsName like CONCAT('%',#{sxmsName},'%')
+        </if>
+        <if test="bjName != null and bjName != ''">
+            AND drbfm_total_struct.structName like CONCAT('%',#{bjName},'%')
+        </if>
+        <if test="requestDesc != null and requestDesc != ''">
+            AND drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+        </if>
+        <if test="relTxIdList != null and relTxIdList.length != ''">
+            AND drbfm_single_sxms.yqId IN
+            <foreach collection="relTxIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryFunctionListByPartId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            drbfm_single_function
+        WHERE
+            belongSingleId = #{belongSingleId}
+    </select>
+
+    <select id="getCopiedSxmsList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_sxms.*
+        FROM
+            drbfm_single_sxms
+            LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+            LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        WHERE
+            drbfm_total_baseInfo.id = #{totalId}
+            AND drbfm_single_sxms.oldId is not null
+
+    </select>
+
+    <select id="getUpSxmsRelList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_sxms_relation.*
+        FROM
+            drbfm_single_sxms,
+            drbfm_single_sxms_relation
+        WHERE
+            drbfm_single_sxms.partId = #{singleId}
+            AND drbfm_single_sxms.id = drbfm_single_sxms_relation.relId
+
+    </select>
+
+    <select id="querySingleSxmsList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * from
+        (SELECT
+            drbfm_single_sxms.id,
+            drbfm_single_sxms.sxmsName,
+            drbfm_single_request.requestDesc,
+            drbfm_single_function.functionDesc,
+            concat(
+                "功能:",
+                ifnull( drbfm_single_function.functionDesc, "" ),
+                CHAR ( 10 ),
+                "特性要求:",
+            ifnull( drbfm_single_request.requestDesc, "" )) AS gnfxgzys,
+            concat(
+                "功能:",
+                ifnull( ssfn.functionDesc, "" ),
+                CHAR ( 10 ),
+                "特性要求:",
+            ifnull( ssrq.requestDesc, "" )) AS gnfxxj,
+            drbfm_total_struct.structName AS jgfxgzys,
+            sss.structName AS jgfxxj,
+            ssrq.requestDesc xjrq,
+            ssfn.functionDesc xjfn,
+            drbfm_total_struct.structName,
+            drbfm_total_baseInfo.analyseName,
+            drbfm_total_baseInfo.jixing,
+            drbfm_total_baseInfo.id AS totalId,
+            drbfm_single_sxms_relation.relId,
+        CASE
+
+                WHEN ( SELECT count( 1 ) FROM drbfm_single_sxms_relation WHERE baseId = drbfm_single_sxms.id )> 0 THEN
+                "yes" ELSE "no"
+            END AS downRender,
+        CASE
+
+                WHEN ( SELECT count( 1 ) FROM drbfm_single_sxms_relation WHERE relId = drbfm_single_sxms.id )> 0 THEN
+                "yes" ELSE "no"
+            END AS upRender
+        FROM
+            drbfm_single_sxms
+            LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+            LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+            LEFT JOIN drbfm_single_request ON drbfm_single_sxms.yqId = drbfm_single_request.id
+            LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+            LEFT JOIN drbfm_single_sxms_relation ON drbfm_single_sxms.id = drbfm_single_sxms_relation.baseId
+            LEFT JOIN drbfm_single_sxms ss ON drbfm_single_sxms_relation.relId = ss.id
+            LEFT JOIN drbfm_single_baseinfo ssb ON ss.partId = ssb.id
+            LEFT JOIN drbfm_total_struct sss ON ssb.structId = sss.id
+            LEFT JOIN drbfm_single_request ssrq ON ss.yqId = ssrq.id
+            LEFT JOIN drbfm_single_function ssfn ON ssfn.id = ssrq.relFunctionId
+        WHERE
+            drbfm_single_sxms.partId = #{partId}
+            AND drbfm_single_sxms.needFxfx = "是"
+            <if test="baseId != null and baseId != ''">
+                AND drbfm_single_sxms_relation.baseId =#{baseId}
+            </if>
+            <if test="sxms != null and sxms != ''">
+                AND drbfm_single_sxms.sxmsName like CONCAT('%',#{sxms},'%')
+            </if>
+            <if test="jgfxgzys != null and jgfxgzys != ''">
+                AND drbfm_total_struct.structName like CONCAT('%',#{jgfxgzys},'%')
+            </if>
+            <if test="functionDesc != null and functionDesc != ''">
+                AND drbfm_single_function.functionDesc like CONCAT('%',#{functionDesc},'%')
+            </if>
+            <if test="requestDesc != null and requestDesc != ''">
+                AND drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+        )r
+        WHERE
+            1=1
+            <if test="upSearch != null and upSearch != ''">
+                AND upRender = #{upSearch}
+            </if>
+            <if test="downSearch != null and downSearch != ''">
+                AND downRender = #{downSearch}
+            </if>
+            <if test="gnfxxj != null and gnfxxj != ''">
+                AND gnfxxj like CONCAT('%',#{gnfxxj},'%')
+            </if>
+            <if test="jgfxxj != null and jgfxxj != ''">
+                AND jgfxxj like CONCAT('%',#{jgfxxj},'%')
+            </if>
+        ORDER BY sxmsName,gnfxgzys
+    </select>
+    <select id="queryModelSxmsList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_sxms.id,
+            drbfm_single_sxms.sxmsName,
+            drbfm_single_request.requestDesc,
+            drbfm_single_request.relDimensionNames,
+            drbfm_total_struct.structName,
+            drbfm_total_baseInfo.analyseName,
+            drbfm_total_baseInfo.jixing,
+            drbfm_total_baseInfo.id AS totalId
+        FROM
+            drbfm_single_sxms
+            LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+            LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+            LEFT JOIN drbfm_single_request ON drbfm_single_sxms.yqId = drbfm_single_request.id
+        <where>
+            1=1
+            AND drbfm_single_sxms.yqId is not null
+            <if test="sxmsName != null and sxmsName != ''">
+                AND sxmsName like CONCAT('%',#{sxmsName},'%')
+            </if>
+            <if test="jixing != null and jixing != ''">
+                AND drbfm_total_baseInfo.jixing =#{jixing}
+            </if>
+            <if test="partId != null and partId != ''">
+                AND drbfm_single_sxms.partId =#{partId}
+            </if>
+            <if test="belongTotalId != null and belongTotalId != ''">
+                AND drbfm_total_struct.belongTotalId =#{belongTotalId}
+            </if>
+            <if test="baseId != null and baseId != ''">
+                AND drbfm_single_sxms.id !=#{baseId}
+            </if>
+            <if test="bjName != null and bjName != ''">
+                AND drbfm_total_struct.structName like CONCAT('%',#{bjName},'%')
+            </if>
+            <if test="pathIds != null and pathIds != ''">
+                AND drbfm_total_struct.id in
+                <foreach collection="pathIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="xjbj != null and xjbj == 'yes'">
+                AND drbfm_total_struct.pathIds like CONCAT('%',#{structId},'%')
+            </if>
+            <if test="sjtjbj != null and sjtjbj == 'yes'">
+                OR(drbfm_total_struct.pathIds like CONCAT('%',#{parentId},'%') AND
+                interfaceRequestStructId is not null and interfaceRequestStructId!='')
+            </if>
+            ORDER BY structName,sxmsName
+            <include refid="pageSql"/>
+        </where>
+    </select>
+
+    <select id="countModelSxmsList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+          count(1)
+        FROM
+        drbfm_single_sxms
+        LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN drbfm_single_request ON drbfm_single_sxms.yqId = drbfm_single_request.id
+        <where>
+            1=1
+            AND drbfm_single_sxms.yqId is not null
+            <if test="sxmsName != null and sxmsName != ''">
+                AND sxmsName like CONCAT('%',#{sxmsName},'%')
+            </if>
+            <if test="jixing != null and jixing != ''">
+                AND drbfm_total_baseInfo.jixing =#{jixing}
+            </if>
+            <if test="partId != null and partId != ''">
+                AND drbfm_single_sxms.partId =#{partId}
+            </if>
+            <if test="belongTotalId != null and belongTotalId != ''">
+                AND drbfm_total_struct.belongTotalId =#{belongTotalId}
+            </if>
+            <if test="baseId != null and baseId != ''">
+                AND drbfm_single_sxms.id !=#{baseId}
+            </if>
+            <if test="bjName != null and bjName != ''">
+                AND drbfm_total_struct.structName like CONCAT('%',#{bjName},'%')
+            </if>
+            <if test="pathIds != null and pathIds != ''">
+                AND drbfm_total_struct.id in
+                <foreach collection="pathIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="xjbj != null and xjbj == 'yes'">
+                AND drbfm_total_struct.pathIds like CONCAT('%',#{structId},'%')
+            </if>
+            <if test="sjtjbj != null and sjtjbj == 'yes'">
+                OR(drbfm_total_struct.pathIds like CONCAT('%',#{parentId},'%') AND
+                interfaceRequestStructId is not null and interfaceRequestStructId!='')
+            </if>
+        </where>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countSelectSxmsList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+           count(1)
+        FROM
+            drbfm_single_sxms
+            LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+            LEFT JOIN drbfm_single_request ON drbfm_single_sxms.yqId = drbfm_single_request.id
+        WHERE
+            partId = #{belongSingleId}
+        <if test="sxmsName != null and sxmsName != ''">
+            AND sxmsName like CONCAT('%',#{sxmsName},'%')
+        </if>
+        <if test="bjName != null and bjName != ''">
+            AND drbfm_total_struct.structName like CONCAT('%',#{bjName},'%')
+        </if>
+        <if test="requestDesc != null and requestDesc != ''">
+            AND drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+        </if>
+    </select>
+
+
+    <select id="querySxmsRelList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_sxms_relation.*,
+            drbfm_single_sxms.sxmsName
+        FROM
+            drbfm_single_sxms_relation
+            LEFT JOIN drbfm_single_sxms ON drbfm_single_sxms_relation.relId = drbfm_single_sxms.id
+        WHERE
+            1=1
+            <if test="baseId != null and baseId != ''">
+                AND drbfm_single_sxms_relation.baseId =#{baseId}
+            </if>
+            <if test="baseIds != null and baseIds != ''">
+                AND drbfm_single_sxms_relation.baseId in
+                <foreach collection="baseIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="relId != null and relId != ''">
+                AND drbfm_single_sxms_relation.relId =#{relId}
+            </if>
+            <if test="relIds != null and relIds != ''">
+                AND drbfm_single_sxms_relation.relId in
+                <foreach collection="relIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+    </select>
+
+
+    <select id="querySxmsRelListBySingleId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_sxms_relation.*
+        FROM
+        drbfm_single_sxms_relation
+        WHERE
+        partId = #{belongSingleId}
+
+    </select>
+
+    <insert id="insertSxmsRel" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_sxms_relation(
+        id
+        ,partId
+        ,baseId
+        ,relId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{partId,jdbcType=VARCHAR}
+        ,#{baseId,jdbcType=VARCHAR}
+        ,#{relId,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <insert id="insertSxmsRelArray" parameterType="java.util.Map">
+        insert into drbfm_single_sxms_relation(
+        id
+        ,partId
+        ,baseId
+        ,relId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR}
+            ,#{item.partId,jdbcType=VARCHAR}
+            ,#{item.baseId,jdbcType=VARCHAR}
+            ,#{item.relId,jdbcType=VARCHAR}
+            ,#{item.CREATE_BY_,jdbcType=VARCHAR}
+            ,#{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+
+    <delete id="deleteSxmsRel" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_sxms_relation
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="id != null and id != ''">
+                id = #{id}
+            </if>
+            <if test="baseIds != null and baseIds != ''">
+                baseId in
+                <foreach collection="baseIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="relIds != null and relIds != ''">
+                relId in
+                <foreach collection="relIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteSxyyRel" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_sxms_relation
+        where relId = #{id}
+    </delete>
+
+    <delete id="deleteSxmsRelBySingleId" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_sxms_relation
+        where partId = #{partId}
+    </delete>
+
+
+    <delete id="deleteSxyy" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_sxms
+         where id = #{id}
+    </delete>
+
+
+    <select id="querySxmsNetList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            base.id as id,
+            base.relType,
+            drbfm_single_sxms.id as sxmsId,
+            drbfm_single_sxms.sxmsName,
+            drbfm_single_request.requestDesc,
+            drbfm_total_struct.structName,
+            drbfm_total_baseInfo.analyseName,
+            drbfm_total_baseInfo.jixing,
+            drbfm_total_baseInfo.id AS totalId
+        FROM
+            (
+            SELECT
+                id,
+                relId AS sxmsId,
+                "向下关联" AS relType
+            FROM
+                drbfm_single_sxms_relation
+            WHERE
+                baseId = #{sxmsId}
+                UNION
+            SELECT
+                id,
+                baseId AS sxmsId,
+                "向上关联" AS relType
+            FROM
+                drbfm_single_sxms_relation
+            WHERE
+		        relId = #{sxmsId} ) base
+            LEFT JOIN drbfm_single_sxms ON base.sxmsId = drbfm_single_sxms.id
+            LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+            LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+            LEFT JOIN drbfm_single_request ON drbfm_single_sxms.yqId = drbfm_single_request.id
+            order by relType,structName,sxmsName
+    </select>
+
+
+    <select id="queryRiskAnalysisList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_sxms.id,
+            sxmsfxpg.yzd,
+            drbfm_single_sxms.yqId,
+            drbfm_single_sxms.id AS sxmsId,
+            drbfm_single_sxms.sxmsName AS sxmsName,
+            CONCAT( drbfm_total_struct.structName, ": ", drbfm_single_sxms.sxmsName ) AS sxmsAllName,
+            drbfm_single_sxms.sxmsName AS sxmsName,
+            drbfm_total_struct.structName,
+            dts.structName AS sxyyStructName,
+            ss.id AS sxyyId,
+            ss.sxmsName AS sxyyName,
+        CASE WHEN ss.yqId IS NULL THEN ss.sxmsName
+        ELSE CONCAT( dts.structName, ": ", ss.sxmsName ) END AS sxyyAllName,
+        CASE WHEN ss.id IS NOT NULL
+                AND ss.yqId IS NULL THEN
+                    "true" ELSE "false"
+                    END AS delFlag,
+                drbfm_single_fxpg.xxyfkz,
+                drbfm_single_fxpg.fsd,
+                drbfm_single_fxpg.tckzfc,
+                sxmsfxpg.tckzfm,
+                drbfm_single_fxpg.tcd,
+                drbfm_single_fxpg.csyxj,
+                drbfm_single_request.requestDesc,
+                drbfm_single_function.functionDesc
+            FROM
+                drbfm_single_sxms
+                LEFT JOIN drbfm_single_sxms_relation ON drbfm_single_sxms.id = drbfm_single_sxms_relation.baseId
+                LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+                LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+                LEFT JOIN drbfm_single_sxms ss ON drbfm_single_sxms_relation.relId = ss.id
+                LEFT JOIN drbfm_single_fxpg ON drbfm_single_sxms.id = drbfm_single_fxpg.sxmsId
+                AND ss.id = drbfm_single_fxpg.sxyyid
+                LEFT JOIN drbfm_single_fxpg sxmsfxpg ON drbfm_single_sxms.id = sxmsfxpg.sxmsId
+                AND sxmsfxpg.sxyyid IS NULL
+                LEFT JOIN drbfm_single_request ON drbfm_single_sxms.yqId = drbfm_single_request.id
+                LEFT JOIN drbfm_single_baseinfo dsb ON ss.partId = dsb.id
+                LEFT JOIN drbfm_total_struct dts ON dsb.structId = dts.id
+                LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+            WHERE
+                drbfm_single_sxms.partId = #{partId}
+                AND drbfm_single_sxms.yqId IS NOT NULL
+                AND drbfm_single_sxms.needFxfx = "是"
+        <if test="requestDesc != null and requestDesc != ''">
+            AND drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+        </if>
+        <if test="functionDesc != null and functionDesc != ''">
+            AND drbfm_single_function.functionDesc like CONCAT('%',#{functionDesc},'%')
+        </if>
+        <if test="csyxj != null and csyxj != ''">
+            AND drbfm_single_fxpg.csyxj like CONCAT('%',#{csyxj},'%')
+        </if>
+        <if test="sxyyId != null and sxyyId != ''">
+            AND drbfm_single_fxpg.sxyyId =#{sxyyId}
+        </if>
+        <if test="sxqy != null and sxqy != ''">
+            AND CONCAT( dts.structName, ": ", ss.sxmsName ) like CONCAT('%',#{sxqy},'%')
+        </if>
+        <if test="sxms != null and sxms != ''">
+            AND CONCAT( drbfm_total_struct.structName, ": ", drbfm_single_sxms.sxmsName ) like CONCAT('%',#{sxms},'%')
+        </if>
+            ORDER BY
+                drbfm_single_sxms.sxmsName,
+                drbfm_single_function.functionDesc,
+                drbfm_single_request.requestDesc,
+                ss.sxmsName
+
+    </select>
+
+    <select id="queryFirstRiskAnalysisPc" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_single_sxms.id,
+        sxmsfxpg.yzd,
+        drbfm_single_sxms.id AS sxmsId,
+        drbfm_single_sxms.sxmsName AS sxmsName,
+        CONCAT( drbfm_total_struct.structName, ": ", drbfm_single_sxms.sxmsName ) AS sxmsAllName,
+        drbfm_single_sxms.sxmsName AS sxmsName,
+        drbfm_total_struct.structName,
+        dts.structName AS sxyyStructName,
+        ss.id AS sxyyId,
+        ss.sxmsName AS sxyyName,
+        CONCAT( dts.structName, ": ", ss.sxmsName ) AS sxyyAllName,
+        drbfm_single_fxpg.xxyfkz,
+        drbfm_single_fxpg.tckzfc,
+        drbfm_single_fxpg.fsd,
+        drbfm_single_fxpg.tcdfc,
+        drbfm_single_request.requestDesc,
+        drbfm_single_function.functionDesc
+        FROM
+        drbfm_single_sxms
+        LEFT JOIN drbfm_single_sxms_relation ON drbfm_single_sxms.id = drbfm_single_sxms_relation.baseId
+        LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_single_sxms ss ON drbfm_single_sxms_relation.relId = ss.id
+        LEFT JOIN drbfm_single_fxpg ON drbfm_single_sxms.id = drbfm_single_fxpg.sxmsId
+        AND ss.id = drbfm_single_fxpg.sxyyid
+        LEFT JOIN drbfm_single_fxpg sxmsfxpg ON drbfm_single_sxms.id = sxmsfxpg.sxmsId
+        AND sxmsfxpg.sxyyid
+        IS NULL LEFT JOIN drbfm_single_request ON drbfm_single_sxms.yqId = drbfm_single_request.id
+        LEFT JOIN drbfm_single_baseinfo dsb ON ss.partId = dsb.id
+        LEFT JOIN drbfm_total_struct dts ON dsb.structId = dts.id
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        WHERE
+        drbfm_single_sxms.partId = #{partId}
+        AND drbfm_single_sxms.yqId IS NOT NULL
+        AND drbfm_single_sxms.needFxfx = "是"
+        AND drbfm_single_fxpg.sxyyId =#{sxyyId}
+        ORDER BY
+        drbfm_single_sxms.sxmsName,
+        drbfm_single_function.functionDesc,
+        drbfm_single_request.requestDesc
+        limit 1
+
+    </select>
+
+
+
+    <select id="queryFxpgListByPartId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+		select * from drbfm_single_fxpg
+		left join drbfm_single_sxms on drbfm_single_fxpg.sxmsId = drbfm_single_sxms.id
+		where drbfm_single_sxms.partId = #{partId}
+    </select>
+
+
+
+    <insert id="createRiskAnalysis" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_fxpg(
+        id
+        ,partId
+        ,sxmsId
+        ,sxyyId
+        ,fsd
+        ,xxyfkz
+        ,tckzfc
+        ,tcdfc
+        ,tcd
+        ,csyxj
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{partId,jdbcType=VARCHAR}
+        ,#{sxmsId,jdbcType=VARCHAR}
+        ,#{sxyyId,jdbcType=VARCHAR}
+        ,#{fsd,jdbcType=VARCHAR}
+        ,#{xxyfkz,jdbcType=VARCHAR}
+        ,#{tckzfc,jdbcType=VARCHAR}
+        ,#{tcdfc,jdbcType=VARCHAR}
+        ,#{tcd,jdbcType=VARCHAR}
+        ,#{csyxj,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <insert id="batchCreateRiskAnalysis" parameterType="java.util.Map">
+        insert into drbfm_single_fxpg(
+        id
+        ,sxmsId
+        ,sxyyId
+        ,fsd
+        ,xxyfkz
+        ,tckzfc
+        ,tcd
+        ,csyxj
+        ,yzd
+        ,tckzfm
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+        (
+         #{item.id,jdbcType=VARCHAR}
+        ,#{item.sxmsId,jdbcType=VARCHAR}
+        ,#{item.sxyyId,jdbcType=VARCHAR}
+        ,#{item.fsd,jdbcType=VARCHAR}
+        ,#{item.xxyfkz,jdbcType=VARCHAR}
+        ,#{item.tckzfc,jdbcType=VARCHAR}
+        ,#{item.tcd,jdbcType=VARCHAR}
+        ,#{item.csyxj,jdbcType=VARCHAR}
+        ,#{item.yzd,jdbcType=VARCHAR}
+        ,#{item.tckzfm,jdbcType=VARCHAR}
+        ,#{item.CREATE_BY_,jdbcType=VARCHAR}
+        ,#{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+        </foreach>
+    </insert>
+
+    <insert id="createRiskAnalysisSxms" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_fxpg(
+        id
+        ,partId
+        ,sxmsId
+        ,yzd
+        ,tckzfm
+        ,tcdfm
+        ,tcd
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{partId,jdbcType=VARCHAR}
+        ,#{sxmsId,jdbcType=VARCHAR}
+        ,#{yzd,jdbcType=VARCHAR}
+        ,#{tckzfm,jdbcType=VARCHAR}
+        ,#{tcdfm,jdbcType=VARCHAR}
+        ,#{tcd,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateRiskAnalysisSxms" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_fxpg
+        set
+        yzd=#{yzd,jdbcType=VARCHAR},
+        tckzfm=#{tckzfm,jdbcType=VARCHAR},
+        tcdfm=#{tcdfm,jdbcType=VARCHAR},
+        tcd=#{tcd,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{sxmsfxId}
+    </update>
+
+    <update id="updateRiskAnalysis" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_single_fxpg
+        set
+        fsd=#{fsd,jdbcType=VARCHAR},
+        xxyfkz=#{xxyfkz,jdbcType=VARCHAR},
+        tckzfc=#{tckzfc,jdbcType=VARCHAR},
+        tcd=#{tcd,jdbcType=VARCHAR},
+        tcdfc=#{tcdfc,jdbcType=VARCHAR},
+        csyxj=#{csyxj,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+
+    <select id="queryRiskAnalysisDetail" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            a.id AS sxmsfxId,
+            a.yzd,
+            a.tcdfm,
+            a.tckzfm,
+            b.id,
+            b.sxmsId,
+            b.sxyyId,
+            b.fsd,
+            b.xxyfkz,
+            b.tckzfc,
+            b.tcdfc,
+            b.tcd
+        FROM
+            ( SELECT * FROM drbfm_single_fxpg WHERE sxmsId = #{sxmsId} AND sxyyId IS NULL ) a
+            LEFT JOIN
+            ( SELECT * FROM drbfm_single_fxpg WHERE sxmsId = #{sxmsId} AND sxyyId = #{sxyyId} ) b
+            ON a.sxmsId = b.sxmsId
+    </select>
+
+    <select id="queryRiskAnalysisDetailRe" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        	drbfm_single_fxpg.id,
+        	fxpgSxms.id as sxmsfxId,
+            drbfm_single_fxpg.sxmsId,
+            drbfm_single_fxpg.sxyyId,
+            drbfm_single_fxpg.fsd,
+            drbfm_single_fxpg.xxyfkz,
+            drbfm_single_fxpg.tckzfc,
+            drbfm_single_fxpg.tcd,
+            fxpgSxms.yzd,
+            fxpgSxms.tckzfm
+        FROM
+            drbfm_single_fxpg
+            LEFT JOIN drbfm_single_fxpg fxpgSxms ON drbfm_single_fxpg.sxmsId = fxpgSxms.sxmsId
+            AND fxpgSxms.sxyyId IS NULL
+        WHERE
+            drbfm_single_fxpg.sxmsId = #{sxmsId}
+            AND drbfm_single_fxpg.sxyyId = #{sxyyId}
+    </select>
+
+    <select id="querySxms2SxyxList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_sxms.sxmsName,
+            sxms.sxmsName AS sxyxName,
+            CONCAT( drbfm_total_struct.structName, ": ", sxms.sxmsName ) AS sxyxAllName
+        FROM
+            drbfm_single_sxms
+            LEFT JOIN drbfm_single_sxms_relation ON drbfm_single_sxms.id = drbfm_single_sxms_relation.relId
+            LEFT JOIN drbfm_single_sxms sxms ON sxms.id = drbfm_single_sxms_relation.baseId
+            LEFT JOIN drbfm_single_baseinfo ON sxms.partId = drbfm_single_baseinfo.id
+			LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        WHERE
+            sxms.sxmsName IS NOT NULL
+            and drbfm_single_sxms.partId = #{partId}
+    </select>
+
+    <select id="querySxms2SjList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_sxms.sxmsName,
+            sxms.sxmsName AS sxyxName,
+            drbfm_single_request.requestDesc,
+            drbfm_single_function.functionDesc,
+            drbfm_total_struct.structName
+        FROM
+            drbfm_single_sxms
+            LEFT JOIN drbfm_single_sxms_relation ON drbfm_single_sxms.id = drbfm_single_sxms_relation.relId
+            LEFT JOIN drbfm_single_sxms sxms ON sxms.id = drbfm_single_sxms_relation.baseId
+            LEFT JOIN drbfm_single_baseinfo ON sxms.partId = drbfm_single_baseinfo.id
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+            LEFT JOIN drbfm_single_request ON sxms.yqId = drbfm_single_request.id
+            LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        WHERE
+            sxms.sxmsName IS NOT NULL
+            and drbfm_single_sxms.partId = #{partId}
+    </select>
+
+
+    <select id="queryParentIdBySingleId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT
+            parentId
+        FROM
+            drbfm_single_baseinfo
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        WHERE
+            drbfm_single_baseinfo.id = #{singleId}
+    </select>
+
+    <select id="countXjbjBySingleId" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT
+            count(1) as cnt
+        FROM
+            drbfm_single_baseinfo
+            LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        WHERE
+            pathIds LIKE CONCAT(
+                '%',(
+                SELECT
+                    structId
+                FROM
+                    drbfm_single_baseinfo
+                WHERE
+                    id = #{singleId}
+                ),
+            '%')
+    </select>
+
+
+    <delete id="deleteRiskAnalysis" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_fxpg
+        where sxyyId = #{id}
+    </delete>
+
+    <delete id="deleteRiskAnalysisBySingleId" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_fxpg
+        where partId = #{partId}
+    </delete>
+
+    <select id="querySxmsIdByRequestIds" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.String">
+        SELECT
+            id
+        FROM
+            drbfm_single_sxms
+        WHERE
+            yqId IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+    <delete id="deleteRiskAnalysisBySxms" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_fxpg
+        where sxmsId IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        OR sxyyId IN
+        <foreach collection="sxyyIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="getChangeDimensionList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            d.NAME_ as changeDimension,
+            d.VALUE_ as dimensionType
+        FROM
+            sys_dic d
+            LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE
+            t.key_ = 'BHDWD'
+            AND t.cat_key_ = 'CAT_DIM'
+            <if test="changeDimension != null and changeDimension != ''">
+                AND d.NAME_ = #{changeDimension}
+            </if>
+            <if test="dimensionType != null and dimensionType != ''">
+                AND d.VALUE_= #{dimensionType}
+            </if>
+        ORDER BY
+            d.sn_ ASC
+    </select>
+
+    <insert id="insertDimension" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_change_dimension(
+        id
+        ,yqId
+        ,relSxmsId
+        ,partId
+        ,changeDimension
+        ,designModel
+        ,changeDetail
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{yqId,jdbcType=VARCHAR}
+        ,#{relSxmsId,jdbcType=VARCHAR}
+        ,#{partId,jdbcType=VARCHAR}
+        ,#{changeDimension,jdbcType=VARCHAR}
+        ,#{designModel,jdbcType=VARCHAR}
+        ,#{changeDetail,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateDimension" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_change_dimension
+        set
+        changeDimension=#{changeDimension,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        changeDetail=#{changeDetail,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <update id="updateChangeRelSxms">
+        update drbfm_change_dimension
+            set  drbfm_change_dimension.relSxmsId = null
+        where
+            drbfm_change_dimension.relSxmsId in
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </update>
+
+    <delete id="deleteDimension" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_change_dimension
+        <where>
+            1=1
+            <if test="ids != null and ids != ''">
+                AND id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="applyIds != null and applyIds != ''">
+                AND yqId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteDimensionBySingleId" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_change_dimension
+        where partId = #{partId}
+    </delete>
+
+    <select id="queryDimensionList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_change_dimension.*,
+            product_spectrum.designModel as designModelName
+        FROM
+            drbfm_change_dimension
+            LEFT JOIN product_spectrum ON drbfm_change_dimension.designModel = product_spectrum.id
+        WHERE
+            yqId = #{yqId}
+    </select>
+
+
+    <select id="querySingleChangeList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_change_dimension.*,
+            drbfm_single_request.requestDesc,
+            product_spectrum.designModel AS designModelName ,
+            cd.dimensionType,
+            drbfm_single_sxms.sxmsName
+        FROM
+            drbfm_change_dimension
+            LEFT JOIN product_spectrum ON drbfm_change_dimension.designModel = product_spectrum.id
+            LEFT JOIN drbfm_single_request ON drbfm_single_request.id = drbfm_change_dimension.yqId
+            LEFT JOIN drbfm_single_sxms ON drbfm_single_sxms.id = drbfm_change_dimension.relSxmsId
+            left join (SELECT
+                    d.NAME_ as changeDimension,
+                    d.VALUE_ as dimensionType,
+                                d.SN_
+                FROM
+                    sys_dic d
+                    LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+                WHERE
+                    t.key_ = 'BHDWD'
+                    AND t.cat_key_ = 'CAT_DIM')cd
+                    on cd.changeDimension = drbfm_change_dimension.changeDimension
+	        WHERE
+            drbfm_change_dimension.partId = #{partId}
+            AND changeDetail is not null and changeDetail !="无"
+            ORDER BY cd.SN_
+
+    </select>
+
+
+    <select id="getDfmeaExport" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+    SELECT
+        drbfm_single_sxms.id,
+        drbfm_single_sxms.sxmsName,
+        concat(
+            "功能:",
+            ifnull( drbfm_single_function.functionDesc, "" ),
+            CHAR ( 10 ),
+            "特性要求:",
+        ifnull( drbfm_single_request.requestDesc, "" )) AS gnfxgzys,
+        concat(
+            "功能:",
+            ifnull( ssfn.functionDesc, "" ),
+            CHAR ( 10 ),
+            "特性要求:",
+        ifnull( ssrq.requestDesc, "" )) AS gnfxxj,
+        drbfm_total_struct.structName AS jgfxgzys,
+        sss.structName AS jgfxxj,
+        sxmsfxpg.yzd,
+        CONCAT( drbfm_total_struct.structName, ": ", drbfm_single_sxms.sxmsName ) AS sxmsAllName,
+        CONCAT( dts.structName, ": ", ss.sxmsName ) AS sxyyAllName,
+        drbfm_single_fxpg.xxyfkz,
+        drbfm_single_fxpg.fsd,
+        drbfm_single_fxpg.tckzfc,
+        sxmsfxpg.tckzfm,
+        drbfm_single_fxpg.tcd,
+        drbfm_single_fxpg.csyxj,
+        drbfm_single_fxpg.gjyfcs,
+        drbfm_single_fxpg.gjtccs,
+        drbfm_single_fxpg.riskLevelFinal,
+        drbfm_single_fxpg.riskLevelFinalyzd,
+        drbfm_single_fxpg.riskLevelFinalfsd,
+        drbfm_single_fxpg.riskLevelFinaltcd,
+        ssrq.requestDesc xjrq,
+        ssfn.functionDesc xjfn,
+        drbfm_total_struct.structName,
+        drbfm_total_baseInfo.analyseName,
+        drbfm_total_baseInfo.jixing,
+        drbfm_total_baseInfo.id AS totalId,
+        drbfm_single_sxms_relation.relId
+    FROM
+        drbfm_single_sxms
+        LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        LEFT JOIN drbfm_total_baseInfo ON drbfm_total_struct.belongTotalId = drbfm_total_baseinfo.id
+        LEFT JOIN drbfm_single_request ON drbfm_single_sxms.yqId = drbfm_single_request.id
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        LEFT JOIN drbfm_single_sxms_relation ON drbfm_single_sxms.id = drbfm_single_sxms_relation.baseId
+        LEFT JOIN drbfm_single_sxms ss ON drbfm_single_sxms_relation.relId = ss.id
+        LEFT JOIN drbfm_single_baseinfo ssb ON ss.partId = ssb.id
+        LEFT JOIN drbfm_total_struct sss ON ssb.structId = sss.id
+        LEFT JOIN drbfm_single_request ssrq ON ss.yqId = ssrq.id
+        LEFT JOIN drbfm_single_function ssfn ON ssfn.id = ssrq.relFunctionId
+        LEFT JOIN drbfm_single_fxpg ON drbfm_single_sxms.id = drbfm_single_fxpg.sxmsId
+        AND ss.id = drbfm_single_fxpg.sxyyid
+        LEFT JOIN drbfm_single_fxpg sxmsfxpg ON drbfm_single_sxms.id = sxmsfxpg.sxmsId
+        AND sxmsfxpg.sxyyid
+        IS NULL LEFT JOIN drbfm_single_baseinfo dsb ON ss.partId = dsb.id
+        LEFT JOIN drbfm_total_struct dts ON dsb.structId = dts.id
+    WHERE
+        drbfm_single_sxms.partId = #{partId}
+        AND drbfm_single_sxms.needFxfx = "是"
+        AND drbfm_single_sxms.yqId IS NOT NULL
+    ORDER BY
+        sxmsName
+    </select>
+
+    <select id="querySingleExpList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            drbfm_single_exp_info.id AS recordId,
+            zlgj_newgjll.*,
+            os_user.FULLNAME_ AS creator
+        FROM
+            drbfm_single_exp_info
+            LEFT JOIN zlgj_newgjll ON drbfm_single_exp_info.relExpId = zlgj_newgjll.gjId
+            LEFT JOIN os_user ON zlgj_newgjll.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+            drbfm_single_exp_info.partId = #{partId}
+    </select>
+    <select id="getRealtionChangePointList" parameterType="java.util.Map"  resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            DISTINCT drbfm_change_dimension.yqId,
+                     drbfm_change_dimension.relSxmsId
+        FROM
+            drbfm_single_request
+            LEFT JOIN drbfm_change_dimension ON drbfm_change_dimension.yqId = drbfm_single_request.id
+            AND drbfm_change_dimension.changeDetail != '无'
+        WHERE
+            belongSingleId = #{belongSingleId}
+            AND
+            drbfm_change_dimension.yqId is not null
+    </select>
+    <select id="getRequestAndSxmsList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+        (SELECT
+        drbfm_single_sxms.id,
+        drbfm_single_sxms.sxmsName,
+        drbfm_single_sxms.yqId,
+        drbfm_single_sxms.partId,
+        drbfm_total_struct.structName
+        FROM
+        drbfm_single_sxms
+        LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        <where>
+            <if test="belongSingleId != null and belongSingleId != ''">
+            and drbfm_single_sxms.partId = #{belongSingleId}
+            </if>
+            <if test="sxmsName != null and sxmsName != ''">
+            and drbfm_single_sxms.sxmsName like CONCAT('%',#{sxmsName},'%')
+            </if>
+        </where>
+        ) sxms
+        LEFT JOIN
+        (
+        SELECT
+        drbfm_single_request.id,
+        drbfm_single_request.belongSingleId,
+        drbfm_single_request.requestDesc,
+        drbfm_single_request.requestChanges,
+        drbfm_single_request.relEffect,
+        drbfm_single_request.riskDesc,
+        drbfm_single_request.compareToJP,
+        drbfm_single_function.functionDesc as relFunctionDesc,
+        drbfm_single_function.relDimensionKeys as relDimensionKeys,
+        drbfm_single_function.relDimensionNames as relDimensionNames
+        FROM
+        drbfm_single_request
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        <where>
+            <if test="requestDesc != null and requestDesc != ''">
+                drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+        </where>
+        group by drbfm_single_request.id
+        )T ON sxms.yqId = T.id
+        <where>
+            <if test="requestDesc != null and requestDesc != ''">
+                T.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+        </where>
+    </select>
+    <select id="countRequestAndSxmsList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(1)
+        FROM
+        (SELECT
+        drbfm_single_sxms.id,
+        drbfm_single_sxms.sxmsName,
+        drbfm_single_sxms.yqId,
+        drbfm_single_sxms.partId,
+        drbfm_total_struct.structName
+        FROM
+        drbfm_single_sxms
+        LEFT JOIN drbfm_single_baseinfo ON drbfm_single_sxms.partId = drbfm_single_baseinfo.id
+        LEFT JOIN drbfm_total_struct ON drbfm_single_baseinfo.structId = drbfm_total_struct.id
+        <where>
+            <if test="belongSingleId != null and belongSingleId != ''">
+                and drbfm_single_sxms.partId = #{belongSingleId}
+            </if>
+            <if test="sxmsName != null and sxmsName != ''">
+                and drbfm_single_sxms.sxmsName like CONCAT('%',#{sxmsName},'%')
+            </if>
+        </where>
+        ) sxms
+        LEFT JOIN
+        (
+        SELECT
+        drbfm_single_request.id,
+        drbfm_single_request.belongSingleId,
+        drbfm_single_request.requestDesc,
+        drbfm_single_request.requestChanges,
+        drbfm_single_request.relEffect,
+        drbfm_single_request.riskDesc,
+        drbfm_single_request.compareToJP,
+        drbfm_single_function.functionDesc as relFunctionDesc,
+        drbfm_single_function.relDimensionKeys as relDimensionKeys,
+        drbfm_single_function.relDimensionNames as relDimensionNames
+        FROM
+        drbfm_single_request
+        LEFT JOIN drbfm_single_function ON drbfm_single_function.id = drbfm_single_request.relFunctionId
+        <where>
+            <if test="requestDesc != null and requestDesc != ''">
+                drbfm_single_request.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+        </where>
+        group by drbfm_single_request.id
+        )T ON sxms.yqId = T.id
+        <where>
+            <if test="requestDesc != null and requestDesc != ''">
+                T.requestDesc like CONCAT('%',#{requestDesc},'%')
+            </if>
+        </where>
+    </select>
+
+
+    <insert id="insertExpRel" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_single_exp_info(
+        id
+        ,partId
+        ,relExpId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+         #{id,jdbcType=VARCHAR}
+        ,#{partId,jdbcType=VARCHAR}
+        ,#{relExpId,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteExpRel" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from drbfm_single_exp_info
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="id != null and id != ''">
+                id = #{id}
+            </if>
+        </where>
+    </delete>
+
+
+</mapper>

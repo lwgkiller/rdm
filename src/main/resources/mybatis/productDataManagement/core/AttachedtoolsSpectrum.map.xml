@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.productDataManagement.core.dao.AttachedtoolsSpectrumDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="queryWhereModelListQuery">
+        <if test="@Ognl@isNotEmpty(attachedtoolsType)">
+            AND business.attachedtoolsType = #{attachedtoolsType}
+        </if>
+        <if test="@Ognl@isNotEmpty(attachedtoolsType2)">
+            AND business.attachedtoolsType2 = #{attachedtoolsType2}
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <sql id="queryWhereItemListQuery">
+        <if test="@Ognl@isNotEmpty(mainId)">
+            AND business.mainId = #{mainId}
+        </if>
+        <if test="@Ognl@isNotEmpty(salesModel)">
+            AND business.salesModel like concat('%',#{salesModel},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(designModel)">
+            AND business.designModel like concat('%',#{designModel},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCode)">
+            AND business.materialCode like concat('%',#{materialCode},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(responsibleName)">
+            AND responsible.FULLNAME_ like concat('%',#{responsibleName},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(salesArea)">
+            AND business.salesArea = #{salesArea}
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+        <if test="@Ognl@isNotEmpty(indepRechOrExtProc)">
+            AND business.indepRechOrExtProc = #{indepRechOrExtProc}
+        </if>
+        <if test="@Ognl@isNotEmpty(mainIds)">
+            AND mainId IN
+            <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+    <!---->
+    <select id="modelListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*
+        FROM
+        attachedtools_spectrum as business
+        <where>
+            <include refid="queryWhereModelListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countModelListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        attachedtools_spectrum as business
+        <where>
+            <include refid="queryWhereModelListQuery"/>
+        </where>
+    </select>
+    <!---->
+    <select id="getModelDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM attachedtools_spectrum AS business
+        WHERE business.id = #{id}
+    </select>
+    <!---->
+    <insert id="insertModel" parameterType="java.util.Map">
+        insert into attachedtools_spectrum(
+        id,
+        orderNo,
+        attachedtoolsType,
+        attachedtoolsType2,
+        functionIntroduction,
+        fileName,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{orderNo,jdbcType=INTEGER},
+        #{attachedtoolsType,jdbcType=VARCHAR},
+        #{attachedtoolsType2,jdbcType=VARCHAR},
+        #{functionIntroduction,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateModel" parameterType="java.util.Map">
+        UPDATE attachedtools_spectrum
+        SET
+        orderNo=#{orderNo,jdbcType=INTEGER},
+        attachedtoolsType=#{attachedtoolsType,jdbcType=VARCHAR},
+        attachedtoolsType2=#{attachedtoolsType2,jdbcType=VARCHAR},
+        functionIntroduction=#{functionIntroduction,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteModel" parameterType="java.util.Map">
+        delete from attachedtools_spectrum
+        <where>
+            <if test="@Ognl@isNotEmpty(ids)">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(ids)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="itemListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        masterData.attachedtoolsType,
+        masterData.attachedtoolsType2,
+        masterData.functionIntroduction,
+        responsible.FULLNAME_ AS responsibleName,
+        responsible.FULLNAME_ AS responsibleId_name,
+        reviewer.FULLNAME_ AS reviewerName
+        FROM
+        attachedtools_spectrum_items as business
+        INNER JOIN attachedtools_spectrum AS masterData
+        ON business.mainId = masterData.id
+        LEFT JOIN os_user AS responsible
+        ON business.responsibleId = responsible.USER_ID_
+        LEFT JOIN os_user AS reviewer
+        ON business.reviewerId = reviewer.USER_ID_
+        <where>
+            <include refid="queryWhereItemListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countItemListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        attachedtools_spectrum_items as business
+        LEFT JOIN os_user AS responsible
+        ON business.responsibleId = responsible.USER_ID_
+        LEFT JOIN os_user AS reviewer
+        ON business.responsibleId = reviewer.USER_ID_
+        <where>
+            <include refid="queryWhereItemListQuery"/>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertItem" parameterType="java.util.Map">
+        insert into attachedtools_spectrum_items(
+        id,
+        applyId,
+        businessStatus,
+        parameters,
+        mainId,
+        salesModel,
+        designModel,
+        materialCode,
+        suitableTonnage,
+        responsibleId,
+        reviewerId,
+        salesArea,
+        indepRechOrExtProc,
+        isSeparately,
+        benchmarkingBrands,
+        competitiveInformation,
+        remarks,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{applyId,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{parameters,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{salesModel,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{suitableTonnage,jdbcType=VARCHAR},
+        #{responsibleId,jdbcType=VARCHAR},
+        #{reviewerId,jdbcType=VARCHAR},
+        #{salesArea,jdbcType=INTEGER},
+        #{indepRechOrExtProc,jdbcType=VARCHAR},
+        #{isSeparately,jdbcType=VARCHAR},
+        #{benchmarkingBrands,jdbcType=VARCHAR},
+        #{competitiveInformation,jdbcType=VARCHAR},
+        #{remarks,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateItem" parameterType="java.util.Map">
+        UPDATE attachedtools_spectrum_items
+        SET
+        applyId=#{applyId,jdbcType=VARCHAR},
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        parameters=#{parameters,jdbcType=VARCHAR},
+        mainId=#{mainId,jdbcType=VARCHAR},
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        suitableTonnage=#{suitableTonnage,jdbcType=VARCHAR},
+        responsibleId=#{responsibleId,jdbcType=VARCHAR},
+        reviewerId=#{reviewerId,jdbcType=VARCHAR},
+        salesArea=#{salesArea,jdbcType=VARCHAR},
+        indepRechOrExtProc=#{indepRechOrExtProc,jdbcType=VARCHAR},
+        isSeparately=#{isSeparately,jdbcType=VARCHAR},
+        benchmarkingBrands=#{benchmarkingBrands,jdbcType=VARCHAR},
+        competitiveInformation=#{competitiveInformation,jdbcType=VARCHAR},
+        remarks=#{remarks,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <update id="updateItemStatus" parameterType="java.util.Map">
+        UPDATE attachedtools_spectrum_items
+        SET
+        reviewerId=#{reviewerId,jdbcType=VARCHAR},
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteItems" parameterType="java.util.Map">
+        delete from attachedtools_spectrum_items
+        <where>
+            <if test="@Ognl@isNotEmpty(mainIds)">
+                AND mainId IN
+                <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(ids)">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(mainIds) and @Ognl@isEmpty(ids)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="getFileListInfos" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from attachedtools_spectrum_fileinfo
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND businessId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(businessTypes)">
+                AND businessType IN
+                <foreach collection="businessTypes" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds) and @Ognl@isEmpty(businessTypes)">
+                AND 1=2
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertFileInfos" parameterType="java.util.Map">
+        insert into attachedtools_spectrum_fileinfo(
+        id,
+        businessId,
+        businessType,
+        fileName,
+        fileSize,
+        fileDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{businessId,jdbcType=VARCHAR},
+        #{businessType,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <delete id="deleteFileInfos" parameterType="java.util.Map">
+        delete from attachedtools_spectrum_fileinfo
+        <where>
+            <if test="@Ognl@isNotEmpty(id)">
+                AND id=#{id}
+            </if>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND businessId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!--查询设计型号是否存在，如果传了id则附加上不等于自己的条件-->
+    <select id="checkDesignModelExist" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        id
+        FROM
+        attachedtools_spectrum_items
+        <where>
+            designModel = #{designModel}
+            <if test="@Ognl@isNotEmpty(id)">
+                AND id != #{id}
+            </if>
+        </where>
+    </select>
+</mapper>

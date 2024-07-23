@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardMessageSendListDao">
+    <select id="queryMsgReceiverList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.id,A.messageId,
+        A.recId,
+        (case A.isRead when '0' then '未读' when '1' then '已读' end) as isRead,
+        A.readTime,A.CREATE_TIME_,
+        B.FULLNAME_ as receiver,
+        os_group.NAME_ as deptName
+        FROM
+        standard_message_sendlist A
+        left join os_user B on A.recId= B.USER_ID_
+        left join os_rel_inst on A.recId=os_rel_inst.PARTY2_
+        left join os_group on os_rel_inst.PARTY1_=os_group.GROUP_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+            and os_rel_inst.DIM1_='1'
+            <if test="messageId != null and messageId != ''">
+                AND A.messageId = #{messageId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+               AND A.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        order by A.isRead desc,deptName
+    </select>
+
+    <update id="updateMsgStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_message_sendlist
+        set
+        isRead=#{isRead,jdbcType=VARCHAR},
+        readTime=#{readTime,jdbcType=TIMESTAMP},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id =#{id}
+    </update>
+
+    <delete id="deleteMsgReceiver" parameterType="java.util.List">
+        delete from standard_message_sendlist
+        where
+        id in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteReceiverByMsgId" parameterType="java.lang.String">
+        delete from standard_message_sendlist where messageId = #{msgId}
+    </delete>
+
+
+
+    <insert id="batchInsertReceiver" parameterType="java.util.List">
+        INSERT INTO standard_message_sendlist (
+            id,
+            messageId,
+            recId,
+            CREATE_BY_,
+            CREATE_TIME_,
+            TENANT_ID_
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.messageId,jdbcType=VARCHAR},
+            #{item.recId,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.TENANT_ID_,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+    <insert id="addReadInfo" parameterType="com.alibaba.fastjson.JSONObject">
+          INSERT INTO standard_message_sendlist (
+            id,
+            messageId,
+            recId,
+            CREATE_BY_,
+            CREATE_TIME_,
+            TENANT_ID_,
+            isRead,
+            readTime,
+            UPDATE_BY_,
+            UPDATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{messageId,jdbcType=VARCHAR},
+            #{recId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{TENANT_ID_,jdbcType=VARCHAR},
+            #{isRead,jdbcType=VARCHAR},
+            #{readTime,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateReadStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_message_sendlist
+        set
+        isRead=#{isRead,jdbcType=VARCHAR},
+        readTime=#{readTime,jdbcType=TIMESTAMP},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where messageId =#{messageId} and recId = #{userId}
+    </update>
+    <select id="getReadInfoByUserIdAndMsgId" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select * from standard_message_sendlist
+        where messageId = #{messageId}
+            and recId = #{recId}
+            limit 1
+    </select>
+
+</mapper>

@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.meeting.core.dao.HyglDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="getHyglList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        hygl_baseinfo.*,
+        os_group.NAME_ AS meetingOrgDepName,
+        os_user.FULLNAME_ AS meetingOrgUserName,
+        createUser.FULLNAME_ AS creator,
+        hygl_meetingtype.value AS meetingModel
+        FROM
+        hygl_baseinfo
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        LEFT JOIN os_user ON hygl_baseinfo.meetingOrgUserId = os_user.USER_ID_
+        LEFT JOIN os_user createUser ON hygl_baseinfo.CREATE_BY_ = createUser.USER_ID_
+        LEFT JOIN hygl_meetingtype ON hygl_baseinfo.meetingModelId = hygl_meetingtype.id
+        <where>
+            <if test="meetingNo !=null and meetingNo !=''">
+                AND hygl_baseinfo.meetingNo like CONCAT('%',#{meetingNo},'%')
+            </if>
+            <if test="meetingOrgUserName !=null and meetingOrgUserName !=''">
+                AND os_user.FULLNAME_ like CONCAT('%',#{meetingOrgUserName},'%')
+            </if>
+            <if test="meetingPlace !=null and meetingPlace !=''">
+                AND hygl_baseinfo.meetingPlace like CONCAT('%',#{meetingPlace},'%')
+            </if>
+            <if test="meetingTheme !=null and meetingTheme !=''">
+                AND hygl_baseinfo.meetingTheme like CONCAT('%',#{meetingTheme},'%')
+            </if>
+            <if test="meetingOrgDepId !=null and meetingOrgDepId !=''">
+                AND hygl_baseinfo.meetingOrgDepId = #{meetingOrgDepId}
+            </if>
+            <if test="meetingOrgDepName !=null and meetingOrgDepName !=''">
+                AND os_group.NAME_ = #{meetingOrgDepName}
+            </if>
+            <if test="meetingModel !=null and meetingModel !=''">
+                AND hygl_baseinfo.meetingModelId = #{meetingModel}
+            </if>
+            <if test="meetingTimeBegin != null and meetingTimeBegin != ''">
+                AND hygl_baseinfo.meetingTime &gt;= #{meetingTimeBegin}
+            </if>
+            <if test="meetingTimeEnd != null and meetingTimeEnd != ''">
+                AND hygl_baseinfo.meetingTime &lt;= #{meetingTimeEnd}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='fgzr'">
+                        AND
+                        (
+                        ((hygl_baseinfo.meetingOrgDepId IN
+                        <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>
+                        or hygl_baseinfo.applyId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_baseinfo.meetingUserIds like CONCAT('%',#{currentUserId},'%')
+                        or hygl_baseinfo.meetingOrgUserId like CONCAT('%',#{currentUserId},'%')
+                        )and hygl_baseinfo.recordStatus!= '草稿')
+                        OR hygl_baseinfo.CREATE_BY_ = #{currentUserId}
+                        )
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND
+                        (
+                        ((hygl_baseinfo.meetingUserIds like CONCAT('%',#{currentUserId},'%')
+                        or hygl_baseinfo.applyId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_baseinfo.meetingOrgUserId like CONCAT('%',#{currentUserId},'%')
+                        )and hygl_baseinfo.recordStatus!= '草稿')
+                        OR hygl_baseinfo.CREATE_BY_ = #{currentUserId}
+                        )
+                    </when>
+                </choose>
+            </if>
+            <if test="recordStatus !=null and recordStatus !=''">
+                AND hygl_baseinfo.recordStatus = #{recordStatus}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countHyglList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        COUNT(*)
+        FROM
+        hygl_baseinfo
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        LEFT JOIN os_user ON hygl_baseinfo.meetingOrgUserId = os_user.USER_ID_
+        LEFT JOIN os_user createUser ON hygl_baseinfo.CREATE_BY_ = createUser.USER_ID_
+        LEFT JOIN hygl_meetingtype ON hygl_baseinfo.meetingModelId = hygl_meetingtype.id
+        <where>
+            <if test="meetingNo !=null and meetingNo !=''">
+                AND hygl_baseinfo.meetingNo like CONCAT('%',#{meetingNo},'%')
+            </if>
+            <if test="meetingOrgUserName !=null and meetingOrgUserName !=''">
+                AND os_user.FULLNAME_ like CONCAT('%',#{meetingOrgUserName},'%')
+            </if>
+            <if test="meetingPlace !=null and meetingPlace !=''">
+                AND hygl_baseinfo.meetingPlace like CONCAT('%',#{meetingPlace},'%')
+            </if>
+            <if test="meetingTheme !=null and meetingTheme !=''">
+                AND hygl_baseinfo.meetingTheme like CONCAT('%',#{meetingTheme},'%')
+            </if>
+            <if test="meetingOrgDepId !=null and meetingOrgDepId !=''">
+                AND hygl_baseinfo.meetingOrgDepId = #{meetingOrgDepId}
+            </if>
+            <if test="meetingOrgDepName !=null and meetingOrgDepName !=''">
+                AND os_group.NAME_ = #{meetingOrgDepName}
+            </if>
+            <if test="meetingModel !=null and meetingModel !=''">
+                AND hygl_baseinfo.meetingModelId = #{meetingModel}
+            </if>
+            <if test="meetingTimeBegin != null and meetingTimeBegin != ''">
+                AND hygl_baseinfo.meetingTime &gt;= #{meetingTimeBegin}
+            </if>
+            <if test="meetingTimeEnd != null and meetingTimeEnd != ''">
+                AND hygl_baseinfo.meetingTime &lt;= #{meetingTimeEnd}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='fgzr'">
+                        AND
+                        (
+                        ((hygl_baseinfo.meetingOrgDepId IN
+                        <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>
+                        or hygl_baseinfo.applyId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_baseinfo.meetingUserIds like CONCAT('%',#{currentUserId},'%')
+                        or hygl_baseinfo.meetingOrgUserId like CONCAT('%',#{currentUserId},'%')
+                        )and hygl_baseinfo.recordStatus!= '草稿')
+                        OR hygl_baseinfo.CREATE_BY_ = #{currentUserId}
+                        )
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND
+                        (
+                        ((hygl_baseinfo.meetingUserIds like CONCAT('%',#{currentUserId},'%')
+                        or hygl_baseinfo.applyId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_baseinfo.meetingOrgUserId like CONCAT('%',#{currentUserId},'%')
+                        )and hygl_baseinfo.recordStatus!= '草稿')
+                        OR hygl_baseinfo.CREATE_BY_ = #{currentUserId}
+                        )
+                    </when>
+                </choose>
+            </if>
+            <if test="recordStatus !=null and recordStatus !=''">
+                AND hygl_baseinfo.recordStatus = #{recordStatus}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertMeetingData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into hygl_baseinfo (id,
+                                   applyId,
+                                   applyName,
+                                   meetingNo,
+                                   meetingOrgDepId,
+                                   meetingOrgUserId,
+                                   meetingUserIds,
+                                   meetingTime,
+                                   meetingPlace,
+                                   meetingModelId,
+                                   meetingTheme,
+                                   recordStatus,
+                                   contentAndConclusion,
+                                   planAndResult,
+                                   company,
+                                   CREATE_BY_,
+                                   CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{applyId,jdbcType=VARCHAR},
+                #{applyName,jdbcType=VARCHAR},
+                #{meetingNo,jdbcType=VARCHAR},
+                #{meetingOrgDepId,jdbcType=VARCHAR},
+                #{meetingOrgUserId,jdbcType=VARCHAR},
+                #{meetingUserIds,jdbcType=VARCHAR},
+                #{meetingTime,jdbcType=VARCHAR},
+                #{meetingPlace,jdbcType=VARCHAR},
+                #{meetingModelId,jdbcType=VARCHAR},
+                #{meetingTheme,jdbcType=VARCHAR},
+                #{recordStatus,jdbcType=VARCHAR},
+                #{contentAndConclusion,jdbcType=VARCHAR},
+                #{planAndResult,jdbcType=VARCHAR},
+                #{company,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <!---->
+    <update id="updateMeetingData" parameterType="com.alibaba.fastjson.JSONObject">
+        update hygl_baseinfo
+        set applyId              = #{applyId,jdbcType=VARCHAR},
+            applyName            = #{applyName,jdbcType=VARCHAR},
+            meetingNo            = #{meetingNo,jdbcType=VARCHAR},
+            meetingOrgDepId      = #{meetingOrgDepId,jdbcType=VARCHAR},
+            meetingOrgUserId     = #{meetingOrgUserId,jdbcType=VARCHAR},
+            meetingUserIds       = #{meetingUserIds,jdbcType=VARCHAR},
+            meetingTime          = #{meetingTime,jdbcType=VARCHAR},
+            meetingPlace         = #{meetingPlace,jdbcType=VARCHAR},
+            meetingModelId       = #{meetingModelId,jdbcType=VARCHAR},
+            meetingTheme         = #{meetingTheme,jdbcType=VARCHAR},
+            recordStatus         = #{recordStatus,jdbcType=VARCHAR},
+            contentAndConclusion = #{contentAndConclusion,jdbcType=VARCHAR},
+            planAndResult        = #{planAndResult,jdbcType=VARCHAR},
+            company              = #{company,jdbcType=VARCHAR},
+            isfinish              = #{isfinish,jdbcType=VARCHAR},
+            meetingSum              = #{meetingSum,jdbcType=VARCHAR},
+            UPDATE_BY_           = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_         = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id}
+    </update>
+    <!---->
+    <select id="queryMeetingById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT hygl_baseinfo.*,
+               os_group.NAME_         AS meetingOrgDepName,
+               os_user.FULLNAME_      AS meetingOrgUserName,
+               hygl_meetingtype.value AS meetingModel
+        FROM hygl_baseinfo
+                 LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+                 LEFT JOIN os_user ON hygl_baseinfo.meetingOrgUserId = os_user.USER_ID_
+                 LEFT JOIN hygl_meetingtype ON hygl_baseinfo.meetingModelId = hygl_meetingtype.id
+        WHERE hygl_baseinfo.id = #{meetingId}
+    </select>
+
+    <!---->
+    <select id="queryMeetingFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from hygl_fileinfo
+        where meetingId IN
+        <foreach collection="meetingIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <delete id="deleteMeetingFile" parameterType="java.util.Map">
+        delete from hygl_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="meetingIds != null and meetingIds !=''">
+                AND meetingId IN
+                <foreach collection="meetingIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteMeeting" parameterType="java.util.Map">
+        delete from hygl_baseinfo
+        <where>
+            <if test="meetingIds != null and meetingIds !=''">
+                id IN
+                <foreach collection="meetingIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="addMeetingFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into hygl_fileinfo (id, fileName, fileSize, fileDesc, meetingId, CREATE_BY_, CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{fileDesc,jdbcType=VARCHAR},
+                #{meetingId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <!---->
+    <select id="queryMeetingPlanList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT hygl_planinfo.*, hygl_baseinfo.meetingTheme, hygl_baseinfo.meetingTime, bpm_inst.STATUS_ AS status
+        FROM hygl_planinfo
+                 left JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+                 left join bpm_inst on hygl_planinfo.id = bpm_inst.BUS_KEY_
+        where hygl_planinfo.meetingId = #{_parameter,jdbcType=VARCHAR}
+        order by hygl_planinfo.sn
+    </select>
+    <select id="queryAllMeetingPlanList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT hygl_planinfo.*, bpm_inst.STATUS_ AS status
+        FROM hygl_planinfo
+                 left join bpm_inst on hygl_planinfo.id = bpm_inst.BUS_KEY_
+        where  hygl_planinfo.meetingId IN
+        <foreach collection="meetingIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        order by hygl_planinfo.sn
+    </select>
+    <!---->
+    <insert id="insertMeetingPlanData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into hygl_planinfo (id,
+                                   meetingId,
+                                   meetingContent,
+                                   meetingPlanRespUserIds,
+                                   otherPlanRespUserIds,
+                                   meetingPlanEndTime,
+                                   meetingPlanCompletion,
+                                   isComplete,
+                                   sn,
+                                   CREATE_BY_,
+                                   CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{meetingId,jdbcType=VARCHAR},
+                #{meetingContent,jdbcType=VARCHAR},
+                #{meetingPlanRespUserIds,jdbcType=VARCHAR},
+                #{otherPlanRespUserIds,jdbcType=VARCHAR},
+                #{meetingPlanEndTime,jdbcType=VARCHAR},
+                #{meetingPlanCompletion,jdbcType=VARCHAR},
+                #{isComplete,jdbcType=VARCHAR},
+                #{sn,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <!---->
+    <update id="updateMeetingPlanData" parameterType="com.alibaba.fastjson.JSONObject">
+        update hygl_planinfo
+        set meetingContent         = #{meetingContent,jdbcType=VARCHAR},
+            meetingPlanRespUserIds = #{meetingPlanRespUserIds,jdbcType=VARCHAR},
+            otherPlanRespUserIds   = #{otherPlanRespUserIds,jdbcType=VARCHAR},
+            meetingPlanEndTime     = #{meetingPlanEndTime,jdbcType=VARCHAR},
+            meetingPlanCompletion  = #{meetingPlanCompletion,jdbcType=VARCHAR},
+            isComplete             = #{isComplete,jdbcType=VARCHAR},
+            sn                     = #{sn,jdbcType=VARCHAR},
+            UPDATE_BY_             = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_           = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id}
+    </update>
+    <!---->
+    <delete id="deleteOneMeetingPlan" parameterType="java.lang.String">
+        delete
+        from hygl_planinfo
+        where id = #{id}
+    </delete>
+    <!---->
+    <delete id="deleteMeetingPlanByMeetingId" parameterType="java.lang.String">
+        delete
+        from hygl_planinfo
+        where meetingId = #{meetingid}
+    </delete>
+    <!---->
+    <select id="getSeqInternal" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT substring(meetingNo, -4, 4) as num
+        FROM hygl_baseinfo
+        where meetingNo like CONCAT(#{tempStr}, '%')
+        order by substring(meetingNo, -4, 4) + '' desc
+        limit 1
+    </select>
+    <select id="getDeptCode" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT DEPT_CODE_ as deptCode
+        FROM os_group
+        where GROUP_ID_ = #{deptId}
+    </select>
+    <select id="getHyglType" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM hygl_meetingtype
+        order by sn
+    </select>
+
+    <update id="updateMeetingPlanRespUserIds" parameterType="com.alibaba.fastjson.JSONObject">
+        update hygl_baseinfo
+        set planRespUserIds = #{planRespUserIds}
+        where id = #{id}
+    </update>
+
+    <select id="getHyglFinishList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        hygl_baseinfo.*,
+        hygl_planinfo.id,
+        bpm_inst.STATUS_ as status
+        FROM
+        hygl_baseinfo
+        left join hygl_planinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+        join bpm_inst on hygl_planinfo.id = bpm_inst.BUS_KEY_
+        where
+            hygl_baseinfo.meetingOrgUserId = #{currentUserId}
+            and hygl_baseinfo.id not in(
+            SELECT
+            distinct hygl_baseinfo.id
+            FROM
+            hygl_baseinfo
+            left join hygl_planinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+            join bpm_inst on hygl_planinfo.id = bpm_inst.BUS_KEY_
+            where  bpm_inst.STATUS_ = 'RUNNING'
+            )
+        and hygl_baseinfo.recordStatus = '已提交'
+        group by hygl_baseinfo.id
+    </select>
+</mapper>

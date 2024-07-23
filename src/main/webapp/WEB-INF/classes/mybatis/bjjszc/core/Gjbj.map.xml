@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.bjjszc.core.dao.GjbjDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryGjbj" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        bjgjbj_info.*,
+        os_group.NAME_ AS deptName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        bjgjbj_info
+        LEFT JOIN os_rel_inst ON bjgjbj_info.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on bjgjbj_info.gjbjId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (bjgjbj_info.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+
+        <if test="applyNumber != null and applyNumber != ''">
+            and bjgjbj_info.applyNumber like CONCAT('%',#{applyNumber},'%')
+        </if>
+        <if test="creatorName != null and creatorName != ''">
+            and bjgjbj_info.creatorName like CONCAT('%',#{creatorName},'%')
+        </if>
+        <if test="whName != null and whName != ''">
+            and bjgjbj_info.whName like CONCAT('%',#{whName},'%')
+        </if>
+        <if test="instStatus != null and instStatus != ''">
+            and bpm_inst.STATUS_ =#{instStatus}
+        </if>
+        <if test='vinCode != null and vinCode !=""'>
+            AND bjgjbj_info.gjbjId IN(
+            select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.vinCode like CONCAT('%',#{vinCode},'%')
+            )
+        </if>
+        <if test='partsType != null and partsType !=""'>
+            AND bjgjbj_info.gjbjId IN(
+            select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.partsType like CONCAT('%',#{partsType},'%')
+            )
+        </if>
+        <if test='holeCode != null and holeCode !=""'>
+            AND bjgjbj_info.gjbjId IN(
+            select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.holeCode like CONCAT('%',#{holeCode},'%')
+            )
+        </if>
+        <if test='holeDesc != null and holeDesc !=""'>
+            AND bjgjbj_info.gjbjId IN(
+            select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.holeDesc like CONCAT('%',#{holeDesc},'%')
+            )
+        </if>
+
+        <if test='devCode != null and devCode !=""'>
+            AND bjgjbj_info.gjbjId IN(
+            select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.devCode like CONCAT('%',#{devCode},'%')
+            )
+        </if>
+        <if test='devDesc != null and devDesc !=""'>
+            AND bjgjbj_info.gjbjId IN(
+            select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.devDesc like CONCAT('%',#{devDesc},'%')
+            )
+        </if>
+
+        <if test='supplier != null and supplier !=""'>
+            AND bjgjbj_info.gjbjId IN(
+            select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.supplier like CONCAT('%',#{supplier},'%')
+            )
+        </if>
+
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countGjbjList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        bjgjbj_info
+        LEFT JOIN os_rel_inst ON bjgjbj_info.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on bjgjbj_info.gjbjId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+
+            <if test="applyNumber != null and applyNumber != ''">
+                and bjgjbj_info.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                and bjgjbj_info.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="whName != null and whName != ''">
+                and bjgjbj_info.whName like CONCAT('%',#{whName},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                and bpm_inst.STATUS_ =#{instStatus}
+            </if>
+
+            <if test='vinCode != null and vinCode !=""'>
+                AND bjgjbj_info.gjbjId IN(
+                select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.vinCode like CONCAT('%',#{vinCode},'%')
+                )
+            </if>
+            <if test='partsType != null and partsType !=""'>
+                AND bjgjbj_info.gjbjId IN(
+                select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.partsType like CONCAT('%',#{partsType},'%')
+                )
+            </if>
+            <if test='holeCode != null and holeCode !=""'>
+                AND bjgjbj_info.gjbjId IN(
+                select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.holeCode like CONCAT('%',#{holeCode},'%')
+                )
+            </if>
+            <if test='holeDesc != null and holeDesc !=""'>
+                AND bjgjbj_info.gjbjId IN(
+                select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.holeDesc like CONCAT('%',#{holeDesc},'%')
+                )
+            </if>
+
+            <if test='devCode != null and devCode !=""'>
+                AND bjgjbj_info.gjbjId IN(
+                select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.devCode like CONCAT('%',#{devCode},'%')
+                )
+            </if>
+            <if test='devDesc != null and devDesc !=""'>
+                AND bjgjbj_info.gjbjId IN(
+                select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.devDesc like CONCAT('%',#{devDesc},'%')
+                )
+            </if>
+
+            <if test='supplier != null and supplier !=""'>
+                AND bjgjbj_info.gjbjId IN(
+                select bjgjbj_detail.belongId from bjgjbj_detail where bjgjbj_detail.supplier like CONCAT('%',#{supplier},'%')
+                )
+            </if>
+        </where>
+    </select>
+
+    <insert id="createGjbj" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into bjgjbj_info(
+            gjbjId
+            ,creatorName
+            ,whId
+            ,whName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{gjbjId,jdbcType=VARCHAR},
+            #{creatorName,jdbcType=VARCHAR},
+            #{whId,jdbcType=VARCHAR},
+            #{whName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateGjbj" parameterType="com.alibaba.fastjson.JSONObject">
+        update bjgjbj_info
+        <set>
+            <if test="whId != null and whId != ''">
+                whId= #{whId,jdbcType=VARCHAR},
+            </if>
+            <if test="whName != null and whName != ''">
+                whName= #{whName,jdbcType=VARCHAR},
+            </if>
+            UPDATE_BY_= #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_= #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        gjbjId=#{gjbjId}
+    </update>
+
+    <update id="updateApplyNumber" parameterType="com.alibaba.fastjson.JSONObject">
+        update bjgjbj_info
+        <set>
+            applyNumber=#{applyNumber,jdbcType=VARCHAR},
+        </set>
+        where
+        gjbjId=#{gjbjId}
+    </update>
+
+    <select id="queryGjbjById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        bjgjbj_info.*,
+        bpm_inst.INST_ID_ as instId
+        from bjgjbj_info
+        left join os_user on bjgjbj_info.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on bjgjbj_info.gjbjId=bpm_inst.BUS_KEY_
+        where bjgjbj_info.gjbjId=#{gjbjId}
+    </select>
+
+    <delete id="deleteGjbj" parameterType="java.util.Map">
+        delete from bjgjbj_info
+        <where>
+            <if test="gjbjId != null and gjbjId !=''">
+                gjbjId=#{gjbjId}
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryGjbjDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from bjgjbj_detail
+        where
+            belongId=#{gjbjId}
+    </select>
+
+    <insert id="createDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO bjgjbj_detail (
+        detailId,
+        belongId,
+        partsType,
+        desginModel,
+        vinCode,
+        productDepartName,
+        holeCode,
+        holeDesc,
+        materialCode,
+        materialDesc,
+        supplier,
+        partsNum,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{detailId,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{partsType,jdbcType=VARCHAR},
+        #{desginModel,jdbcType=VARCHAR},
+        #{vinCode,jdbcType=TIMESTAMP},
+        #{productDepartName,jdbcType=TIMESTAMP},
+        #{holeCode,jdbcType=TIMESTAMP},
+        #{holeDesc,jdbcType=TIMESTAMP},
+        #{materialCode,jdbcType=TIMESTAMP},
+        #{materialDesc,jdbcType=TIMESTAMP},
+        #{supplier,jdbcType=TIMESTAMP},
+        #{partsNum,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update bjgjbj_detail
+        <set>
+            partsType=#{partsType,jdbcType=VARCHAR},
+            desginModel=#{desginModel,jdbcType=VARCHAR},
+            vinCode=#{vinCode,jdbcType=VARCHAR},
+            productDepartName=#{productDepartName,jdbcType=VARCHAR},
+            holeCode=#{holeCode,jdbcType=TIMESTAMP},
+            holeDesc=#{holeDesc,jdbcType=TIMESTAMP},
+            materialCode=#{materialCode,jdbcType=TIMESTAMP},
+            materialDesc=#{materialDesc,jdbcType=TIMESTAMP},
+            supplier=#{supplier,jdbcType=TIMESTAMP},
+            partsNum=#{partsNum,jdbcType=TIMESTAMP},
+            remark=#{remark,jdbcType=TIMESTAMP},
+            devCode=#{devCode,jdbcType=TIMESTAMP},
+            devDesc=#{devDesc,jdbcType=TIMESTAMP},
+            planActTime=#{planActTime,jdbcType=TIMESTAMP},
+            needExp=#{needExp,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </set>
+        where
+        detailId=#{detailId}
+    </update>
+
+    <delete id="deleteDetail" parameterType="java.util.Map">
+        delete from bjgjbj_detail
+        <where>
+            <if test="detailId != null and detailId !=''">
+                detailId=#{detailId}
+            </if>
+            <if test="gjbjId != null and gjbjId !=''">
+                belongId=#{gjbjId}
+            </if>
+        </where>
+    </delete>
+
+
+</mapper>

@@ -1,0 +1,1374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.ProductDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.productType,
+        B.productModel,
+        B.important,
+        B.taskFrom,
+        B.processStatus,
+        B.productLeader,
+        B.modelStatus,
+        B.isNewModel,
+        B.responseMan,
+        B.remark,
+        B.changeReason,
+        B.planChange,
+        B.productStatus,
+        C.FULLNAME_ as productLeaderName,
+        D.FULLNAME_ as responseManName,
+        E.FULLNAME_ as planAdminName,
+        B.isLx,
+        B.budgetProductModel,
+        B.downLine,
+        B.isInverted,
+        B.isNeedModel,
+        B.mainConfig,
+        F.ysbh,
+        F.projectId,
+        F.projectName,
+        B.productId,
+        B.productModelReal
+        FROM
+        xpsz_plan_item A
+        LEFT JOIN xpsz_baseinfo B ON A.mainId = B.id
+        LEFT JOIN os_user C ON B.productLeader = C.USER_ID_
+        LEFT JOIN os_user D ON B.responseMan = D.USER_ID_
+        left join os_user E on B.planAdmin = E.USER_ID_
+        LEFT JOIN ( SELECT * FROM project_baseinfo WHERE productIds != '' AND productIds IS NOT NULL ) F ON (
+        F.productIds LIKE CONCAT( '%', B.productId, ',%' ) OR F.productIds LIKE CONCAT( '%,', B.productId, '%' ) OR F.productIds = B.productId)
+        AND B.productId != '' AND B.productId IS NOT NULL
+        <where>
+            <if test="isLx != null and isLx != ''">
+                and B.isLx=#{isLx}
+            </if>
+            <if test="important != null and important != ''">
+                and B.important=#{important}
+            </if>
+            <if test="processStatus != null and processStatus != ''">
+                and B.processStatus=#{processStatus}
+            </if>
+            <if test="finished != null and finished != ''">
+                and B.finished=#{finished}
+            </if>
+            <if test="belongYear != null and belongYear != ''">
+                and B.belongYear=#{belongYear}
+            </if>
+            <if test="productLeaderName != null and productLeaderName != ''">
+                and C.FULLNAME_ like CONCAT('%',#{productLeaderName},'%')
+            </if>
+            <if test="responseManName != null and responseManName != ''">
+                and D.FULLNAME_ like CONCAT('%',#{responseManName},'%')
+            </if>
+            <if test="planAdminName != null and planAdminName != ''">
+                and E.FULLNAME_ like CONCAT('%',#{planAdminName},'%')
+            </if>
+            <if test="productModel != null and productModel != ''">
+                and B.productModel like CONCAT('%',#{productModel},'%')
+            </if>
+            <if test="userId != null and userId != ''">
+                and (B.CREATE_BY_ = #{userId} or B.productLeader = #{userId} or B.responseMan = #{userId})
+            </if>
+            <if test="isHistory != null and isHistory != ''">
+                <choose>
+                    <when test='isHistory=="0"'>
+                        AND (A.itemType = '3' or A.itemType = '4')
+                    </when>
+                </choose>
+            </if>
+            <if test="isHistory == null or isHistory == ''">
+                AND (A.itemType = '3' or A.itemType = '4')
+            </if>
+            <if test="ids != null and ids != ''">
+                and B.id in
+                <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="productStatus != null and productStatus != ''">
+                and FIND_IN_SET(B.productStatus,#{productStatus})
+            </if>
+            <if test="productType != null and productType != ''">
+                and FIND_IN_SET(B.productType,#{productType})
+            </if>
+            <if test="stage != null and stage != ''">
+                and A.itemType = '4'
+                and A.${stage} is not null
+                <if test="reportStartDate != null and reportStartDate != ''">
+                    and A.${stage} &gt;= DATE_FORMAT(#{reportStartDate},'%Y-%m-%d')
+                </if>
+                <if test="reportEndDate != null and reportEndDate != ''">
+                    and A.${stage} &lt;=  DATE_FORMAT(#{reportEndDate},'%Y-%m-%d')
+                </if>
+            </if>
+        </where>
+        GROUP BY A.id
+        order by A.mainId,A.itemType
+        <include refid="pageSql"/>
+    </select>
+    <select id="getBaseList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,B.*,
+        C.FULLNAME_ as productLeaderName,
+        F.projectId,
+        F.projectName
+        FROM
+        xpsz_baseinfo A
+        left join xpsz_plan_item B on A.id = B.mainId
+        LEFT JOIN os_user C ON A.productLeader = C.USER_ID_
+        LEFT JOIN ( SELECT * FROM project_baseinfo WHERE productIds != '' AND productIds IS NOT NULL ) F ON (
+        F.productIds LIKE CONCAT( '%', A.productId, ',%' ) OR F.productIds LIKE CONCAT( '%,', A.productId, '%' ) OR F.productIds = A.productId)
+        AND A.productId != '' AND A.productId IS NOT NULL
+        WHERE
+        (A.finished = '0' or A.finished is null)
+        and B.itemType = '4'
+        <if test="showAll == 'false'">
+            and A.important='3'
+        </if>
+        <if test="userId != null and userId != ''">
+            and (A.CREATE_BY_ = #{userId} or A.productLeader = #{userId} or A.responseMan = #{userId})
+        </if>
+        <if test="ids != null and ids != ''">
+            and A.id in
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        group by B.id
+        order by A.id
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.FULLNAME_ as productLeaderName,
+            C.FULLNAME_ as responseManName,
+            D.FULLNAME_ as planAdminName,
+            F.projectName
+        FROM
+            xpsz_baseinfo A
+            LEFT JOIN os_user B ON A.productLeader = B.USER_ID_
+            LEFT JOIN os_user C ON A.responseMan = C.USER_ID_
+            left join os_user D on A.planAdmin = D.USER_ID_
+            LEFT JOIN ( SELECT * FROM project_baseinfo WHERE productIds != '' AND productIds IS NOT NULL ) F ON (
+                F.productIds LIKE CONCAT( '%', A.productId, ',%' ) OR F.productIds LIKE CONCAT( '%,', A.productId, '%' ) OR F.productIds = A.productId)
+                AND A.productId != '' AND A.productId IS NOT NULL
+            where A.id=#{id}
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO xpsz_baseinfo (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            productType,
+            productId,
+            productModel,
+            productModelReal,
+            important,
+            taskFrom,
+            processStatus,
+            productLeader,
+            modelStatus,
+            isNewModel,
+            responseMan,
+            remark,
+            changeReason,
+            planChange,
+            finished,
+            productStatus,
+            planAdmin,
+            isLx,
+            projectId,
+            belongYear,
+            budgetProductModel,
+            downLine,
+            isInverted,
+            isNeedModel,
+            mainConfig
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{productType,jdbcType=VARCHAR},
+            #{productId,jdbcType=VARCHAR},
+            #{productModel,jdbcType=VARCHAR},
+            #{productModelReal,jdbcType=VARCHAR},
+            #{important,jdbcType=VARCHAR},
+            #{taskFrom,jdbcType=VARCHAR},
+            #{processStatus,jdbcType=VARCHAR},
+            #{productLeader,jdbcType=VARCHAR},
+            #{modelStatus,jdbcType=VARCHAR},
+            #{isNewModel,jdbcType=VARCHAR},
+            #{responseMan,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{changeReason,jdbcType=VARCHAR},
+            #{planChange,jdbcType=VARCHAR},
+            #{finished,jdbcType=VARCHAR},
+            #{productStatus,jdbcType=VARCHAR},
+            #{planAdmin,jdbcType=VARCHAR},
+            #{isLx,jdbcType=VARCHAR},
+            #{projectId,jdbcType=VARCHAR},
+            #{belongYear,jdbcType=VARCHAR},
+            #{budgetProductModel,jdbcType=VARCHAR},
+            #{downLine,jdbcType=VARCHAR},
+            #{isInverted,jdbcType=VARCHAR},
+            #{isNeedModel,jdbcType=VARCHAR},
+            #{mainConfig,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update xpsz_baseinfo
+        <set>
+            <if test="productType != null and productType != ''">
+                productType=#{productType,jdbcType=VARCHAR},
+            </if>
+            <if test="productId != null">
+                productId=#{productId,jdbcType=VARCHAR},
+            </if>
+            <if test="productModel != null and productModel != ''">
+                productModel=#{productModel,jdbcType=VARCHAR},
+            </if>
+            <if test="productModelReal != null">
+                productModelReal=#{productModelReal,jdbcType=VARCHAR},
+            </if>
+            <if test="important != null and important != ''">
+                important=#{important,jdbcType=VARCHAR},
+            </if>
+            <if test="taskFrom != null and taskFrom != ''">
+                taskFrom=#{taskFrom,jdbcType=VARCHAR},
+            </if>
+            <if test="processStatus != null and processStatus != ''">
+                processStatus=#{processStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="productLeader != null and productLeader != ''">
+                productLeader=#{productLeader,jdbcType=VARCHAR},
+            </if>
+            <if test="modelStatus != null and modelStatus != ''">
+                modelStatus=#{modelStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="isNewModel != null and isNewModel != ''">
+                isNewModel=#{isNewModel,jdbcType=VARCHAR},
+            </if>
+            <if test="responseMan != null and responseMan != ''">
+                responseMan=#{responseMan,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null and remark != ''">
+                remark=#{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="changeReason != null and changeReason != ''">
+                changeReason=#{changeReason,jdbcType=VARCHAR},
+            </if>
+            <if test="planChange != null and planChange != ''">
+                planChange=#{planChange,jdbcType=VARCHAR},
+            </if>
+            <if test="finished != null and finished != ''">
+                finished=#{finished,jdbcType=VARCHAR},
+            </if>
+            <if test="productStatus != null and productStatus != ''">
+                productStatus=#{productStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="planAdmin != null and planAdmin != ''">
+                planAdmin=#{planAdmin,jdbcType=VARCHAR},
+            </if>
+            <if test="isLx != null and isLx != ''">
+                isLx=#{isLx,jdbcType=VARCHAR},
+            </if>
+            <if test="projectId != null and projectId != ''">
+                projectId=#{projectId,jdbcType=VARCHAR},
+            </if>
+            <if test="belongYear != null and belongYear != ''">
+                belongYear=#{belongYear,jdbcType=VARCHAR},
+            </if>
+            <if test="budgetProductModel != null and budgetProductModel != ''">
+                budgetProductModel=#{budgetProductModel,jdbcType=VARCHAR},
+            </if>
+            <if test="downLine != null and downLine != ''">
+                downLine=#{downLine,jdbcType=VARCHAR},
+            </if>
+            <if test="isInverted != null and isInverted != ''">
+                isInverted=#{isInverted,jdbcType=VARCHAR},
+            </if>
+            <if test="isNeedModel != null and isNeedModel != ''">
+                isNeedModel=#{isNeedModel,jdbcType=VARCHAR},
+            </if>
+            <if test="mainConfig != null and mainConfig != ''">
+                mainConfig=#{mainConfig,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <insert id="addItem" parameterType="java.util.Map">
+        INSERT INTO xpsz_plan_item (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        mainId,
+        <if test="fah_date != null and fah_date != ''">
+            fah_date,
+        </if>
+        <if test="tzgd_date != null and tzgd_date != ''">
+            tzgd_date,
+        </if>
+        <if test="tzxf_date != null and tzxf_date != ''">
+            tzxf_date,
+        </if>
+        <if test="sapjl_date != null and sapjl_date != ''">
+            sapjl_date,
+        </if>
+        <if test="czqj_date != null and czqj_date != ''">
+            czqj_date,
+        </if>
+        <if test="zkjdh_date != null and zkjdh_date != ''">
+            zkjdh_date,
+        </if>
+        <if test="gyfa_date != null and gyfa_date != ''">
+            gyfa_date,
+        </if>
+        <if test="pbomjl_date != null and pbomjl_date != ''">
+            pbomjl_date,
+        </if>
+        <if test="fsztzd_date != null and fsztzd_date != ''">
+            fsztzd_date,
+        </if>
+        <if test="scdd_date != null and scdd_date != ''">
+            scdd_date,
+        </if>
+        <if test="zybj_date != null and zybj_date != ''">
+            zybj_date,
+        </if>
+        <if test="xljdhsj_date != null and xljdhsj_date != ''">
+            xljdhsj_date,
+        </if>
+        <if test="mjwcsj_date != null and mjwcsj_date != ''">
+            mjwcsj_date,
+        </if>
+        <if test="gzjdw_date != null and gzjdw_date != ''">
+            gzjdw_date,
+        </if>
+        <if test="qbptjwc_date != null and qbptjwc_date != ''">
+            qbptjwc_date,
+        </if>
+        <if test="cwjy_date != null and cwjy_date != ''">
+            cwjy_date,
+        </if>
+        <if test="yjwczcs_date != null and yjwczcs_date != ''">
+            yjwczcs_date,
+        </if>
+        <if test="szgcwtqd_date != null and szgcwtqd_date != ''">
+            szgcwtqd_date,
+        </if>
+        <if test="zjtx_date != null and zjtx_date != ''">
+            zjtx_date,
+        </if>
+        <if test="cs_date != null and cs_date != ''">
+            cs_date,
+        </if>
+        <if test="yjtzzgwcsj_date != null and yjtzzgwcsj_date != ''">
+            yjtzzgwcsj_date,
+        </if>
+        <if test="gykhkssj_date != null and gykhkssj_date != ''">
+            gykhkssj_date,
+        </if>
+        <if test="xplwcsj_date != null and xplwcsj_date != ''">
+            xplwcsj_date,
+        </if>
+        <if test="sgsywc_date != null and sgsywc_date != ''">
+            sgsywc_date,
+        </if>
+        <if test="jswj_date != null and jswj_date != ''">
+            jswj_date,
+        </if>
+        <if test="xssy_date != null and xssy_date != ''">
+            xssy_date,
+        </if>
+        <if test="kfqrpsh_date != null and kfqrpsh_date != ''">
+            kfqrpsh_date,
+        </if>
+        <if test="cpjd_date != null and cpjd_date != ''">
+            cpjd_date,
+        </if>
+        <if test="jblczt_date != null and jblczt_date != ''">
+            jblczt_date,
+        </if>
+        <if test="ssrq_date != null and ssrq_date != ''">
+            ssrq_date,
+        </if>
+        itemType
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{UPDATE_BY_,jdbcType=VARCHAR},
+        #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        #{mainId,jdbcType=VARCHAR},
+        <if test="fah_date != null and fah_date != ''">
+            #{fah_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="tzgd_date != null and tzgd_date != ''">
+            #{tzgd_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="tzxf_date != null and tzxf_date != ''">
+            #{tzxf_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="sapjl_date != null and sapjl_date != ''">
+            #{sapjl_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="czqj_date != null and czqj_date != ''">
+            #{czqj_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="zkjdh_date != null and zkjdh_date != ''">
+            #{zkjdh_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="gyfa_date != null and gyfa_date != ''">
+            #{gyfa_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="pbomjl_date != null and pbomjl_date != ''">
+            #{pbomjl_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="fsztzd_date != null and fsztzd_date != ''">
+            #{fsztzd_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="scdd_date != null and scdd_date != ''">
+            #{scdd_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="zybj_date != null and zybj_date != ''">
+            #{zybj_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="xljdhsj_date != null and xljdhsj_date != ''">
+            #{xljdhsj_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="mjwcsj_date != null and mjwcsj_date != ''">
+            #{mjwcsj_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="gzjdw_date != null and gzjdw_date != ''">
+            #{gzjdw_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="qbptjwc_date != null and qbptjwc_date != ''">
+            #{qbptjwc_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="cwjy_date != null and cwjy_date != ''">
+            #{cwjy_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="yjwczcs_date != null and yjwczcs_date != ''">
+            #{yjwczcs_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="szgcwtqd_date != null and szgcwtqd_date != ''">
+            #{szgcwtqd_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="zjtx_date != null and zjtx_date != ''">
+            #{zjtx_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="cs_date != null and cs_date != ''">
+            #{cs_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="yjtzzgwcsj_date != null and yjtzzgwcsj_date != ''">
+            #{yjtzzgwcsj_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="gykhkssj_date != null and gykhkssj_date != ''">
+            #{gykhkssj_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="xplwcsj_date != null and xplwcsj_date != ''">
+            #{xplwcsj_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="sgsywc_date != null and sgsywc_date != ''">
+            #{sgsywc_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="jswj_date != null and jswj_date != ''">
+            #{jswj_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="xssy_date != null and xssy_date != ''">
+            #{xssy_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="kfqrpsh_date != null and kfqrpsh_date != ''">
+            #{kfqrpsh_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="cpjd_date != null and cpjd_date != ''">
+            #{cpjd_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="jblczt_date != null and jblczt_date != ''">
+            #{jblczt_date,jdbcType=TIMESTAMP},
+        </if>
+        <if test="ssrq_date != null and ssrq_date != ''">
+            #{ssrq_date,jdbcType=TIMESTAMP},
+        </if>
+        #{itemType,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateItem" parameterType="java.util.Map">
+        update xpsz_plan_item
+        <set>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delItem" parameterType="java.lang.String">
+        delete from xpsz_plan_item where id = #{id}
+    </delete>
+    <select id="getItemList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select A.*
+        from xpsz_plan_item A
+        <where>
+            <if test="mainId != null and mainId != ''">
+                and A.mainId=#{mainId}
+            </if>
+            <if test="type != null and type != ''">
+                and (A.itemType='3' or A.itemType='4')
+            </if>
+            <if test="itemType != null and itemType != ''">
+                and A.itemType = #{itemType}
+            </if>
+        </where>
+        ORDER BY A.itemType
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from xpsz_baseinfo
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="batchDeleteItems" parameterType="java.util.Map">
+        delete from xpsz_plan_item
+        WHERE
+        mainId in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <update id="updateDate" parameterType="java.util.Map">
+        update xpsz_plan_item
+        <set>
+            <if test="fah_date != null ">
+                <if test="fah_date == ''">
+                    fah_date=null,
+                </if>
+                <if test="fah_date != ''">
+                    fah_date=#{fah_date},
+                </if>
+            </if>
+            <if test="tzgd_date != null ">
+                <if test="tzgd_date == ''">
+                    tzgd_date=null,
+                </if>
+                <if test="tzgd_date != ''">
+                    tzgd_date=#{tzgd_date},
+                </if>
+            </if>
+            <if test="tzxf_date != null ">
+                <if test="tzxf_date == ''">
+                    tzxf_date=null,
+                </if>
+                <if test="tzxf_date != ''">
+                    tzxf_date=#{tzxf_date},
+                </if>
+            </if>
+            <if test="sapjl_date != null ">
+                <if test="sapjl_date == ''">
+                    sapjl_date=null,
+                </if>
+                <if test="sapjl_date != ''">
+                    sapjl_date=#{sapjl_date},
+                </if>
+            </if>
+            <if test="czqj_date != null ">
+                <if test="czqj_date == ''">
+                    czqj_date=null,
+                </if>
+                <if test="czqj_date != ''">
+                    czqj_date=#{czqj_date},
+                </if>
+            </if>
+            <if test="zkjdh_date != null ">
+                <if test="zkjdh_date == ''">
+                    zkjdh_date=null,
+                </if>
+                <if test="zkjdh_date != ''">
+                    zkjdh_date=#{zkjdh_date},
+                </if>
+            </if>
+            <if test="gyfa_date != null ">
+                <if test="gyfa_date == ''">
+                    gyfa_date=null,
+                </if>
+                <if test="gyfa_date != ''">
+                    gyfa_date=#{gyfa_date},
+                </if>
+            </if>
+            <if test="pbomjl_date != null ">
+                <if test="pbomjl_date == ''">
+                    pbomjl_date=null,
+                </if>
+                <if test="pbomjl_date != ''">
+                    pbomjl_date=#{pbomjl_date},
+                </if>
+            </if>
+            <if test="fsztzd_date != null ">
+                <if test="fsztzd_date == ''">
+                    fsztzd_date=null,
+                </if>
+                <if test="fsztzd_date != ''">
+                    fsztzd_date=#{fsztzd_date},
+                </if>
+            </if>
+            <if test="scdd_date != null ">
+                <if test="scdd_date == ''">
+                    scdd_date=null,
+                </if>
+                <if test="scdd_date != ''">
+                    scdd_date=#{scdd_date},
+                </if>
+            </if>
+            <if test="zybj_date != null ">
+                <if test="zybj_date == ''">
+                    zybj_date=null,
+                </if>
+                <if test="zybj_date != ''">
+                    zybj_date=#{zybj_date},
+                </if>
+            </if>
+            <if test="xljdhsj_date != null ">
+                <if test="xljdhsj_date == ''">
+                    xljdhsj_date=null,
+                </if>
+                <if test="xljdhsj_date != ''">
+                    xljdhsj_date=#{xljdhsj_date},
+                </if>
+            </if>
+            <if test="mjwcsj_date != null ">
+                <if test="mjwcsj_date == ''">
+                    mjwcsj_date=null,
+                </if>
+                <if test="mjwcsj_date != ''">
+                    mjwcsj_date=#{mjwcsj_date},
+                </if>
+            </if>
+            <if test="gzjdw_date != null">
+                <if test="gzjdw_date == ''">
+                    gzjdw_date=null,
+                </if>
+                <if test="gzjdw_date != ''">
+                    gzjdw_date=#{gzjdw_date},
+                </if>
+            </if>
+            <if test="qbptjwc_date != null ">
+                <if test="qbptjwc_date == ''">
+                    qbptjwc_date=null,
+                </if>
+                <if test="qbptjwc_date != ''">
+                    qbptjwc_date=#{qbptjwc_date},
+                </if>
+            </if>
+            <if test="cwjy_date != null ">
+                <if test="cwjy_date == ''">
+                    cwjy_date=null,
+                </if>
+                <if test="cwjy_date != ''">
+                    cwjy_date=#{cwjy_date},
+                </if>
+            </if>
+            <if test="yjwczcs_date != null ">
+                <if test="yjwczcs_date == ''">
+                    yjwczcs_date=null,
+                </if>
+                <if test="yjwczcs_date != ''">
+                    yjwczcs_date=#{yjwczcs_date},
+                </if>
+            </if>
+            <if test="szgcwtqd_date != null">
+                <if test="szgcwtqd_date == ''">
+                    szgcwtqd_date=null,
+                </if>
+                <if test="szgcwtqd_date != ''">
+                    szgcwtqd_date=#{szgcwtqd_date},
+                </if>
+            </if>
+            <if test="zjtx_date != null ">
+                <if test="zjtx_date == ''">
+                    zjtx_date=null,
+                </if>
+                <if test="zjtx_date != ''">
+                    zjtx_date=#{zjtx_date},
+                </if>
+            </if>
+            <if test="cs_date != null ">
+                <if test="cs_date == ''">
+                    cs_date=null,
+                </if>
+                <if test="cs_date != ''">
+                    cs_date=#{cs_date},
+                </if>
+            </if>
+            <if test="yjtzzgwcsj_date != null ">
+                <if test="yjtzzgwcsj_date == ''">
+                    yjtzzgwcsj_date=null,
+                </if>
+                <if test="yjtzzgwcsj_date != ''">
+                    yjtzzgwcsj_date=#{yjtzzgwcsj_date},
+                </if>
+            </if>
+            <if test="gykhkssj_date != null ">
+                <if test="gykhkssj_date == ''">
+                    gykhkssj_date=null,
+                </if>
+                <if test="gykhkssj_date != ''">
+                    gykhkssj_date=#{gykhkssj_date},
+                </if>
+            </if>
+            <if test="xplwcsj_date != null ">
+                <if test="xplwcsj_date == ''">
+                    xplwcsj_date=null,
+                </if>
+                <if test="xplwcsj_date != ''">
+                    xplwcsj_date=#{xplwcsj_date},
+                </if>
+            </if>
+            <if test="sgsywc_date != null ">
+                <if test="sgsywc_date == ''">
+                    sgsywc_date=null,
+                </if>
+                <if test="sgsywc_date != ''">
+                    sgsywc_date=#{sgsywc_date},
+                </if>
+            </if>
+            <if test="jswj_date != null ">
+                <if test="jswj_date == ''">
+                    jswj_date=null,
+                </if>
+                <if test="jswj_date != ''">
+                    jswj_date=#{jswj_date},
+                </if>
+            </if>
+            <if test="xssy_date != null ">
+                <if test="xssy_date == ''">
+                    xssy_date=null,
+                </if>
+                <if test="xssy_date != ''">
+                    xssy_date=#{xssy_date},
+                </if>
+            </if>
+            <if test="kfqrpsh_date != null ">
+                <if test="kfqrpsh_date == ''">
+                    kfqrpsh_date=null,
+                </if>
+                <if test="kfqrpsh_date != ''">
+                    kfqrpsh_date=#{kfqrpsh_date},
+                </if>
+            </if>
+            <if test="cpjd_date != null ">
+                <if test="cpjd_date == ''">
+                    cpjd_date=null,
+                </if>
+                <if test="cpjd_date != ''">
+                    cpjd_date=#{cpjd_date},
+                </if>
+            </if>
+            <if test="jblczt_date != null ">
+                <if test="jblczt_date == ''">
+                    jblczt_date=null,
+                </if>
+                <if test="jblczt_date != ''">
+                    jblczt_date=#{jblczt_date},
+                </if>
+            </if>
+            <if test="ssrq_date != null ">
+                <if test="ssrq_date == ''">
+                    ssrq_date=null,
+                </if>
+                <if test="ssrq_date != ''">
+                    ssrq_date=#{ssrq_date},
+                </if>
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getJsonArray" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        B.productType,
+        B.productModel,
+        B.important,
+        B.taskFrom,
+        B.processStatus,
+        B.productLeader,
+        B.modelStatus,
+        B.isNewModel,
+        B.responseMan,
+        B.remark,
+        B.changeReason,
+        B.planChange,
+        C.FULLNAME_ as productLeaderName,
+        D.FULLNAME_ as responseManName
+        FROM
+        xpsz_plan_item A
+        LEFT JOIN xpsz_baseinfo B ON A.mainId = B.id
+        LEFT JOIN os_user C ON B.productLeader = C.USER_ID_
+        LEFT JOIN os_user D ON B.responseMan = D.USER_ID_
+    </select>
+    <insert id="addFileInfos" parameterType="java.util.Map">
+		INSERT INTO xpsz_fileInfos
+		(
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            fileName,
+            fileSize,
+            mainId,
+            fileDesc,
+            picType
+		)
+		VALUES
+		(
+			#{id,jdbcType=VARCHAR},
+			#{CREATE_BY_,jdbcType=VARCHAR},
+			#{CREATE_TIME_,jdbcType=TIMESTAMP},
+			#{UPDATE_BY_,jdbcType=VARCHAR},
+			#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+			#{fileName,jdbcType=VARCHAR},
+			#{fileSize,jdbcType=VARCHAR},
+			#{mainId,jdbcType=VARCHAR},
+			#{fileDesc,jdbcType=VARCHAR},
+			#{picType,jdbcType=VARCHAR}
+		)
+	</insert>
+    <select id="getFileListByMainId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+			xpsz_fileInfos.*,
+			os_user.FULLNAME_ AS creator
+		FROM
+			xpsz_fileInfos
+			LEFT JOIN os_user ON xpsz_fileInfos.CREATE_BY_ = os_user.USER_ID_
+		WHERE
+			xpsz_fileInfos.mainId = #{mainId}
+	</select>
+
+    <delete id="deleteFileByIds" parameterType="java.util.Map">
+        delete from xpsz_fileInfos
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getBaseInfoList" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+            A.*
+        FROM
+            xpsz_baseinfo A
+        WHERE
+            (A.finished = '0' OR A.finished IS NULL )
+            and A.id in (select mainId from xpsz_plan_item )
+        ORDER BY
+            CREATE_TIME_ DESC
+    </select>
+    <select id="getItemListByMainId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from xpsz_plan_item where mainId = #{mainId} and (itemType = '3' or itemType = '4') order by itemType desc
+    </select>
+    <select id="getItemObject" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.util.Map">
+        select * from xpsz_plan_item where mainId = #{mainId} and itemType = #{itemType} limit 1
+    </select>
+
+    <update id="updatePlanDate" parameterType="java.util.Map">
+        update xpsz_plan_item
+        <set>
+            <if test="fah_date != null and fah_date != ''">
+                fah_date=date_add(fah_date, interval #{fah_date} day),
+            </if>
+            <if test="tzgd_date != null and tzgd_date != ''">
+                tzgd_date=date_add(tzgd_date, interval #{tzgd_date} day),
+            </if>
+            <if test="tzxf_date != null and tzxf_date != ''">
+                tzxf_date=date_add(tzxf_date, interval #{tzxf_date} day),
+            </if>
+            <if test="sapjl_date != null and sapjl_date != ''">
+                sapjl_date=date_add(sapjl_date, interval #{sapjl_date} day),
+            </if>
+            <if test="czqj_date != null and czqj_date != ''">
+                czqj_date=date_add(czqj_date, interval #{czqj_date} day),
+            </if>
+            <if test="zkjdh_date != null and zkjdh_date != ''">
+                zkjdh_date=date_add(zkjdh_date, interval #{zkjdh_date} day),
+            </if>
+            <if test="gyfa_date != null and gyfa_date != ''">
+                gyfa_date=date_add(gyfa_date, interval #{gyfa_date} day),
+            </if>
+            <if test="pbomjl_date != null and pbomjl_date != ''">
+                pbomjl_date=date_add(pbomjl_date, interval #{pbomjl_date} day),
+            </if>
+            <if test="fsztzd_date != null and fsztzd_date != ''">
+                fsztzd_date=date_add(fsztzd_date, interval #{fsztzd_date} day),
+            </if>
+            <if test="scdd_date != null and scdd_date != ''">
+                scdd_date=date_add(scdd_date, interval #{scdd_date} day),
+            </if>
+            <if test="zybj_date != null and zybj_date != ''">
+                zybj_date=date_add(zybj_date, interval #{zybj_date} day),
+            </if>
+            <if test="xljdhsj_date != null and xljdhsj_date != ''">
+                xljdhsj_date=date_add(xljdhsj_date, interval #{xljdhsj_date} day),
+            </if>
+            <if test="mjwcsj_date != null and mjwcsj_date != ''">
+                mjwcsj_date=date_add(mjwcsj_date, interval #{mjwcsj_date} day),
+            </if>
+            <if test="gzjdw_date != null and gzjdw_date != ''">
+                gzjdw_date=date_add(gzjdw_date, interval #{gzjdw_date} day),
+            </if>
+            <if test="qbptjwc_date != null and qbptjwc_date != ''">
+                qbptjwc_date=date_add(qbptjwc_date, interval #{qbptjwc_date} day),
+            </if>
+            <if test="yjwczcs_date != null and yjwczcs_date != ''">
+                yjwczcs_date=date_add(yjwczcs_date, interval #{yjwczcs_date} day),
+            </if>
+            <if test="szgcwtqd_date != null and szgcwtqd_date != ''">
+                szgcwtqd_date=date_add(szgcwtqd_date, interval #{szgcwtqd_date} day),
+            </if>
+            <if test="zjtx_date != null and zjtx_date != ''">
+                zjtx_date=date_add(zjtx_date, interval #{zjtx_date} day),
+            </if>
+            <if test="cs_date != null and cs_date != ''">
+                cs_date=date_add(cs_date, interval #{cs_date} day),
+            </if>
+            <if test="yjtzzgwcsj_date != null and yjtzzgwcsj_date != ''">
+                yjtzzgwcsj_date=date_add(yjtzzgwcsj_date, interval #{yjtzzgwcsj_date} day),
+            </if>
+            <if test="gykhkssj_date != null and gykhkssj_date != ''">
+                gykhkssj_date=date_add(gykhkssj_date, interval #{gykhkssj_date} day),
+            </if>
+            <if test="xplwcsj_date != null and xplwcsj_date != ''">
+                xplwcsj_date=date_add(xplwcsj_date, interval #{xplwcsj_date} day),
+            </if>
+            <if test="sgsywc_date != null and sgsywc_date != ''">
+                sgsywc_date=date_add(sgsywc_date, interval #{sgsywc_date} day),
+            </if>
+            <if test="jswj_date != null and jswj_date != ''">
+                jswj_date=date_add(jswj_date, interval #{jswj_date} day),
+            </if>
+            <if test="xssy_date != null and xssy_date != ''">
+                xssy_date=date_add(xssy_date, interval #{xssy_date} day),
+            </if>
+            <if test="kfqrpsh_date != null and kfqrpsh_date != ''">
+                kfqrpsh_date=date_add(kfqrpsh_date, interval #{kfqrpsh_date} day),
+            </if>
+            <if test="cpjd_date != null and cpjd_date != ''">
+                cpjd_date=date_add(cpjd_date, interval #{cpjd_date} day),
+            </if>
+            <if test="jblczt_date != null and jblczt_date != ''">
+                jblczt_date=date_add(jblczt_date, interval #{jblczt_date} day),
+            </if>
+            <if test="ssrq_date != null and ssrq_date != ''">
+                ssrq_date=date_add(ssrq_date, interval #{ssrq_date} day),
+            </if>
+        </set>
+        WHERE
+        mainId=#{mainId}
+        and itemType = #{itemType}
+    </update>
+    <update id="updateOrgDate" parameterType="java.util.Map">
+        update xpsz_plan_item
+        <set>
+            <if test="fah_date != null and fah_date != ''">
+                fah_date=#{fah_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="tzgd_date != null and tzgd_date != ''">
+                tzgd_date=#{tzgd_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="tzxf_date != null and tzxf_date != ''">
+                tzxf_date=#{tzxf_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="sapjl_date != null and sapjl_date != ''">
+                sapjl_date=#{sapjl_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="czqj_date != null and czqj_date != ''">
+                czqj_date=#{czqj_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="zkjdh_date != null and zkjdh_date != ''">
+                zkjdh_date=#{zkjdh_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="gyfa_date != null and gyfa_date != ''">
+                gyfa_date=#{gyfa_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="pbomjl_date != null and pbomjl_date != ''">
+                pbomjl_date=#{pbomjl_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="fsztzd_date != null and fsztzd_date != ''">
+                fsztzd_date=#{fsztzd_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="scdd_date != null and scdd_date != ''">
+                scdd_date=#{scdd_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="zybj_date != null and zybj_date != ''">
+                zybj_date=#{zybj_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="xljdhsj_date != null and xljdhsj_date != ''">
+                xljdhsj_date=#{xljdhsj_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="mjwcsj_date != null and mjwcsj_date != ''">
+                mjwcsj_date=#{mjwcsj_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="gzjdw_date != null and gzjdw_date != ''">
+                gzjdw_date=#{gzjdw_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="qbptjwc_date != null and qbptjwc_date != ''">
+                qbptjwc_date=#{qbptjwc_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="cwjy_date != null and cwjy_date != ''">
+                cwjy_date=#{cwjy_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="yjwczcs_date != null and yjwczcs_date != ''">
+                yjwczcs_date=#{yjwczcs_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="szgcwtqd_date != null and szgcwtqd_date != ''">
+                szgcwtqd_date=#{szgcwtqd_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="zjtx_date != null and zjtx_date != ''">
+                zjtx_date=#{zjtx_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="cs_date != null and cs_date != ''">
+                cs_date=#{cs_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="yjtzzgwcsj_date != null and yjtzzgwcsj_date != ''">
+                yjtzzgwcsj_date=#{yjtzzgwcsj_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="gykhkssj_date != null and gykhkssj_date != ''">
+                gykhkssj_date=#{gykhkssj_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="xplwcsj_date != null and xplwcsj_date != ''">
+                xplwcsj_date=#{xplwcsj_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="sgsywc_date != null and sgsywc_date != ''">
+                sgsywc_date=#{sgsywc_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="jswj_date != null and jswj_date != ''">
+                jswj_date=#{jswj_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="xssy_date != null and xssy_date != ''">
+                xssy_date=#{xssy_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="kfqrpsh_date != null and kfqrpsh_date != ''">
+                kfqrpsh_date=#{kfqrpsh_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="cpjd_date != null and cpjd_date != ''">
+                cpjd_date=#{cpjd_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="jblczt_date != null and jblczt_date != ''">
+                jblczt_date=#{jblczt_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="ssrq_date != null and ssrq_date != ''">
+                ssrq_date=#{ssrq_date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="produceNotice != null and produceNotice != ''">
+                produceNotice=#{produceNotice,jdbcType=VARCHAR},
+            </if>
+        </set>
+        WHERE
+        mainId=#{mainId}
+        and itemType = #{itemType}
+    </update>
+
+    <select id="getReportJdzt" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.processStatus,
+        count( 1 ) AS total
+        FROM
+        xpsz_baseinfo A
+        <where>
+            <if test="startYear != null and startYear != ''">
+                and YEAR(A.CREATE_TIME_) &gt;= #{startYear}
+            </if>
+            <if test="endYear != null and endYear != ''">
+                and YEAR(A.CREATE_TIME_) &lt;= #{endYear}
+            </if>
+            <if test="reportYear != null and reportYear != ''">
+                and A.belongYear = #{reportYear}
+            </if>
+            <if test="isImportant != null and isImportant != ''">
+                and A.important='3'
+            </if>
+        </where>
+        GROUP BY A.processStatus
+    </select>
+
+    <select id="getReportJdtj" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count(*) as num
+        FROM
+        xpsz_baseinfo A
+        left join xpsz_plan_item B on A.id = B.mainId
+        WHERE
+        B.itemType = '4'
+        <choose>
+            <when test="reportType == 'tzgd_date'">
+                and B.tzgd_date is not null
+                <if test="startYear != null and startYear != ''">
+                    and B.tzgd_date &gt;= DATE_FORMAT(#{startYear},'%Y-%m-%d')
+                </if>
+                <if test="endYear != null and endYear != ''">
+                    and B.tzgd_date &lt;=  DATE_FORMAT(#{endYear},'%Y-%m-%d')
+                </if>
+            </when>
+            <when test="reportType == 'zkjdh_date'">
+                and B.zkjdh_date is not null
+                <if test="startYear != null and startYear != ''">
+                    and B.zkjdh_date &gt;= DATE_FORMAT(#{startYear},'%Y-%m-%d')
+                </if>
+                <if test="endYear != null and endYear != ''">
+                    and B.zkjdh_date &lt;=  DATE_FORMAT(#{endYear},'%Y-%m-%d')
+                </if>
+            </when>
+            <when test="reportType == 'yjwczcs_date'">
+                and B.yjwczcs_date is not null
+                <if test="startYear != null and startYear != ''">
+                    and B.yjwczcs_date &gt;= DATE_FORMAT(#{startYear},'%Y-%m-%d')
+                </if>
+                <if test="endYear != null and endYear != ''">
+                    and B.yjwczcs_date &lt;=  DATE_FORMAT(#{endYear},'%Y-%m-%d')
+                </if>
+            </when>
+            <when test="reportType == 'gykhkssj_date'">
+                and B.gykhkssj_date is not null
+                <if test="startYear != null and startYear != ''">
+                    and B.gykhkssj_date &gt;= DATE_FORMAT(#{startYear},'%Y-%m-%d')
+                </if>
+                <if test="endYear != null and endYear != ''">
+                    and B.gykhkssj_date &lt;=  DATE_FORMAT(#{endYear},'%Y-%m-%d')
+                </if>
+            </when>
+            <when test="reportType == 'xplwcsj_date'">
+                and B.xplwcsj_date is not null
+                <if test="startYear != null and startYear != ''">
+                    and B.xplwcsj_date &gt;= DATE_FORMAT(#{startYear},'%Y-%m-%d')
+                </if>
+                <if test="endYear != null and endYear != ''">
+                    and B.xplwcsj_date &lt;=  DATE_FORMAT(#{endYear},'%Y-%m-%d')
+                </if>
+            </when>
+            <when test="reportType == 'ssrq_date'">
+                and B.ssrq_date is not null
+                <if test="startYear != null and startYear != ''">
+                    and B.ssrq_date &gt;= DATE_FORMAT(#{startYear},'%Y-%m-%d')
+                </if>
+                <if test="endYear != null and endYear != ''">
+                    and B.ssrq_date &lt;= DATE_FORMAT(#{endYear},'%Y-%m-%d')
+                </if>
+            </when>
+        </choose>
+        <if test="isImportant != null and isImportant != ''">
+            and (A.important='3' )
+        </if>
+        <if test="finished !=null and finished != ''">
+            and (A.finished != '1' or A.finished is null)
+        </if>
+    </select>
+
+    <select id="getProducts" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,B.*
+        FROM
+        xpsz_baseinfo A
+        left join xpsz_plan_item B on A.id = B.mainId
+        WHERE
+        B.itemType = '4'
+        <if test="startYear != null and startYear != ''">
+            and YEAR(A.CREATE_TIME_) &gt;= #{startYear}
+        </if>
+        <if test="endYear != null and endYear != ''">
+            and YEAR(A.CREATE_TIME_) &lt;= #{endYear}
+        </if>
+        <if test="isImportant != null and isImportant != ''">
+            and (A.important='3')
+        </if>
+        <if test="finished !=null and finished != ''">
+            and (A.finished != '1' or A.finished is null)
+        </if>
+    </select>
+    <select id="getProductObjByMainId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from xpsz_plan_item A
+        where A.mainId = #{mainId} and A.itemType = '3'
+        limit 1
+    </select>
+    <select id="getProductObjByProductIdAndYear" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from xpsz_baseinfo A
+        where
+        A.productId = #{productId}
+        and A.belongYear = #{belongYear}
+        <if test="excludeId != null and excludeId != ''">
+             AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="queryXpszAndXpByProductName" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            product_spectrum.id,
+            product_spectrum.designModel,
+            xpsz_baseinfo.id AS xpszId
+        FROM
+            product_spectrum
+            LEFT JOIN xpsz_baseinfo ON product_spectrum.id = xpsz_baseinfo.productId
+        WHERE
+            product_spectrum.designModel = #{designModel}
+        <if test="belongYear != null and belongYear != ''">
+            AND xpsz_baseinfo.belongYear = #{belongYear}
+        </if>
+    </select>
+
+    <select id="getProductInfoByMainId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.isNewModel,B.ssrq_date
+        FROM
+            xpsz_baseinfo A
+            LEFT JOIN xpsz_plan_item B ON A.id = B.mainId
+            where A.id = #{mainId}
+            and B.itemType = '3'
+            limit 1
+    </select>
+
+    <select id="getChangeRecordListByMainId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+		SELECT
+			xpsz_changerecord.*,
+			os_user.FULLNAME_ AS creator
+		FROM
+			xpsz_changerecord
+			LEFT JOIN os_user ON xpsz_changerecord.CREATE_BY_ = os_user.USER_ID_
+		WHERE
+			xpsz_changerecord.mainId = #{mainId}
+	</select>
+
+    <select id="getPlanDate" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            xpsz_plan_item A
+        WHERE
+            A.itemType = '3'
+            AND mainId = #{mainId}
+            limit 1
+    </select>
+    <select id="getNewProductInfo" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from xpsz_baseinfo A
+        where A.productId = #{productId}
+         and (A.finished = '0' or A.finished is null or A.finished = '')
+        limit 1
+    </select>
+    <select id="getProjectByProductId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from project_baseinfo where productIds like CONCAT('%',#{productId},'%') limit 1
+    </select>
+    <select id="getDeliveryResponse"  parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            project_deliveryproduct
+        WHERE
+            projectId = #{projectId}
+            and deliveryId = #{deliveryId}
+            and productIds like  CONCAT('%',#{productId},'%')
+            limit 1
+    </select>
+    <select id="getStageFinishDate" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.String">
+        SELECT
+            ${stageName}
+        FROM
+            xpsz_plan_item
+        WHERE
+            mainId = #{mainId}
+            AND itemType = #{itemType}
+    </select>
+    <select id="getDeliveryByUserId"  parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        project_deliveryproduct.deliveryId,
+        project_stage_leveldelivery.deliveryName,
+        project_baseinfo.productIds,
+        project_baseinfo.productNames,
+        project_baseinfo.projectId,
+        project_baseinfo.categoryId,
+        project_memberinfo.userId as respManId,
+        project_baseinfo.projectName,
+        project_baseinfo.currentStageId,
+        project_stage_leveldelivery.stageId,
+        xpsz_dept_items.itemName,
+        xpsz_dept_items.itemCode,
+        bpm_inst.ACT_INST_ID_,
+        bpm_inst.STATUS_ as status
+        FROM
+        project_deliveryproduct
+        LEFT JOIN project_baseinfo ON project_baseinfo.projectId = project_deliveryproduct.projectId
+        LEFT JOIN project_memberinfo ON project_baseinfo.projectId = project_memberinfo.projectId
+        LEFT JOIN project_stage_leveldelivery ON project_stage_leveldelivery.deliveryId =
+        project_deliveryproduct.deliveryId
+        LEFT JOIN project_stagedivide ON project_stage_leveldelivery.stageId = project_stagedivide.stageId
+        LEFT JOIN xpsz_dept_items ON xpsz_dept_items.deliveryId = project_deliveryproduct.deliveryId
+        left join bpm_inst on project_baseinfo.projectId=bpm_inst.BUS_KEY_
+        WHERE
+        project_deliveryproduct.userId = #{userId}
+        <if test="projectName != null and projectName != ''">
+            AND project_baseinfo.projectName like CONCAT ('%',#{projectName},'%')
+        </if>
+        and ( xpsz_dept_items.itemCode IS NOT NULL AND xpsz_dept_items.itemCode != '' )
+        and project_memberinfo.roleId='2'
+        and bpm_inst.STATUS_='RUNNING'
+        AND ( project_stage_leveldelivery.deliveryName IS NOT NULL AND project_stage_leveldelivery.deliveryName != '' )
+        ORDER BY
+        project_stagedivide.stageNo ,
+        project_baseinfo.projectId
+    </select>
+    <select id="getFinishDeliveryByProject"  parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            project_fileinfo
+        WHERE
+            project_fileinfo.projectId = #{projectId}
+          and (project_fileinfo.isPDMFile !='1'  or project_fileinfo.isPDMFile is null)
+    </select>
+</mapper>

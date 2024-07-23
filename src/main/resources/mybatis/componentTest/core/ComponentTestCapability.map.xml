@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.componentTest.core.dao.ComponentTestCapabilityDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="capability !=null and capability !=''">
+            AND component_test_capability.capability like concat('%',#{capability},'%')
+        </if>
+        <if test="type !=null and type !=''">
+            AND component_test_capability.type = #{type}
+        </if>
+        <if test="capabilityId !=null and capabilityId !=''">
+            AND capabilityId = #{capabilityId}
+        </if>
+        <if test="resources !=null and resources !=''">
+            AND resources like concat('%',#{resources},'%')
+        </if>
+        <if test="capabilityItem !=null and capabilityItem !=''">
+            AND capabilityItem like concat('%', #{capabilityItem},'%')
+        </if>
+        <if test="principal !=null and principal !=''">
+            AND principal like concat('%', #{principal},'%')
+        </if>
+        <if test="principal !=null and principal !=''">
+            AND principal like concat('%', #{principal},'%')
+        </if>
+    </sql>
+    <!---->
+    <select id="componentTestCapabilityItemListQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        component_test_capability_item.*,
+        component_test_capability.capability,
+        component_test_capability.type,
+        component_test_capability_item.principal principalId_name
+        FROM
+        component_test_capability_item
+        left join component_test_capability
+        on component_test_capability_item.capabilityId = component_test_capability.id
+        <where>
+            <include refid="query_where"/>
+        </where>
+        order by orderNum asc
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countComponentTestCapabilityItemListQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM
+        component_test_capability_item
+        left join component_test_capability
+        on component_test_capability_item.capabilityId = component_test_capability.id
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="componentTestCapabilityListQuery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select * from component_test_capability
+        <where>
+            <if test="pid != null and pid != ''">
+                and pid = #{pid}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="createComponentTestCapability" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO component_test_capability (
+          id,
+          pid,
+          capability,
+          type,
+          path,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) VALUES (
+          #{id,jdbcType=VARCHAR},
+          #{pid,jdbcType=VARCHAR},
+          #{capability,jdbcType=VARCHAR},
+          #{type,jdbcType=VARCHAR},
+          #{path,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateComponentTestCapability" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE component_test_capability
+        SET
+        pid=#{pid,jdbcType=VARCHAR},
+        capability=#{capability,jdbcType=VARCHAR},
+        type=#{type,jdbcType=VARCHAR},
+        path=#{path,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE id = #{id};
+    </update>
+    <!---->
+    <select id="getComponentTestCapabilityById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM component_test_capability
+        WHERE id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteComponentTestCapability" parameterType="java.lang.String">
+        delete from component_test_capability where path like concat(#{path},'%')
+    </delete>
+    <!---->
+    <select id="selectComponentTestCapabilityByPath" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM component_test_capability
+        WHERE path LIKE concat(#{path}, '%')
+    </select>
+    <!---->
+    <insert id="createComponentTestCapabilityItem" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO component_test_capability_item (
+        id,
+        capabilityId,
+        orderNum,
+        resources,
+        capabilityItem,
+        keyPoint,
+        principalId,
+        principal,
+        creator,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        VALUES
+        (
+        #{id,jdbcType=VARCHAR},
+        #{capabilityId,jdbcType=VARCHAR},
+        #{orderNum,jdbcType=INTEGER},
+        #{resources,jdbcType=VARCHAR},
+        #{capabilityItem,jdbcType=VARCHAR},
+        #{keyPoint,jdbcType=VARCHAR},
+        #{principalId,jdbcType=VARCHAR},
+        #{principal,jdbcType=VARCHAR},
+        #{creator,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateComponentTestCapabilityItem" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE component_test_capability_item
+        SET
+        capabilityId=#{capabilityId,jdbcType=VARCHAR},
+        orderNum=#{orderNum,jdbcType=INTEGER},
+        resources=#{resources,jdbcType=VARCHAR},
+        capabilityItem=#{capabilityItem,jdbcType=VARCHAR},
+        keyPoint=#{keyPoint,jdbcType=VARCHAR},
+        principalId=#{principalId,jdbcType=VARCHAR},
+        principal=#{principal,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE id = #{id}
+    </update>
+    <!---->
+    <delete id="deleteComponentTestCapabilityItem" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from component_test_capability_item
+        <where>
+            <if test="@Ognl@isNotEmpty(ids)">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(componentTestCapabilityIds)">
+                capabilityId in
+                <foreach collection="componentTestCapabilityIds" index="index" open="(" close=")" item="item" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(ids) and @Ognl@isEmpty(componentTestCapabilityIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+</mapper>

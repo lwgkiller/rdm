@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.world.core.dao.CkddDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    
+    <select id="queryCkdd" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        export_info.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        export_info
+        LEFT JOIN os_rel_inst ON export_info.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = export_info.CREATE_BY_
+        left join bpm_inst on export_info.ckddId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (export_info.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="model != null and model != ''">
+            and export_info.model like CONCAT('%',#{model},'%')
+        </if>
+        <if test="ddNumber != null and ddNumber != ''">
+            and export_info.ddNumber like CONCAT('%',#{ddNumber},'%')
+        </if>
+        <if test="cpzg != null and cpzg != ''">
+            and export_info.cpzg = #{cpzg}
+        </if>
+        <if test="rdmSpecialddNumber != null and rdmSpecialddNumber != ''">
+            and export_info.rdmSpecialddNumber = #{rdmSpecialddNumber}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countCkddList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        export_info
+        LEFT JOIN os_rel_inst ON export_info.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on export_info.ckddId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="model != null and model != ''">
+                and export_info.model like CONCAT('%',#{model},'%')
+            </if>
+            <if test="ddNumber != null and ddNumber != ''">
+                and export_info.ddNumber like CONCAT('%',#{ddNumber},'%')
+            </if>
+            <if test="cpzg != null and cpzg != ''">
+                and export_info.cpzg = #{cpzg}
+            </if>
+        </where>
+    </select>
+
+    <insert id="createCkdd" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into export_info(
+            ckddId
+            ,ckMonth
+            ,cpzgId
+            ,cpzg
+            ,resId
+            ,res
+            ,depId
+            ,dep
+            ,ddNumber
+            ,country
+            ,model
+            ,need
+            ,CREATE_BY_
+            ,CREATE_TIME_
+            ,rdmSpecialddNumber
+        )
+        values(
+            #{ckddId,jdbcType=VARCHAR},
+            #{ckMonth,jdbcType=TIMESTAMP},
+            #{cpzgId,jdbcType=VARCHAR},
+            #{cpzg,jdbcType=VARCHAR},
+            #{resId,jdbcType=VARCHAR},
+            #{res,jdbcType=VARCHAR},
+            #{depId,jdbcType=VARCHAR},
+            #{dep,jdbcType=VARCHAR},
+            #{ddNumber,jdbcType=VARCHAR},
+            #{country,jdbcType=VARCHAR},
+            #{model,jdbcType=VARCHAR},
+            #{need,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{rdmSpecialddNumber,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateCkdd" parameterType="com.alibaba.fastjson.JSONObject">
+        update export_info
+        <set>
+            ckMonth=#{ckMonth,jdbcType=TIMESTAMP},
+            cpzgId=#{cpzgId,jdbcType=VARCHAR},
+            cpzg=#{cpzg,jdbcType=VARCHAR},
+            resId=#{resId,jdbcType=VARCHAR},
+            res=#{res,jdbcType=VARCHAR},
+            depId=#{depId,jdbcType=VARCHAR},
+            dep=#{dep,jdbcType=VARCHAR},
+            ddNumber=#{ddNumber,jdbcType=VARCHAR},
+            country=#{country,jdbcType=VARCHAR},
+            model=#{model,jdbcType=VARCHAR},
+            need=#{need,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            rdmSpecialddNumber=#{rdmSpecialddNumber,jdbcType=VARCHAR}
+        </set>
+        where
+        ckddId=#{ckddId}
+    </update>
+
+
+    <select id="queryCkddById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        export_info.*,
+        bpm_inst.INST_ID_ as instId
+        from export_info
+        left join os_user on export_info.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on export_info.ckddId=bpm_inst.BUS_KEY_
+        where export_info.ckddId=#{ckddId}
+    </select>
+
+    <select id="queryCkddFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        export_file
+        WHERE
+        belongId=#{ckddId}
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into export_file(
+        fileId
+        ,fileName
+        ,belongId
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteCkddFile" parameterType="java.util.Map">
+        delete from export_file
+        <where>
+            <if test="fileId != null and fileId !=''">
+                fileId=#{fileId}
+            </if>
+            <if test="ckddId != null and ckddId !=''">
+                belongId=#{ckddId}
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteCkdd" parameterType="java.util.Map">
+        delete from export_info
+        <where>
+            <if test="ckddId != null and ckddId !=''">
+                ckddId=#{ckddId}
+            </if>
+        </where>
+    </delete>
+    <select id="queryTimeList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from export_time
+        where
+            belongId=#{ckddId}
+    </select>
+
+    <select id="queryCkddDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from export_detail
+        where
+            belongId=#{ckddId}
+        order by config
+
+    </select>
+
+    <insert id="createDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO export_detail (
+        spId,
+        config,
+        risk,
+        measures,
+        solveId,
+        solve,
+        finishTime,
+        belongId,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{spId,jdbcType=VARCHAR},
+        #{config,jdbcType=VARCHAR},
+        #{risk,jdbcType=VARCHAR},
+        #{measures,jdbcType=VARCHAR},
+        #{solveId,jdbcType=VARCHAR},
+        #{solve,jdbcType=VARCHAR},
+        #{finishTime,jdbcType=TIMESTAMP},
+        #{belongId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update export_detail
+        <set>
+            config =#{config,jdbcType=VARCHAR},
+            risk=#{risk,jdbcType=VARCHAR},
+            measures=#{measures,jdbcType=VARCHAR},
+            solveId=#{solveId,jdbcType=VARCHAR},
+            solve=#{solve,jdbcType=VARCHAR},
+            finishTime=#{finishTime,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </set>
+        where
+        spId=#{spId}
+    </update>
+    <delete id="deleteDetail" parameterType="java.util.Map">
+    delete from export_detail
+    <where>
+        <if test="spId != null and spId !=''">
+            spId=#{spId}
+        </if>
+        <if test="ckddId != null and ckddId !=''">
+            belongId=#{ckddId}
+        </if>
+    </where>
+</delete>
+
+    <insert id="createTime" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO export_time (
+        timeId,
+        timeSelect,
+        timeType,
+        belongId,
+        total,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{timeId,jdbcType=VARCHAR},
+        #{timeSelect,jdbcType=TIMESTAMP},
+        #{timeType,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{total,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateTime" parameterType="com.alibaba.fastjson.JSONObject">
+        update export_time
+        <set>
+            timeSelect =#{timeSelect,jdbcType=TIMESTAMP},
+            timeType=#{timeType,jdbcType=VARCHAR},
+            total=#{total,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </set>
+        where
+        timeId=#{timeId}
+    </update>
+
+    <delete id="deleteTime" parameterType="java.util.Map">
+        delete from export_time
+        <where>
+            <if test="timeId != null and timeId !=''">
+                timeId=#{timeId}
+            </if>
+            <if test="ckddId != null and ckddId !=''">
+                belongId=#{ckddId}
+            </if>
+        </where>
+    </delete>
+    <select id="queryBelongId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        environmental_rjfile.fileId,
+        environmental_rjfile.fileName
+        from environmental_rjfile
+        where environmental_rjfile.belongId=#{belongId}
+    </select>
+
+    <select id="queryZzr" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        solve,
+        solveId
+        FROM
+        export_detail
+        WHERE
+        belongId= #{belongId}
+    </select>
+    <select id="queryNowYearMaxNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            SUBSTR( rdmSpecialddNumber, -3 ) AS num
+        FROM
+            export_info
+        WHERE
+            rdmSpecialddNumber IS NOT NULL
+            AND rdmSpecialddNumber != ''
+            AND SUBSTR( rdmSpecialddNumber, 4, 4 ) = #{year}
+        ORDER BY num DESC
+        limit 1
+    </select>
+
+    <select id="queryApiList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            rdmSpecialddNumber,
+            ddNumber,
+            ckMonth,
+            model,
+            country,
+            need
+        FROM
+            export_info
+        WHERE
+            rdmSpecialddNumber like CONCAT('%',#{searchValue},'%')
+    </select>
+
+    <update id="updateNum" parameterType="com.alibaba.fastjson.JSONObject">
+        update export_info
+        <set>
+            rdmSpecialddNumber =#{rdmSpecialddNumber,jdbcType=TIMESTAMP}
+        </set>
+        where
+        ckddId=#{ckddId}
+    </update>
+</mapper>

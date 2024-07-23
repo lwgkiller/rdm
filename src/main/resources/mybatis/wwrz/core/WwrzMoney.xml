@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.wwrz.core.dao.WwrzMoneyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.productType,
+            B.productModel,
+            B.cabForm,
+            C.FULLNAME_ as creator,
+            D.FULLNAME_ as chargerName
+        FROM
+        wwrz_money A
+        LEFT JOIN wwrz_baseinfo B ON A.applyId = B.id
+        left join os_user C on A.CREATE_BY_ = C.USER_ID_
+        left join os_user D on B.productLeader = D.USER_ID_
+        <where>
+            <if test="productModel != null and productModel != ''">
+                and B.productModel like CONCAT('%',#{productModel},'%')
+            </if>
+            <if test="chargerName != null and chargerName != ''">
+                and D.FULLNAME_ like CONCAT('%',#{chargerName},'%')
+            </if>
+            <if test="contractCode != null and contractCode != ''">
+                and A.contractCode like CONCAT('%',#{contractCode},'%')
+            </if>
+            <if test="invoiceCode != null and invoiceCode != ''">
+                and A.invoiceCode like CONCAT('%',#{invoiceCode},'%')
+            </if>
+            <if test="showAll != null and showAll != ''">
+                <choose>
+                    <when test="showAll ==0">
+                        and A.CREATE_BY_ = #{userId}
+                    </when>
+                    <when test="showAll ==1">
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+           SELECT
+            A.*,
+            B.productType,
+            B.productModel,
+            B.cabForm,
+            B.productLeader,
+            C.FULLNAME_ as creator,
+            D.FULLNAME_ as productLeaderName
+        FROM
+        wwrz_money A
+        LEFT JOIN wwrz_baseinfo B ON A.applyId = B.id
+        left join os_user C on A.CREATE_BY_ = C.USER_ID_
+        left join os_user D on B.productLeader = D.USER_ID_
+            where A.id=#{id}
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO wwrz_money (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            applyId,
+            contractCode,
+            money,
+            invoiceCode,
+            <if test="paymentDate != null and paymentDate != ''">
+                paymentDate,
+            </if>
+            reportCode,
+            certCode,
+            documentCode,
+            remark,
+            items,
+            itemNames,
+            companyCode
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{applyId,jdbcType=VARCHAR},
+            #{contractCode,jdbcType=VARCHAR},
+            #{money,jdbcType=VARCHAR},
+            #{invoiceCode,jdbcType=VARCHAR},
+            <if test="paymentDate != null and paymentDate != ''">
+                #{paymentDate,jdbcType=TIMESTAMP},
+            </if>
+            #{reportCode,jdbcType=VARCHAR},
+            #{certCode,jdbcType=VARCHAR},
+            #{documentCode,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{items,jdbcType=VARCHAR},
+            #{itemNames,jdbcType=VARCHAR},
+            #{companyCode,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update wwrz_money
+            set
+                contractCode=#{contractCode,jdbcType=VARCHAR},
+                money=#{money,jdbcType=VARCHAR},
+                invoiceCode=#{invoiceCode,jdbcType=VARCHAR},
+                reportCode=#{reportCode,jdbcType=VARCHAR},
+                certCode=#{certCode,jdbcType=VARCHAR},
+                documentCode=#{documentCode,jdbcType=VARCHAR},
+                remark=#{remark,jdbcType=VARCHAR},
+                items=#{items,jdbcType=VARCHAR},
+                itemNames=#{itemNames,jdbcType=VARCHAR},
+                companyCode=#{companyCode,jdbcType=VARCHAR},
+                <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                    UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                </if>
+                <if test="paymentDate != null and paymentDate != ''">
+                    paymentDate=#{paymentDate,jdbcType=TIMESTAMP},
+                </if>
+                 UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from wwrz_money
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <update id="finish" parameterType="java.lang.String">
+        update wwrz_money set finishFlag = 'Y' where id = #{id}
+    </update>
+    <select id="getFlowStatus" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from bpm_inst A where A.BUS_KEY_ = #{applyId}
+    </select>
+
+
+</mapper>

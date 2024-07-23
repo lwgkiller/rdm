@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.trialPartsProcess.core.dao.TrialPartsProcessDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertTrialPartsProcessBase" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into trialparts_process_base (id, deptId, creater,
+                                             deptName, model, category,
+                                             trialNum, trialBillNum, trialMaterielNumBe,
+                                             trialMaterialDescBe, supplierBe, trialMaterielNumAf,
+                                             trialMaterialDescAf, supplierAf, interchange,
+                                             differ, planDate, faultNum, memberInfo,
+                                             faultRate, CREATE_BY_, CREATE_TIME_,
+                                             UPDATE_BY_, UPDATE_TIME_)
+        values (#{id,jdbcType=VARCHAR}, #{deptId,jdbcType=VARCHAR}, #{creater,jdbcType=VARCHAR},
+                #{deptName,jdbcType=VARCHAR}, #{model,jdbcType=VARCHAR}, #{category,jdbcType=VARCHAR},
+                #{trialNum,jdbcType=VARCHAR}, #{trialBillNum,jdbcType=VARCHAR}, #{trialMaterielNumBe,jdbcType=VARCHAR},
+                #{trialMaterialDescBe,jdbcType=VARCHAR}, #{supplierBe,jdbcType=VARCHAR}, #{trialMaterielNumAf,jdbcType=VARCHAR},
+                #{trialMaterialDescAf,jdbcType=VARCHAR}, #{supplierAf,jdbcType=VARCHAR}, #{interchange,jdbcType=VARCHAR},
+                #{differ,jdbcType=VARCHAR}, #{planDate,jdbcType=TIMESTAMP}, #{faultNum,jdbcType=VARCHAR},#{memberInfo,jdbcType=VARCHAR},
+                #{faultRate,jdbcType=VARCHAR}, #{CREATE_BY_,jdbcType=VARCHAR}, #{CREATE_TIME_,jdbcType=TIMESTAMP},
+                #{UPDATE_BY_,jdbcType=VARCHAR}, #{UPDATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <insert id="insertTrialPartsProcessBatch" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into trialparts_process_batch (id, applyId, trialBatch,
+                                              trialBatchNum, trialProcess, finishDate,
+                                              CREATE_BY_, CREATE_TIME_, UPDATE_BY_,
+                                              UPDATE_TIME_)
+        values (#{id,jdbcType=VARCHAR}, #{applyId,jdbcType=VARCHAR}, #{trialBatch,jdbcType=VARCHAR},
+                #{trialBatchNum,jdbcType=VARCHAR}, #{trialProcess,jdbcType=VARCHAR}, #{finishDate,jdbcType=TIMESTAMP},
+                #{CREATE_BY_,jdbcType=VARCHAR}, #{CREATE_TIME_,jdbcType=TIMESTAMP}, #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <insert id="insertTrialPartsProcessBatchDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into trialparts_process_batch_detail (id, applyId,trialBatch,
+                                                     vinCode, workDuration, deadline,
+                                                     CREATE_BY_, CREATE_TIME_, UPDATE_BY_,
+                                                     UPDATE_TIME_)
+        values (#{id,jdbcType=VARCHAR}, #{applyId,jdbcType=VARCHAR}, #{trialBatch,jdbcType=VARCHAR},
+                #{vinCode,jdbcType=VARCHAR}, #{workDuration,jdbcType=VARCHAR}, #{deadline,jdbcType=TIMESTAMP},
+                #{CREATE_BY_,jdbcType=VARCHAR}, #{CREATE_TIME_,jdbcType=TIMESTAMP}, #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <insert id="insertFile" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into trialparts_process_file (id, applyId, fileName,
+                                             fileType, fileSize, CREATE_BY_,
+                                             CREATE_TIME_, UPDATE_BY_, UPDATE_TIME_,
+                                             fileDesc)
+        values (#{id,jdbcType=VARCHAR}, #{applyId,jdbcType=VARCHAR}, #{fileName,jdbcType=VARCHAR},
+                #{fileType,jdbcType=VARCHAR}, #{fileSize,jdbcType=VARCHAR}, #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP}, #{UPDATE_BY_,jdbcType=VARCHAR}, #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{fileDesc,jdbcType=VARCHAR})
+    </insert>
+
+    <update id="updateTrialPartsProcessBase" parameterType="com.alibaba.fastjson.JSONObject">
+        update trialparts_process_base
+        set
+            model = #{model,jdbcType=VARCHAR},
+            category = #{category,jdbcType=VARCHAR},
+            trialNum = #{trialNum,jdbcType=VARCHAR},
+            trialBillNum = #{trialBillNum,jdbcType=VARCHAR},
+            trialMaterielNumBe = #{trialMaterielNumBe,jdbcType=VARCHAR},
+            trialMaterialDescBe = #{trialMaterialDescBe,jdbcType=VARCHAR},
+            supplierBe = #{supplierBe,jdbcType=VARCHAR},
+            trialMaterielNumAf = #{trialMaterielNumAf,jdbcType=VARCHAR},
+            trialMaterialDescAf = #{trialMaterialDescAf,jdbcType=VARCHAR},
+            supplierAf = #{supplierAf,jdbcType=VARCHAR},
+            interchange = #{interchange,jdbcType=VARCHAR},
+            differ = #{differ,jdbcType=VARCHAR},
+            planDate = #{planDate,jdbcType=TIMESTAMP},
+            memberInfo = #{memberInfo,jdbcType=VARCHAR},
+            faultNum = #{faultNum,jdbcType=VARCHAR},
+            faultRate = #{faultRate,jdbcType=VARCHAR},
+            UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateTrialPartsProcessBatch" parameterType="com.alibaba.fastjson.JSONObject">
+        update trialparts_process_batch
+        set
+            trialBatch = #{trialBatch,jdbcType=VARCHAR},
+            trialBatchNum = #{trialBatchNum,jdbcType=VARCHAR},
+            trialProcess = #{trialProcess,jdbcType=VARCHAR},
+            finishDate = #{finishDate,jdbcType=TIMESTAMP},
+            UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateTrialPartsProcessBatchDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update trialparts_process_batch_detail
+        set
+            trialBatch = #{trialBatch,jdbcType=VARCHAR},
+            vinCode = #{vinCode,jdbcType=VARCHAR},
+            workDuration = #{workDuration,jdbcType=VARCHAR},
+            deadline = #{deadline,jdbcType=TIMESTAMP},
+            UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=VARCHAR}
+    </update>
+
+    <delete id="deleteTrialPartsProcessBaseALL" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from trialparts_process_base
+        <where>
+            <if test="applyIds != null and applyIds != ''">
+                id in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteTrialPartsProcessBatch" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from trialparts_process_batch
+        where id = #{id,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteTrialPartsProcessBatchALL" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from trialparts_process_batch
+        <where>
+            <if test="applyIds != null and applyIds != ''">
+                applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteTrialPartsProcessBatchDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from trialparts_process_batch_detail
+        where id = #{id,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteTrialPartsProcessBatchDetailALL" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from trialparts_process_batch_detail
+        <where>
+            <if test="applyIds != null and applyIds != ''">
+                applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteTrialPartsProcessBatchDetailByTrialBatch" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from trialparts_process_batch_detail
+        where applyId = #{applyId,jdbcType=VARCHAR}
+        AND trialBatch = #{trialBatch,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteFile" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from trialparts_process_file
+        where id = #{id,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteFileALL" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from trialparts_process_file
+        <where>
+            <if test="applyIds != null and applyIds != ''">
+                applyId in
+                <foreach collection="applyIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryBaseInfoList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        trialparts_process_base.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        from trialparts_process_base trialparts_process_base
+        left join bpm_inst on trialparts_process_base.id=bpm_inst.BUS_KEY_
+        left join os_group on trialparts_process_base.deptId = os_group.GROUP_ID_
+        <where>
+            <if test="creater != null and creater != ''">
+                AND trialparts_process_base.creater like CONCAT('%',#{creater},'%')
+            </if>
+            <if test="deptName != null and deptName != ''">
+                AND trialparts_process_base.deptName like CONCAT('%',#{deptName},'%')
+            </if>
+            <if test="trialBillNum != null and trialBillNum != ''">
+                AND trialparts_process_base.trialBillNum like CONCAT('%',#{trialBillNum},'%')
+            </if>
+            <if test="trialMaterielNumAf != null and trialMaterielNumAf != ''">
+                AND trialparts_process_base.trialMaterielNumAf like CONCAT('%',#{trialMaterielNumAf},'%')
+            </if>
+            <if test="category != null and category != ''">
+                AND trialparts_process_base.category like CONCAT('%',#{category},'%')
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR
+                        trialparts_process_base.CREATE_BY_ = #{currentUserId})
+                        AND bpm_inst.STATUS_ !='DISCARD_END'
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+    </select>
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+            trialparts_process_base.*,
+            bpm_inst.INST_ID_ as instId
+        from
+            trialparts_process_base left join bpm_inst on trialparts_process_base.id=bpm_inst.BUS_KEY_
+        where
+            id =#{id}
+    </select>
+
+    <select id="queryBatchInfo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        trialparts_process_batch.*
+        from trialparts_process_batch
+        where applyId = #{applyId,jdbcType=VARCHAR}
+        <include refid="pageSql"/>
+        <include refid="orderBy"/>
+    </select>
+
+    <select id="queryBatchDetailInfo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        trialparts_process_batch_detail.*
+        from trialparts_process_batch_detail
+        where applyId = #{applyId,jdbcType=VARCHAR}
+        AND trialBatch = #{trialBatch,jdbcType=VARCHAR}
+        <include refid="pageSql"/>
+        <include refid="orderBy"/>
+    </select>
+
+    <select id="queryFileList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        trialparts_process_file.*
+        from trialparts_process_file
+        <where>
+            <if test="applyId !=null and applyId !=''">
+                applyId = #{applyId}
+            </if>
+        </where>
+    </select>
+    <select id="queryBatchInfoById" resultType="com.alibaba.fastjson.JSONObject">
+        select
+            trialparts_process_batch.*
+        from trialparts_process_batch
+        where id = #{id,jdbcType=VARCHAR}
+    </select>
+
+    <!--获取个人基本信息-->
+    <select id="getUserInfoById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            ou.USER_ID_ as userId,
+            ou.FULLNAME_ as userName,
+            (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+                od on od.DIM_ID_ = oi.DIM1_
+             where od.DIM_KEY_ = 'ZJ' and oi.PARTY2_ = ou.USER_ID_ limit 1) duty,
+        (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+        od on od.DIM_ID_ = oi.DIM1_
+        where od.DIM_KEY_ = 'GW' and oi.PARTY2_ = ou.USER_ID_ limit 1) post,
+        (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+        od on od.DIM_ID_ = oi.DIM1_
+        where od.DIM_KEY_ = '_ADMIN' and oi.PARTY2_ = ou.USER_ID_ limit 1) deptName,
+          B.id,B.education,B.expert,B.major,B.qualification
+        FROM
+            OS_USER ou  left join portrait_userinfo B on ou.USER_ID_ = B.userId,
+            OS_REL_INST oi,
+            os_inst_users iu
+        WHERE
+            ou.USER_ID_ = oi.PARTY2_
+          AND oi.REL_TYPE_ID_ = 1
+          AND ou.USER_ID_ = iu.USER_ID_
+          and ou.USER_ID_ = #{userId}
+            limit 1
+    </select>
+
+</mapper>

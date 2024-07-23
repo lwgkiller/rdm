@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmCommon.core.dao.ImportUserDao">
+    <resultMap id="BaseResultMap" type="com.redxun.sys.org.entity.OsUser">
+        <id column="user_id_" property="userId" jdbcType="VARCHAR"/>
+        <result column="FULLNAME_" property="fullname" jdbcType="VARCHAR"/>
+        <result column="USER_NO_" property="userNo" jdbcType="VARCHAR"/>
+        <result column="PWD_" property="pwd" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="addUserInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into os_user(
+            user_id_,FULLNAME_,USER_NO_,PWD_,STATUS_,TENANT_ID_,SEX_,MOBILE_,EMAIL_,CERT_NO_,pdmUserNo,szrUserId,szrUserName,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},#{userName,jdbcType=VARCHAR},#{userNo,jdbcType=VARCHAR},#{pwd,jdbcType=VARCHAR},
+        'IN_JOB','1','Male',#{mobile,jdbcType=VARCHAR},#{email,jdbcType=VARCHAR},#{CERT_NO_,jdbcType=VARCHAR},
+        #{pdmUserNo,jdbcType=VARCHAR},#{szrUserId,jdbcType=VARCHAR},#{szrUserName,jdbcType=VARCHAR},now()
+        )
+    </insert>
+
+    <insert id="addInstUser" parameterType="com.redxun.sys.org.entity.OsInstUsers">
+        insert into os_inst_users(
+            ID_,USER_ID_,APPROVE_USER_,IS_ADMIN_,DOMAIN_,STATUS_,TENANT_ID_,CREATE_TYPE_,APPLY_STATUS_
+        )values(
+        #{id,jdbcType=VARCHAR},#{userId,jdbcType=VARCHAR},#{approveUser,jdbcType=VARCHAR},#{isAdmin,jdbcType=VARCHAR},
+       #{domain,jdbcType=VARCHAR},#{status,jdbcType=VARCHAR},'1',#{createType,jdbcType=VARCHAR},#{applyStatus,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="addOsRelInst" parameterType="com.redxun.sys.org.entity.OsRelInst">
+        insert into os_rel_inst(
+            INST_ID_,REL_TYPE_ID_,REL_TYPE_KEY_,PARTY1_,PARTY2_,DIM1_,IS_MAIN_,STATUS_,REL_TYPE_,CREATE_BY_,CREATE_TIME_,TENANT_ID_
+        )values(
+        #{instId,jdbcType=VARCHAR},#{relTypeId,jdbcType=VARCHAR},#{relTypeKey,jdbcType=VARCHAR},#{party1,jdbcType=VARCHAR},
+       #{party2,jdbcType=VARCHAR},#{dim1,jdbcType=VARCHAR},#{isMain,jdbcType=VARCHAR},#{status,jdbcType=VARCHAR},
+       #{relType,jdbcType=VARCHAR},#{createBy,jdbcType=VARCHAR},#{createTime,jdbcType=TIMESTAMP},#{tenantId,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <!--查询组织id根据KEY值-->
+    <select id="getGroupId" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+	        A.GROUP_ID_ as groupId,A.NAME_,A.KEY_
+        FROM
+	        os_group A
+        WHERE
+            A.STATUS_ = 'ENABLED'
+            and A.DIM_ID_ = #{DimId}
+            and A.NAME_ = #{deptName}
+        LIMIT 1
+    </select>
+
+    <select id="getUserByNo" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from os_user where STATUS_ = 'IN_JOB' and USER_NO_ = #{userNo}
+    </select>
+</mapper>

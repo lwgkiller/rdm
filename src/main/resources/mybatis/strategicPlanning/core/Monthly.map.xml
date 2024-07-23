@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.strategicPlanning.core.dao.MonthlyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryMonthlyList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgh_monthly.*,
+        os_user.FULLNAME_ AS creator
+        FROM
+        zlgh_monthly
+        LEFT JOIN os_user ON os_user.USER_ID_ = zlgh_monthly.CREATE_BY_
+        <where>
+            <if test="docName != null and docName != ''">
+                zlgh_monthly.fileName like CONCAT('%',#{docName},'%')
+            </if>
+            <if test="yk_time != null and yk_time != ''">
+               and zlgh_monthly.yk_time =#{yk_time}
+            </if>
+            <if test="type != null and type != ''">
+                and zlgh_monthly.type =#{type}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countMonthlyFileList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        zlgh_monthly
+        <where>
+            <if test="docName != null and docName != ''">
+                zlgh_monthly.fileName like CONCAT('%',#{docName},'%')
+            </if>
+            <if test="type != null and type != ''">
+                and zlgh_monthly.type =#{type}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryMonthlyFileByName" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        zlgh_monthly.*
+        FROM
+        zlgh_monthly
+        WHERE
+        zlgh_monthly.fileName = #{fileName}
+<!--        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_templateFile.TENANT_ID_=#{TENANT_ID_}
+        </if>-->
+    </select>
+
+
+    <update id="updateMonthlyFile" parameterType="java.util.Map">
+        UPDATE zlgh_monthly SET
+		fileName=#{fileName,jdbcType=VARCHAR},
+		fileSize=#{fileSize,jdbcType=VARCHAR},
+		yk_time=#{yk_time,jdbcType=VARCHAR},
+		description=#{description,jdbcType=VARCHAR},
+		CREATE_BY_=#{CREATE_BY_,jdbcType=VARCHAR},
+		CREATE_TIME_=#{CREATE_TIME_,jdbcType=TIMESTAMP},
+		TENANT_ID_=#{TENANT_ID_,jdbcType=VARCHAR}
+		WHERE
+		id=#{id}
+    </update>
+
+    <insert id="addMonthlyFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zlgh_monthly(
+        Id
+        ,fileName
+        ,fileSize
+        ,yk_time
+		,description
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{Id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{yk_time,jdbcType=VARCHAR},
+		#{description,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteMonthlyFile" parameterType="java.util.Map">
+        delete from zlgh_monthly
+        <where>
+            <if test="Id != null and Id != ''">
+                Id=#{Id}
+            </if>
+        </where>
+    </delete>
+
+    <insert id="createMonthlyFile" parameterType="java.util.Map">
+        INSERT INTO zlgh_monthly
+		(
+		Id
+        ,fileName
+        ,fileSize
+        ,yk_time
+		,description
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        ,type
+        )values(
+        #{Id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{yk_time,jdbcType=VARCHAR},
+		#{description,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{type,jdbcType=VARCHAR}
+        )
+    </insert>
+</mapper>

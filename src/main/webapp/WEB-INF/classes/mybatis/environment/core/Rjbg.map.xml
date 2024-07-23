@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.RjbgDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryRjbg" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environmental_rjbg.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        environmental_rjbg
+        LEFT JOIN os_rel_inst ON environmental_rjbg.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_rjbg.CREATE_BY_
+        left join bpm_inst on environmental_rjbg.rjbgId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (environmental_rjbg.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="applyName != null and applyName != ''">
+            and environmental_rjbg.applyName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="appDeptName != null and appDeptName != ''">
+            and environmental_rjbg.appDeptName like CONCAT('%',#{appDeptName},'%')
+        </if>
+        <if test="modelName != null and modelName != ''">
+            and environmental_rjbg.modelName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="fdjGrand != null and fdjGrand != ''">
+            and environmental_rjbg.fdjGrand like CONCAT('%',#{fdjGrand},'%')
+        </if>
+        <if test="fdjModel != null and fdjModel != ''">
+            and environmental_rjbg.fdjModel like CONCAT('%',#{fdjModel},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countRjbgList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        environmental_rjbg
+        LEFT JOIN os_rel_inst ON environmental_rjbg.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on environmental_rjbg.rjbgId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            and (environmental_rjbg.CREATE_BY_ = #{currentUserId}
+            or bpm_inst.STATUS_ != 'DRAFTED')
+            <if test="applyName != null and applyName != ''">
+                and environmental_rjbg.applyName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="appDeptName != null and appDeptName != ''">
+                and environmental_rjbg.appDeptName like CONCAT('%',#{appDeptName},'%')
+            </if>
+            <if test="modelName != null and modelName != ''">
+                and environmental_rjbg.modelName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="fdjGrand != null and fdjGrand != ''">
+                and environmental_rjbg.fdjGrand like CONCAT('%',#{fdjGrand},'%')
+            </if>
+            <if test="fdjModel != null and fdjModel != ''">
+                and environmental_rjbg.fdjModel like CONCAT('%',#{fdjModel},'%')
+            </if>
+        </where>
+    </select>
+    <insert id="createRjbg" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_rjbg (rjbgId,
+                                        applyId,
+                                        applyName,
+                                        appDeptId,
+                                        appDeptName,
+                                        modelId,
+                                        modelName,
+                                        dlId,
+                                        dlName,
+                                        dqId,
+                                        dqName,
+                                        kzId,
+                                        kzName,
+                                        fdjGrand,
+                                        fdjModel,
+                                        CREATE_BY_,
+                                        CREATE_TIME_)
+        values (#{rjbgId,jdbcType=VARCHAR},
+                #{applyId,jdbcType=VARCHAR},
+                #{applyName,jdbcType=VARCHAR},
+                #{appDeptId,jdbcType=VARCHAR},
+                #{appDeptName,jdbcType=VARCHAR},
+                #{modelId,jdbcType=VARCHAR},
+                #{modelName,jdbcType=VARCHAR},
+                #{dlId,jdbcType=VARCHAR},
+                #{dlName,jdbcType=VARCHAR},
+                #{dqId,jdbcType=VARCHAR},
+                #{dqName,jdbcType=VARCHAR},
+                #{kzId,jdbcType=VARCHAR},
+                #{kzName,jdbcType=VARCHAR},
+                #{fdjGrand,jdbcType=VARCHAR},
+                #{fdjModel,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateRjbg" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_rjbg
+        <set>
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            appDeptId=#{appDeptId,jdbcType=VARCHAR},
+            appDeptName=#{appDeptName,jdbcType=VARCHAR},
+            modelId=#{modelId,jdbcType=VARCHAR},
+            modelName=#{modelName,jdbcType=VARCHAR},
+            dlId=#{dlId,jdbcType=VARCHAR},
+            dlName=#{dlName,jdbcType=VARCHAR},
+            dqId=#{dqId,jdbcType=VARCHAR},
+            dqName=#{dqName,jdbcType=VARCHAR},
+            kzId=#{kzId,jdbcType=VARCHAR},
+            kzName=#{kzName,jdbcType=VARCHAR},
+            fdjGrand=#{fdjGrand,jdbcType=VARCHAR},
+            fdjModel=#{fdjModel,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        rjbgId=#{rjbgId}
+    </update>
+
+    <select id="queryReason" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT environmental_reason.*
+        FROM environmental_reason
+        where belongId = #{belongId}
+
+    </select>
+
+    <insert id="createReason" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_reason (reasonId, reason, purpose, belongId, CREATE_BY_, CREATE_TIME_)
+        values (#{reasonId,jdbcType=VARCHAR},
+                #{reason,jdbcType=VARCHAR},
+                #{purpose,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateReason" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_reason
+        <set>
+            reason=#{reason,jdbcType=VARCHAR},
+            purpose=#{purpose,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        reasonId=#{reasonId}
+    </update>
+
+    <delete id="deleteReason" parameterType="java.util.Map">
+        delete from environmental_reason
+        <where>
+            <if test="reasonId != null and reasonId != ''">
+                reasonId=#{reasonId}
+            </if>
+            <if test="rjbgIds != null and rjbgIds !=''">
+                belongId IN
+                <foreach collection="rjbgIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryRjbgById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select environmental_rjbg.*, bpm_inst.INST_ID_ as instId
+        from environmental_rjbg
+                 left join os_user on environmental_rjbg.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on environmental_rjbg.rjbgId = bpm_inst.BUS_KEY_
+        where environmental_rjbg.rjbgId = #{rjbgId}
+    </select>
+
+    <select id="queryRjbgFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        environmental_smfile
+        WHERE
+        belongId IN
+        <foreach collection="rjbgIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="fileType != null and fileType !='' ">
+            and fileType=#{fileType}
+        </if>
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_smfile (fileId, fileName, belongId, fileSize, fileType, CREATE_BY_, CREATE_TIME_)
+        values (#{fileId,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{fileType,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <delete id="deleteRjbgFile" parameterType="java.util.Map">
+        delete from environmental_smfile
+        <where>
+            <if test="fileId != null and fileId != ''">
+                fileId=#{fileId}
+            </if>
+            <if test="rjbgIds != null and rjbgIds !=''">
+                AND belongId IN
+                <foreach collection="rjbgIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteRjbg" parameterType="java.util.Map">
+        delete from environmental_rjbg
+        <where>
+            <if test="rjbgIds != null and rjbgIds !=''">
+                rjbgId IN
+                <foreach collection="rjbgIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <update id="updateRjbgNumber" parameterType="java.util.Map">
+        update environmental_rjbg
+        set noticeNo = #{noticeNo,jdbcType=VARCHAR}
+        where rjbgId = #{rjbgId}
+    </update>
+    <select id="queryMaxRjbgNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT noticeNo
+        FROM environmental_rjbg
+        WHERE noticeNo like CONCAT('%', #{applyTimeStart}, '%')
+        ORDER BY noticeNo DESC
+        LIMIT 1
+    </select>
+
+    <select id="checkModel" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT environmental_rjbg.*
+        FROM environmental_rjbg
+                 left join bpm_inst on environmental_rjbg.rjbgId = bpm_inst.BUS_KEY_
+        where fdjModel = #{fdjModel}
+          and bpm_inst.STATUS_ != 'DRAFTED'
+    </select>
+</mapper>

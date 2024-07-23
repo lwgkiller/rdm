@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.AwardGrouplScienceProgressDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <delete id="deleteAgp" parameterType="java.util.Map">
+        delete from award_groupl_science_progress
+        where
+        id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <delete id="deleteAgpFileIds" parameterType="java.util.Map">
+        delete from award_fileInfo
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <select id="queryAgpList" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        t1.id,
+        t1.award_type awardType,
+
+        t1.honor,
+        t1.commend_unit commendUnit,
+        t1.certificate_number certificateNumber,
+        t1.validity,
+        DATE_FORMAT(t1.expiry_time,'%Y-%m-%d') expiryTime,
+        DATE_FORMAT(t1.predict_recheck_time,'%Y-%m-%d') predictRecheckTime,
+        t1.next_review_state nextReviewState,
+        t1.winning_unit winningUnit,
+
+        t1.prizewinner,
+        t1.portrayal_point_person_id portrayalPointPersonId,
+        t1.portrayal_point_person_name portrayalPointPersonName,
+        DATE_FORMAT(t1.prize_time,'%Y-%m-%d') prizeTime,
+        t1.fileId,
+        t1.CREATE_BY_,
+        DATE_FORMAT(t1.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        t2.fileName,
+        t2.fileSize
+        from
+        award_groupl_science_progress t1
+        left join award_fileInfo t2 on t1.fileId = t2.id
+        WHERE
+        1=1
+
+        <if test="prizewinner != null and prizewinner != ''">
+            AND t1.prizewinner like CONCAT('%',#{prizewinner},'%')
+        </if>
+        <if test="winningUnit != null and winningUnit != ''">
+            AND t1.winning_unit like CONCAT('%',#{winningUnit},'%')
+        </if>
+        <if test="awardType != null and awardType != ''">
+            AND t1.award_type = #{awardType}
+        </if>
+        <if test="projetName != null and projetName != ''">
+            AND t1.projet_name like CONCAT('%',#{projetName},'%')
+        </if>
+
+        <if test="rdTimeStart !=null and rdTimeStart !=''">
+            AND t1.prize_time &gt;= #{rdTimeStart}
+        </if>
+        <if test="rdTimeEnd !=null and rdTimeEnd !=''">
+            AND t1.prize_time &lt;= #{rdTimeEnd}
+        </if>
+
+        order by t1.CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countAgpfyList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        award_groupl_science_progress t1
+        <where>
+            <if test="prizewinner != null and prizewinner != ''">
+                AND t1.prizewinner like CONCAT('%',#{prizewinner},'%')
+            </if>
+            <if test="winningUnit != null and winningUnit != ''">
+                AND t1.winning_unit like CONCAT('%',#{winningUnit},'%')
+            </if>
+            <if test="awardType != null and awardType != ''">
+                AND t1.award_type = #{awardType}
+            </if>
+            <if test="projetName != null and projetName != ''">
+                AND t1.projet_name like CONCAT('%',#{projetName},'%')
+            </if>
+
+            <if test="rdTimeStart !=null and rdTimeStart !=''">
+                AND t1.prize_time &gt;= #{rdTimeStart}
+            </if>
+            <if test="rdTimeEnd !=null and rdTimeEnd !=''">
+                AND t1.prize_time &lt;= #{rdTimeEnd}
+            </if>
+        </where>
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into award_fileInfo(
+        id,
+        fileName,
+        fileSize,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <select id="queryAgpById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        t1.id,
+        t1.award_type awardType,
+
+        t1.honor,
+        t1.commend_unit commendUnit,
+        t1.certificate_number certificateNumber,
+        t1.validity,
+        DATE_FORMAT(t1.expiry_time,'%Y-%m-%d') expiryTime,
+        DATE_FORMAT(t1.predict_recheck_time,'%Y-%m-%d') predictRecheckTime,
+        t1.next_review_state nextReviewState,
+        t1.winning_unit winningUnit,
+
+        t1.prizewinner,
+        t1.portrayal_point_person_id portrayalPointPersonId,
+        t1.portrayal_point_person_name portrayalPointPersonName,
+        DATE_FORMAT(t1.prize_time,'%Y-%m-%d') prizeTime,
+        t1.fileId,
+        t1.CREATE_BY_,
+        DATE_FORMAT(t1.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        t2.fileName,
+        t2.fileSize
+        from
+        award_groupl_science_progress t1
+        left join award_fileInfo t2 on t1.fileId = t2.id
+        <where>
+            <if test="awardId != null and awardId != ''">
+                t1.id =#{awardId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="saveApgList" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into award_groupl_science_progress(
+            id,
+            award_type ,
+
+            honor,
+            commend_unit,
+            certificate_number,
+            validity,
+            expiry_time,
+            predict_recheck_time,
+            next_review_state,
+            winning_unit,
+
+            prizewinner,
+            portrayal_point_person_id ,
+            portrayal_point_person_name,
+            prize_time,
+            fileId,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{awardType,jdbcType=VARCHAR},
+
+            #{honor,jdbcType=VARCHAR},
+            #{commendUnit,jdbcType=VARCHAR},
+            #{certificateNumber,jdbcType=VARCHAR},
+            #{validity,jdbcType=VARCHAR},
+            #{expiryTime,jdbcType=VARCHAR},
+            #{predictRecheckTime,jdbcType=VARCHAR},
+            #{nextReviewState,jdbcType=VARCHAR},
+            #{winningUnit,jdbcType=VARCHAR},
+
+            #{prizewinner,jdbcType=VARCHAR},
+            #{portrayalPointPersonId,jdbcType=VARCHAR},
+            #{portrayalPointPersonName,jdbcType=VARCHAR},
+            #{prizeTime,jdbcType=TIMESTAMP},
+            #{fjId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        update award_fileInfo
+        set
+        fileName=#{fileName,jdbcType=VARCHAR},
+        fileSize=#{fileSize,jdbcType=TIMESTAMP},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+
+    <update id="updateAgpList" parameterType="com.alibaba.fastjson.JSONObject">
+        update award_groupl_science_progress
+        set
+        award_type =#{awardType,jdbcType=VARCHAR},
+
+        honor=#{honor,jdbcType=TIMESTAMP},
+        commend_unit=#{commendUnit,jdbcType=TIMESTAMP},
+        certificate_number=#{certificateNumber,jdbcType=TIMESTAMP},
+        validity=#{validity,jdbcType=TIMESTAMP},
+        expiry_time=#{expiryTime,jdbcType=TIMESTAMP},
+        predict_recheck_time=#{predictRecheckTime,jdbcType=TIMESTAMP},
+        next_review_state=#{nextReviewState,jdbcType=TIMESTAMP},
+        winning_unit=#{winningUnit,jdbcType=VARCHAR},
+
+        prizewinner=#{prizewinner,jdbcType=VARCHAR},
+        portrayal_point_person_id =#{portrayalPointPersonId,jdbcType=VARCHAR},
+        portrayal_point_person_name=#{portrayalPointPersonName,jdbcType=VARCHAR},
+        prize_time=#{prizeTime,jdbcType=TIMESTAMP},
+        fileId=#{fjId,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+
+
+    <select id="queryNameCount" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        FULLNAME_ fullName,
+        USER_ID_ userId,
+        count(*) count
+        from
+        os_user
+        WHERE FULLNAME_ in
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        GROUP BY FULLNAME_
+        ORDER BY FIELD ( FULLNAME_,
+        <foreach collection="ids" index="index" item="item" open="" separator="," close="">
+            #{item}
+        </foreach>
+        ) asc
+    </select>
+
+    <insert id="addAgpList" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into award_groupl_science_progress(
+            id,
+            award_type ,
+
+            honor,
+            commend_unit,
+            certificate_number,
+            validity,
+            expiry_time,
+            predict_recheck_time,
+            next_review_state,
+            winning_unit,
+
+            prizewinner,
+            portrayal_point_person_id ,
+            portrayal_point_person_name,
+            prize_time,
+            fileId,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{awardType,jdbcType=VARCHAR},
+
+            #{honor,jdbcType=VARCHAR},
+            #{commendUnit,jdbcType=VARCHAR},
+            #{certificateNumber,jdbcType=VARCHAR},
+            #{validity,jdbcType=VARCHAR},
+            #{expiryTime,jdbcType=VARCHAR},
+            #{predictRecheckTime,jdbcType=VARCHAR},
+            #{nextReviewState,jdbcType=VARCHAR},
+            #{winningUnit,jdbcType=VARCHAR},
+
+            #{prizewinner,jdbcType=VARCHAR},
+            #{portrayalPointPersonId,jdbcType=VARCHAR},
+            #{portrayalPointPersonName,jdbcType=VARCHAR},
+            #{prizeTime,jdbcType=TIMESTAMP},
+            #{fjId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+</mapper>

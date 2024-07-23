@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectMessageDao">
+    <select id="querySendMsg" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_message.*
+        FROM
+        project_message
+        <where>
+            <if test="userId != null and userId!=''">
+                project_message.CREATE_BY_ = #{userId}
+            </if>
+        </where>
+        ORDER BY project_message.CREATE_TIME_ desc
+    </select>
+
+    <insert id="insertToProjectMessage" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO project_message (
+        id,
+        recUserIds,
+        recGroupIds,
+        title,
+        content,
+        messageType,
+        canPopup,
+        expireTime,
+        appName,
+        recType,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        VALUES
+        (
+            #{id,jdbcType=VARCHAR},
+            #{recUserIds,jdbcType=VARCHAR},
+            #{recGroupIds,jdbcType=VARCHAR},
+            #{title,jdbcType=VARCHAR},
+            #{content,jdbcType=VARCHAR},
+            #{messageType,jdbcType=VARCHAR},
+            #{canPopup,jdbcType=VARCHAR},
+            #{expireTime,jdbcType=TIMESTAMP},
+            #{appName,jdbcType=VARCHAR},
+            #{recType,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <insert id="insertToProjectMessageBox" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO project_message_box ( id, messageId, readUserId, CREATE_BY_, CREATE_TIME_)
+        VALUES
+        (
+            #{id,jdbcType=VARCHAR},
+            #{messageId,jdbcType=VARCHAR},
+            #{readUserId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <select id="queryMsgType" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            *
+        FROM
+            project_message_type
+        ORDER BY num
+    </select>
+
+    <select id="queryRespProjects" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            project_baseinfo.projectId,
+            project_baseinfo.projectName,
+            bpm_inst.STATUS_
+        FROM
+            project_memberinfo
+            LEFT JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+            LEFT JOIN project_baseinfo ON project_memberinfo.projectId = project_baseinfo.projectId
+            LEFT JOIN bpm_inst ON project_memberinfo.projectId = bpm_inst.BUS_KEY_
+        WHERE
+            project_member_role.roleName = '项目负责人'
+            AND bpm_inst.STATUS_ = 'RUNNING'
+            <if test="userId != null and userId != ''">
+            AND project_memberinfo.userId = #{userId}
+            </if>
+    </select>
+
+    <select id="queryRecMsg"  parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            project_message.*,
+            os_user.FULLNAME_ AS sendUserName
+        FROM
+            project_message
+            LEFT JOIN os_user ON project_message.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+            project_message.appName = #{appName}
+            <if test="recType != null and recType !=''">
+                AND FIND_IN_SET( #{recType}, project_message.recType )
+            </if>
+            AND (
+            project_message.messageType = 'system'
+            OR ( FIND_IN_SET( #{userId}, project_message.recUserIds ) OR ( project_message.recGroupIds IS NOT NULL AND project_message.recGroupIds != '' ) )
+            )
+    </select>
+
+    <select id="queryHasReadMsg" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            *
+        FROM
+            project_message_box
+        WHERE
+            readUserId = #{userId}
+            AND messageId IN
+            <foreach collection="messageIds" index="index" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+    </select>
+
+    <select id="queryMsgDetailById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_message.*,
+        os_user.FULLNAME_ AS sendUserName
+        FROM
+        project_message
+        LEFT JOIN os_user ON project_message.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+        project_message.id = #{id}
+    </select>
+
+    <select id="queryUserIdsByGroupIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT DISTINCT
+            os_rel_inst.PARTY2_ AS userId
+        FROM
+            os_rel_inst
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.PARTY1_ IN
+        <foreach collection="groupIds" index="index" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="queryGroupIdsByUserId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            distinct PARTY1_ as groupId
+        FROM
+            os_rel_inst
+        WHERE
+            REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND PARTY2_ = #{userId}
+    </select>
+</mapper>

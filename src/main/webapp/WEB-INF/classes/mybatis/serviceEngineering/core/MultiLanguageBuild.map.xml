@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.MultiLanguageBuildDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+        <if test="designModel !=null and designModel !=''">
+            AND business.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+    </sql>
+    <sql id="whereGlossary">
+        <if test="materialCode !=null and materialCode !=''">
+            AND service_engineering_yy_ljtc.materialCode = #{materialCode}
+        </if>
+        <if test="originChinese !=null and originChinese !=''">
+            AND service_engineering_yy_ljtc.originChinese = #{originChinese}
+        </if>
+    </sql>
+    <!--特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst.INST_ID_ AS instId。其实现在没必要了，可以用business.INST_ID_取代-->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        service_engineering_multiLanguageBuild_apply AS business
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_multiLanguageBuild_apply AS business
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!--语言库查询-->
+    <select id="glossaryListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from
+        service_engineering_yy_ljtc
+        <where>
+            1=1
+            <include refid="whereGlossary"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from service_engineering_multiLanguageBuild_apply
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteItem" parameterType="java.util.Map">
+        delete from service_engineering_multiLanguageBuild_applyitems
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteItemByMainId" parameterType="java.lang.String" >
+        delete from service_engineering_multiLanguageBuild_applyitems
+        where mainId = #{mainId}
+    </delete>
+    <!--和组织，用户，bpm_inst的关联没啥用了。业务表冗余存储了。特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst-->
+    <select id="queryDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM service_engineering_multiLanguageBuild_apply AS business
+        WHERE business.id = #{businessId}
+    </select>
+    <!---->
+    <select id="queryItemList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_multiLanguageBuild_applyitems
+        WHERE mainId = #{_parameter,jdbcType=VARCHAR}
+    </select>
+    <!---->
+    <select id="queryItemListByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_multiLanguageBuild_applyitems
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <!---->
+    <select id="queryGlossaryListByMaterialCodes" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from
+        service_engineering_yy_ljtc
+        <where>
+            <if test="materialCodes != null and materialCodes !=''">
+                materialCode IN
+                <foreach collection="materialCodes" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryApplyitemsListByMaterialCodes" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from
+        service_engineering_multilanguagebuild_applyitems
+        <where>
+            <if test="materialCodes != null and materialCodes !=''">
+                materialCode IN
+                <foreach collection="materialCodes" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_multiLanguageBuild_apply(
+        id,
+        designModel,
+        saleType,
+        zhengJiCode,
+        totalCodeNum,
+        selfTranslatePercent,
+        outTranslatePercent,
+        manualType,
+        multilingualSign,
+        multilingualText,
+        applyUserId,
+        applyUser,
+        applyDate,
+        chReviewerId,
+        chReviewer,
+        enReviewerId,
+        enReviewer,
+        multilingualReviewerId,
+        multilingualReviewer,
+        businessStatus,
+        jumpEnglish,
+        CREATE_BY_,
+        CREATE_TIME_,
+        INST_ID_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{saleType,jdbcType=VARCHAR},
+        #{zhengJiCode,jdbcType=VARCHAR},
+        #{totalCodeNum,jdbcType=VARCHAR},
+        #{selfTranslatePercent,jdbcType=VARCHAR},
+        #{outTranslatePercent,jdbcType=VARCHAR},
+        #{manualType,jdbcType=VARCHAR},
+        #{multilingualSign,jdbcType=VARCHAR},
+        #{multilingualText,jdbcType=VARCHAR},
+        #{applyUserId,jdbcType=VARCHAR},
+        #{applyUser,jdbcType=VARCHAR},
+        #{applyDate,jdbcType=VARCHAR},
+        #{chReviewerId,jdbcType=VARCHAR},
+        #{chReviewer,jdbcType=VARCHAR},
+        #{enReviewerId,jdbcType=VARCHAR},
+        #{enReviewer,jdbcType=VARCHAR},
+        #{multilingualReviewerId,jdbcType=VARCHAR},
+        #{multilingualReviewer,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{jumpEnglish,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{INST_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_multiLanguageBuild_apply
+        set
+        designModel=#{designModel,jdbcType=VARCHAR},
+        saleType=#{saleType,jdbcType=VARCHAR},
+        zhengJiCode=#{zhengJiCode,jdbcType=VARCHAR},
+        multilingualSign=#{multilingualSign,jdbcType=VARCHAR},
+        applyUserId=#{applyUserId,jdbcType=VARCHAR},
+        applyUser=#{applyUser,jdbcType=VARCHAR},
+        applyDate=#{applyDate,jdbcType=VARCHAR},
+        chReviewerId=#{chReviewerId,jdbcType=VARCHAR},
+        chReviewer=#{chReviewer,jdbcType=VARCHAR},
+        enReviewerId=#{enReviewerId,jdbcType=VARCHAR},
+        enReviewer=#{enReviewer,jdbcType=VARCHAR},
+        multilingualReviewerId=#{multilingualReviewerId,jdbcType=VARCHAR},
+        multilingualReviewer=#{multilingualReviewer,jdbcType=VARCHAR},
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        INST_ID_=#{INST_ID_,jdbcType=VARCHAR},
+        externalSelect=#{externalSelect,jdbcType=VARCHAR},
+        totalCodeNum=#{totalCodeNum,jdbcType=VARCHAR},
+        selfTranslatePercent=#{selfTranslatePercent,jdbcType=VARCHAR},
+        outTranslatePercent=#{outTranslatePercent,jdbcType=VARCHAR},
+        manualType = #{manualType,jdbcType=VARCHAR},
+        jumpEnglish = #{jumpEnglish,jdbcType=VARCHAR},
+        multilingualText = #{multilingualText,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <insert id="insertItem" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_multiLanguageBuild_applyitems(
+        id,
+        mainId,
+        materialCode,
+        originChinese,
+        chinese,
+        chineseHit,
+        chineseUpdateBy,
+        chineseTextHit,
+        en,
+        enHit,
+        enUpdateBy,
+        enTextHit,
+        multilingualSign,
+        multilingualText,
+        multilingualUpdateBy,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{originChinese,jdbcType=VARCHAR},
+        #{chinese,jdbcType=VARCHAR},
+        #{chineseHit,jdbcType=VARCHAR},
+        #{chineseUpdateBy,jdbcType=VARCHAR},
+        #{chineseTextHit,jdbcType=VARCHAR},
+        #{en,jdbcType=VARCHAR},
+        #{enHit,jdbcType=VARCHAR},
+        #{enUpdateBy,jdbcType=VARCHAR},
+        #{enTextHit,jdbcType=VARCHAR},
+        #{multilingualSign,jdbcType=VARCHAR},
+        #{multilingualText,jdbcType=VARCHAR},
+        #{multilingualUpdateBy,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateItem" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_multiLanguageBuild_applyitems
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        originChinese=#{originChinese,jdbcType=VARCHAR},
+        chinese=#{chinese,jdbcType=VARCHAR},
+        chineseHit=#{chineseHit,jdbcType=VARCHAR},
+        chineseUpdateBy=#{chineseUpdateBy,jdbcType=VARCHAR},
+        chineseTextHit=#{chineseTextHit,jdbcType=VARCHAR},
+        en=#{en,jdbcType=VARCHAR},
+        enHit=#{enHit,jdbcType=VARCHAR},
+        enUpdateBy=#{enUpdateBy,jdbcType=VARCHAR},
+        enTextHit=#{enTextHit,jdbcType=VARCHAR},
+        multilingualSign=#{multilingualSign,jdbcType=VARCHAR},
+        multilingualText=#{multilingualText,jdbcType=VARCHAR},
+        multilingualUpdateBy=#{multilingualUpdateBy,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+</mapper>

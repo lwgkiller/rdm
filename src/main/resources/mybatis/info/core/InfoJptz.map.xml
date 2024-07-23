@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.info.core.dao.InfoJptzDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="selectJptzList" parameterType="java.util.Map" resultType="com.redxun.info.core.model.InfoJptz">
+        SELECT
+        jptz.id,
+        jptz.paperFactory,
+        jptz.paperCategory,
+        jptz.paperDesc,
+        jptz.CREATE_BY_ as createBy,
+        jptz.CREATE_TIME_ createTime,
+        jptz.TENANT_ID_ as tenantId,
+        jptz.UPDATE_BY_ as updateBy,
+        jptz.UPDATE_TIME_ as updateTime,
+        ouc.FULLNAME_ AS creator,
+        ouu.FULLNAME_ AS updator
+        FROM info_jptz jptz
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = jptz.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = jptz.UPDATE_BY_
+        WHERE 1=1
+        <if test="paperFactory != null and paperFactory != ''">AND jptz.paperFactory LIKE CONCAT( '%', #{paperFactory}, '%' )</if>
+        <if test="paperCategory != null and paperCategory != ''">AND jptz.paperCategory LIKE CONCAT( '%', #{paperCategory}, '%' )</if>
+        <if test="paperDesc != null and paperDesc != ''">AND jptz.paperDesc LIKE CONCAT( '%', #{paperDesc}, '%' )</if>
+        order by jptz.CREATE_TIME_ desc
+        <if test="sortField != null and sortField !='' and sortOrder != null and sortOrder !='' ">
+            , ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="selectJptzCount" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM info_jptz
+    </select>
+
+    <insert id="batchInsertJptz" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO info_jptz
+                (id,paperFactory,paperCategory,paperDesc,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.paperFactory},#{item.paperCategory},#{item.paperDesc},#{item.createBy},SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+
+    <update id="batchUpdateJptz" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update info_jptz
+                <set>
+                    <if test="item.paperFactory != null and item.paperFactory != ''">paperFactory=#{item.paperFactory},</if>
+                    <if test="item.paperCategory != null and item.paperCategory != ''">paperCategory=#{item.paperCategory},</if>
+                    <if test="item.paperDesc != null and item.paperDesc != ''">paperDesc=#{item.paperDesc},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+
+    <delete id="batchDeleteJptz">
+        <if test="list != null and list.size > 0">
+            delete from info_jptz where id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+            delete from info_jptz_files where belongId in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+    <!-- ==============竞品图纸样本文件=============== -->
+
+    <select id="selectJptzFileList" parameterType="java.util.Map"
+            resultType="com.redxun.info.core.model.InfoJptzFiles">
+        SELECT
+        file.id,
+        file.belongId,
+        file.fileName,
+        file.fileSize,
+        file.CREATE_BY_ as createBy,
+        file.CREATE_TIME_ createTime,
+        file.TENANT_ID_ as tenantId,
+        file.UPDATE_BY_ as updateBy,
+        file.UPDATE_TIME_ as updateTime,
+        ouc.FULLNAME_ AS creator,
+        ouu.FULLNAME_ AS updator
+        FROM info_jptz_files file
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = file.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = file.UPDATE_BY_
+        WHERE 1=1
+        <if test="belongId != null and belongId != ''">AND file.belongId = #{belongId}</if>
+        <if test="fileName != null and fileName != ''">AND file.fileName LIKE CONCAT( '%', #{fileName}, '%' )</if>
+        order by file.CREATE_TIME_ desc
+        <if test="sortField != null and sortField !='' and sortOrder != null and sortOrder !='' ">
+            , ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="selectJptzFileCount" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM info_jptz_files
+        WHERE 1=1
+        <if test="belongId != null and belongId != ''">AND belongId = #{belongId}</if>
+    </select>
+
+    <insert id="batchInsertJptzFile" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO info_jptz_files (id,belongId,fileName,fileSize,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.belongId},#{item.fileName},#{item.fileSize},#{item.createBy},SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+
+    <update id="batchUpdateJptzFile" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update info_jptz_files
+                <set>
+                    <if test="item.belongId != null and item.belongId != ''">belongId=#{item.belongId},</if>
+                    <if test="item.fileName != null and item.fileName != ''">fileName=#{item.fileName},</if>
+                    <if test="item.fileSize != null and item.fileSize != ''">fileSize=#{item.fileSize},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+
+    <delete id="batchDeleteJptzFile">
+        <if test="list != null and list.size > 0">
+            delete from info_jptz_files where id in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+    <delete id="deleteJptzFileBy">
+        <if test="list != null and list.size > 0">
+            delete from info_jptz_files where belongId in
+            <foreach collection="list" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>;
+        </if>
+    </delete>
+
+</mapper>

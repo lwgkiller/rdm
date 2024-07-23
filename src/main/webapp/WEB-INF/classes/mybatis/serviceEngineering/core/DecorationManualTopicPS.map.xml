@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.DecorationManualTopicPSDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+        <if test="@Ognl@isNotEmpty(businessNo)">
+            AND business.businessNo like CONCAT('%',#{businessNo},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(businessNoTopic)">
+            AND business.businessNoTopic like CONCAT('%',#{businessNoTopic},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(chapter)">
+            AND business.chapter like CONCAT('%',#{chapter},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(system)">
+            AND business.system like CONCAT('%',#{system},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(topicType)">
+            AND business.topicType like CONCAT('%',#{topicType},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(productSerie)">
+            AND business.productSerie like CONCAT('%',#{productSerie},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(manualVersion)">
+            AND business.manualVersion like CONCAT('%',#{manualVersion},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <!--特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst.INST_ID_ AS instId。其实现在没必要了，可以用business.INST_ID_取代-->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        DATE_FORMAT(business.CREATE_TIME_,"%Y-%m-%d %T") as createTime,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        service_engineering_decoration_manualtopic_ps AS business
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_decoration_manualtopic_ps AS business
+        LEFT JOIN bpm_inst on business.id = bpm_inst.BUS_KEY_
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!--和组织，用户，bpm_inst的关联没啥用了。业务表冗余存储了。特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst-->
+    <select id="queryDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            DATE_FORMAT(business.CREATE_TIME_, "%Y-%m-%d %T") AS createTime,
+            bpm_inst.INST_ID_                                 AS instId
+        FROM service_engineering_decoration_manualtopic_ps AS business
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_decoration_manualtopic_ps(
+            id,
+            businessNo,
+            applicantId,
+            applicant,
+            reviewerId,
+            reviewer,
+            assessorIds,
+            assessors,
+            approverId,
+            approver,
+            topicId,
+            businessNoTopic,
+            chapter,
+            system,
+            topicType,
+            productSerie,
+            manualVersion,
+            topicPSItems,
+            remark,
+            businessStatus,
+            CREATE_BY_,
+            CREATE_TIME_,
+            INST_ID_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{businessNo,jdbcType=VARCHAR},
+            #{applicantId,jdbcType=VARCHAR},
+            #{applicant,jdbcType=VARCHAR},
+            #{reviewerId,jdbcType=VARCHAR},
+            #{reviewer,jdbcType=VARCHAR},
+            #{assessorIds,jdbcType=VARCHAR},
+            #{assessors,jdbcType=VARCHAR},
+            #{approverId,jdbcType=VARCHAR},
+            #{approver,jdbcType=VARCHAR},
+            #{topicId,jdbcType=VARCHAR},
+            #{businessNoTopic,jdbcType=VARCHAR},
+            #{chapter,jdbcType=VARCHAR},
+            #{system,jdbcType=VARCHAR},
+            #{topicType,jdbcType=VARCHAR},
+            #{productSerie,jdbcType=VARCHAR},
+            #{manualVersion,jdbcType=VARCHAR},
+            #{topicPSItems,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{INST_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update service_engineering_decoration_manualtopic_ps
+        set
+            businessNo=#{businessNo,jdbcType=VARCHAR},
+            applicantId=#{applicantId,jdbcType=VARCHAR},
+            applicant=#{applicant,jdbcType=VARCHAR},
+            reviewerId=#{reviewerId,jdbcType=VARCHAR},
+            reviewer=#{reviewer,jdbcType=VARCHAR},
+            assessorIds=#{assessorIds,jdbcType=VARCHAR},
+            assessors=#{assessors,jdbcType=VARCHAR},
+            approverId=#{approverId,jdbcType=VARCHAR},
+            approver=#{approver,jdbcType=VARCHAR},
+            topicId=#{topicId,jdbcType=VARCHAR},
+            businessNoTopic=#{businessNoTopic,jdbcType=VARCHAR},
+            chapter=#{chapter,jdbcType=VARCHAR},
+            system=#{system,jdbcType=VARCHAR},
+            topicType=#{topicType,jdbcType=VARCHAR},
+            productSerie=#{productSerie,jdbcType=VARCHAR},
+            manualVersion=#{manualVersion,jdbcType=VARCHAR},
+            topicPSItems=#{topicPSItems,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from service_engineering_decoration_manualtopic_ps
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+</mapper>

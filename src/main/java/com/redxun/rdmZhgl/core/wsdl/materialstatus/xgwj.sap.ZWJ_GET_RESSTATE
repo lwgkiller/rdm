@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://esb.primeton.com/sap-adaptor" xmlns:soapenc11="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://esb.primeton.com/sap-adaptor" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://esb.primeton.com/sap-adaptor/rfc" xmlns:soapenc12="http://www.w3.org/2003/05/soap-encoding">
+  <wsdl:types>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor/rfc">
+															<xsd:complexType name="ArrayOfRESB_OUT">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="RESB_OUT" nillable="true" type="ns1:RESB_OUT"/>
+				</xsd:sequence>
+			</xsd:complexType>
+																	<xsd:complexType name="RESB_OUT">
+				<xsd:sequence>
+									<xsd:element minOccurs="0" name="RETURNCODE" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="WQSL" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="RETURNMSG" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="KZEAR" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="RSNUM" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="RSPOS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="XLOEK" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="XWAOK" nillable="true" type="xsd:string"/>
+								</xsd:sequence>
+			</xsd:complexType>
+																						<xsd:complexType name="ArrayOfRES_IN">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="RES_IN" nillable="true" type="ns1:RES_IN"/>
+				</xsd:sequence>
+			</xsd:complexType>
+																	<xsd:complexType name="RES_IN">
+				<xsd:sequence>
+									<xsd:element minOccurs="0" name="RSNUM" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="RSPOS" nillable="true" type="xsd:string"/>
+								</xsd:sequence>
+			</xsd:complexType>
+																</xsd:schema>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor">
+			<xsd:element name="ZWJ_GET_RESSTATE">
+				<xsd:complexType>
+					<xsd:sequence>
+																		<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfRESB_OUT" nillable="true" type="ns1:ArrayOfRESB_OUT"/>
+																	<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfRES_IN" nillable="true" type="ns1:ArrayOfRES_IN"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="ZWJ_GET_RESSTATEResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+																<xsd:element maxOccurs="1" minOccurs="1" name="RETURNCODE" nillable="true" type="xsd:string"/>
+																									<xsd:element maxOccurs="1" minOccurs="1" name="RETURNMSG" nillable="true" type="xsd:string"/>
+																					<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfRESB_OUT" nillable="true" type="ns1:ArrayOfRESB_OUT"/>
+																	<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfRES_IN" nillable="true" type="ns1:ArrayOfRES_IN"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="ZWJ_GET_RESSTATERequest">
+    <wsdl:part name="parameters" element="tns:ZWJ_GET_RESSTATE">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="ZWJ_GET_RESSTATEResponse">
+    <wsdl:part name="parameters" element="tns:ZWJ_GET_RESSTATEResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="xgwj.sap.ZWJ_GET_RESSTATEPortType">
+    <wsdl:operation name="ZWJ_GET_RESSTATE">
+      <wsdl:input name="ZWJ_GET_RESSTATERequest" message="tns:ZWJ_GET_RESSTATERequest">
+    </wsdl:input>
+      <wsdl:output name="ZWJ_GET_RESSTATEResponse" message="tns:ZWJ_GET_RESSTATEResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="xgwj.sap.ZWJ_GET_RESSTATEHttpBinding" type="tns:xgwj.sap.ZWJ_GET_RESSTATEPortType">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="ZWJ_GET_RESSTATE">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="ZWJ_GET_RESSTATERequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="ZWJ_GET_RESSTATEResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="xgwj.sap.ZWJ_GET_RESSTATE">
+    <wsdl:port name="xgwj.sap.ZWJ_GET_RESSTATEHttpPort" binding="tns:xgwj.sap.ZWJ_GET_RESSTATEHttpBinding">
+      <wsdlsoap:address location="HTTP://10.15.8.175:9091/xgwj.sap.ZWJ_GET_RESSTATE"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

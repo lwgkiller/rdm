@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.presaleDocuments.core.dao.PresaleDocumentsDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="queryWhereListQuery">
+        <if test="@Ognl@isNotEmpty(businessType)">
+            AND business.businessType = #{businessType}
+        </if>
+        <if test="@Ognl@isNotEmpty(saleModel)">
+            AND business.productSpectrum like CONCAT('%',#{saleModel},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(designModel)">
+            AND business.productSpectrum like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCode)">
+            AND business.productSpectrum like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(productManagerName)">
+            AND business.productSpectrum like CONCAT('%',#{productManagerName},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(repUserName)">
+            AND os_user.FULLNAME_ like CONCAT('%',#{repUserName},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(docLanguage)">
+            AND business.docLanguage = #{docLanguage}
+        </if>
+        <if test="@Ognl@isNotEmpty(salesArea)">
+            AND business.salesArea = #{salesArea}
+        </if>
+        <if test="@Ognl@isNotEmpty(releaseTimeBegin)">
+            AND business.releaseTime &gt;= #{releaseTimeBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(releaseTimeEnd)">
+            AND business.releaseTime &lt;= #{releaseTimeEnd}
+        </if>
+        <!---->
+        <if test="@Ognl@isNotEmpty(ids)">
+            AND id IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="@Ognl@isNotEmpty(REF_ID_)">
+            AND business.REF_ID_ = #{REF_ID_}
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        os_user.FULLNAME_ AS repUserName
+        FROM
+        pre_sale_documents as business
+        LEFT JOIN os_user
+        ON business.repUserId = os_user.USER_ID_
+        <where>
+            <include refid="queryWhereListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        pre_sale_documents as business
+        LEFT JOIN os_user
+        ON business.repUserId = os_user.USER_ID_
+        <where>
+            <include refid="queryWhereListQuery"/>
+        </where>
+    </select>
+    <!---->
+    <select id="getDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            os_user.FULLNAME_ AS repUserName
+        FROM
+            pre_sale_documents AS business
+            LEFT JOIN os_user ON business.repUserId = os_user.USER_ID_
+        WHERE business.id = #{id}
+    </select>
+    <!---->
+    <select id="getDataByApplyId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*
+        FROM
+        pre_sale_documents AS business
+        WHERE business.applyId = #{applyId}
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into pre_sale_documents(
+        id,
+        productSpectrum,
+        businessStatus,
+        salesArea,
+        docLanguage,
+        docVersion,
+        applicabilityStatement,
+        releaseTime,
+        repUserId,
+        systemType,
+        remarks,
+        businessType,
+        applyId,
+        REF_ID_,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{productSpectrum,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{salesArea,jdbcType=VARCHAR},
+        #{docLanguage,jdbcType=VARCHAR},
+        #{docVersion,jdbcType=VARCHAR},
+        #{applicabilityStatement,jdbcType=VARCHAR},
+        #{releaseTime,jdbcType=VARCHAR},
+        #{repUserId,jdbcType=VARCHAR},
+        #{systemType,jdbcType=VARCHAR},
+        #{remarks,jdbcType=VARCHAR},
+        #{businessType,jdbcType=VARCHAR},
+        #{applyId,jdbcType=VARCHAR},
+        #{REF_ID_,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        UPDATE pre_sale_documents
+        SET
+        productSpectrum=#{productSpectrum,jdbcType=VARCHAR},
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        salesArea=#{salesArea,jdbcType=VARCHAR},
+        docLanguage=#{docLanguage,jdbcType=VARCHAR},
+        docVersion=#{docVersion,jdbcType=VARCHAR},
+        applicabilityStatement=#{applicabilityStatement,jdbcType=VARCHAR},
+        releaseTime=#{releaseTime,jdbcType=VARCHAR},
+        repUserId=#{repUserId,jdbcType=VARCHAR},
+        systemType=#{systemType,jdbcType=VARCHAR},
+        remarks=#{remarks,jdbcType=VARCHAR},
+        businessType=#{businessType,jdbcType=VARCHAR},
+        applyId=#{applyId,jdbcType=VARCHAR},
+        REF_ID_=#{REF_ID_,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from pre_sale_documents
+        <where>
+            <if test="@Ognl@isNotEmpty(ids)">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(ids)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+
+</mapper>

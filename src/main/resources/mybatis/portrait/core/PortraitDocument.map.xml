@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitDocumentDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!--获取个人基本信息-->
+    <select id="getUserInfoById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+     SELECT
+        ou.USER_ID_ as userId,
+        ou.FULLNAME_ as userName,
+        (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+        od on od.DIM_ID_ = oi.DIM1_
+        where od.DIM_KEY_ = 'ZJ' and oi.PARTY2_ = ou.USER_ID_ limit 1) duty,
+        (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+        od on od.DIM_ID_ = oi.DIM1_
+        where od.DIM_KEY_ = 'GW' and oi.PARTY2_ = ou.USER_ID_ limit 1) post,
+        (SELECT og.NAME_ FROM os_group og left join os_rel_inst oi on og.GROUP_ID_ = oi.PARTY1_ left join os_dimension
+        od on od.DIM_ID_ = oi.DIM1_
+        where od.DIM_KEY_ = '_ADMIN' and oi.PARTY2_ = ou.USER_ID_ limit 1) deptName
+        FROM
+        OS_USER ou,
+        OS_REL_INST oi,
+        os_inst_users iu
+        WHERE
+        ou.USER_ID_ = oi.PARTY2_
+        AND oi.REL_TYPE_ID_ = 1
+        AND ou.USER_ID_ = iu.USER_ID_
+        and ou.USER_ID_ = #{userId}
+        limit 1
+    </select>
+
+    <select id="getUserList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            T.*,
+            ( T.projectScore + T.standardScore + T.knowledgeScore + T.rewardScore + T.secretScore + T.technologyScore ) AS techScore,
+            ( T.bbsScore + T.patentReadScore + T.informationScore + T.analysisImproveScore + T.contractScore ) AS teamWorkScore,
+            ( T.attendanceScore + T.notificationScore + T.performanceScore ) AS workScore,
+            ( T.courseScore + T.cultureScore ) AS employeeScore,
+            (T.projectScore + T.standardScore + T.knowledgeScore + T.rewardScore + secretScore + T.technologyScore + T.bbsScore + T.patentReadScore + T.informationScore + T.analysisImproveScore + T.contractScore + T.attendanceScore + T.notificationScore + T.performanceScore + T.courseScore + T.cultureScore ) AS totalScore
+        FROM
+        (
+        SELECT
+            userTmp.USER_ID_ as userId,
+            userTmp.FULLNAME_ as userName,
+            userTmp.deptName,
+            userTmp.duty,
+            userTmp.post,
+            IFNULL( standard.standardScore, 0 ) AS standardScore,
+            IFNULL( knowledge.knowledgeScore, 0 ) AS knowledgeScore,
+            IFNULL( project.projectScore, 0 ) AS projectScore,
+            IFNULL( reward.rewardScore, 0 ) AS rewardScore,
+            IFNULL( secret.secretScore, 0 ) AS secretScore,
+            IFNULL( technology.technologyScore, 0 ) AS technologyScore,
+            IFNULL( bbsScore, 0 ) AS bbsScore,
+            IFNULL( patentScore, 0 ) AS patentReadScore,
+            IFNULL( informationScore, 0 ) AS informationScore,
+            IFNULL( analysisimproveScore, 0 ) AS analysisImproveScore,
+            IFNULL( contractScore, 0 ) AS contractScore,
+            IFNULL( attendanceScore, 0 ) AS attendanceScore,
+            IFNULL( notificationScore, 0 ) AS notificationScore,
+            IFNULL( performanceScore, 0 ) AS performanceScore,
+            IFNULL( courseScore, 0 ) AS courseScore,
+            IFNULL( cultureScore, 0 ) AS cultureScore
+        FROM
+            (
+                SELECT
+                    os_user.USER_ID_,
+                    os_user.FULLNAME_,
+                    os_group.NAME_ AS deptName,
+                    gwTmp.gwName as post,
+                    zjTmp.zjName as duty
+                FROM
+                    os_user
+                    LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+                    LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+                    LEFT JOIN (
+                        SELECT
+                        os_group.NAME_ AS gwName,
+                        os_rel_inst.PARTY2_ AS userId
+                        FROM
+                        os_group
+                        LEFT JOIN os_rel_inst ON os_group.GROUP_ID_ = os_rel_inst.PARTY1_
+                        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+                        WHERE
+                        os_dimension.DIM_KEY_ = 'GW'
+                        AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                        GROUP BY userId
+                    ) gwTmp ON os_user.USER_ID_ = gwTmp.userId
+                    LEFT JOIN (
+                        SELECT
+                        os_group.NAME_ AS zjName,
+                        os_rel_inst.PARTY2_ AS userId
+                        FROM
+                        os_group
+                        LEFT JOIN os_rel_inst ON os_group.GROUP_ID_ = os_rel_inst.PARTY1_
+                        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+                        WHERE
+                        os_dimension.DIM_KEY_ = 'ZJ'
+                        AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                        GROUP BY userId
+                    ) zjTmp ON os_user.USER_ID_ = zjTmp.userId
+                WHERE
+                    os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                    AND os_rel_inst.DIM1_ = '1'
+                    AND os_rel_inst.PARTY1_ IN
+                    <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                        #{id}
+                    </foreach>
+                    AND os_user.STATUS_ = 'IN_JOB'
+                    <if test="userId != null and userId != ''">
+                        AND os_user.USER_ID_ = #{userId}
+                    </if>
+                    <if test="userIds != null and userIds != ''">
+                        AND os_user.USER_ID_ in
+                        <foreach collection="userIds" index="index" item="userId" open="(" separator="," close=")">
+                            #{userId}
+                        </foreach>
+                    </if>
+                    <if test="deptName != null and deptName != ''">
+                        and os_group.NAME_ like CONCAT('%',#{deptName},'%')
+                    </if>
+                    <if test="post != null and post != ''">
+                        and gwTmp.gwName like CONCAT('%',#{post},'%')
+                    </if>
+                    <if test="duty != null and duty != ''">
+                        and zjTmp.zjName like CONCAT('%',#{duty},'%')
+                    </if>
+            ) userTmp
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_standard.score ), 2 ), 0 ) AS standardScore
+                FROM
+                    portrait_standard
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        YEAR(portrait_standard.publishDate)=#{reportYear}
+                    </if>
+                </where>
+                GROUP BY userId
+            ) standard ON userTmp.USER_ID_ = standard.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_knowledge.score ), 2 ), 0 ) AS knowledgeScore
+                FROM
+                    portrait_knowledge
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        YEAR(portrait_knowledge.authorizeDate)=#{reportYear}
+                    </if>
+                </where>
+                GROUP BY userId
+            ) knowledge ON userTmp.USER_ID_ = knowledge.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( project_user_stagescore.stageScore ), 3 ), 0 ) AS projectScore
+                FROM
+                    project_user_stagescore
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        YEAR(project_user_stagescore.CREATE_TIME_)=#{reportYear}
+                    </if>
+                </where>
+                GROUP BY userId
+            ) project ON userTmp.USER_ID_ = project.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_reward.score ), 2 ), 0 ) AS rewardScore
+                FROM
+                    portrait_reward
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        rewardYear =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) reward ON userTmp.USER_ID_ = reward.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_secret.score ), 2 ), 0 ) AS secretScore
+                FROM
+                    portrait_secret
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        applyYear =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) secret ON userTmp.USER_ID_ = secret.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_technology.score ), 2 ), 0 ) AS technologyScore
+                FROM
+                    portrait_technology
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        applyYear =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) technology ON userTmp.USER_ID_ = technology.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_bbs.score ), 2 ), 0 ) AS bbsScore
+                FROM
+                    portrait_bbs
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        publishYear =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) bbs ON userTmp.USER_ID_ = bbs.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_patent.score ), 2 ), 0 ) AS patentScore
+                FROM
+                    portrait_patent
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        interpretationYear =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) patent ON userTmp.USER_ID_ = patent.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_information.score ), 2 ), 0 ) AS informationScore
+                FROM
+                    portrait_information
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        applyYear =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) information ON userTmp.USER_ID_ = information.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_analysisimprove.score ), 2 ), 0 ) AS analysisimproveScore
+                FROM
+                    portrait_analysisimprove
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        applyYear =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) analysisimprove ON userTmp.USER_ID_ = analysisimprove.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_contract.score ), 2 ), 0 ) AS contractScore
+                FROM
+                    portrait_contract
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        signYear =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) contract ON userTmp.USER_ID_ = contract.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_attendance.score ), 2 ), 0 ) AS attendanceScore
+                FROM
+                    portrait_attendance
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        YEAR(portrait_attendance.CREATE_TIME_) =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) attendance ON userTmp.USER_ID_ = attendance.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_notification.score ), 2 ), 0 ) AS notificationScore
+                FROM
+                    portrait_notification
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        YEAR(portrait_notification.CREATE_TIME_) =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) notification ON userTmp.USER_ID_ = notification.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_performance.score ), 2 ), 0 ) AS performanceScore
+                FROM
+                    portrait_performance
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        substring(portrait_performance.yearMonth,1,4) =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) performance ON userTmp.USER_ID_ = performance.userId
+        LEFT JOIN (
+                SELECT
+                    userId,
+                    IFNULL( ROUND( SUM( portrait_course.score ), 2 ), 0 ) AS courseScore
+                FROM
+                    portrait_course
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        YEAR(portrait_course.courseDate) =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY
+                    userId
+            ) course ON userTmp.USER_ID_ = course.userId
+        LEFT JOIN (
+                SELECT
+                    teacherUserId,
+                    IFNULL( ROUND( SUM( portrait_culture.score ), 2 ), 0 ) AS cultureScore
+                FROM
+                    portrait_culture
+                <where>
+                    <if test="reportYear != null and reportYear != ''">
+                        YEAR(portrait_culture.conformDate) =#{reportYear}
+                    </if>
+                </where>
+                GROUP BY teacherUserId
+            ) culture ON userTmp.USER_ID_ = culture.teacherUserId
+        ) T
+        ORDER BY totalScore DESC
+    </select>
+
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from portrait_notification
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!--从配置表中查询配置信息-->
+    <select id="getPortraitConfig" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT
+	        A.configValue
+        FROM
+	    portrait_config A
+	    where A.configKey = #{configKey}
+    </select>
+    <!--三高一可得分计算-->
+    <select id="getSGYKScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2),0) as totalScore
+        from portrait_sgyk A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and substring(A.yearMonth,1,4) = #{reportYear}
+        </if>
+    </select>
+    <!--科技项目-->
+    <select id="getProjectScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.stageScore),3),0) as totalScore
+        from project_user_stagescore A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.CREATE_TIME_) = #{reportYear}
+        </if>
+    </select>
+    <!--标准-->
+    <select id="getStandardScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_standard A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.publishDate) = #{reportYear}
+        </if>
+    </select>
+    <!--知识产权-->
+    <select id="getKnowledgeScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_knowledge A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.authorizeDate) = #{reportYear}
+        </if>
+    </select>
+    <!--协同事项-->
+    <select id="getTeamWorkScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_teamwork A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.CREATE_TIME_) = #{reportYear}
+        </if>
+    </select>
+    <!--考勤-->
+    <select id="getAttentionScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_attendance A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and substring(A.yearMonth,1,4) = #{reportYear}
+        </if>
+    </select>
+    <!--通报-->
+    <select id="getNotificationScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_notification A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.CREATE_TIME_) = #{reportYear}
+        </if>
+    </select>
+    <!--月度绩效-->
+    <select id="getPerformanceScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_performance A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and substring(A.yearMonth,1,4) = #{reportYear}
+        </if>
+    </select>
+    <!--荣誉奖项-->
+    <select id="getRewardScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_reward A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and A.rewardYear = #{reportYear}
+        </if>
+    </select>
+    <!--招标规划-->
+    <select id="getBidPlanScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_bidplan A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.CREATE_TIME_) = #{reportYear}
+        </if>
+    </select>
+    <!--培训课程-->
+    <select id="getCourseScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_course A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.courseDate) = #{reportYear}
+        </if>
+    </select>
+    <!--导师培养-->
+    <select id="getCultureScore" parameterType="java.util.Map" resultType="java.lang.Float">
+        select IFNULL(ROUND(sum(A.score),2) ,0) as totalScore
+        from portrait_culture A
+        where A.teacherUserId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.conformDate) = #{reportYear}
+        </if>
+    </select>
+    <!--获取个人分类数据-->
+    <select id="getPersonScore" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        ou.USER_ID_ as userId,
+        ou.FULLNAME_ as userName,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_standard A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.publishDate)=#{reportYear}
+        </if>
+        ) as standardScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_knowledge A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.authorizeDate) =#{reportYear}
+        </if>
+        ) as knowledgeScore,
+        (select IFNULL(ROUND(sum(A.stageScore),3),0) as totalScore from project_user_stagescore A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.CREATE_TIME_)=#{reportYear}
+        </if>
+        ) as projectScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_reward A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and rewardYear =#{reportYear}
+        </if>
+        ) as rewardScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_secret A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and A.applyYear =#{reportYear}
+        </if>
+        ) as secretScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_technology A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and A.applyYear =#{reportYear}
+        </if>
+        ) as technologyScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_bbs A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and A.publishYear =#{reportYear}
+        </if>
+        ) as bbsScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_patent A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and A.interpretationYear =#{reportYear}
+        </if>
+        ) as patentReadScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_information A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and A.applyYear =#{reportYear}
+        </if>
+        ) as informationScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_analysisimprove A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and A.applyYear =#{reportYear}
+        </if>
+        ) as analysisImproveScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_contract A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and A.signYear =#{reportYear}
+        </if>
+        ) as contractScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_attendance A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.CREATE_TIME_) =#{reportYear}
+        </if>
+        ) as attendanceScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_notification A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.CREATE_TIME_) =#{reportYear}
+        </if>
+        ) as notificationScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_performance A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and substring(A.yearMonth,1,4) =#{reportYear}
+        </if>
+        ) as performanceScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_course A where A.userId = ou.USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.courseDate) =#{reportYear}
+        </if>
+        ) as courseScore,
+        (select IFNULL(ROUND(sum(A.score),2),0) as totalScore from portrait_culture A where A.teacherUserId = ou.
+        USER_ID_
+        <if test="reportYear != null and reportYear != ''">
+            and YEAR(A.conformDate) =#{reportYear}
+        </if>
+        ) as cultureScore
+        FROM
+        OS_USER ou
+        where ou.USER_ID_ = #{userId}
+    </select>
+
+</mapper>

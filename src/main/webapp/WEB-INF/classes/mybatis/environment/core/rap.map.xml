@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.RapDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertRap" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO environmental_regulationsandpolicies (
+        rapId,
+        rapName,
+        rapStatus,
+        rapArea,
+        rapDate,
+        auditStatus,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{rapId,jdbcType=VARCHAR},
+        #{rapName,jdbcType=VARCHAR},
+        #{rapStatus,jdbcType=VARCHAR},
+        #{rapArea,jdbcType=VARCHAR},
+        #{rapDate,jdbcType=TIMESTAMP},
+        #{auditStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateRap" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_regulationsandpolicies
+        <set>
+        <if test="rapName != null and rapName != ''">
+            rapName=#{rapName,jdbcType=VARCHAR},
+        </if>
+        <if test="rapStatus != null and rapStatus != ''">
+            rapStatus=#{rapStatus,jdbcType=VARCHAR},
+        </if>
+        <if test="rapArea != null and rapArea != ''">
+            rapArea=#{rapArea,jdbcType=VARCHAR},
+        </if>
+        <if test="rapDate != null and rapDate != ''">
+            rapDate=#{rapDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="auditStatus != null and auditStatus != ''">
+            auditStatus=#{auditStatus,jdbcType=VARCHAR},
+        </if>
+        </set>
+        where
+        rapId=#{rapId}
+    </update>
+    <select id="queryRapById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select environmental_regulationsandpolicies.*
+        from environmental_regulationsandpolicies
+        where
+        rapId=#{rapId}
+    </select>
+    <select id="queryRapFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        fileId,
+        fileName,
+        belongId as rapId,
+        fileSize
+        FROM
+        environmental_file
+        WHERE
+        <if test="rapIds != null and rapIds !=''">
+            belongId IN
+            <foreach collection="rapIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_file(
+          fileId,
+          fileName,
+          fileSize,
+          belongId,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) values(
+          #{fileId,jdbcType=VARCHAR},
+          #{fileName,jdbcType=VARCHAR},
+          #{fileSize,jdbcType=VARCHAR},
+          #{belongId,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="queryRap" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environmental_regulationsandpolicies.*,
+        os_user.FULLNAME_ AS userName
+        from
+        environmental_regulationsandpolicies
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_regulationsandpolicies.CREATE_BY_
+        <where>
+            <if test="rapName != null and rapName != ''">
+                rapName like CONCAT('%',#{rapName},'%')
+            </if>
+            <if test="rapArea != null and rapArea != ''">
+                and rapArea like CONCAT('%',#{rapArea},'%')
+            </if>
+            <if test="rapStatus != null and rapStatus != ''">
+                and rapStatus =#{rapStatus}
+            </if>
+            <if test="createtime1!=null">
+                and rapDate &gt;= #{createtime1}
+            </if>
+            <if test="createtime2!=null">
+                and rapDate &lt;= #{createtime2}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='FGLR'">
+                        AND (environmental_regulationsandpolicies.CREATE_BY_ = #{currentUserId}
+                        OR environmental_regulationsandpolicies.auditStatus!='待提交'
+                        OR environmental_regulationsandpolicies.auditStatus!='驳回待提交')
+                    </when>
+                    <when test="roleName =='FGSH'">
+                        AND (environmental_regulationsandpolicies.CREATE_BY_ = #{currentUserId}
+                        OR environmental_regulationsandpolicies.auditStatus!='待提交'
+                        OR environmental_regulationsandpolicies.auditStatus!='驳回待提交')
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND (environmental_regulationsandpolicies.CREATE_BY_ = #{currentUserId}
+                        OR environmental_regulationsandpolicies.auditStatus!='待提交'
+                        OR environmental_regulationsandpolicies.auditStatus!='驳回待提交')
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countRapList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        environmental_regulationsandpolicies
+        <where>
+            <if test="rapName != null and rapName != ''">
+                rapName like CONCAT('%',#{rapName},'%')
+            </if>
+            <if test="rapArea != null and rapArea != ''">
+                and rapArea like CONCAT('%',#{rapArea},'%')
+            </if>
+            <if test="rapStatus != null and rapStatus != ''">
+                and rapStatus =#{rapStatus}
+            </if>
+            <if test="createtime1!=null">
+                and rapDate &gt;= #{createtime1}
+            </if>
+            <if test="createtime2!=null">
+                and rapDate &lt;= #{createtime2}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='FGLR'">
+                        AND (environmental_regulationsandpolicies.CREATE_BY_ = #{currentUserId}
+                        OR environmental_regulationsandpolicies.auditStatus!='待提交'
+                        OR environmental_regulationsandpolicies.auditStatus!='驳回待提交')
+                    </when>
+                    <when test="roleName =='FGSH'">
+                        AND (environmental_regulationsandpolicies.CREATE_BY_ = #{currentUserId}
+                        OR environmental_regulationsandpolicies.auditStatus!='待提交'
+                        OR environmental_regulationsandpolicies.auditStatus!='驳回待提交')
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND (environmental_regulationsandpolicies.CREATE_BY_ = #{currentUserId}
+                        OR environmental_regulationsandpolicies.auditStatus!='待提交'
+                        OR environmental_regulationsandpolicies.auditStatus!='驳回待提交')
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+    <delete id="deleteRapFile" parameterType="java.util.Map">
+        delete from environmental_file
+        <where>
+            <if test="id != null and id != ''">
+                fileId=#{id}
+            </if>
+            <if test="rapIds != null and rapIds !=''">
+                AND belongId IN
+                <foreach collection="rapIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteRap" parameterType="java.util.Map">
+        delete from environmental_regulationsandpolicies
+        <where>
+            <if test="rapIds != null and rapIds !=''">
+                AND rapId IN
+                <foreach collection="rapIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+</mapper>

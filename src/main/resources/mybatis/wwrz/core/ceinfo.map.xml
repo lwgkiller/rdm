@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.wwrz.core.dao.CeinfoDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <insert id="createCeinfo" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ceinfo_list(
+        ceinfoId
+        ,saleModel
+        ,designModel
+        ,materialNum
+        ,emission
+        ,jxId
+        ,dcId
+        ,zsId
+        ,jxNum
+        ,dcNum
+        ,zsNum
+        ,jxStartDate
+        ,dcStartDate
+        ,zsStartDate
+        ,jxEndDate
+        ,dcEndDate
+        ,zsEndDate
+        ,certName
+        ,certAdress
+        ,noiseReal
+        ,noisePlan
+        ,enginePower
+        ,onlyNum
+        ,replaceNo
+        ,explains
+        ,addupdate
+        ,noteStatus
+        ,linkWwrz
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )
+        values(
+        #{ceinfoId,jdbcType=VARCHAR},
+        #{saleModel,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{materialNum,jdbcType=VARCHAR},
+        #{emission,jdbcType=VARCHAR},
+        #{jxId,jdbcType=VARCHAR},
+        #{dcId,jdbcType=VARCHAR},
+        #{zsId,jdbcType=VARCHAR},
+        #{jxNum,jdbcType=VARCHAR},
+        #{dcNum,jdbcType=VARCHAR},
+        #{zsNum,jdbcType=VARCHAR},
+        #{jxStartDate,jdbcType=VARCHAR},
+        #{dcStartDate,jdbcType=VARCHAR},
+        #{zsStartDate,jdbcType=VARCHAR},
+        #{jxEndDate,jdbcType=VARCHAR},
+        #{dcEndDate,jdbcType=VARCHAR},
+        #{zsEndDate,jdbcType=VARCHAR},
+        #{certName,jdbcType=VARCHAR},
+        #{certAdress,jdbcType=VARCHAR},
+        #{noiseReal,jdbcType=VARCHAR},
+        #{noisePlan,jdbcType=VARCHAR},
+        #{enginePower,jdbcType=VARCHAR},
+        #{onlyNum,jdbcType=VARCHAR},
+        #{replaceNo,jdbcType=VARCHAR},
+        #{explains,jdbcType=VARCHAR},
+        #{addupdate,jdbcType=VARCHAR},
+        #{noteStatus,jdbcType=VARCHAR},
+        #{linkWwrz,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateCeinfo" parameterType="com.alibaba.fastjson.JSONObject">
+        update ceinfo_list
+        set
+            saleModel=#{saleModel,jdbcType=VARCHAR},
+            designModel=#{designModel,jdbcType=VARCHAR},
+            materialNum=#{materialNum,jdbcType=VARCHAR},
+            emission=#{emission,jdbcType=VARCHAR},
+            jxId=#{jxId,jdbcType=VARCHAR},
+            dcId=#{dcId,jdbcType=VARCHAR},
+            zsId=#{zsId,jdbcType=VARCHAR},
+            jxNum=#{jxNum,jdbcType=VARCHAR},
+            dcNum=#{dcNum,jdbcType=VARCHAR},
+            zsNum=#{zsNum,jdbcType=VARCHAR},
+            jxStartDate=#{jxStartDate,jdbcType=VARCHAR},
+            dcStartDate=#{dcStartDate,jdbcType=VARCHAR},
+            zsStartDate=#{zsStartDate,jdbcType=VARCHAR},
+            jxEndDate=#{jxEndDate,jdbcType=VARCHAR},
+            dcEndDate=#{dcEndDate,jdbcType=VARCHAR},
+            zsEndDate=#{zsEndDate,jdbcType=VARCHAR},
+            certName=#{certName,jdbcType=VARCHAR},
+            certAdress=#{certAdress,jdbcType=VARCHAR},
+            noiseReal=#{noiseReal,jdbcType=VARCHAR},
+            noisePlan=#{noisePlan,jdbcType=VARCHAR},
+            enginePower=#{enginePower,jdbcType=VARCHAR},
+            replaceNo=#{replaceNo,jdbcType=VARCHAR},
+            explains=#{explains,jdbcType=VARCHAR},
+            addupdate=#{addupdate,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+
+        where
+        ceinfoId=#{ceinfoId}
+    </update>
+    <select id="queryCeinfoById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select A.*,
+        B.saleModel as oldsaleModel
+        from ceinfo_list A
+        LEFT JOIN ceinfo_list B ON B.ceinfoId = A.replaceNo
+        where
+        A.ceinfoId=#{ceinfoId}
+    </select>
+
+    <select id="queryCeinfo" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        ceinfo_list.*,
+        os_user.FULLNAME_ AS userName
+        from
+        ceinfo_list
+        LEFT JOIN os_user ON os_user.USER_ID_ = ceinfo_list.CREATE_BY_
+        <where>
+            1=1
+            <if test="saleModel != null and saleModel != ''">
+                and saleModel like CONCAT('%',#{saleModel},'%')
+            </if>
+            <if test="onlyNum != null and onlyNum != ''">
+                and onlyNum like CONCAT('%',#{onlyNum},'%')
+            </if>
+            <if test="zsNum != null and zsNum != ''">
+                and zsNum like CONCAT('%',#{zsNum},'%')
+            </if>
+            <if test="noteStatus != null and noteStatus != ''">
+                and noteStatus =#{noteStatus}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countCeinfoList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        ceinfo_list
+        <where>
+            <if test="saleModel != null and saleModel != ''">
+                and saleModel like CONCAT('%',#{saleModel},'%')
+            </if>
+            <if test="onlyNum != null and onlyNum != ''">
+                and onlyNum like CONCAT('%',#{onlyNum},'%')
+            </if>
+            <if test="zsNum != null and zsNum != ''">
+                and zsNum like CONCAT('%',#{zsNum},'%')
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteCeinfo" parameterType="java.util.Map">
+        delete from ceinfo_list
+        <where>
+            <if test="ceinfoIds != null and ceinfoIds !=''">
+                AND ceinfoId IN
+                <foreach collection="ceinfoIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="queryMaxNum" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        right(onlyNum,2) as maxNum
+        from
+        ceinfo_list
+        where
+             saleModel =#{saleModel}
+        ORDER BY
+        right(onlyNum,2) DESC
+        LIMIT 1
+    </select>
+
+    <update id="updateNoteStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update ceinfo_list
+        <set>
+            noteStatus='1'
+        </set>
+        where
+        ceinfoId=#{replaceNo}
+    </update>
+
+    <select id="queryAuto" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        B.productModel as saleModel,
+        A.id,
+        A.reportCode,
+        A.reportDate,
+        A.reportName,
+        A.reportValidity
+        from
+        wwrz_files A
+        LEFT JOIN wwrz_baseinfo B  ON A.mainId = B.id
+        where
+             B.id =#{wwrzId}
+             and A.reportType='证书'
+    </select>
+
+    <select id="queryCeinfoByOnlyNum" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        ceinfoId,
+        zsNum as number,
+        certName as notified,
+        certAdress as address,
+        noiseReal as measured,
+        noisePlan as guaranteed,
+        enginePower as engine,
+        zsStartDate as valid
+        from ceinfo_list
+        where
+        onlyNum=#{onlyNum}
+        and noteStatus ='0'
+    </select>
+</mapper>

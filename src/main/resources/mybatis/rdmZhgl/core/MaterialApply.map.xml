@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.MaterialApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--项目流程查询-->
+    <select id="queryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        material_apply.*,
+        material_apply.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        os_rel_inst.PARTY1_ as applyUserDepId
+        FROM
+        material_apply
+        LEFT JOIN os_user ON material_apply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON material_apply.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON material_apply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND material_apply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="currentProcessTask != null and currentProcessTask != ''">
+                AND act_ru_task.NAME_ like CONCAT ('%',#{currentProcessTask},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND material_apply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND material_apply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="applyType != null and applyType != ''">
+                AND material_apply.applyType=#{applyType}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND material_apply.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+
+    <select id="getObjectById" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.INST_ID_  AS instId,
+            C.FULLNAME_ AS userName,
+            D.NAME_     AS deptName
+        FROM
+            material_apply A
+            LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+            LEFT JOIN os_user C ON A.CREATE_BY_ = C.USER_ID_
+            LEFT JOIN os_group D ON A.deptId = D.GROUP_ID_
+        WHERE A.id = #{id}
+    </select>
+
+    <select id="getJsonObject" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.INST_ID_  AS instId,
+            C.FULLNAME_ AS userName,
+            D.NAME_     AS deptName
+        FROM material_apply A
+            LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+            LEFT JOIN os_user C ON A.CREATE_BY_ = C.USER_ID_
+            LEFT JOIN os_group D ON A.deptId = D.GROUP_ID_
+        WHERE A.id = #{id}
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+        INSERT INTO material_apply (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            TENANT_ID_,
+            deptId,
+            applyType,
+            costCenter,
+            orderCode,
+            materialCode,
+            finalDate,
+            reason,
+            storageLocation,
+            ledgerAccount
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{TENANT_ID_,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR},
+            #{applyType,jdbcType=VARCHAR},
+            #{costCenter,jdbcType=VARCHAR},
+            #{orderCode,jdbcType=VARCHAR},
+            #{materialCode,jdbcType=VARCHAR},
+            #{finalDate,jdbcType=TIMESTAMP},
+            #{reason,jdbcType=VARCHAR},
+            #{storageLocation,jdbcType=TIMESTAMP},
+            #{ledgerAccount,jdbcType=VARCHAR}
+              )
+    </insert>
+    <insert id="update" parameterType="java.util.Map">
+        UPDATE material_apply SET
+        <if test="applyType != null and applyType != ''">
+            applyType=#{applyType,jdbcType=VARCHAR},
+        </if>
+        <if test="costCenter != null and costCenter != ''">
+            costCenter=#{costCenter,jdbcType=VARCHAR},
+        </if>
+        <if test="orderCode != null and orderCode != ''">
+            orderCode=#{orderCode,jdbcType=VARCHAR},
+        </if>
+        <if test="materialCode != null and materialCode != ''">
+            materialCode=#{materialCode,jdbcType=VARCHAR},
+        </if>
+        <if test="finalDate != null and finalDate != ''">
+            finalDate=#{finalDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="reason != null and reason != ''">
+            reason=#{reason,jdbcType=VARCHAR},
+        </if>
+        <if test="storageLocation != null and storageLocation != ''">
+            storageLocation=#{storageLocation,jdbcType=VARCHAR},
+        </if>
+        ledgerAccount=#{ledgerAccount,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+    <delete id="delete" parameterType="java.lang.String">
+        delete from material_apply
+        where material_apply.id=#{id}
+    </delete>
+
+    <insert id="addDetail" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO material_applydetail (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            applyId,
+            lineNo,
+            itemCode,
+            totalNum,
+            storage,
+            unit,
+            itemName
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{applyId,jdbcType=VARCHAR},
+            #{lineNo,jdbcType=VARCHAR},
+            #{itemCode,jdbcType=VARCHAR},
+            #{totalNum,jdbcType=VARCHAR},
+            #{storage,jdbcType=VARCHAR},
+            #{unit,jdbcType=VARCHAR},
+             #{itemName,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update material_applydetail
+        set
+        lineNo=#{lineNo,jdbcType=VARCHAR},
+        itemCode=#{itemCode,jdbcType=VARCHAR},
+        totalNum=#{totalNum,jdbcType=VARCHAR},
+        delaNum=#{delaNum,jdbcType=VARCHAR},
+        storage=#{storage,jdbcType=VARCHAR},
+        finishFlag=#{finishFlag,jdbcType=VARCHAR},
+        delFlag=#{delFlag,jdbcType=VARCHAR},
+        <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        unit=#{unit,jdbcType=VARCHAR},
+        itemName=#{itemName,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delDetailById" parameterType="java.lang.String">
+        delete from material_applydetail
+        where id = #{id}
+    </delete>
+    <delete id="delDetailByApplyId" parameterType="java.lang.String">
+        delete from material_applydetail
+        where applyId = #{applyId}
+    </delete>
+
+    <select id="getDetailList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            (CASE A.finishFlag
+             WHEN '0'
+                 THEN '否'
+             WHEN '1'
+                 THEN '是' END) AS finishFlagText,
+            (CASE A.delFlag
+             WHEN '0'
+                 THEN '否'
+             WHEN '1'
+                 THEN '是' END) AS delFlagText
+        FROM
+            material_applydetail A
+        WHERE A.applyId = #{applyId}
+    </select>
+
+    <select id="getDetailReport" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        B.finalDate,
+        B.materialCode,
+        B.applyType,
+        C.FULLNAME_ as userName,
+        D.NAME_ as deptName,
+        (case A.finishFlag when '0' then '否' when '1' then '是' end) as finishFlagText,
+        (case A.delFlag when '0' then '否' when '1' then '是' end) as delFlagText,
+        TIMESTAMPDIFF(DAY,NOW(),B.finalDate) as diffDay,
+        A.*
+        FROM
+        material_applydetail A
+        LEFT JOIN material_apply B ON A.applyId = B.id
+        left join os_user C on B.CREATE_BY_ = C.USER_ID_
+        left join os_group D on B.deptId = D.GROUP_ID_
+        left join bpm_inst E on E.BUS_KEY_ = B.id
+        where E.STATUS_ = 'SUCCESS_END'
+        <if test="userId != null and userId != ''">
+            and B.CREATE_BY_ = #{userId}
+        </if>
+        <if test="applyId != null and applyId != ''">
+            and A.applyId like CONCAT('%',#{applyId},'%')
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and B.deptId = #{deptId}
+        </if>
+        <if test="applyType != null and applyType != ''">
+            and B.applyType = #{applyType}
+        </if>
+        <if test="materialCode != null and materialCode != ''">
+            and B.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and C.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and D.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        order by B.CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <insert id="updateSendStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE material_apply SET
+            materialCode=#{materialCode,jdbcType=VARCHAR},
+            succeed=#{succeed,jdbcType=VARCHAR},
+             errorMsg=#{errorMsg,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </insert>
+    <insert id="updateDetailLineNo" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE material_applydetail SET
+            lineNo=#{lineNo,jdbcType=VARCHAR},
+             materialCode=#{materialCode,jdbcType=VARCHAR}
+        WHERE
+        applyId=#{applyId}
+        and itemCode = #{itemCode}
+    </insert>
+    <insert id="updateDetailStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE material_applydetail SET
+        <if test="delaNum != null and delaNum != ''">
+            delaNum=#{delaNum,jdbcType=VARCHAR},
+        </if>
+        <if test="finishFlag != null and finishFlag != ''">
+            finishFlag=#{finishFlag,jdbcType=VARCHAR},
+        </if>
+        <if test="delFlag != null and delFlag != ''">
+            delFlag=#{delFlag,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        materialCode=#{materialCode}
+        and lineNo = #{lineNo}
+    </insert>
+    <select id="getMaterialItemList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,B.finalDate
+        FROM
+        material_applydetail A
+        left join material_apply B on A.applyId = B.id
+        where A.finishFlag = 0
+        and A.delFlag = 0
+        and A.materialCode is not null
+        and A.lineNo is not null
+        <if test="finalDate!=null and finalDate != ''">
+            and DATE_FORMAT(B.finalDate,'%Y-%m-%d') &lt; #{finalDate}
+        </if>
+    </select>
+
+    <!--tdmII专用-->
+    <select id="queryListForTdmII" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        material_apply.*,
+        material_apply.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        os_rel_inst.PARTY1_ as applyUserDepId
+        FROM
+        material_apply
+        LEFT JOIN os_user ON material_apply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON material_apply.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON material_apply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND material_apply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="currentProcessTask != null and currentProcessTask != ''">
+                AND act_ru_task.NAME_ like CONCAT ('%',#{currentProcessTask},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND material_apply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND material_apply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="applyType != null and applyType != ''">
+                AND material_apply.applyType=#{applyType}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND material_apply.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <!--tdmII专用参数-->
+            <if test="@Ognl@isNotEmpty(userNo)">
+                AND os_user.USER_NO_ = #{userNo}
+            </if>
+            <if test="@Ognl@isNotEmpty(succeed)">
+                AND material_apply.succeed = #{succeed}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </select>
+    <select id="queryListCountForTdmII" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        material_apply
+        LEFT JOIN os_user ON material_apply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON material_apply.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON material_apply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND material_apply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="currentProcessTask != null and currentProcessTask != ''">
+                AND act_ru_task.NAME_ like CONCAT ('%',#{currentProcessTask},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND material_apply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND material_apply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="applyType != null and applyType != ''">
+                AND material_apply.applyType=#{applyType}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND material_apply.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <!--tdmII专用参数-->
+            <if test="@Ognl@isNotEmpty(userNo)">
+                AND os_user.USER_NO_ = #{userNo}
+            </if>
+            <if test="@Ognl@isNotEmpty(succeed)">
+                AND material_apply.succeed = #{succeed}
+            </if>
+        </where>
+    </select>
+
+    <select id="getProjectByOrderCode" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_baseinfo.*,
+            bpm_inst.STATUS_ as status
+        FROM
+            project_baseinfo
+                left join bpm_inst on project_baseinfo.projectId=bpm_inst.BUS_KEY_
+        WHERE
+            project_baseinfo.cwddh=#{cwddh}
+        or project_baseinfo.gbcwddh=#{cwddh}
+    </select>
+</mapper>

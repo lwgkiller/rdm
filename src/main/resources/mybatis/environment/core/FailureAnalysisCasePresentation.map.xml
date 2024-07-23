@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.FailureAnalysisCasePresentationDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryApplyList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        failureanalysiscase.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        failureanalysiscase
+        left join bpm_inst on failureanalysiscase.id=bpm_inst.BUS_KEY_
+        left join (select distinct applyId from failureanalysiscase_file ) a on failureanalysiscase.id = a.applyId
+        left join os_group on failureanalysiscase.departId = os_group.GROUP_ID_
+        <where>
+            <if test="createrName != null and createrName != ''">
+                AND failureanalysiscase.createrName like CONCAT('%',#{createrName},'%')
+            </if>
+            <if test="caseName != null and caseName != ''">
+                AND failureanalysiscase.caseName like CONCAT('%',#{caseName},'%')
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                AND failureanalysiscase.yearMonth like CONCAT('%',#{yearMonth},'%')
+            </if>
+            <if test="isYXAL != null and isYXAL == 'yes'">
+                AND isYXAL = #{isYXAL}
+            </if>
+            <if test="isYXAL != null and isYXAL == 'no'">
+                AND (isYXAL = #{isYXAL} or isYXAL is null)
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR
+                        failureanalysiscase.CREATE_BY_ = #{currentUserId})
+                        AND bpm_inst.STATUS_ !='DISCARD_END'
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+    </select>
+
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+            failureanalysiscase.*,
+            bpm_inst.INST_ID_ as instId
+        from
+            failureanalysiscase left join bpm_inst on failureanalysiscase.id=bpm_inst.BUS_KEY_
+        where
+            id =#{id}
+    </select>
+
+
+    <insert id="insertFailureAnalysisCase" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into failureanalysiscase(
+                                id
+                               ,yearMonth
+                               ,createrName
+                               ,departId
+                               ,caseName
+                               ,CREATE_BY_
+                               ,CREATE_TIME_
+        )values(
+                #{id,jdbcType=VARCHAR}
+               ,#{yearMonth,jdbcType=VARCHAR}
+               ,#{createrName,jdbcType=VARCHAR}
+               ,#{departId,jdbcType=VARCHAR}
+               ,#{caseName,jdbcType=VARCHAR}
+               ,#{CREATE_BY_,jdbcType=VARCHAR}
+               ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+               )
+    </insert>
+
+
+    <update id="updateFailureAnalysisCase" parameterType="com.alibaba.fastjson.JSONObject">
+        update failureanalysiscase
+        set
+            yearMonth=#{yearMonth,jdbcType=VARCHAR},
+            caseName=#{caseName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+
+    <update id="chooseYxal" parameterType="com.alibaba.fastjson.JSONObject">
+        update failureanalysiscase
+        set
+        isYXAL= #{isYXAL}
+        <where>
+            1=1
+            <if test="ids != null and ids != ''">
+                and id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+
+    </update>
+    <update id="cancelYxal" parameterType="com.alibaba.fastjson.JSONObject">
+        update failureanalysiscase
+        set
+        isYXAL= #{isYXAL}
+        <where>
+            1=1
+            <if test="ids != null and ids != ''">
+                and id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </update>
+
+
+    <delete id="deleteFailureAnalysisCase" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from failureanalysiscase
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+    <insert id="insertFile" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into failureanalysiscase_file(
+                                id
+                               ,applyId
+                               ,fileName
+                               ,fileSize
+                               ,fileDesc
+                               ,CREATE_BY_
+                               ,CREATE_TIME_
+        )values(
+                   #{id,jdbcType=VARCHAR}
+               ,#{applyId,jdbcType=VARCHAR}
+               ,#{fileName,jdbcType=VARCHAR}
+               ,#{fileSize,jdbcType=VARCHAR}
+               ,#{fileDesc,jdbcType=VARCHAR}
+               ,#{CREATE_BY_,jdbcType=VARCHAR}
+               ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+               )
+    </insert>
+
+
+    <delete id="deleteFile" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from failureanalysiscase_file
+        <where>
+            <if test="id != null and id != ''">
+                id = #{id}
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteAllFile" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from failureanalysiscase_file
+        <where>
+            <if test="ids != null and ids != ''">
+                applyId in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+    <select id="queryFileList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from failureanalysiscase_file
+        <where>
+            <if test="applyId !=null and applyId !=''">
+                applyId = #{applyId}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryExist" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        failureanalysiscase.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        failureanalysiscase
+        left join bpm_inst on failureanalysiscase.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="caseName != null and caseName != ''">
+                AND failureanalysiscase.caseName = #{caseName}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+    </select>
+
+</mapper>

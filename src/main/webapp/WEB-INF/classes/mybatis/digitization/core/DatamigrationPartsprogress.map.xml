@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.digitization.core.dao.DatamigrationPartsprogressDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        digitization_datamigration_partsprogress as business
+        <where>
+            <if test="salesModel !=null and salesModel !=''">
+                AND business.salesModel like CONCAT('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND business.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND business.materialCode = #{materialCode}
+            </if>
+            <if test="subMaterial !=null and subMaterial !=''">
+                AND business.subMaterial = #{subMaterial}
+            </if>
+            <if test="draftsmans !=null and draftsmans !=''">
+                AND business.draftsmans like CONCAT('%',#{draftsmans},'%')
+            </if>
+            <if test="engineers !=null and engineers !=''">
+                AND business.engineers like CONCAT('%',#{engineers},'%')
+            </if>
+            <if test="productDirector !=null and productDirector !=''">
+                AND business.productDirector like CONCAT('%',#{productDirector},'%')
+            </if>
+            <if test="productInstitute !=null and productInstitute !=''">
+                AND business.productInstitute like CONCAT('%',#{productInstitute},'%')
+            </if>
+            <if test="keyusers !=null and keyusers !=''">
+                AND business.keyusers like CONCAT('%',#{keyusers},'%')
+            </if>
+            <if test="totalPercentage !=null and totalPercentage !=''">
+                <if test="totalPercentageTag !=null and totalPercentageTag !='' and totalPercentageTag == '等于'">
+                    AND CAST(business.totalPercentage AS DECIMAL(9,2)) = #{totalPercentage,jdbcType=NUMERIC}
+                </if>
+                <if test="totalPercentageTag !=null and totalPercentageTag !='' and totalPercentageTag == '大于'">
+                    AND CAST(business.totalPercentage AS DECIMAL(9,2)) &gt; #{totalPercentage,jdbcType=NUMERIC}
+                </if>
+                <if test="totalPercentageTag !=null and totalPercentageTag !='' and totalPercentageTag == '小于'">
+                    AND CAST(business.totalPercentage AS DECIMAL(9,2)) &lt; #{totalPercentage,jdbcType=NUMERIC}
+                </if>
+            </if>
+            <if test="machineTotalPercentage !=null and machineTotalPercentage !=''">
+                <if test="machineTotalPercentageTag !=null and machineTotalPercentageTag !='' and machineTotalPercentageTag == '等于'">
+                    AND CAST(business.machineTotalPercentage AS DECIMAL(9,2)) = #{machineTotalPercentage,jdbcType=NUMERIC}
+                </if>
+                <if test="machineTotalPercentageTag !=null and machineTotalPercentageTag !='' and machineTotalPercentageTag == '大于'">
+                    AND CAST(business.machineTotalPercentage AS DECIMAL(9,2)) &gt; #{machineTotalPercentage,jdbcType=NUMERIC}
+                </if>
+                <if test="machineTotalPercentageTag !=null and machineTotalPercentageTag !='' and machineTotalPercentageTag == '小于'">
+                    AND CAST(business.machineTotalPercentage AS DECIMAL(9,2)) &lt; #{machineTotalPercentage,jdbcType=NUMERIC}
+                </if>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(*) FROM
+        digitization_datamigration_partsprogress as business
+        <where>
+            <if test="salesModel !=null and salesModel !=''">
+                AND business.salesModel like CONCAT('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND business.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND business.materialCode = #{materialCode}
+            </if>
+            <if test="subMaterial !=null and subMaterial !=''">
+                AND business.subMaterial = #{subMaterial}
+            </if>
+            <if test="draftsmans !=null and draftsmans !=''">
+                AND business.draftsmans like CONCAT('%',#{draftsmans},'%')
+            </if>
+            <if test="engineers !=null and engineers !=''">
+                AND business.engineers like CONCAT('%',#{engineers},'%')
+            </if>
+            <if test="productDirector !=null and productDirector !=''">
+                AND business.productDirector like CONCAT('%',#{productDirector},'%')
+            </if>
+            <if test="productInstitute !=null and productInstitute !=''">
+                AND business.productInstitute like CONCAT('%',#{productInstitute},'%')
+            </if>
+            <if test="keyusers !=null and keyusers !=''">
+                AND business.keyusers like CONCAT('%',#{keyusers},'%')
+            </if>
+            <if test="totalPercentage !=null and totalPercentage !=''">
+                <if test="totalPercentageTag !=null and totalPercentageTag !='' and totalPercentageTag == '等于'">
+                    AND CAST(business.totalPercentage AS DECIMAL(9,2)) = #{totalPercentage,jdbcType=NUMERIC}
+                </if>
+                <if test="totalPercentageTag !=null and totalPercentageTag !='' and totalPercentageTag == '大于'">
+                    AND CAST(business.totalPercentage AS DECIMAL(9,2)) &gt; #{totalPercentage,jdbcType=NUMERIC}
+                </if>
+                <if test="totalPercentageTag !=null and totalPercentageTag !='' and totalPercentageTag == '小于'">
+                    AND CAST(business.totalPercentage AS DECIMAL(9,2)) &lt; #{totalPercentage,jdbcType=NUMERIC}
+                </if>
+            </if>
+            <if test="machineTotalPercentage !=null and machineTotalPercentage !=''">
+                <if test="machineTotalPercentageTag !=null and machineTotalPercentageTag !='' and machineTotalPercentageTag == '等于'">
+                    AND CAST(business.machineTotalPercentage AS DECIMAL(9,2)) = #{machineTotalPercentage,jdbcType=NUMERIC}
+                </if>
+                <if test="machineTotalPercentageTag !=null and machineTotalPercentageTag !='' and machineTotalPercentageTag == '大于'">
+                    AND CAST(business.machineTotalPercentage AS DECIMAL(9,2)) &gt; #{machineTotalPercentage,jdbcType=NUMERIC}
+                </if>
+                <if test="machineTotalPercentageTag !=null and machineTotalPercentageTag !='' and machineTotalPercentageTag == '小于'">
+                    AND CAST(business.machineTotalPercentage AS DECIMAL(9,2)) &lt; #{machineTotalPercentage,jdbcType=NUMERIC}
+                </if>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertData" parameterType="java.util.Map">
+        insert into digitization_datamigration_partsprogress(
+          id,
+          orderNum,
+          salesModel,
+          designModel,
+          materialCode,
+          migrationContent,
+          subDescription,
+          subMaterial,
+          draftsmans,
+          draftsmanIds,
+          engineers,
+          engineerIds,
+          conversionPercentage,
+          proofreadingPercentage,
+          windchillPercentage,
+          totalPercentage,
+          partsPercentage,
+          machinePercentage,
+          machineTotalPercentage,
+          productDirector,
+          productDirectorIds,
+          productInstitute,
+          productInstituteId,
+          keyusers,
+          keyuserIds,
+          remark,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{orderNum,jdbcType=INTEGER},
+          #{salesModel,jdbcType=VARCHAR},
+          #{designModel,jdbcType=VARCHAR},
+          #{materialCode,jdbcType=VARCHAR},
+          #{migrationContent,jdbcType=VARCHAR},
+          #{subDescription,jdbcType=VARCHAR},
+          #{subMaterial,jdbcType=VARCHAR},
+          #{draftsmans,jdbcType=VARCHAR},
+          #{draftsmanIds,jdbcType=VARCHAR},
+          #{engineers,jdbcType=VARCHAR},
+          #{engineerIds,jdbcType=VARCHAR},
+          #{conversionPercentage,jdbcType=VARCHAR},
+          #{proofreadingPercentage,jdbcType=VARCHAR},
+          #{windchillPercentage,jdbcType=VARCHAR},
+          #{totalPercentage,jdbcType=VARCHAR},
+          #{partsPercentage,jdbcType=VARCHAR},
+          #{machinePercentage,jdbcType=VARCHAR},
+          #{machineTotalPercentage,jdbcType=VARCHAR},
+          #{productDirector,jdbcType=VARCHAR},
+          #{productDirectorIds,jdbcType=VARCHAR},
+		  #{productInstitute,jdbcType=VARCHAR},
+		  #{productInstituteId,jdbcType=VARCHAR},
+		  #{keyusers,jdbcType=VARCHAR},
+		  #{keyuserIds,jdbcType=VARCHAR},
+          #{remark,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateData" parameterType="java.util.Map">
+        update digitization_datamigration_partsprogress
+        set
+        orderNum=#{orderNum,jdbcType=INTEGER},
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        migrationContent=#{migrationContent,jdbcType=VARCHAR},
+        subDescription=#{subDescription,jdbcType=VARCHAR},
+        subMaterial=#{subMaterial,jdbcType=VARCHAR},
+        draftsmans=#{draftsmans,jdbcType=VARCHAR},
+        draftsmanIds=#{draftsmanIds,jdbcType=VARCHAR},
+        engineers=#{engineers,jdbcType=VARCHAR},
+        engineerIds=#{engineerIds,jdbcType=VARCHAR},
+        conversionPercentage=#{conversionPercentage,jdbcType=VARCHAR},
+        proofreadingPercentage=#{proofreadingPercentage,jdbcType=VARCHAR},
+        windchillPercentage=#{windchillPercentage,jdbcType=VARCHAR},
+        totalPercentage=#{totalPercentage,jdbcType=VARCHAR},
+        partsPercentage=#{partsPercentage,jdbcType=VARCHAR},
+        machinePercentage=#{machinePercentage,jdbcType=VARCHAR},
+        machineTotalPercentage=#{machineTotalPercentage,jdbcType=VARCHAR},
+        productDirector=#{productDirector,jdbcType=VARCHAR},
+        productDirectorIds=#{productDirectorIds,jdbcType=VARCHAR},
+		productInstitute=#{productInstitute,jdbcType=VARCHAR},
+		productInstituteId=#{productInstituteId,jdbcType=VARCHAR},
+		keyusers=#{keyusers,jdbcType=VARCHAR},
+		keyuserIds=#{keyuserIds,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <update id="updateDataSameClass" parameterType="java.util.Map">
+        update digitization_datamigration_partsprogress
+        set
+        machineTotalPercentage=#{machineTotalPercentage,jdbcType=VARCHAR}
+        where
+        materialCode=#{materialCode}
+    </update>
+
+    <delete id="deleteData" parameterType="java.util.Map">
+        delete from digitization_datamigration_partsprogress
+        where id in
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>

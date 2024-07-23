@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmCommon.core.dao.RdmHomeDao">
+    <select id="queryWorkStatus" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        leaderSchedule.*
+        FROM
+        leaderSchedule
+        WHERE
+        leaderSchedule.leaderUserId IN
+        <foreach collection="userIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        AND leaderSchedule.dayStr = #{dayStr}
+        <if test="currentTime !=null and currentTime !=''">
+            AND leaderSchedule.startTime &lt;= #{currentTime} AND leaderSchedule.endTime >= #{currentTime}
+        </if>
+        <if test="ifNotice !=null and ifNotice !=''">
+            AND leaderSchedule.ifNotice = #{ifNotice}
+        </if>
+        order by startTime
+    </select>
+
+    <select id="queryWorkStatusEnum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            sys_dic.DIC_ID_,
+            sys_dic.NAME_
+        FROM
+            sys_dic
+            LEFT JOIN sys_tree ON sys_dic.TYPE_ID_ = sys_tree.TREE_ID_
+        WHERE
+            sys_tree.KEY_ = 'workStatus'
+        ORDER BY
+            sys_dic.SN_
+    </select>
+
+    <select id="queryWorkStatusTimeEnum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            sys_dic.DIC_ID_,
+            sys_dic.NAME_
+        FROM
+            sys_dic
+            LEFT JOIN sys_tree ON sys_dic.TYPE_ID_ = sys_tree.TREE_ID_
+        WHERE
+            sys_tree.KEY_ = 'workStatusTime'
+        ORDER BY
+            sys_dic.SN_
+    </select>
+
+    <select id="queryWorkStatusUserEnum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            sys_dic.NAME_ as userNo,
+            os_user.USER_ID_ as userId,
+            os_user.FULLNAME_ as userName
+        FROM
+            sys_dic
+            LEFT JOIN sys_tree ON sys_dic.TYPE_ID_ = sys_tree.TREE_ID_
+            left join os_user on sys_dic.NAME_=os_user.USER_NO_
+        WHERE
+            sys_tree.KEY_ = 'workStatusUser'
+        ORDER BY
+            sys_dic.SN_
+    </select>
+
+    <insert id="insertWorkStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into leaderSchedule(
+            id
+            ,leaderUserId
+            ,leaderUserName
+            ,dayStr
+            ,startTime
+            ,endTime
+            ,place
+            ,scheduleDesc
+            ,ifNotice
+            ,creatorName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )values(
+             #{id,jdbcType=VARCHAR}
+            ,#{leaderUserId,jdbcType=VARCHAR}
+            ,#{leaderUserName,jdbcType=VARCHAR}
+            ,#{dayStr,jdbcType=VARCHAR}
+            ,#{startTime,jdbcType=VARCHAR}
+            ,#{endTime,jdbcType=VARCHAR}
+            ,#{place,jdbcType=VARCHAR}
+            ,#{scheduleDesc,jdbcType=VARCHAR}
+            ,#{ifNotice,jdbcType=VARCHAR}
+            ,#{creatorName,jdbcType=VARCHAR}
+            ,#{CREATE_BY_,jdbcType=VARCHAR}
+            ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateWorkStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update leaderSchedule
+        set
+        leaderUserId=#{leaderUserId,jdbcType=VARCHAR},
+        leaderUserName=#{leaderUserName,jdbcType=VARCHAR},
+        dayStr=#{dayStr,jdbcType=VARCHAR},
+        startTime=#{startTime,jdbcType=VARCHAR},
+        endTime=#{endTime,jdbcType=VARCHAR},
+        place=#{place,jdbcType=VARCHAR},
+        scheduleDesc=#{scheduleDesc,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_},
+        UPDATE_TIME_=#{UPDATE_TIME_}
+        where
+        id=#{id}
+    </update>
+    <delete id="deleteWorkStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from leaderSchedule
+        where
+        id=#{id}
+    </delete>
+
+    <select id="queryLeaderScheduleJob" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        leaderSchedule.*
+        FROM
+        leaderSchedule
+        WHERE
+        dayStr = #{dayStr}
+        and startTime &gt;= #{nowTime}
+        order by leaderUserId,startTime asc
+    </select>
+
+    <update id="updateIfNotice" parameterType="com.alibaba.fastjson.JSONObject">
+        update leaderSchedule
+        set
+        ifNotice='yes'
+        where
+        leaderUserId=#{leaderUserId}
+        and ifNotice='no'
+        and dayStr = #{dayStr}
+    </update>
+</mapper>

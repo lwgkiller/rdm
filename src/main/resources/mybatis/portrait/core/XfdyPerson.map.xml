@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.XfdyPersonDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryXfdyPerson" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        xfdyperson_info
+        <where>
+            <if test="userName !=null and userName !=''">
+                applyName like CONCAT ('%',#{userName},'%')
+            </if>
+            <if test="deptName !=null and deptName !=''">
+                AND deptName like CONCAT ('%',#{deptName},'%')
+            </if>
+        </where>
+        ORDER BY
+            CONVERT ( applyName USING GBK ) ASC
+    </select>
+
+    <insert id="createXfdyPerson" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into xfdyperson_info(
+            xfdyId
+            ,deptId
+            ,deptName
+            ,applyId
+            ,applyName
+            ,info
+            ,fileName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{xfdyId,jdbcType=VARCHAR},
+            #{deptId,jdbcType=TIMESTAMP},
+            #{deptName,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{applyName,jdbcType=VARCHAR},
+            #{info,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateXfdyPerson" parameterType="com.alibaba.fastjson.JSONObject">
+        update xfdyperson_info
+        set
+            deptId=#{deptId,jdbcType=TIMESTAMP},
+            deptName=#{deptName,jdbcType=VARCHAR},
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            info=#{info,jdbcType=VARCHAR},
+            fileName=#{fileName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        xfdyId=#{xfdyId}
+    </update>
+
+    <select id="queryXfdyPersonById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from xfdyperson_info
+        where xfdyId=#{xfdyId}
+    </select>
+
+    <delete id="deleteXfdyPerson" parameterType="java.util.Map">
+        delete from xfdyperson_info
+        where
+            xfdyId=#{xfdyId}
+    </delete>
+
+    <select id="queryImgById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        fileName
+        from xfdyperson_info
+        where xfdyId=#{xfdyId}
+    </select>
+
+    <insert id="addXfdyFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO xfdyfile_info
+		(
+		id,
+		fileName,
+		fileSize,
+		fileDesc,
+		CREATE_BY_,
+		CREATE_TIME_,
+		TENANT_ID_,
+		UPDATE_BY_,
+		UPDATE_TIME_
+		)
+		VALUES
+		(
+		#{id,jdbcType=VARCHAR},
+		#{fileName,jdbcType=VARCHAR},
+		#{fileSize,jdbcType=VARCHAR},
+		#{fileDesc,jdbcType=VARCHAR},
+		#{CREATE_BY_,jdbcType=VARCHAR},
+		#{CREATE_TIME_,jdbcType=TIMESTAMP},
+		#{TENANT_ID_,jdbcType=VARCHAR},
+		#{UPDATE_BY_,jdbcType=VARCHAR},
+		#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+		)
+	</insert>
+
+
+    <delete id="deleteXfdyFileInfos" parameterType="java.util.Map">
+        delete from
+        xfdyfile_info
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+        </where>
+    </delete>
+
+
+    <select id="queryXfdyFileList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        xfdyfile_info.*,
+        os_user.FULLNAME_ AS creator
+        FROM
+        xfdyfile_info
+        LEFT JOIN os_user ON xfdyfile_info.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+        1=1
+        <if test="fileName != null and fileName != ''">
+            and xfdyfile_info.fileName like CONCAT ('%',#{fileName},'%')
+        </if>
+    </select>
+</mapper>

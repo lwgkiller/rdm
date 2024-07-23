@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitAsyncRewardDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="getCityRewardList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            YEAR(A.prize_time) as rewardYear
+        FROM
+            award_city_level_science_progress A
+            where A.async = '0'
+            and (A.award_type = 'gjj' or A.award_type = 'sbj')
+    </select>
+    <update id="updateCityReward" parameterType="java.util.Map">
+        update award_city_level_science_progress
+        set
+        async = '1'
+        where id=#{fromId}
+    </update>
+    <select id="getGroupRewardList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            YEAR(A.prize_time) as rewardYear
+        FROM
+            award_group_progress A
+            where A.async = '0'
+            and (A.award_type = 'gjj' or A.award_type = 'sbj')
+    </select>
+    <update id="updateGroupReward" parameterType="java.util.Map">
+        update award_group_progress
+        set
+        async = '1'
+        where id=#{fromId}
+    </update>
+    <select id="getScienceRewardList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            YEAR(A.contract_begin_time) as rewardYear
+        FROM
+            award_science_plan_project A
+            where A.async = '0'
+            and (A.award_type = 'gjj' or A.award_type = 'sbj')
+    </select>
+    <update id="updateScienceReward" parameterType="java.util.Map">
+        update award_science_plan_project
+        set
+        async = '1'
+        where id=#{fromId}
+    </update>
+    <select id="getPatentRewardList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            YEAR(A.prize_time) as rewardYear
+        FROM
+            award_patent A
+            where A.async = '0'
+            and (A.award_type = 'gjj' or A.award_type = 'sbj')
+    </select>
+    <update id="updatePatentReward" parameterType="java.util.Map">
+        update award_patent
+        set
+        async = '1'
+        where id=#{fromId}
+    </update>
+    <select id="getHeightRewardList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            YEAR(A.prize_time) as rewardYear
+        FROM
+            award_groupl_science_progress A
+            where A.async = '0'
+            and (A.award_type = 'gjj' or A.award_type = 'sbj')
+    </select>
+    <update id="updateHeightReward" parameterType="java.util.Map">
+        update award_groupl_science_progress
+        set
+        async = '1'
+        where id=#{fromId}
+    </update>
+    <select id="getNewProductRewardList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            YEAR(A.prize_time) as rewardYear
+        FROM
+            award_newe_product A
+            where A.async = '0'
+            and (A.award_type = 'gjj' or A.award_type = 'sbj')
+    </select>
+    <update id="updateNewProductReward" parameterType="java.util.Map">
+        update award_newe_product
+        set
+        async = '1'
+        where id=#{fromId}
+    </update>
+    <select id="getManageRewardList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            YEAR(A.prize_time) as rewardYear
+        FROM
+            award_manage A
+            where A.async = '0'
+            and (A.award_type = 'gjj' or A.award_type = 'sbj')
+    </select>
+    <update id="updateManageReward" parameterType="java.util.Map">
+        update award_manage
+        set
+        async = '1'
+        where id=#{fromId}
+    </update>
+    <select id="getTalentRewardList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            YEAR(A.prize_time) as rewardYear
+        FROM
+            award_talents A
+            where A.async = '0'
+            and (A.award_type = 'gjj' or A.award_type = 'sbj')
+    </select>
+    <update id="updateTalentReward" parameterType="java.util.Map">
+        update award_talents
+        set
+        async = '1'
+        where id=#{fromId}
+    </update>
+    <select id="getOtherRewardList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            YEAR(A.prize_time) as rewardYear
+        FROM
+            award_other A
+            where A.async = '0'
+            and (A.award_type = 'gjj' or A.award_type = 'sbj')
+    </select>
+    <update id="updateOtherReward" parameterType="java.util.Map">
+        update award_other
+        set
+        async = '1'
+        where id=#{fromId}
+    </update>
+    <delete id="delRewardInfoByFromId" parameterType="java.util.Map">
+            delete from portrait_reward where
+            fromId IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </delete>
+</mapper>

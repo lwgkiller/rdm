@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.wwrz.core.dao.WwrzTestPlanDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.FULLNAME_ as chargerName,
+            C.NAME_ as deptName
+        FROM
+            wwrz_testplan A
+            left join os_user B on A.charger = B.USER_ID_
+            LEFT JOIN os_group C ON C.GROUP_ID_ = A.deptId
+	        where A.id = #{id}
+    </select>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        select T.* from (
+        SELECT
+        A.* ,
+        B.FULLNAME_ AS chargerName,
+        C.NAME_ as deptName,
+        (select id from wwrz_baseinfo where planId = A.id limit 1) as applyId
+        FROM
+        wwrz_testplan A
+        LEFT JOIN os_user B ON A.charger = B.USER_ID_
+        left join os_group C on A.deptId = C.GROUP_ID_
+        where 1=1
+        <if test="deptName != null and deptName != ''">
+            and C.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="productModel != null and productModel != ''">
+            and A.productModel like CONCAT('%',#{productModel},'%')
+        </if>
+        <if test="chargerName != null and chargerName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{chargerName},'%')
+        </if>
+        <if test="certType != null and certType != ''">
+            and A.certType = #{certType}
+        </if>
+        <if test="testType != null and testType != ''">
+            and A.testType like CONCAT('%',#{testType},'%')
+        </if>
+        <if test="yearMonth != null and yearMonth != ''">
+            and A.yearMonth = #{yearMonth}
+        </if>
+        <if test="yearMonthStart != null and yearMonthStart != ''">
+            AND A.yearMonth &gt;= #{yearMonthStart}
+        </if>
+        <if test="yearMonthEnd != null and yearMonthEnd != ''">
+            AND A.yearMonth &lt;= #{yearMonthEnd}
+        </if>
+        <if test="planStatus != null and planStatus != ''">
+            and A.planStatus = #{planStatus}
+        </if>
+        <if test="userId != null and userId != ''">
+            and (A.CREATE_BY_ = #{userId} or A.charger = #{userId})
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+        <if test="planYear != null and planYear != ''">
+            and LEFT(A.yearMonth,4) = #{planYear}
+        </if>
+        <if test="isShowAll != null and isShowAll != ''">
+            and A.id not in (select planId from wwrz_baseinfo)
+        </if>
+        )T
+        where 1=1
+        <if test="planExeStatus != null and planExeStatus != ''">
+            <choose>
+                <when test='planExeStatus=="0"'>
+                    AND T.applyId is null
+                </when>
+                <when test='planExeStatus=="1"'>
+                    AND T.applyId is not null
+                </when>
+            </choose>
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+         INSERT INTO wwrz_testplan (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            deptId,
+            productModel,
+            charger,
+            certType,
+            testType,
+            yearMonth,
+            remark,
+            planCode,
+            planCodeDateStr,
+            planCodeStr
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{deptId,jdbcType=VARCHAR},
+            #{productModel,jdbcType=VARCHAR},
+            #{charger,jdbcType=VARCHAR},
+            #{certType,jdbcType=VARCHAR},
+            #{testType,jdbcType=VARCHAR},
+            #{yearMonth,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{planCode,jdbcType=VARCHAR},
+            #{planCodeDateStr,jdbcType=VARCHAR},
+            #{planCodeStr,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="update" parameterType="java.util.Map">
+        update wwrz_testplan
+        <set>
+            <if test="deptId != null and deptId != ''">
+                deptId=#{deptId,jdbcType=VARCHAR},
+            </if>
+            <if test="productModel != null and productModel != ''">
+                productModel=#{productModel,jdbcType=VARCHAR},
+            </if>
+            <if test="charger != null and charger != ''">
+                charger=#{charger,jdbcType=VARCHAR},
+            </if>
+            <if test="certType != null and certType != ''">
+                certType=#{certType,jdbcType=VARCHAR},
+            </if>
+            <if test="testType != null and testType != ''">
+                testType=#{testType,jdbcType=VARCHAR},
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                yearMonth=#{yearMonth,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null and remark != ''">
+                remark=#{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="planStatus != null and planStatus != ''">
+                planStatus=#{planStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from wwrz_testplan
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getPlanListByIds" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+      SELECT
+        A.* ,
+        B.FULLNAME_ AS chargerName,
+        C.NAME_ as deptName
+        FROM
+            wwrz_testplan A
+        LEFT JOIN os_user B ON A.charger = B.USER_ID_
+        left join os_group C on A.deptId = C.GROUP_ID_
+        where 1=1
+        and A.id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <update id="updatePlanStatus" parameterType="com.alibaba.fastjson.JSONObject" >
+        update wwrz_testplan
+        set planStatus = #{planStatus}
+        where id = #{planId}
+    </update>
+    <select id="getPlanCode" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            wwrz_testplan A
+        WHERE
+            A.planCodeDateStr = #{planCodeDateStr}
+        ORDER BY
+            A.planCodeStr DESC
+            LIMIT 1
+    </select>
+    <select id="getPlanListByStatus" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.deptId,
+            C.NAME_ AS deptName,
+            GROUP_CONCAT(A.id) as planIds
+        FROM
+        wwrz_testplan A
+        LEFT JOIN os_user B ON A.charger = B.USER_ID_
+        LEFT JOIN os_group C ON A.deptId = C.GROUP_ID_
+        where 1=1
+        <if test="planStatus != null and planStatus != ''">
+            and A.planStatus = #{planStatus}
+        </if>
+        group by A.deptId
+    </select>
+</mapper>

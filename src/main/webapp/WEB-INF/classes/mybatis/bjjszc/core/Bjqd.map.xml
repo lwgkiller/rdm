@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.bjjszc.core.dao.BjqdDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryBjqdFlowList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        bjgyqd_info.*,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.STATUS_ as status,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        os_user.FULLNAME_ as userName
+        from bjgyqd_info
+        left join os_user on bjgyqd_info.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on bjgyqd_info.id=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        <where>
+            <if test="applyName != null and applyName != ''">
+                and os_user.FULLNAME_ like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                and bpm_inst.STATUS_ =#{instStatus}
+            </if>
+        </where>
+        ORDER BY bjgyqd_info.CREATE_TIME_ DESC
+    </select>
+
+    <select id="queryBjqdFlow" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        bjgyqd.*
+        FROM
+        bjgyqd
+        WHERE
+        bjgyqd.projectId = #{projectId}
+        order by zcId,wlId
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryBjqdList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        bjgyqd.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        bjgyqd
+        LEFT JOIN os_user ON os_user.USER_ID_ = bjgyqd.CREATE_BY_
+        WHERE
+        1=1
+        <if test="zcId != null and zcId != ''">
+            and zcId like CONCAT('%',#{zcId},'%')
+        </if>
+        <if test="zcName != null and zcName != ''">
+            and zcName like CONCAT('%',#{zcName},'%')
+        </if>
+        <if test="wlType != null and wlType != ''">
+            and wlType = #{wlType}
+        </if>
+        <if test="wlId != null and wlId != ''">
+            and wlId like CONCAT('%',#{wlId},'%')
+        </if>
+        <if test="wlName != null and wlName != ''">
+            and wlName like CONCAT('%',#{wlName},'%')
+        </if>
+        <if test="gys != null and gys != ''">
+            and gys like CONCAT('%',#{gys},'%')
+        </if>
+        <if test="kgmsx != null and kgmsx != ''">
+            <choose>
+                <when test='kgmsx == "空"'>
+                    and (kgmsx is null or kgmsx = '')
+                </when>
+                <otherwise>
+                    and kgmsx = #{kgmsx}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="pms != null and pms != ''">
+            <choose>
+                <when test='pms == "空"'>
+                    and (pms is null or pms = '')
+                </when>
+                <otherwise>
+                    and pms = #{pms}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="projectId == 'yes'">
+            and (projectId is NOT NULL AND projectId != '')
+        </if>
+        <if test="projectId == 'no'">
+            and (projectId is NULL OR projectId = '')
+        </if>
+        <if test="applyName != null and applyName != ''">
+            and os_user.FULLNAME_ like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="time != null and time != ''">
+            AND (bjgyqd.CREATE_TIME_ is not null and bjgyqd.CREATE_TIME_!='' and LEFT ( bjgyqd.CREATE_TIME_, 10 ) &gt;=#{time})
+        </if>
+        <if test="createTimeTo != null and createTimeTo != ''">
+            AND (bjgyqd.CREATE_TIME_ is not null and bjgyqd.CREATE_TIME_!='' and LEFT ( bjgyqd.CREATE_TIME_, 10 ) &lt;=#{createTimeTo})
+        </if>
+        <if test="inputTimeFrom != null and inputTimeFrom != ''">
+            AND (bjgyqd.inputTime is not null and bjgyqd.inputTime!='' and bjgyqd.inputTime &gt;=#{inputTimeFrom})
+        </if>
+        <if test="inputTimeTo != null and inputTimeTo != ''">
+            AND (bjgyqd.inputTime is not null and bjgyqd.inputTime!='' and bjgyqd.inputTime &lt;=#{inputTimeTo})
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryBjqd" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        bjgyqd.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        bjgyqd
+        LEFT JOIN os_user ON os_user.USER_ID_ = bjgyqd.CREATE_BY_
+        WHERE
+        1=1
+        <if test="zcId != null and zcId != ''">
+            and zcId like CONCAT('%',#{zcId},'%')
+        </if>
+        <if test="zcName != null and zcName != ''">
+            and zcName like CONCAT('%',#{zcName},'%')
+        </if>
+        <if test="wlType != null and wlType != ''">
+            and wlType = #{wlType}
+        </if>
+        <if test="wlId != null and wlId != ''">
+            and wlId like CONCAT('%',#{wlId},'%')
+        </if>
+        <if test="wlName != null and wlName != ''">
+            and wlName like CONCAT('%',#{wlName},'%')
+        </if>
+        <if test="gys != null and gys != ''">
+            and gys like CONCAT('%',#{gys},'%')
+        </if>
+        <if test="kgmsx != null and kgmsx != ''">
+            <choose>
+                <when test='kgmsx == "空"'>
+                    and (kgmsx is null or kgmsx = '')
+                </when>
+                <otherwise>
+                    and kgmsx = #{kgmsx}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="pms != null and pms != ''">
+            <choose>
+                <when test='pms == "空"'>
+                    and (pms is null or pms = '')
+                </when>
+                <otherwise>
+                    and pms = #{pms}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="projectId != null and projectId != ''">
+            <choose>
+                <when test='projectId == "yes"'>
+                    and (projectId is NOT NULL AND projectId != '')
+                </when>
+                <when test='projectId == "no"'>
+                    and (projectId is NULL OR projectId = '')
+                </when>
+            </choose>
+        </if>
+        <if test="applyName != null and applyName != ''">
+            and os_user.FULLNAME_ like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="time != null and time != ''">
+            AND LEFT ( bjgyqd.CREATE_TIME_, 10 ) = #{time}
+        </if>
+        <if test="inputTimeFrom != null and inputTimeFrom != ''">
+            AND (bjgyqd.inputTime is not null and bjgyqd.inputTime!='' and bjgyqd.inputTime &gt;=#{inputTimeFrom})
+        </if>
+        <if test="inputTimeTo != null and inputTimeTo != ''">
+            AND (bjgyqd.inputTime is not null and bjgyqd.inputTime!='' and bjgyqd.inputTime &lt;=#{inputTimeTo})
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryBjqdById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+    SELECT
+    bjgyqd.*
+    FROM
+    bjgyqd
+    WHERE
+    projectId = #{projectId}
+    order by zcId,wlId
+    <include refid="pageSql" />
+    </select>
+
+    <select id="countBjqd" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        bjgyqd
+        LEFT JOIN os_user ON os_user.USER_ID_ = bjgyqd.CREATE_BY_
+        WHERE
+        1=1
+        <if test="zcId != null and zcId != ''">
+            and zcId like CONCAT('%',#{zcId},'%')
+        </if>
+        <if test="zcName != null and zcName != ''">
+            and zcName like CONCAT('%',#{zcName},'%')
+        </if>
+        <if test="wlType != null and wlType != ''">
+            and wlType = #{wlType}
+        </if>
+        <if test="wlId != null and wlId != ''">
+            and wlId like CONCAT('%',#{wlId},'%')
+        </if>
+        <if test="wlName != null and wlName != ''">
+            and wlName like CONCAT('%',#{wlName},'%')
+        </if>
+        <if test="gys != null and gys != ''">
+            and gys like CONCAT('%',#{gys},'%')
+        </if>
+        <if test="kgmsx != null and kgmsx != ''">
+            <choose>
+                <when test='kgmsx == "空"'>
+                    and (kgmsx is null or kgmsx = '')
+                </when>
+                <otherwise>
+                    and kgmsx = #{kgmsx}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="pms != null and pms != ''">
+            <choose>
+                <when test='pms == "空"'>
+                    and (pms is null or pms = '')
+                </when>
+                <otherwise>
+                    and pms = #{pms}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="projectId != null and projectId != ''">
+            <choose>
+                <when test='projectId == "yes"'>
+                    and (projectId is NOT NULL AND projectId != '')
+                </when>
+                <when test='projectId == "no"'>
+                    and (projectId is NULL OR projectId = '')
+                </when>
+            </choose>
+        </if>
+        <if test="applyName != null and applyName != ''">
+            and os_user.FULLNAME_ like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="time != null and time != ''">
+            AND (bjgyqd.CREATE_TIME_ is not null and bjgyqd.CREATE_TIME_!='' and LEFT ( bjgyqd.CREATE_TIME_, 10 ) &gt;=#{time})
+        </if>
+        <if test="createTimeTo != null and createTimeTo != ''">
+            AND (bjgyqd.CREATE_TIME_ is not null and bjgyqd.CREATE_TIME_!='' and LEFT ( bjgyqd.CREATE_TIME_, 10 ) &lt;=#{createTimeTo})
+        </if>
+        <if test="inputTimeFrom != null and inputTimeFrom != ''">
+            AND (bjgyqd.inputTime is not null and bjgyqd.inputTime!='' and bjgyqd.inputTime &gt;=#{inputTimeFrom})
+        </if>
+        <if test="inputTimeTo != null and inputTimeTo != ''">
+            AND (bjgyqd.inputTime is not null and bjgyqd.inputTime!='' and bjgyqd.inputTime &lt;=#{inputTimeTo})
+        </if>
+    </select>
+
+    <select id="countBjqdById" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        bjgyqd
+        WHERE
+        projectId = #{projectId}
+    </select>
+
+    <insert id="insertBjqd" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO bjgyqd (
+        id,
+        zcId,
+        zcName,
+        wlType,
+        wlId,
+        wlName,
+        gys,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{zcId,jdbcType=VARCHAR},
+        #{zcName,jdbcType=VARCHAR},
+        #{wlType,jdbcType=VARCHAR},
+        #{wlId,jdbcType=VARCHAR},
+        #{wlName,jdbcType=VARCHAR},
+        #{gys,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <select id="judgeWlId" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM bjgyqd
+        WHERE
+        wlId = #{wlId}
+    </select>
+
+    <select id="queryByWlId" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM bjgyqd
+        WHERE
+        wlId = #{wlId}
+    </select>
+
+    <insert id="createBjqd" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into bjgyqd_info(
+            id
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="batchUpdateBjqd" parameterType="java.util.List">
+        <foreach collection="list" item="item" separator=";">
+            update bjgyqd
+            set
+            projectId=#{item.projectId,jdbcType=VARCHAR},
+            kgmsx=#{item.kgmsx,jdbcType=VARCHAR},
+            gys=#{item.gys,jdbcType=VARCHAR},
+            price=#{item.price,jdbcType=VARCHAR},
+            pms=#{item.pms,jdbcType=VARCHAR},
+            remark=#{item.remark,jdbcType=VARCHAR},
+            inputTime=#{item.inputTime,jdbcType=VARCHAR},
+            UPDATE_BY_=#{item.UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{item.UPDATE_TIME_,jdbcType=TIMESTAMP}
+            where
+            wlId=#{item.wlId} and (projectId is null or projectId = '' or projectId = #{item.projectId})
+        </foreach>
+    </update>
+
+    <update id="batchUpdateBjqdPMS" parameterType="java.util.List">
+        <foreach collection="list" item="item" separator=";">
+            update bjgyqd
+            set
+            pms=#{item.pms,jdbcType=VARCHAR},
+            UPDATE_BY_=#{item.UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{item.UPDATE_TIME_,jdbcType=TIMESTAMP}
+            where
+            wlId=#{item.wlId} and (projectId is not null and projectId != '' and projectId = #{item.projectId})
+        </foreach>
+    </update>
+
+
+    <delete id="delBjqd" parameterType="java.lang.String">
+        delete from bjgyqd
+        where id=#{id}
+    </delete>
+
+    <update id="updateBjqdFlow" parameterType="com.alibaba.fastjson.JSONObject">
+        update bjgyqd
+        <set>
+            projectId=#{projectId,jdbcType=VARCHAR},
+            kgmsx=#{kgmsx,jdbcType=VARCHAR},
+            price=#{price,jdbcType=VARCHAR},
+            pms=#{pms,jdbcType=VARCHAR}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <select id="queryInstIdById" parameterType="java.lang.String" resultType="java.lang.String">
+        select
+        bpm_inst.INST_ID_ as instId
+        from bjgyqd_info
+        left join bpm_inst on bjgyqd_info.id=bpm_inst.BUS_KEY_
+        where bjgyqd_info.id=#{id}
+    </select>
+
+    <select id="queryUserIdsById" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT
+			GROUP_CONCAT(DISTINCT bpm_node_jump.HANDLER_ID_ SEPARATOR ',') as userIds
+        FROM
+        bpm_node_jump
+        LEFT JOIN bpm_inst ON bpm_node_jump.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+        left join os_user on bpm_node_jump.HANDLER_ID_ = os_user.USER_ID_
+		LEFT JOIN bjgyqd_info ON bpm_inst.BUS_KEY_ = bjgyqd_info.id
+        WHERE
+		(bpm_node_jump.HANDLER_ID_ IS NOT NULL OR bpm_node_jump.HANDLER_ID_ != '')
+		AND
+		bjgyqd_info.id = #{id}
+		GROUP BY bpm_node_jump.ACT_INST_ID_
+    </select>
+
+    <select id="countKgmsx" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        bjgyqd
+        WHERE
+        (kgmsx is not null AND kgmsx != '')
+        <if test="wlType != null and wlType != ''">
+            and wlType = #{wlType}
+        </if>
+        <if test="create_startTime != null and create_startTime != ''">
+            AND CREATE_TIME_ &gt;= CONCAT(#{create_startTime}, ' 00:00:00')
+        </if>
+        <if test="create_endTime != null and create_endTime != ''">
+            AND CREATE_TIME_ &lt;= CONCAT(#{create_endTime}, ' 23:59:59')
+        </if>
+    </select>
+
+    <select id="countKMS" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        bjgyqd
+        WHERE
+        (pms is not null AND pms != '')
+        <if test="wlType != null and wlType != ''">
+            and wlType = #{wlType}
+        </if>
+        <if test="create_startTime != null and create_startTime != ''">
+            AND CREATE_TIME_ &gt;= CONCAT(#{create_startTime}, ' 00:00:00')
+        </if>
+        <if test="create_endTime != null and create_endTime != ''">
+            AND CREATE_TIME_ &lt;= CONCAT(#{create_endTime}, ' 23:59:59')
+        </if>
+    </select>
+
+    <select id="countAll" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        bjgyqd
+        WHERE
+        1=1
+        <if test="wlType != null and wlType != ''">
+            and wlType = #{wlType}
+        </if>
+    </select>
+
+    <select id="countKgmsxAmount" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        bjgyqd
+        WHERE
+        (kgmsx is not null AND kgmsx != '')
+    </select>
+
+    <select id="countKMSAmount" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        bjgyqd
+        WHERE
+        (pms is not null AND pms != '')
+    </select>
+
+    <select id="countAllLine" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            COUNT(*) as countAll ,
+            LEFT(CREATE_TIME_,10) as time
+        FROM
+            `bjgyqd`
+        GROUP BY
+            LEFT(CREATE_TIME_,10)
+        ORDER BY CREATE_TIME_ ASC
+        LIMIT 6
+    </select>
+
+    <select id="countKgmsxLine" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+            COUNT(*)
+        FROM
+            bjgyqd
+        WHERE
+            ( kgmsx IS NOT NULL AND kgmsx != "" )
+            AND LEFT ( CREATE_TIME_, 10 ) = #{time}
+    </select>
+
+    <select id="countKMSLine" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+            COUNT(*)
+        FROM
+            bjgyqd
+        WHERE
+            ( pms IS NOT NULL AND pms != "" )
+            AND LEFT ( CREATE_TIME_, 10 ) = #{time}
+    </select>
+
+    <select id="queryAllWlId" resultType="java.lang.String">
+        SELECT distinct wlId
+        FROM bjgyqd
+    </select>
+
+    <insert id="batchInsertBjqd" parameterType="java.util.List">
+        INSERT INTO bjgyqd (
+        id,
+        zcId,
+        zcName,
+        wlType,
+        wlId,
+        wlName,
+        gys,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.zcId,jdbcType=VARCHAR},
+            #{item.zcName,jdbcType=VARCHAR},
+            #{item.wlType,jdbcType=VARCHAR},
+            #{item.wlId,jdbcType=VARCHAR},
+            #{item.wlName,jdbcType=VARCHAR},
+            #{item.gys,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+</mapper>

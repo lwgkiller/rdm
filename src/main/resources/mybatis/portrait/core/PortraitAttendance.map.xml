@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitAttendanceDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ AS userName,
+        G.NAME_ as deptName
+        FROM
+        portrait_attendance A
+        LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        LEFT JOIN os_rel_inst C  ON A.userId = C.PARTY2_
+        LEFT JOIN os_dimension D  ON C.DIM1_ = D.DIM_ID_
+        left join os_group G on C.PARTY1_ = G.GROUP_ID_
+        where
+        C.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND D.DIM_KEY_ = '_ADMIN'
+        AND C.PARTY1_ in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="userId != null and userId != ''">
+            AND A.userId = #{userId}
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and G.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="yearMonth != null and yearMonth != ''">
+            and A.yearMonth = #{yearMonth}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO portrait_attendance (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            userId,
+            yearMonth,
+            attendanceRank,
+            score
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{userId,jdbcType=VARCHAR},
+            #{yearMonth,jdbcType=VARCHAR},
+            #{attendanceRank,jdbcType=VARCHAR},
+            #{score,jdbcType=FLOAT}
+        )
+    </insert>
+    <!--批量插入考勤原始数据-->
+    <insert id="batchInsertAttendance" parameterType="java.util.List">
+        INSERT INTO portrait_attendance (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        userId,
+        yearMonth,
+        attendanceRank,
+        score
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.userId,jdbcType=VARCHAR},
+            #{item.yearMonth,jdbcType=VARCHAR},
+            #{item.attendanceRank,jdbcType=VARCHAR},
+            #{item.score,jdbcType=FLOAT}
+            )
+        </foreach>
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update portrait_attendance
+        <set>
+            <if test="userId != null and userId != ''">
+                userId=#{userId,jdbcType=VARCHAR},
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                yearMonth=#{yearMonth,jdbcType=VARCHAR},
+            </if>
+            <if test="attendanceRank != null and attendanceRank != ''">
+                attendanceRank=#{attendanceRank,jdbcType=VARCHAR},
+            </if>
+            <if test="score != null and score != ''">
+                score=#{score,jdbcType=FLOAT},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      select A.*,
+        B.FULLNAME_ AS userName
+      from portrait_attendance A
+        LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        where A.id = #{id}
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from  portrait_attendance
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!--获取个人考勤信息-->
+    <select id="getPersonAttendanceList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.util.Map">
+        SELECT
+            A.id,
+            A.yearMonth,
+            A.attendanceRank,
+            A.score,
+            A.CREATE_TIME_
+        FROM
+            portrait_attendance A
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and substring(A.yearMonth,1,4) = #{reportYear}
+        </if>
+    </select>
+    <!--批量插入考勤原始数据-->
+    <insert id="batchInsertOrgData" parameterType="java.util.List">
+        INSERT INTO portrait_attendance_org (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            userId,
+            yearMonth,
+            overTime,
+            overDay
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.userId,jdbcType=VARCHAR},
+            #{item.yearMonth,jdbcType=VARCHAR},
+            #{item.overTime,jdbcType=FLOAT},
+            #{item.overDay,jdbcType=FLOAT}
+            )
+        </foreach>
+    </insert>
+    <!--根据部门id获取下属人员-->
+    <select id="getUserByDeptId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        	select A.* from os_user A
+				left join os_rel_inst B on A.USER_ID_ = B.PARTY2_
+				where B.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+				and B.DIM1_ = 1
+                and A.CERT_NO_ is not NULL
+                and A.CERT_NO_ != ''
+                AND B.PARTY1_ in
+                <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+    </select>
+    <!--根据月份先删除,-->
+    <delete id="delByMonth" parameterType="java.lang.String" >
+        delete from portrait_attendance_org where yearMonth = #{yearMonth}
+    </delete>
+    <!--根据月份先删除,-->
+    <delete id="delAttendanceByMonth" parameterType="java.lang.String" >
+        delete from portrait_attendance where yearMonth = #{yearMonth}
+    </delete>
+    <!--获取基准数据列表-->
+    <select id="getTopUserList" parameterType="com.alibaba.fastjson.JSONObject"  resultType="com.alibaba.fastjson.JSONObject">
+        select * from portrait_attendance_org where yearMonth = #{yearMonth} and overDay &gt;=  #{overDay} order by overDay asc
+    </select>
+    <select id="getDownUserList" parameterType="com.alibaba.fastjson.JSONObject"  resultType="com.alibaba.fastjson.JSONObject">
+        select * from portrait_attendance_org where yearMonth = #{yearMonth} and overDay &lt; #{overDay} order by overDay asc
+    </select>
+</mapper>

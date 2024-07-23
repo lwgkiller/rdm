@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.researchTool.core.dao.ResearchToolDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertTool" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO wangpan_dataTab (
+        toolid,
+        name,
+        size,
+        usedirection,
+        applicable,
+        reperson,
+        download,
+        `type`
+        )
+        values(
+        #{toolid,jdbcType=VARCHAR},
+        #{name,jdbcType=VARCHAR},
+        #{size,jdbcType=VARCHAR},
+        #{usedirection,jdbcType=VARCHAR},
+        #{applicable,jdbcType=VARCHAR},
+        #{reperson,jdbcType=VARCHAR},
+        #{download,jdbcType=VARCHAR},
+        #{type,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateTool" parameterType="com.alibaba.fastjson.JSONObject">
+        update wangpan_dataTab
+        <set>
+        <if test="name != null and name != ''">
+            name=#{name,jdbcType=VARCHAR},
+        </if>
+        <if test="size != null and size != ''">
+            size=#{size,jdbcType=VARCHAR},
+        </if>
+        <if test="usedirection != null and usedirection != ''">
+            usedirection=#{usedirection,jdbcType=VARCHAR},
+        </if>
+        <if test="applicable != null and applicable != ''">
+            applicable=#{applicable,jdbcType=VARCHAR},
+        </if>
+        <if test="reperson != null and reperson != ''">
+            reperson=#{reperson,jdbcType=VARCHAR},
+        </if>
+        <if test="download != null and download != ''">
+            download=#{download,jdbcType=VARCHAR},
+        </if>
+        </set>
+        where
+        toolid=#{toolid}
+    </update>
+    <select id="queryToolById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select wangpan_dataTab.*
+        from wangpan_dataTab
+        where
+        toolid=#{toolid}
+    </select>
+    <select id="queryTool" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        from
+        wangpan_dataTab
+        <where>
+            wangpan_dataTab.type='fztool'
+            <if test="usedirection != null and usedirection != ''">
+                AND usedirection like CONCAT('%',#{usedirection},'%')
+            </if>
+        </where>
+    </select>
+    <delete id="deletetool" parameterType="java.util.Map">
+        delete from wangpan_dataTab
+        <where>
+            <if test="toolids != null and toolids !=''">
+                toolid IN
+                <foreach collection="toolids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="queryTrain" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        from
+        wangpan_dataTab
+        <where>
+            wangpan_dataTab.type='rdmTrain'
+            <if test="usedirection != null and usedirection != ''">
+                AND usedirection like CONCAT('%',#{usedirection},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

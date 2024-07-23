@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitAnalysisImproveDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ AS userName,
+        G.NAME_ as deptName,
+        F.zjbh,
+        F.wtms
+        FROM
+        portrait_analysisimprove A
+        LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        LEFT JOIN os_rel_inst C ON A.userId = C.PARTY2_
+        LEFT JOIN os_dimension D ON C.DIM1_ = D.DIM_ID_
+        left join os_group G on C.PARTY1_ = G.GROUP_ID_
+        left join zlgj_wtsb_tab F on A.mainId = F.wtId
+        where
+        C.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND D.DIM_KEY_ = '_ADMIN'
+        AND C.PARTY1_ in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="userId != null and userId != ''">
+            AND A.userId = #{userId}
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and G.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="title != null and title != ''">
+            and F.title like CONCAT('%',#{title},'%')
+        </if>
+        order by A.applyYear desc,A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <select id="getPersonAnalysisImproveList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        F.zjbh,
+        F.wtms
+        FROM
+        portrait_analysisimprove A
+        left join zlgj_wtsb_tab F on A.mainId = F.wtId
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and A.applyYear = #{reportYear}
+        </if>
+    </select>
+    <insert id="addAnalysisImprove" parameterType="java.util.List">
+        INSERT INTO portrait_analysisimprove (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        userId,
+        mainId,
+        applyYear,
+        score,
+        cqnode,
+        delayDay
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        (
+        #{id,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{UPDATE_BY_,jdbcType=VARCHAR},
+        #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        #{userId,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{applyYear,jdbcType=VARCHAR},
+        #{score,jdbcType=FLOAT},
+        #{cqnode,jdbcType=VARCHAR},
+        #{delayDay,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO portrait_analysisimprove (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        userId,
+        mainId,
+        applyYear,
+        score,
+        cqnode,
+        delayDay
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.userId,jdbcType=VARCHAR},
+            #{item.mainId,jdbcType=VARCHAR},
+            #{item.applyYear,jdbcType=VARCHAR},
+            #{item.score,jdbcType=FLOAT},
+            #{item.cqnode,jdbcType=VARCHAR},
+            #{item.delayDay,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+    <select id="getAnalysisImproveList" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+            A.*,
+            LEFT ( A.CREATE_TIME_, 4 ) AS applyYear
+        FROM
+            zlgj_wtsb_tab A
+            LEFT JOIN bpm_inst B ON A.wtId = B.BUS_KEY_
+        WHERE
+            B.STATUS_ = 'SUCCESS_END'
+    </select>
+    <select id="getDelayApply" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            zlgj_cqsm A
+            left join bpm_inst B on A.cqsmId = B.BUS_KEY_
+        WHERE
+            A.wtId = #{wtId}
+            and A.cqnode = #{cqnode}
+            and B.STATUS_ = 'SUCCESS_END'
+            limit 1
+    </select>
+    <delete id="delAllInfo">
+        delete from portrait_analysisimprove
+    </delete>
+    <select id="getDay" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from portrait_analysis_day where dayType = #{dayType}
+    </select>
+</mapper>

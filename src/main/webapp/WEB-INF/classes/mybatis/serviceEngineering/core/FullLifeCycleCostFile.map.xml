@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.FullLifeCycleCostFileDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="salesModel !=null and salesModel !=''">
+            AND manualfile.salesModel like CONCAT('%',#{salesModel},'%')
+        </if>
+        <if test="designModel !=null and designModel !=''">
+            AND manualfile.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND manualfile.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="manualDescription !=null and manualDescription !=''">
+            AND manualfile.manualDescription like CONCAT('%',#{manualDescription},'%')
+        </if>
+        <if test="manualLanguage != null and manualLanguage != ''">
+            AND manualfile.manualLanguage like CONCAT('%',#{manualLanguage},'%')
+        </if>
+        <if test="manualCode !=null and manualCode !=''">
+            AND manualfile.manualCode like CONCAT('%',#{manualCode},'%')
+        </if>
+        <if test="keyUser != null and keyUser != ''">
+            AND manualfile.keyUser like CONCAT('%',#{keyUser},'%')
+        </if>
+        <if test="manualStatus != null and manualStatus != ''">
+            AND manualfile.manualStatus like CONCAT('%',#{manualStatus},'%')
+        </if>
+        <if test="isCE != null and isCE != ''">
+            AND manualfile.isCE = #{isCE}
+        </if>
+        <if test="demandListNo != null and demandListNo != ''">
+            AND manualdemand.demandListNo = #{demandListNo}
+        </if>
+        <if test="applyTimeBegin != null and applyTimeBegin != ''">
+            AND manualdemand.applyTime &gt;= #{applyTimeBegin}
+        </if>
+        <if test="applyTimeEnd != null and applyTimeEnd != ''">
+            AND manualdemand.applyTime &lt;= #{applyTimeEnd}
+        </if>
+        <if test="publishTimeBegin != null and publishTimeBegin != ''">
+            AND manualdemand.publishTime &gt;= #{publishTimeBegin}
+        </if>
+        <if test="publishTimeEnd != null and publishTimeEnd != ''">
+            AND manualdemand.publishTime &lt;= #{publishTimeEnd}
+        </if>
+        <if test="cpzgName != null and cpzgName != ''">
+            AND manualfile.cpzgName like CONCAT('%',#{cpzgName},'%')
+        </if>
+        <if test="manualVersion !=null and manualVersion !=''">
+            AND manualfile.manualVersion = #{manualVersion}
+        </if>
+        <if test="manualEdition !=null and manualEdition !=''">
+            AND manualfile.manualEdition like CONCAT('%',#{manualEdition},'%')
+        </if>
+    </sql>
+    <sql id="query_where2">
+        AND manualfile.salesModel = #{salesModel}
+        AND manualfile.designModel = #{designModel}
+        AND manualfile.materialCode = #{materialCode}
+        <if test="manualLanguage !=null and manualLanguage !=''">
+            AND manualfile.manualLanguage = #{manualLanguage}
+        </if>
+        <if test="isCE !=null and isCE !=''">
+            AND manualfile.isCE = #{isCE}
+        </if>
+        <if test="manualCode !=null and manualCode !=''">
+            AND manualfile.manualCode = #{manualCode}
+        </if>
+        <if test="manualEdition !=null and manualEdition !=''">
+            AND manualfile.manualEdition = #{manualEdition}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQueryQuick" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT manualfile.* FROM
+        service_engineering_maintenance_manualfile AS manualfile
+        <where>
+            <include refid="query_where2"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT manualfile.* FROM
+        service_engineering_maintenance_manualfile AS manualfile
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_maintenance_manualfile AS manualfile
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="dataListQuery2" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT manualfile.*,manualdemand.demandListNo,manualdemand.applyTime,manualdemand.publishTime AS demandTime FROM
+        service_engineering_maintenance_manualfile AS manualfile
+        LEFT JOIN service_engineering_maintenance_manualfilelog AS manualfilelog
+        ON manualfilelog.mainId = manualfile.id
+        LEFT JOIN service_engineering_maintenance_manualdemand AS manualdemand
+        ON manualfilelog.demandId = manualdemand.id
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery2" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_maintenance_manualfile AS manualfile
+        LEFT JOIN service_engineering_maintenance_manualfilelog AS manualfilelog
+        ON manualfilelog.mainId = manualfile.id
+        LEFT JOIN service_engineering_maintenance_manualdemand AS manualdemand
+        ON manualfilelog.demandId = manualdemand.id
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            service_engineering_maintenance_manualfile
+        WHERE
+            service_engineering_maintenance_manualfile.id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.lang.String">
+        delete from service_engineering_maintenance_manualfile
+        where id = #{id}
+    </delete>
+    <!---->
+    <delete id="deleteBusinessLogs" parameterType="java.lang.String">
+    delete from service_engineering_maintenance_manualfilelog
+    where mainId = #{id}
+</delete>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_maintenance_manualfile(
+        id,
+        salesModel,
+        designModel,
+        materialCode,
+        manualDescription,
+        cpzgId,
+        cpzgName,
+        manualLanguage,
+        manualCode,
+        manualVersion,
+        manualEdition,
+        isCE,
+        keyUserId,
+        keyUser,
+        publishTime,
+        manualStatus,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{salesModel,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{manualDescription,jdbcType=VARCHAR},
+        #{cpzgId,jdbcType=VARCHAR},
+        #{cpzgName,jdbcType=VARCHAR},
+        #{manualLanguage,jdbcType=VARCHAR},
+        #{manualCode,jdbcType=VARCHAR},
+        #{manualVersion,jdbcType=VARCHAR},
+        #{manualEdition,jdbcType=VARCHAR},
+        #{isCE,jdbcType=VARCHAR},
+        #{keyUserId,jdbcType=VARCHAR},
+        #{keyUser,jdbcType=VARCHAR},
+        #{publishTime,jdbcType=VARCHAR},
+        #{manualStatus,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update service_engineering_maintenance_manualfile
+        set
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        manualDescription=#{manualDescription,jdbcType=VARCHAR},
+        cpzgId=#{cpzgId,jdbcType=VARCHAR},
+        cpzgName=#{cpzgName,jdbcType=VARCHAR},
+        manualLanguage=#{manualLanguage,jdbcType=VARCHAR},
+        manualCode=#{manualCode,jdbcType=VARCHAR},
+        manualVersion=#{manualVersion,jdbcType=VARCHAR},
+        manualEdition=#{manualEdition,jdbcType=VARCHAR},
+        isCE=#{isCE,jdbcType=VARCHAR},
+        keyUserId=#{keyUserId,jdbcType=VARCHAR},
+        keyUser=#{keyUser,jdbcType=VARCHAR},
+        publishTime=#{publishTime,jdbcType=VARCHAR},
+        manualStatus=#{manualStatus,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <select id="queryLogList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            log.*,
+            demand.demandListNo,
+            demand.salesArea,
+            demand.quantity,
+            demand.applyTime,
+            demand.publishTime,
+            demand.applyUser,
+            demand.applyDep,
+            demand.Bconfirming
+        FROM
+            service_engineering_maintenance_manualfilelog AS log
+            LEFT JOIN
+            service_engineering_maintenance_manualdemand AS demand
+                ON log.demandId = demand.id
+        WHERE mainId = #{_parameter,jdbcType=VARCHAR}
+    </select>
+    <!---->
+    <insert id="insertLog" parameterType="java.util.Map">
+        insert into service_engineering_maintenance_manualfilelog(
+        id,
+        mainId,
+        demandId,
+        remark,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{demandId,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <select id="getUsersByRolekey" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT os_user.*
+        FROM os_rel_inst
+            LEFT JOIN os_group
+                ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN os_user
+                ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        WHERE
+            os_rel_inst.DIM1_ = '2'
+            AND os_group.KEY_ = #{roleKey}
+    </select>
+</mapper>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://esb.primeton.com/sap-adaptor" xmlns:soapenc11="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://esb.primeton.com/sap-adaptor" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://esb.primeton.com/sap-adaptor/rfc" xmlns:soapenc12="http://www.w3.org/2003/05/soap-encoding">
+  <wsdl:types>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor/rfc">
+									<xsd:complexType name="ArrayOfIN_DATA">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="IN_DATA" nillable="true" type="ns1:IN_DATA"/>
+				</xsd:sequence>
+			</xsd:complexType>
+																	<xsd:complexType name="IN_DATA">
+				<xsd:sequence>
+									<xsd:element minOccurs="0" name="MATID" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="BESKZ" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="BKLAS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="DISLS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="DISMM" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="DISPO" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="DWERK" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="DZEIT" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="EKGRP" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="KTGRM" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="LGPRO" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MAGRV" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MAKTX" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MATKL" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MATNR" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MEINS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MMSTA" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MTART" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="MTVFP" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="PEINH" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="PLIFZ" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="PRCTR" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="RGEKZ" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="SBDKZ" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="SERNP" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="SOBSL" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="SPART" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="STPRS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="VKORG" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="VTWEG" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="WERKS" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="ZCK1" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="ZCK2" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="ZCK3" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="ZPSLX" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="RETURNCODE" nillable="true" type="xsd:string"/>
+									<xsd:element minOccurs="0" name="RETURNMSG" nillable="true" type="xsd:string"/>
+								</xsd:sequence>
+			</xsd:complexType>
+																</xsd:schema>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://esb.primeton.com/sap-adaptor">
+			<xsd:element name="ZWJXERDM_MODIFY_MARA">
+				<xsd:complexType>
+					<xsd:sequence>
+												<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfIN_DATA" nillable="true" type="ns1:ArrayOfIN_DATA"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="ZWJXERDM_MODIFY_MARAResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+												<xsd:element maxOccurs="1" minOccurs="1" name="ArrayOfIN_DATA" nillable="true" type="ns1:ArrayOfIN_DATA"/>
+										</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="ZWJXERDM_MODIFY_MARARequest">
+    <wsdl:part name="parameters" element="tns:ZWJXERDM_MODIFY_MARA">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="ZWJXERDM_MODIFY_MARAResponse">
+    <wsdl:part name="parameters" element="tns:ZWJXERDM_MODIFY_MARAResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="xgwjj.sap.ZWJXERDM_MARAPortType">
+    <wsdl:operation name="ZWJXERDM_MODIFY_MARA">
+      <wsdl:input name="ZWJXERDM_MODIFY_MARARequest" message="tns:ZWJXERDM_MODIFY_MARARequest">
+    </wsdl:input>
+      <wsdl:output name="ZWJXERDM_MODIFY_MARAResponse" message="tns:ZWJXERDM_MODIFY_MARAResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="xgwjj.sap.ZWJXERDM_MARAHttpBinding" type="tns:xgwjj.sap.ZWJXERDM_MARAPortType">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="ZWJXERDM_MODIFY_MARA">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="ZWJXERDM_MODIFY_MARARequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="ZWJXERDM_MODIFY_MARAResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="xgwjj.sap.ZWJXERDM_MARA">
+    <wsdl:port name="xgwjj.sap.ZWJXERDM_MARAHttpPort" binding="tns:xgwjj.sap.ZWJXERDM_MARAHttpBinding">
+      <wsdlsoap:address location="HTTP://10.15.8.175:9091/xgwjj.sap.ZWJXERDM_MARA"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitRecruitmentDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.NAME_ AS deptName
+        FROM
+        portrait_recruitment A
+        LEFT JOIN os_group B ON A.deptId = B.GROUP_ID_
+        where  1=1
+        <if test="userName != null and userName != ''">
+            AND A.userName like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="status != null and status != ''">
+            AND A.status = #{status}
+        </if>
+        <if test="resumeName != null and resumeName != ''">
+            AND A.resumeName like CONCAT('%',#{resumeName},'%')
+        </if>
+        <if test="major != null and major != ''">
+            AND A.major like CONCAT('%',#{major},'%')
+        </if>
+        <if test="deptId != null and deptId != ''">
+            AND A.deptId = #{deptId}
+        </if>
+        <if test="userId != null and userId != ''">
+            AND A.userId = #{userId}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO portrait_recruitment (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            userId,
+            userName,
+            deptId,
+            resumeName,
+            major,
+            remark,
+            status
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{userId,jdbcType=VARCHAR},
+            #{userName,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR},
+            #{resumeName,jdbcType=VARCHAR},
+            #{major,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{status,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update portrait_recruitment
+        <set>
+            <if test="resumeName != null and resumeName != ''">
+                resumeName=#{resumeName,jdbcType=VARCHAR},
+            </if>
+            <if test="major != null and major != ''">
+                major=#{major,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null and remark != ''">
+                remark=#{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null and status != ''">
+                status=#{status,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      select A.*,
+       B.NAME_ AS deptName
+      from portrait_recruitment A
+        LEFT JOIN os_group B ON A.deptId = B.GROUP_ID_
+        where A.id = #{id}
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from  portrait_recruitment
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

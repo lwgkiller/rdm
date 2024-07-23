@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.presaleDocuments.core.dao.PresaleDocumentsDownloadApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="queryWhereListQuery">
+        <if test="@Ognl@isNotEmpty(businessNo)">
+            AND business.businessNo = #{businessNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(applyUserName)">
+            AND applyUser.FULLNAME_ like CONCAT('%',#{applyUserName},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(applyUserDeptName)">
+            AND applyDep.NAME_ like CONCAT('%',#{applyUserDeptName},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(applyTimeBegin)">
+            AND business.applyTime &gt;= #{applyTimeBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(applyTimeEnd)">
+            AND business.applyTime &lt;= #{applyTimeEnd}
+        </if>
+        <if test="@Ognl@isNotEmpty(endTimeBegin)">
+            AND business.endTime &gt;= #{endTimeBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(endTimeEnd)">
+            AND business.endTime &lt;= #{endTimeEnd}
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+        <if test="@Ognl@isNotEmpty(roleName)">
+            <choose>
+                <when test="roleName =='other'">
+                    AND (business.applyUserId = #{currentUserId})
+                </when>
+            </choose>
+        </if>
+    </sql>
+    <!--特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst.INST_ID_ AS instId。其实现在没必要了，可以用business.INST_ID_取代-->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId,
+        bpm_inst.ACT_INST_ID_,
+        applyUser.FULLNAME_ AS applyUserName,
+        applyDep.NAME_ AS applyUserDeptName
+        FROM
+        pre_sale_documents_downloadapply AS business
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN os_user AS applyUser ON business.applyUserId = applyUser.USER_ID_
+        LEFT JOIN os_rel_inst ON
+        applyUser.USER_ID_ = os_rel_inst.PARTY2_ AND
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND
+        os_rel_inst.IS_MAIN_ = 'YES'
+        LEFT JOIN os_group AS applyDep ON os_rel_inst.PARTY1_ = applyDep.GROUP_ID_
+        <where>
+            <include refid="queryWhereListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM
+        pre_sale_documents_downloadapply AS business
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN os_user AS applyUser ON business.applyUserId = applyUser.USER_ID_
+        LEFT JOIN os_rel_inst ON
+        applyUser.USER_ID_ = os_rel_inst.PARTY2_ AND
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND
+        os_rel_inst.IS_MAIN_ = 'YES'
+        LEFT JOIN os_group AS applyDep ON os_rel_inst.PARTY1_ = applyDep.GROUP_ID_
+        <where>
+            <include refid="queryWhereListQuery"/>
+        </where>
+    </select>
+    <!--和组织，用户，bpm_inst的关联没啥用了。业务表冗余存储了。特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst-->
+    <select id="getDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            bpm_inst.STATUS_    AS status,
+            bpm_inst.INST_ID_   AS instId,
+            bpm_inst.ACT_INST_ID_,
+            applyUser.FULLNAME_ AS applyUserName,
+            applyDep.NAME_      AS applyUserDeptName
+        FROM
+            pre_sale_documents_downloadapply AS business
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+            LEFT JOIN os_user AS applyUser ON business.applyUserId = applyUser.USER_ID_
+            LEFT JOIN os_rel_inst ON
+                                      applyUser.USER_ID_ = os_rel_inst.PARTY2_ AND
+                                      os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND
+                                      os_rel_inst.IS_MAIN_ = 'YES'
+            LEFT JOIN os_group AS applyDep ON os_rel_inst.PARTY1_ = applyDep.GROUP_ID_
+        WHERE business.id = #{id}
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into pre_sale_documents_downloadapply(
+        id,
+        businessNo,
+        applyUserId,
+        applyTime,
+        endTime,
+        businessStatus,
+        documentIds,
+        remarks,
+        INST_ID_,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{businessNo,jdbcType=VARCHAR},
+        #{applyUserId,jdbcType=VARCHAR},
+        #{applyTime,jdbcType=VARCHAR},
+        #{endTime,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{documentIds,jdbcType=VARCHAR},
+        #{remarks,jdbcType=VARCHAR},
+        #{INST_ID_,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update pre_sale_documents_downloadapply
+        set
+        businessNo=#{businessNo,jdbcType=VARCHAR},
+        applyUserId=#{applyUserId,jdbcType=VARCHAR},
+        applyTime=#{applyTime,jdbcType=VARCHAR},
+        endTime=#{endTime,jdbcType=VARCHAR},
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        documentIds=#{documentIds,jdbcType=VARCHAR},
+        remarks=#{remarks,jdbcType=VARCHAR},
+        INST_ID_=#{INST_ID_,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from pre_sale_documents_downloadapply
+        <where>
+            <if test="@Ognl@isNotEmpty(ids)">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(ids)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+</mapper>

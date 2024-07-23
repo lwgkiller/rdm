@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.JszbDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryJszbList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            jszb_baseinfo.*,
+            os_group.NAME_ AS applyUserDeptName,
+            os_user.FULLNAME_ AS applyUserName,
+            act_ru_task.NAME_ as currentProcessTask,
+            act_ru_task.ID_ as taskId,
+            bpm_inst.STATUS_ as status,
+            bpm_inst.INST_ID_ as instId
+        FROM
+            jszb_baseinfo
+            LEFT JOIN os_rel_inst ON jszb_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN os_user ON os_user.USER_ID_ = jszb_baseinfo.CREATE_BY_
+            left join bpm_inst on jszb_baseinfo.jszbId=bpm_inst.BUS_KEY_
+            left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="gslclb != null and gslclb != ''">
+                AND jszb_baseinfo.gslclb = #{gslclb}
+            </if>
+            <if test="zbName != null and zbName != ''">
+                AND jszb_baseinfo.zbName like CONCAT('%',#{zbName},'%')
+            </if>
+            <if test="CREATE_TIME_StartTime != null and CREATE_TIME_StartTime != ''">
+                AND jszb_baseinfo.CREATE_TIME_ &gt;= #{CREATE_TIME_StartTime}
+            </if>
+            <if test="CREATE_TIME_EndTime != null and CREATE_TIME_EndTime != ''">
+                AND jszb_baseinfo.CREATE_TIME_ &lt;= #{CREATE_TIME_EndTime}
+            </if>
+            <if test="lxTimeStartTime != null and lxTimeStartTime != ''">
+                AND jszb_baseinfo.lxTime &gt;= #{lxTimeStartTime}
+            </if>
+            <if test="lxTimeEndTime != null and lxTimeEndTime != ''">
+                AND jszb_baseinfo.lxTime &lt;= #{lxTimeEndTime}
+            </if>
+            <if test="xmNum != null and xmNum != ''">
+                AND jszb_baseinfo.xmNum like CONCAT('%',#{xmNum},'%')
+            </if>
+            <if test="zbbmName != null and zbbmName != ''">
+                AND jszb_baseinfo.zbbmName like CONCAT('%',#{zbbmName},'%')
+            </if>
+            <if test="jbrName != null and jbrName != ''">
+                AND jszb_baseinfo.jbrName like CONCAT('%',#{jbrName},'%')
+            </if>
+            <if test="status != null and status != ''">
+                <choose>
+                    <when test="status == 'SUCCESS_END'">
+                        AND (bpm_inst.STATUS_ = #{status} or  bpm_inst.STATUS_ is null)
+                    </when>
+                    <otherwise>
+                        AND bpm_inst.STATUS_ = #{status}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR jszb_baseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countJszbList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        jszb_baseinfo
+        LEFT JOIN os_rel_inst ON jszb_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on jszb_baseinfo.jszbId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="gslclb != null and gslclb != ''">
+                AND jszb_baseinfo.gslclb = #{gslclb}
+            </if>
+            <if test="zbName != null and zbName != ''">
+                AND jszb_baseinfo.zbName like CONCAT('%',#{zbName},'%')
+            </if>
+            <if test="CREATE_TIME_StartTime != null and CREATE_TIME_StartTime != ''">
+                AND jszb_baseinfo.CREATE_TIME_ &gt;= #{CREATE_TIME_StartTime}
+            </if>
+            <if test="CREATE_TIME_EndTime != null and CREATE_TIME_EndTime != ''">
+                AND jszb_baseinfo.CREATE_TIME_ &lt;= #{CREATE_TIME_EndTime}
+            </if>
+            <if test="lxTimeStartTime != null and lxTimeStartTime != ''">
+                AND jszb_baseinfo.lxTime &gt;= #{lxTimeStartTime}
+            </if>
+            <if test="lxTimeEndTime != null and lxTimeEndTime != ''">
+                AND jszb_baseinfo.lxTime &lt;= #{lxTimeEndTime}
+            </if>
+            <if test="xmNum != null and xmNum != ''">
+                AND jszb_baseinfo.xmNum like CONCAT('%',#{xmNum},'%')
+            </if>
+            <if test="zbbmName != null and zbbmName != ''">
+                AND jszb_baseinfo.zbbmName like CONCAT('%',#{zbbmName},'%')
+            </if>
+            <if test="jbrName != null and jbrName != ''">
+                AND jszb_baseinfo.jbrName like CONCAT('%',#{jbrName},'%')
+            </if>
+            <if test="status != null and status != ''">
+                <choose>
+                    <when test="status == 'SUCCESS_END'">
+                        AND (bpm_inst.STATUS_ = #{status} or  bpm_inst.STATUS_ is null)
+                    </when>
+                    <otherwise>
+                        AND bpm_inst.STATUS_ = #{status}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR jszb_baseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+
+    <insert id="insertJszb" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jszb_baseinfo(
+            jszbId
+            ,gslclb
+            ,zbbmId
+            ,zbbmName
+            ,jbrId
+            ,jbrName
+            ,zbName
+            ,xmNum
+            ,zbjg
+            ,zbzzxs
+            ,zbxs
+            ,lxTime
+            ,publishType
+            ,cgfs
+            ,yjFinishTime
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{jszbId,jdbcType=VARCHAR},
+            #{gslclb,jdbcType=VARCHAR},
+            #{zbbmId,jdbcType=VARCHAR},
+            #{zbbmName,jdbcType=VARCHAR},
+            #{jbrId,jdbcType=VARCHAR},
+            #{jbrName,jdbcType=VARCHAR},
+            #{zbName,jdbcType=VARCHAR},
+            #{xmNum,jdbcType=VARCHAR},
+            #{zbjg,jdbcType=VARCHAR},
+            #{zbzzxs,jdbcType=VARCHAR},
+            #{zbxs,jdbcType=VARCHAR},
+            #{lxTime,jdbcType=TIMESTAMP},
+            #{publishType,jdbcType=VARCHAR},
+            #{cgfs,jdbcType=VARCHAR},
+            #{yjFinishTime,jdbcType=TIMESTAMP},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateJszb" parameterType="com.alibaba.fastjson.JSONObject">
+        update jszb_baseinfo
+        set
+            gslclb=#{gslclb,jdbcType=VARCHAR},
+            zbbmId=#{zbbmId,jdbcType=VARCHAR},
+            zbbmName=#{zbbmName,jdbcType=VARCHAR},
+            jbrId=#{jbrId,jdbcType=VARCHAR},
+            jbrName=#{jbrName,jdbcType=VARCHAR},
+            zbName=#{zbName,jdbcType=VARCHAR},
+            xmNum=#{xmNum,jdbcType=VARCHAR},
+            zbjg=#{zbjg,jdbcType=VARCHAR},
+            zbzzxs=#{zbzzxs,jdbcType=VARCHAR},
+            zbxs=#{zbxs,jdbcType=VARCHAR},
+            lxTime=#{lxTime,jdbcType=TIMESTAMP},
+            publishType=#{publishType,jdbcType=VARCHAR},
+            cgfs=#{cgfs,jdbcType=VARCHAR},
+            yjFinishTime=#{yjFinishTime,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            jszbId=#{jszbId}
+    </update>
+
+
+
+    <select id="queryJszbById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select jszb_baseinfo.*,os_user.FULLNAME_,bpm_inst.INST_ID_ as instId
+        from jszb_baseinfo
+        left join os_user on jszb_baseinfo.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on jszb_baseinfo.jszbId=bpm_inst.BUS_KEY_
+        where jszb_baseinfo.jszbId=#{jszbId}
+    </select>
+
+    <select id="queryJszbFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+          jszb_fileinfo.*,
+          jszb_ckinfo.lcwjlx as fjlbName,
+          jszb_ckinfo.ssjd,
+          os_user.FULLNAME_ as creator
+        FROM
+          jszb_fileinfo
+        left join jszb_ckinfo on jszb_ckinfo.ckId=jszb_fileinfo.ckId
+        left join os_user on jszb_fileinfo.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="jszbIds != null and jszbIds !=''">
+                jszb_fileinfo.jszbId IN
+                <foreach collection="jszbIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="ckIds != null and ckIds !=''">
+                AND jszb_fileinfo.ckId IN
+                <foreach collection="ckIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+    <insert id="addJszbFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jszb_fileinfo(
+        id
+        ,jszbId
+        ,ckId
+        ,fileName
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{jszbId,jdbcType=VARCHAR},
+        #{ckId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteJszbFile" parameterType="java.util.Map">
+        delete from jszb_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="jszbIds != null and jszbIds !=''">
+                AND jszbId IN
+                <foreach collection="jszbIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteJszb" parameterType="java.util.Map">
+        delete from jszb_baseinfo
+        <where>
+            <if test="jszbIds != null and jszbIds !=''">
+                jszbId IN
+                <foreach collection="jszbIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="queryJszbckData" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        jszb_ckinfo.*
+        FROM
+        jszb_ckinfo
+        order by ckId,lcfl
+    </select>
+    <select id="queryJszbFileTypes" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            jszb_ckinfo
+        WHERE
+        1=1
+        <if test="type != null and type != ''">
+            and jszb_ckinfo.lcfl = #{type}
+        </if>
+        <if test="jdType != null and jdType != ''">
+            and jszb_ckinfo.ssjd = #{jdType}
+        </if>
+        <if test="required !=null and required !=''">
+            AND jszb_ckinfo.required = #{required}
+        </if>
+        order by lcfl,num+''
+    </select>
+
+    <select id="queryJszbTemplateFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        jszb_fileinfo.*,
+        os_user.FULLNAME_ as creator
+        FROM
+        jszb_fileinfo
+        left join os_user
+        on jszb_fileinfo.CREATE_BY_ = os_user.USER_ID_
+        where
+        (jszbId is null or jszbId = '')
+        and
+        (ckId is null or ckId = '')
+        <if test="fileName !=null and fileName !=''">
+            AND jszb_fileinfo.fileName like CONCAT('%',#{fileName},'%')
+        </if>
+    </select>
+</mapper>

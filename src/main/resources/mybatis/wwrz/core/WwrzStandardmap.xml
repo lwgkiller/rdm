@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.wwrz.core.dao.WwrzStandardDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.standardNumber,
+        B.standardName,
+        C.FULLNAME_ as 	creator
+        FROM
+        wwrz_standarddetail A
+        LEFT JOIN wwrz_standard B ON A.mainId = B.id
+        left join os_user C on A.CREATE_BY_ = C.USER_ID_
+        <where>
+            <if test="standardNumber != null and standardNumber != ''">
+                and B.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <if test="standardName != null and standardName != ''">
+                and B.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+        </where>
+        order by B.CREATE_TIME_ ,A.standardCode+''
+        <include refid="pageSql"/>
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            wwrz_standard A
+            where id=#{id}
+    </select>
+    <insert id="addObject" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO wwrz_standard (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            standardNumber,
+            standardName
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{standardNumber,jdbcType=VARCHAR},
+            #{standardName,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="addMapObject" parameterType="java.util.Map">
+         INSERT INTO wwrz_standard (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            standardNumber,
+            standardName
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{standardNumber,jdbcType=VARCHAR},
+            #{standardName,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="com.alibaba.fastjson.JSONObject">
+        update wwrz_standard
+            set
+                standardNumber=#{standardNumber,jdbcType=VARCHAR},
+                standardName=#{standardName,jdbcType=VARCHAR},
+                <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                    UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                </if>
+                 UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from wwrz_standard
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <insert id="addStandardDetail" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO wwrz_standarddetail (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            standardCode,
+            remark
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{standardCode,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="addMapStandardDetail" parameterType="java.util.Map">
+         INSERT INTO wwrz_standarddetail (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            standardCode,
+            remark
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{standardCode,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateStandardDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update wwrz_standarddetail
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        standardCode=#{standardCode,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delStandardDetail" parameterType="java.lang.String">
+        delete from wwrz_standarddetail where id = #{id}
+    </delete>
+    <select id="getStandardDetailList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            wwrz_standarddetail A
+        WHERE A.mainId = #{mainId}
+    </select>
+    <delete id="batchDeleteDetail" parameterType="java.util.Map">
+        delete from wwrz_standarddetail
+        WHERE
+        mainId in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getStandardList" resultType="com.alibaba.fastjson.JSONObject">
+        select A.* from wwrz_standard A order by A.CREATE_TIME_
+    </select>
+</mapper>

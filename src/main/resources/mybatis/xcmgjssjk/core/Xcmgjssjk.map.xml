@@ -1,0 +1,485 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgjssjk.core.dao.XcmgjssjkDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertJssjk" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jssjk_baseinfo(
+          jssjkId,
+          jsName,
+          jsNum,
+          ytxm,
+          xmNum,
+          jdTime,
+          jslb,
+          jsfx,
+          yffx,
+          jsfzrId,
+          jsfzrName,
+          lxfs,
+          jsms,
+          tdhmc,
+          splx,
+          sbbId,
+          ifzb,
+          path,
+          ifdel,
+          delReason,
+          CREATE_BY_,
+          CREATE_TIME_,
+          ifjdjs,
+          jsly
+        )
+        values
+        (
+          #{jssjkId,jdbcType=VARCHAR},
+          #{jsName,jdbcType=VARCHAR},
+          #{jsNum,jdbcType=VARCHAR},
+          #{ytxm,jdbcType=VARCHAR},
+          #{xmNum,jdbcType=VARCHAR},
+          #{jdTime,jdbcType=TIMESTAMP},
+          #{jslb,jdbcType=VARCHAR},
+          #{jsfx,jdbcType=VARCHAR},
+          #{yffx,jdbcType=VARCHAR},
+          #{jsfzrId,jdbcType=VARCHAR},
+          #{jsfzrName,jdbcType=VARCHAR},
+          #{lxfs,jdbcType=VARCHAR},
+          #{jsms,jdbcType=VARCHAR},
+          #{tdhmc,jdbcType=VARCHAR},
+          #{splx,jdbcType=VARCHAR},
+          #{sbbId,jdbcType=VARCHAR},
+          #{ifzb,jdbcType=VARCHAR},
+          #{path,jdbcType=VARCHAR},
+          #{ifdel,jdbcType=VARCHAR},
+          #{delReason,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP},
+          #{ifjdjs,jdbcType=VARCHAR},
+          #{jsly,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateJssjk" parameterType="com.alibaba.fastjson.JSONObject">
+        update jssjk_baseinfo
+        set
+        jsName = #{jsName,jdbcType=VARCHAR},
+        jsNum = #{jsNum,jdbcType=VARCHAR},
+        ytxm =#{ytxm,jdbcType=VARCHAR},
+        xmNum=#{xmNum,jdbcType=VARCHAR},
+        jdTime=  #{jdTime,jdbcType=TIMESTAMP},
+        jslb=  #{jslb,jdbcType=VARCHAR},
+        jsfx=  #{jsfx,jdbcType=VARCHAR},
+        yffx=  #{yffx,jdbcType=VARCHAR},
+        jsfzrId=  #{jsfzrId,jdbcType=VARCHAR},
+        jsfzrName=  #{jsfzrName,jdbcType=VARCHAR},
+        lxfs=  #{lxfs,jdbcType=VARCHAR},
+        jsms=#{jsms,jdbcType=VARCHAR},
+        tdhmc =#{tdhmc,jdbcType=VARCHAR},
+        splx=  #{splx,jdbcType=VARCHAR},
+        <if test="sbbId != null and sbbId != ''">
+           sbbId=  #{sbbId,jdbcType=VARCHAR},
+        </if>
+        ifzb=  #{ifzb,jdbcType=VARCHAR},
+        <if test="path != null and path != ''">
+            path=  #{path,jdbcType=VARCHAR},
+        </if>
+        <if test="ifdel != null and ifdel != ''">
+          ifdel=  #{ifdel,jdbcType=VARCHAR},
+        </if>
+        delReason=  #{delReason,jdbcType=VARCHAR},
+        UPDATE_BY_=  #{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=  #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        ifjdjs=  #{ifjdjs,jdbcType=VARCHAR},
+        jsly=  #{jsly,jdbcType=VARCHAR}
+        where
+        jssjkId=#{jssjkId}
+    </update>
+
+    <!---->
+    <select id="queryJssjkList" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+          jssjk_baseinfo.*,
+        os_group.NAME_ as deptName
+        from
+          jssjk_baseinfo
+        left join os_rel_inst on jssjk_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        left join os_group on os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            and os_rel_inst.DIM1_='1'
+            and jssjk_baseinfo.ifzb="yes"
+            and jssjk_baseinfo.ifdel is null
+            <if test="type != null and type != ''">
+                <if test="type=='my'">
+                    AND jssjk_baseinfo.CREATE_BY_=#{userId}
+                </if>
+            </if>
+            <if test="jsNum != null and jsNum != ''">
+                AND jssjk_baseinfo.jsNum like CONCAT('%',#{jsNum},'%')
+            </if>
+            <if test="ytxm != null and ytxm != ''">
+                AND jssjk_baseinfo.ytxm like CONCAT('%',#{ytxm},'%')
+            </if>
+            <if test="jsName != null and jsName != ''">
+                AND jssjk_baseinfo.jsName like CONCAT('%',#{jsName},'%')
+            </if>
+            <if test="xmNum != null and xmNum != ''">
+                AND jssjk_baseinfo.xmNum like CONCAT('%',#{xmNum},'%')
+            </if>
+            <if test="jslb != null and jslb != ''">
+                AND jssjk_baseinfo.jslb = #{jslb}
+            </if>
+            <if test="deptId != null and deptId != ''">
+                AND os_rel_inst.PARTY1_ = #{deptId}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countJssjkList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+          count( * )
+        FROM
+        jssjk_baseinfo
+        left join os_rel_inst on jssjk_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            and os_rel_inst.DIM1_='1'
+            and jssjk_baseinfo.ifzb="yes"
+            and jssjk_baseinfo.ifdel is null
+            <if test="type != null and type != ''">
+                <if test="type=='my'">
+                    AND jssjk_baseinfo.CREATE_BY_=#{userId}
+                </if>
+            </if>
+            <if test="jsNum != null and jsNum != ''">
+                AND jssjk_baseinfo.jsNum like CONCAT('%',#{jsNum},'%')
+            </if>
+            <if test="jsName != null and jsName != ''">
+                AND jssjk_baseinfo.jsName like CONCAT('%',#{jsName},'%')
+            </if>
+            <if test="xmNum != null and xmNum != ''">
+                AND jssjk_baseinfo.xmNum like CONCAT('%',#{xmNum},'%')
+            </if>
+            <if test="jslb != null and jslb != ''">
+                AND jssjk_baseinfo.jslb = #{jslb}
+            </if>
+            <if test="deptId != null and deptId != ''">
+                AND os_rel_inst.PARTY1_ = #{deptId}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO jssjk_fileinfo
+		(
+		id,
+		jssjkId,
+		fjlx,
+		fileName,
+		fileSize,
+		CREATE_BY_,
+		CREATE_TIME_
+		)
+		VALUES
+		(
+			#{id,jdbcType=VARCHAR},
+			#{jssjkId,jdbcType=VARCHAR},
+			#{fjlx,jdbcType=VARCHAR},
+			#{fileName,jdbcType=VARCHAR},
+			#{fileSize,jdbcType=VARCHAR},
+			#{CREATE_BY_,jdbcType=VARCHAR},
+			now()
+		)
+	</insert>
+
+    <select id="queryJssjkFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+          jssjk_fileinfo.*
+        FROM
+          jssjk_fileinfo
+        WHERE
+          jssjk_fileinfo.jssjkId IN
+        <foreach collection="jssjkIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <delete id="deleteJssjkFile" parameterType="java.util.Map">
+        delete from jssjk_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="jssjkIds != null and jssjkIds !=''">
+                AND jssjkId IN
+                <foreach collection="jssjkIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteJssjk" parameterType="java.util.Map">
+        delete from jssjk_baseinfo
+        <where>
+            <if test="jssjkIds != null and jssjkIds !=''">
+                jssjkId IN
+                <foreach collection="jssjkIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="querySpList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        jssjk_baseinfo.*,
+        os_group.NAME_ AS applyUserDeptName,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ as currentProcessTask,
+        act_ru_task.ID_ as taskId,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        j1.jsNum as sbjsNum
+        FROM
+        jssjk_baseinfo
+        LEFT JOIN os_rel_inst ON jssjk_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = jssjk_baseinfo.CREATE_BY_
+        left join bpm_inst on jssjk_baseinfo.jssjkId=bpm_inst.BUS_KEY_
+        left join act_ru_task on bpm_inst.ACT_INST_ID_=act_ru_task.PROC_INST_ID_
+        left join jssjk_baseinfo j1 on j1.jssjkId = jssjk_baseinfo.sbbId
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="jsNum != null and jsNum != ''">
+            AND jssjk_baseinfo.jsNum like CONCAT('%',#{jsNum},'%')
+        </if>
+        <if test="jsName != null and jsName != ''">
+            AND jssjk_baseinfo.jsName like CONCAT('%',#{jsName},'%')
+        </if>
+        <if test="applyUserId != null and applyUserId != ''">
+            AND jssjk_baseinfo.CREATE_BY_ like CONCAT('%',#{applyUserId},'%')
+        </if>
+        <if test="applyDepId != null and applyDepId != ''">
+            AND os_group.GROUP_ID_ = #{applyDepId}
+        </if>
+        <if test="status != null and status != ''">
+            AND bpm_inst.STATUS_ = #{status}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='other'">
+                    AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR jssjk_baseinfo.CREATE_BY_ = #{currentUserId})
+                </when>
+            </choose>
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countSpList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        jssjk_baseinfo
+        LEFT JOIN os_rel_inst ON jssjk_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on jssjk_baseinfo.jssjkId=bpm_inst.BUS_KEY_
+        left join jssjk_baseinfo j1 on j1.jssjkId = jssjk_baseinfo.sbbId
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="jsNum != null and jsNum != ''">
+                AND jssjk_baseinfo.jsNum like CONCAT('%',#{jsNum},'%')
+            </if>
+            <if test="applyUserId != null and applyUserId != ''">
+                AND jssjk_baseinfo.CREATE_BY_ like CONCAT('%',#{applyUserId},'%')
+            </if>
+            <if test="applyDepId != null and applyDepId != ''">
+                AND os_group.GROUP_ID_ = #{applyDepId}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR bpm_inst.STATUS_ is null OR jssjk_baseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+    <select id="queryJssjkById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select jssjk_baseinfo.*,os_user.FULLNAME_,bpm_inst.INST_ID_ as instId
+        from jssjk_baseinfo
+        left join os_user on jssjk_baseinfo.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on jssjk_baseinfo.jssjkId=bpm_inst.BUS_KEY_
+        where jssjk_baseinfo.jssjkId=#{jssjkId}
+    </select>
+    <select id="queryJssjkByIdCp" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select jssjk_baseinfo.*,
+        j1.jsNum as sbjsNum
+        from jssjk_baseinfo
+        left join jssjk_baseinfo j1 on j1.jssjkId=jssjk_baseinfo.sbbId
+        where jssjk_baseinfo.sbbId=#{jssjkId}
+    </select>
+    <select id="queryJssjkByIdCpFile" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select jssjk_fileinfo.*
+        from jssjk_fileinfo
+        where jssjk_fileinfo.jssjkId=#{jssjkId}
+    </select>
+    <insert id="insertJssjktdmc" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jssjk_tdxxinfo(
+            id
+            ,jssjkId
+            ,wbName
+            ,nbIds
+            ,nbNames
+            ,gznr
+            ,lxfs
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{jssjkId,jdbcType=VARCHAR},
+            #{wbName,jdbcType=VARCHAR},
+            #{nbIds,jdbcType=VARCHAR},
+            #{nbNames,jdbcType=VARCHAR},
+            #{gznr,jdbcType=VARCHAR},
+            #{lxfs,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="getTdmcList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+          jssjk_tdxxinfo.*
+        FROM
+          jssjk_tdxxinfo
+        WHERE
+          ifwb is null AND
+          jssjk_tdxxinfo.jssjkId = #{jssjkId}
+    </select>
+    <update id="updateJssjktdmc" parameterType="com.alibaba.fastjson.JSONObject">
+        update jssjk_tdxxinfo
+        set
+            wbName=#{wbName,jdbcType=VARCHAR},
+            nbIds=#{nbIds,jdbcType=VARCHAR},
+            nbNames=#{nbNames,jdbcType=VARCHAR},
+            gznr=#{gznr,jdbcType=VARCHAR},
+            lxfs=#{lxfs,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+    <delete id="deleteJssjktdmc" parameterType="java.util.Map">
+        delete from jssjk_tdxxinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="jssjkIds != null and jssjkIds !=''">
+                AND jssjkId IN
+                <foreach collection="jssjkIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="queryMaxJssjkNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            jssjk_baseinfo
+        WHERE
+            jsNum IS NOT NULL
+            AND jsNum != ''
+            AND SUBSTR( jsNum, 8,4 )= #{applyTimeStart}
+        ORDER BY
+            SUBSTR( jsNum, 13 ) + '' DESC
+            LIMIT 1
+    </select>
+    <update id="updateJssjkNumber" parameterType="java.util.Map">
+        update jssjk_baseinfo
+        set
+          jsNum=#{jsNum,jdbcType=VARCHAR}
+        where
+          jssjkId=#{jssjkId}
+    </update>
+    <insert id="insertJssjktdmcwb" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into jssjk_tdxxinfo(
+            id
+            ,jssjkId
+            ,wbName
+            ,wbdw
+            ,ifwb
+            ,gznr
+            ,lxfs
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{jssjkId,jdbcType=VARCHAR},
+            #{wbName,jdbcType=VARCHAR},
+            #{wbdw,jdbcType=VARCHAR},
+            #{ifwb,jdbcType=VARCHAR},
+            #{gznr,jdbcType=VARCHAR},
+            #{lxfs,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateJssjktdmcwb" parameterType="com.alibaba.fastjson.JSONObject">
+        update jssjk_tdxxinfo
+        set
+            wbName=#{wbName,jdbcType=VARCHAR},
+            wbdw=#{wbdw,jdbcType=VARCHAR},
+            ifwb=#{ifwb,jdbcType=VARCHAR},
+            gznr=#{gznr,jdbcType=VARCHAR},
+            lxfs=#{lxfs,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+    <delete id="deleteJssjktdmcwb" parameterType="java.util.Map">
+        delete from jssjk_tdxxinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+        </where>
+    </delete>
+    <select id="getTdmcwbList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+          jssjk_tdxxinfo.*
+        FROM
+          jssjk_tdxxinfo
+        WHERE
+          ifwb is not null AND
+          jssjk_tdxxinfo.jssjkId = #{jssjkId}
+    </select>
+</mapper>

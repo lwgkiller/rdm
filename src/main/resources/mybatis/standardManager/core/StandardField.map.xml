@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardFieldManagerDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField}
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryFieldObject" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_field.*,
+            standard_systemcategory.systemCategoryName,
+            user1.FULLNAME_ AS respUserName,
+            user2.FULLNAME_ AS createName,
+            user3.FULLNAME_ AS updateName
+        FROM
+            standard_field
+            LEFT JOIN standard_systemcategory ON standard_field.systemCategoryId = standard_systemcategory.systemCategoryId
+            LEFT JOIN os_user user1 ON standard_field.respUserId = user1.USER_ID_
+            LEFT JOIN os_user user2 ON standard_field.CREATE_BY_ = user2.USER_ID_
+            LEFT JOIN os_user user3 ON standard_field.UPDATE_BY_ = user3.USER_ID_
+        <where>
+            <if test="id !=null and id != ''">
+                standard_field.fieldId=#{id}
+            </if>
+            <if test="fieldName !=null and fieldName != ''">
+                AND standard_field.fieldName LIKE CONCAT('%',#{fieldName},'%')
+            </if>
+            <if test="systemCategoryId !=null and systemCategoryId != ''">
+                AND standard_field.systemCategoryId =#{systemCategoryId}
+            </if>
+            <if test="fieldUserId != null and fieldUserId != ''">
+                AND standard_field.fieldId IN (
+                    select standard_field_user_relation.fieldId
+                    from standard_field_user_relation
+                    where standard_field_user_relation.userId=#{fieldUserId}
+                )
+            </if>
+        </where>
+        order by CONVERT(standard_systemcategory.systemCategoryName using GBK),CONVERT(standard_field.fieldName using GBK)
+    </select>
+
+    <insert id="saveField" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO standard_field(
+          fieldId,
+          fieldName,
+          systemCategoryId,
+          respUserId,
+          ywRespUserId,
+          ywRespUserName,
+          CREATE_BY_,
+          CREATE_TIME_,
+          TENANT_ID_
+        )
+        VALUES(
+        #{fieldId,jdbcType=VARCHAR},
+        #{fieldName,jdbcType=VARCHAR},
+        #{systemCategoryId,jdbcType=VARCHAR},
+        #{respUserId,jdbcType=VARCHAR},
+        #{ywRespUserId,jdbcType=VARCHAR},
+        #{ywRespUserName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateField" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE standard_field SET
+        fieldName=#{fieldName,jdbcType=VARCHAR},
+        systemCategoryId=#{systemCategoryId,jdbcType=VARCHAR},
+        respUserId=#{respUserId,jdbcType=VARCHAR},
+        ywRespUserId=#{ywRespUserId,jdbcType=VARCHAR},
+        ywRespUserName=#{ywRespUserName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        fieldId=#{fieldId}
+    </update>
+
+    <delete id="deleteField" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from standard_field
+        WHERE
+        fieldId IN
+        <foreach collection="fieldIds" index="index" item="fieldId" open="(" close=")" separator=",">
+            #{fieldId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteStandardFieldRelaByField" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from standard_field_relation
+        WHERE
+        fieldId IN
+        <foreach collection="fieldIds" index="index" item="fieldId" open="(" close=")" separator=",">
+            #{fieldId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteStandardFieldRelaByStandard" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from standard_field_relation
+        WHERE
+        standardId IN
+        <foreach collection="standardIds" index="index" item="standardId" open="(" close=")" separator=",">
+            #{standardId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteUserFieldRelaByField" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from standard_field_user_relation
+        WHERE
+        fieldId IN
+        <foreach collection="fieldIds" index="index" item="fieldId" open="(" close=")" separator=",">
+            #{fieldId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteUserFieldRelaByUser" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from standard_field_user_relation
+        WHERE
+        userId IN
+        <foreach collection="userIds" index="index" item="userId" open="(" close=")" separator=",">
+            #{userId}
+        </foreach>
+    </delete>
+
+
+    <select id="queryFieldByName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from standard_field
+        where fieldName=#{fieldName}
+    </select>
+
+    <select id="queryFieldObjectByStandardId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_field.*
+        FROM
+            standard_field_relation
+            LEFT JOIN standard_field ON standard_field_relation.fieldId = standard_field.fieldId
+        WHERE
+            standard_field_relation.standardId = #{standardId}
+    </select>
+
+    <insert id="batchInsertStandardFieldRela" parameterType="java.util.List">
+        INSERT INTO standard_field_relation
+        (
+        standardId,
+        fieldId
+        )
+        VALUES
+        <foreach collection="list" separator="," index="index" item="obj" open="" close="">
+            (
+            #{obj.standardId,jdbcType=VARCHAR},
+            #{obj.fieldId,jdbcType=VARCHAR}
+            )
+        </foreach>
+
+    </insert>
+
+    <insert id="batchInsertUserFieldRela" parameterType="java.util.List">
+        INSERT INTO standard_field_user_relation
+        (
+          userId,
+          fieldId
+        )
+        VALUES
+        <foreach collection="list" separator="," index="index" item="obj" open="" close="">
+            (
+            #{obj.userId,jdbcType=VARCHAR},
+            #{obj.fieldId,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+
+    <select id="queryFieldUserRela" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_field_user_relation.*,
+        B.FULLNAME_ as userName,
+        (select G.name_ from os_rel_inst R
+        left join os_group G on R.party1_ = G.group_id_
+        where R.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' and  R.PARTY2_ = standard_field_user_relation.userId and R.DIM1_ = '1'
+        limit 1) as userDepName
+        FROM
+        standard_field_user_relation
+        left join os_user B on standard_field_user_relation.userId = B.USER_ID_
+        where 1=1
+        <if test="userName != null and userName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="fieldId != null and fieldId != ''">
+            and standard_field_user_relation.fieldId =  #{fieldId}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countFieldUserRela" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        standard_field_user_relation
+        left join os_user B on standard_field_user_relation.userId = B.USER_ID_
+        where 1=1
+        <if test="userName != null and userName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="fieldId != null and fieldId != ''">
+            and standard_field_user_relation.fieldId =  #{fieldId}
+        </if>
+    </select>
+
+    <select id="batchQueryFieldByStandardIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_field.*,
+            standard_field_relation.standardId
+        FROM
+            standard_field_relation
+            LEFT JOIN standard_field ON standard_field_relation.fieldId = standard_field.fieldId
+        WHERE
+          standard_field_relation.standardId IN
+            <foreach collection="standardIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+    <select id="groupStandardByField" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_field_relation.fieldId,
+        count( * ) AS fieldStandardNum
+        FROM
+        standard_field_relation
+        <if test="standardStatus != null and standardStatus != ''">
+          left join standard_source on standard_field_relation.standardId = standard_source.id
+        </if>
+        WHERE
+        standard_field_relation.fieldId IN
+        <foreach collection="fieldIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="standardStatus != null and standardStatus != ''">
+            AND standard_source.standardStatus = #{standardStatus}
+        </if>
+        GROUP BY fieldId
+    </select>
+</mapper>

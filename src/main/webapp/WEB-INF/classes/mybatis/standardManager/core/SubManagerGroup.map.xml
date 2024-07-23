@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.SubManagerGroupDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField}
+            </if>
+        </if>
+    </sql>
+    <select id="getObject" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_submanager_group.*,
+            standard_system.systemName
+        FROM
+            standard_submanager_group
+            left join standard_system on standard_submanager_group.systemId=standard_system.id
+	    where standard_submanager_group.id = #{id}
+    </select>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_submanager_group.id,
+        standard_submanager_group.groupName,
+        standard_systemcategory.systemCategoryId,
+        standard_systemcategory.systemCategoryName,
+        standard_system.id as systemId,
+        standard_system.systemName,
+        standard_submanager_group.CREATE_BY_,
+        B.FULLNAME_ AS createName,
+        standard_submanager_group.CREATE_TIME_,
+        standard_submanager_group.UPDATE_BY_,
+        C.FULLNAME_ AS updateName,
+        standard_submanager_group.UPDATE_TIME_
+        FROM
+        standard_submanager_group
+        LEFT JOIN standard_systemcategory ON standard_submanager_group.systemCategoryId = standard_systemcategory.systemCategoryId
+        LEFT JOIN standard_system ON standard_submanager_group.systemId = standard_system.id
+        LEFT JOIN os_user B ON standard_submanager_group.CREATE_BY_ = B.USER_ID_
+        LEFT JOIN os_user C ON standard_submanager_group.UPDATE_BY_ = C.USER_ID_
+        <where>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                standard_submanager_group.systemCategoryId = #{systemCategoryId}
+            </if>
+            <if test="groupName != null and groupName != ''">
+                and standard_submanager_group.groupName like CONCAT('%',#{groupName},'%')
+            </if>
+            <if test="subManagerUserId != null and subManagerUserId != ''">
+                and standard_submanager_group.id IN (
+                  select standard_submanager.groupId
+                  from standard_submanager
+                  where standard_submanager.userId=#{subManagerUserId}
+                )
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="getDicGroup" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+	        A.id as value ,A.groupCode as code,A.groupName as text
+        FROM
+            tms_messagerecgroup A
+        WHERE 1=1
+            order by A.UPDATE_TIME_ desc
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+         INSERT INTO standard_submanager_group (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            systemCategoryId,
+            systemId,
+            groupName
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{systemCategoryId,jdbcType=VARCHAR},
+            #{systemId,jdbcType=VARCHAR},
+            #{groupName,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="update" parameterType="java.util.Map">
+        update standard_submanager_group
+        <set>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                systemCategoryId=#{systemCategoryId,jdbcType=VARCHAR},
+            </if>
+            <if test="groupName != null and groupName != ''">
+                groupName=#{groupName,jdbcType=VARCHAR},
+            </if>
+            <if test="systemId != null and systemId != ''">
+                systemId=#{systemId,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchGroupDelete" parameterType="java.util.Map">
+        delete from standard_submanager_group
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="batchGroupUserDelete" parameterType="java.util.Map">
+        delete from standard_submanager
+        WHERE
+        groupId in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getObjectByName" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+	        A.*
+        FROM
+	        standard_submanager_group A
+	        where groupName = #{groupName}
+    </select>
+</mapper>

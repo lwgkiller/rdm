@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.RjssDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryRjss" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environmental_rjss.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        environmental_rjss
+        LEFT JOIN os_rel_inst ON environmental_rjss.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_rjss.CREATE_BY_
+        left join bpm_inst on environmental_rjss.rjssId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (environmental_rjss.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="applyName != null and applyName != ''">
+            and environmental_rjss.applyName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="appDeptName != null and appDeptName != ''">
+            and environmental_rjss.appDeptName like CONCAT('%',#{appDeptName},'%')
+        </if>
+        <if test="modelName != null and modelName != ''">
+            and environmental_rjss.modelName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="fdjGrand != null and fdjGrand != ''">
+            and environmental_rjss.fdjGrand like CONCAT('%',#{fdjGrand},'%')
+        </if>
+        <if test="fdjModel != null and fdjModel != ''">
+            and environmental_rjss.fdjModel like CONCAT('%',#{fdjModel},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countRjssList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        environmental_rjss
+        LEFT JOIN os_rel_inst ON environmental_rjss.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on environmental_rjss.rjssId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            and (environmental_rjss.CREATE_BY_ = #{currentUserId}
+            or bpm_inst.STATUS_ != 'DRAFTED')
+            <if test="applyName != null and applyName != ''">
+                and environmental_rjss.applyName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="appDeptName != null and appDeptName != ''">
+                and environmental_rjss.appDeptName like CONCAT('%',#{appDeptName},'%')
+            </if>
+            <if test="modelName != null and modelName != ''">
+                and environmental_rjss.modelName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="fdjGrand != null and fdjGrand != ''">
+                and environmental_rjss.fdjGrand like CONCAT('%',#{fdjGrand},'%')
+            </if>
+            <if test="fdjModel != null and fdjModel != ''">
+                and environmental_rjss.fdjModel like CONCAT('%',#{fdjModel},'%')
+            </if>
+        </where>
+    </select>
+    <insert id="createRjss" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_rjss (rjssId,
+                                        applyId,
+                                        applyName,
+                                        appDeptId,
+                                        appDeptName,
+                                        version,
+                                        yyId,
+                                        yyName,
+                                        dlId,
+                                        dlName,
+                                        dqId,
+                                        dqName,
+                                        kzId,
+                                        kzName,
+                                        zlId,
+                                        zlName,
+                                        zzId,
+                                        zzName,
+                                        fwId,
+                                        fwName,
+                                        fdjGrand,
+                                        fdjModel,
+                                        content,
+                                        CREATE_BY_,
+                                        CREATE_TIME_)
+        values (#{rjssId,jdbcType=VARCHAR},
+                #{applyId,jdbcType=VARCHAR},
+                #{applyName,jdbcType=VARCHAR},
+                #{appDeptId,jdbcType=VARCHAR},
+                #{appDeptName,jdbcType=VARCHAR},
+                #{version,jdbcType=VARCHAR},
+                #{yyId,jdbcType=VARCHAR},
+                #{yyName,jdbcType=VARCHAR},
+                #{dlId,jdbcType=VARCHAR},
+                #{dlName,jdbcType=VARCHAR},
+                #{dqId,jdbcType=VARCHAR},
+                #{dqName,jdbcType=VARCHAR},
+                #{kzId,jdbcType=VARCHAR},
+                #{kzName,jdbcType=VARCHAR},
+                #{zlId,jdbcType=VARCHAR},
+                #{zlName,jdbcType=VARCHAR},
+                #{zzId,jdbcType=VARCHAR},
+                #{zzName,jdbcType=VARCHAR},
+                #{fwId,jdbcType=VARCHAR},
+                #{fwName,jdbcType=VARCHAR},
+                #{fdjGrand,jdbcType=VARCHAR},
+                #{fdjModel,jdbcType=VARCHAR},
+                #{content,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateRjss" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_rjss
+        <set>
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            appDeptId=#{appDeptId,jdbcType=VARCHAR},
+            appDeptName=#{appDeptName,jdbcType=VARCHAR},
+            dlId=#{dlId,jdbcType=VARCHAR},
+            dlName=#{dlName,jdbcType=VARCHAR},
+            dqId=#{dqId,jdbcType=VARCHAR},
+            dqName=#{dqName,jdbcType=VARCHAR},
+            kzId=#{kzId,jdbcType=VARCHAR},
+            kzName=#{kzName,jdbcType=VARCHAR},
+            fdjGrand=#{fdjGrand,jdbcType=VARCHAR},
+            fdjModel=#{fdjModel,jdbcType=VARCHAR},
+            version=#{version,jdbcType=VARCHAR},
+            yyId=#{yyId,jdbcType=VARCHAR},
+            yyName=#{yyName,jdbcType=VARCHAR},
+            zlId=#{zlId,jdbcType=VARCHAR},
+            zlName=#{zlName,jdbcType=VARCHAR},
+            zzId=#{zzId,jdbcType=VARCHAR},
+            zzName=#{zzName,jdbcType=VARCHAR},
+            fwId=#{fwId,jdbcType=VARCHAR},
+            fwName=#{fwName,jdbcType=VARCHAR},
+            content=#{content,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        rjssId=#{rjssId}
+    </update>
+
+    <select id="queryReason" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT environmental_reason.*
+        FROM environmental_reason
+        where belongId = #{belongId}
+
+    </select>
+
+    <insert id="createReason" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_reason (reasonId, reason, purpose, belongId, CREATE_BY_, CREATE_TIME_)
+        values (#{reasonId,jdbcType=VARCHAR},
+                #{reason,jdbcType=VARCHAR},
+                #{purpose,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateReason" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_reason
+        <set>
+            reason=#{reason,jdbcType=VARCHAR},
+            purpose=#{purpose,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        reasonId=#{reasonId}
+    </update>
+
+    <delete id="deleteReason" parameterType="java.util.Map">
+        delete from environmental_reason
+        <where>
+            <if test="reasonId != null and reasonId != ''">
+                reasonId=#{reasonId}
+            </if>
+            <if test="rjssIds != null and rjssIds !=''">
+                belongId IN
+                <foreach collection="rjssIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT environmental_rjssDetail.*
+        FROM environmental_rjssDetail
+        where belongId = #{belongId}
+    </select>
+
+    <insert id="createDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_rjssDetail (detailId,
+                                              modelId,
+                                              modelName,
+                                              cpzgId,
+                                              cpzgName,
+                                              isLeader,
+                                              belongId,
+                                              detailDeptName,
+                                              CREATE_BY_,
+                                              CREATE_TIME_)
+        values (#{detailId,jdbcType=VARCHAR},
+                #{modelId,jdbcType=VARCHAR},
+                #{modelName,jdbcType=VARCHAR},
+                #{cpzgId,jdbcType=VARCHAR},
+                #{cpzgName,jdbcType=VARCHAR},
+                #{isLeader,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{detailDeptName,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_rjssDetail
+        <set>
+            modelId=#{modelId,jdbcType=VARCHAR},
+            modelName=#{modelName,jdbcType=VARCHAR},
+            cpzgId=#{cpzgId,jdbcType=VARCHAR},
+            cpzgName=#{cpzgName,jdbcType=VARCHAR},
+            isLeader=#{isLeader,jdbcType=VARCHAR},
+            detailDeptName=#{detailDeptName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        detailId=#{detailId}
+    </update>
+
+    <delete id="deleteDetail" parameterType="java.util.Map">
+        delete from environmental_rjssDetail
+        <where>
+            <if test="detailId != null and detailId != ''">
+                detailId=#{detailId}
+            </if>
+            <if test="rjssIds != null and rjssIds !=''">
+                belongId IN
+                <foreach collection="rjssIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryRjssById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select environmental_rjss.*, bpm_inst.INST_ID_ as instId
+        from environmental_rjss
+                 left join os_user on environmental_rjss.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on environmental_rjss.rjssId = bpm_inst.BUS_KEY_
+        where environmental_rjss.rjssId = #{rjssId}
+    </select>
+
+    <select id="queryRjssFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environmental_smfile.*,
+        os_user.FULLNAME_ AS creatorName
+        FROM
+        environmental_smfile
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_smfile.CREATE_BY_
+        WHERE
+        environmental_smfile.belongId IN
+        <foreach collection="rjssIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="fileType != null and fileType !='' ">
+            and environmental_smfile.fileType=#{fileType}
+        </if>
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_smfile (fileId, fileName, belongId, fileSize, fileType, CREATE_BY_, CREATE_TIME_)
+        values (#{fileId,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{fileType,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <delete id="deleteRjssFile" parameterType="java.util.Map">
+        delete from environmental_smfile
+        <where>
+            <if test="fileId != null and fileId != ''">
+                fileId=#{fileId}
+            </if>
+            <if test="rjssIds != null and rjssIds !=''">
+                AND belongId IN
+                <foreach collection="rjssIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteRjss" parameterType="java.util.Map">
+        delete from environmental_rjss
+        <where>
+            <if test="rjssIds != null and rjssIds !=''">
+                rjssId IN
+                <foreach collection="rjssIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <update id="updateRjssNumber" parameterType="java.util.Map">
+        update environmental_rjss
+        set noticeNo = #{noticeNo,jdbcType=VARCHAR}
+        where rjssId = #{rjssId}
+    </update>
+    <select id="queryMaxRjssNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT noticeNo
+        FROM environmental_rjss
+        WHERE noticeNo like CONCAT('%', #{applyTimeStart}, '%')
+        ORDER BY noticeNo DESC
+        LIMIT 1
+    </select>
+</mapper>

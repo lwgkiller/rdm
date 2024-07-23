@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmCommon.core.dao.CommonInfoDao">
+    <select id="getDicValues" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            d.DIC_ID_ AS id,
+            d.KEY_    AS key_,
+            d.NAME_   AS text,
+            d.VALUE_  AS value
+        FROM sys_dic d LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{key}
+              AND t.cat_key_ = 'CAT_DIM'
+        ORDER BY d.sn_ ASC
+    </select>
+    <select id="getUserIdAndCerNo" resultType="java.util.Map">
+        SELECT
+            A.USER_ID_,
+            A.CERT_NO_
+        FROM
+            os_user A
+        WHERE
+            A.STATUS_ = 'IN_JOB'
+            AND A.CERT_NO_ IS NOT NULL
+            AND A.CERT_NO_ != ''
+    </select>
+
+    <select id="getUserInfoByUserName" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select ou.*
+        FROM
+        OS_USER ou,
+        OS_REL_INST oi,
+        os_inst_users iu
+        WHERE
+        ou.STATUS_ = 'IN_JOB'
+        and ou.USER_ID_ = oi.PARTY2_
+        AND oi.REL_TYPE_ID_ = 1
+        AND ou.USER_ID_ = iu.USER_ID_
+        AND oi.IS_MAIN_ = 'YES'
+        AND oi.PARTY1_ in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="userName != null and userName != ''">
+            and ou.FULLNAME_ = #{userName}
+        </if>
+    </select>
+
+    <select id="getDeptInfoByDeptName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            os_group A
+        WHERE A.DIM_ID_ = 1
+              AND A.NAME_ = #{deptName}
+    </select>
+    <select id="getDeptIdByUserId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT A.PARTY1_ AS deptId
+        FROM
+            os_rel_inst A
+        WHERE A.DIM1_ = '1'
+              AND A.STATUS_ = 'ENABLED'
+              AND A.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+              AND A.PARTY2_ = #{userId}
+              limit 1
+    </select>
+
+    <select id="getUserOrg" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            B.NAME_,
+            B.KEY_,
+            A.*
+        FROM
+            os_rel_inst A
+            LEFT JOIN os_group B ON A.PARTY1_ = B.GROUP_ID_
+        WHERE A.PARTY2_ = #{userId}
+    </select>
+    <select id="getGroupInfo" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT A.*
+        FROM
+            os_group A
+            LEFT JOIN os_dimension B ON A.DIM_ID_ = B.DIM_ID_
+        WHERE
+            B.DIM_KEY_ = #{groupType}
+            AND A.NAME_ = #{groupName}
+    </select>
+    <select id="getUserIdByDeptAndUserName" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            os_rel_inst
+            LEFT JOIN os_user ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        WHERE
+            REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND REL_TYPE_ID_ = '1'
+            AND os_user.FULLNAME_ = #{userName}
+            AND PARTY1_ IN (
+                SELECT GROUP_ID_
+                FROM
+                    os_group
+                WHERE
+                    PARENT_ID_ = #{deptId}
+                    OR GROUP_ID_ = #{deptId}
+            )
+    </select>
+    <select id="getDeptRoleUsers" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT A.*
+        FROM
+            os_rel_inst A
+            LEFT JOIN os_group B ON A.PARTY1_ = B.GROUP_ID_
+        WHERE
+            A.DIM1_ = '2'
+            AND B.KEY_ = #{roleKey}
+            AND A.PARTY2_ IN (SELECT PARTY2_
+                              FROM os_rel_inst
+                              WHERE DIM1_ = '1' AND PARTY1_ = #{deptId})
+    </select>
+    <select id="getGroupUsers" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT A.*
+        FROM
+            os_rel_inst A
+            LEFT JOIN os_group B ON A.PARTY1_ = B.GROUP_ID_
+        WHERE
+            A.DIM1_ = #{dim}
+            AND B.KEY_ = #{key}
+    </select>
+    <select id="getBelongGroups" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT A.*
+        FROM
+            os_rel_inst A
+        WHERE
+            A.REL_TYPE_KEY_ = #{typeKey}
+            AND A.PARTY2_ = #{userId}
+    </select>
+    <select id="getDicValue" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            d.DIC_ID_ AS id,
+            d.KEY_    AS key_,
+            d.NAME_   AS text,
+            d.VALUE_  AS value
+        FROM sys_dic d LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{type}
+              AND t.cat_key_ = 'CAT_DIM'
+              AND d.KEY_ = #{key}
+    </select>
+    <select id="getDicKeyByValue" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            d.DIC_ID_ AS id,
+            d.KEY_    AS key_,
+            d.NAME_   AS text,
+            d.VALUE_  AS value
+        FROM sys_dic d LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE t.key_ = #{type}
+              AND t.cat_key_ = 'CAT_DIM'
+              AND d.NAME_ = #{name}
+    </select>
+    <select id="getUsersByDeptId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT A.PARTY2_ AS userId
+        FROM
+            os_rel_inst A
+        WHERE A.PARTY1_ = #{deptId}
+              AND A.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+    </select>
+
+    <select id="getGroupInfoById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM os_group A
+        WHERE A.GROUP_ID_ = #{groupId}
+    </select>
+
+    <select id="queryDeptUnderJSZX" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT os_group.*
+        FROM
+            os_group
+            LEFT JOIN os_rank_type ON os_group.RANK_LEVEL_ = os_rank_type.LEVEL_
+        WHERE
+            os_group.PATH_ LIKE CONCAT('%', #{jszxId}, '%')
+            AND os_rank_type.NAME_ = '部门'
+    </select>
+
+    <select id="getDeptInfoByUserIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_rel_inst.PARTY2_ AS userId,
+        os_group.NAME_ AS deptName
+        FROM
+        os_rel_inst
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND os_rel_inst.IS_MAIN_='YES'
+        AND os_rel_inst.PARTY2_ IN
+        <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="getDicInfo" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT d.*
+        FROM
+            sys_dic d
+            LEFT JOIN sys_tree t ON d.TYPE_ID_ = t.tree_id_
+        WHERE
+            t.key_ = #{dicType}
+            AND t.cat_key_ = 'CAT_DIM'
+            AND d.KEY_ = #{dicKey}
+        ORDER BY
+            d.sn_ ASC
+    </select>
+    <select id="queryDeptRespByUserIds" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_user.USER_ID_,
+        os_user.FULLNAME_
+        FROM
+        os_user
+        WHERE
+        os_user.STATUS_ = 'IN_JOB'
+        AND os_user.USER_ID_ IN (
+        SELECT
+        PARTY2_
+        FROM
+        os_rel_inst
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-LEADER'
+        AND DIM1_ = '1'
+        AND os_rel_inst.PARTY1_ IN (
+        SELECT PARTY1_
+        FROM os_rel_inst
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND DIM1_ = '1'
+        AND IS_MAIN_='YES'
+        AND os_rel_inst.PARTY2_ IN
+        <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        )
+        )
+    </select>
+
+    <select id="queryDeptRespByUserId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            os_user.USER_ID_,
+            os_user.FULLNAME_
+        FROM
+            os_user
+        WHERE
+            os_user.STATUS_ = 'IN_JOB'
+            AND os_user.USER_ID_ IN (
+                SELECT PARTY2_
+                FROM
+                    os_rel_inst
+                WHERE
+                    os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-LEADER'
+                    AND DIM1_ = '1'
+                    AND os_rel_inst.PARTY1_ IN (
+                        SELECT PARTY1_
+                        FROM os_rel_inst
+                        WHERE
+                            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                            AND DIM1_ = '1'
+                            AND IS_MAIN_ = 'YES'
+                            AND os_rel_inst.PARTY2_ = #{userId}
+                    )
+            )
+    </select>
+
+    <select id="queryDept" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT os_group.NAME_ AS deptname
+        FROM os_group
+        WHERE
+            GROUP_ID_ = #{deptId}
+    </select>
+
+    <select id="queryDeptByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from os_group
+        where
+        GROUP_ID_ IN
+        <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <!--根据组id和角色查询人-->
+    <select id="queryUserByGroupId" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            os_user.USER_ID_,
+            os_user.FULLNAME_
+        FROM
+            os_user
+            LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = #{REL_TYPE_KEY_}
+            AND os_rel_inst.PARTY1_ = #{deptId}
+            AND os_user.STATUS_ = 'IN_JOB'
+    </select>
+
+    <!--根据组名称和角色查询人-->
+    <select id="queryUserByGroupName" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            os_user.USER_ID_,
+            os_user.FULLNAME_
+        FROM
+            os_user
+            LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = #{REL_TYPE_KEY_}
+            AND os_group.NAME_ = #{groupName}
+    </select>
+
+    <select id="queryDeptByUserId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            os_rel_inst.PARTY2_ AS userId,
+            os_user.FULLNAME_   AS userName,
+            os_group.GROUP_ID_  AS deptId,
+            os_group.NAME_      AS deptName
+        FROM
+            os_rel_inst
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN os_user ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            AND os_rel_inst.IS_MAIN_ = 'YES'
+            AND os_rel_inst.PARTY2_ = #{userId}
+    </select>
+
+    <select id="batchDeptByUserId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            os_rel_inst.PARTY2_ AS userId,
+            os_user.FULLNAME_   AS userName,
+            os_group.GROUP_ID_  AS deptId,
+            os_group.NAME_      AS deptName
+        FROM
+            os_rel_inst
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN os_user ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        WHERE
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            AND os_rel_inst.IS_MAIN_ = 'YES'
+            AND os_rel_inst.PARTY2_ in
+        <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <!--根据参数获取我最近的访问菜单的记录-->
+    <select id="getMyMenuRecent" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        sys_menu_recentclick.*,
+        sys_menu.NAME_ as menuName
+        FROM
+        sys_menu_recentclick
+        INNER JOIN sys_menu ON sys_menu_recentclick.menuId = sys_menu.MENU_ID_
+        <where>
+            <if test="@Ognl@isNotEmpty(clickUserId)">
+                AND sys_menu_recentclick.clickUserId = #{clickUserId}
+            </if>
+            <if test="@Ognl@isNotEmpty(menuId)">
+                AND sys_menu_recentclick.menuId = #{menuId}
+            </if>
+        </where>
+        ORDER BY UPDATE_TIME_ DESC
+    </select>
+    <!--添加我的近期访问菜单记录-->
+    <insert id="insertMyMenuRecent" parameterType="java.util.Map">
+        insert into sys_menu_recentclick(
+        id,
+        menuId,
+        sysId,
+        clickUserId,
+        CREATE_TIME_,
+        UPDATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{menuId,jdbcType=VARCHAR},
+        #{sysId,jdbcType=VARCHAR},
+        #{clickUserId,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!--更新我的近期访问菜单记录-->
+    <update id="updateMyMenuRecent" parameterType="java.util.Map">
+        update sys_menu_recentclick
+        set
+        menuId=#{menuId,jdbcType=VARCHAR},
+        sysId=#{sysId,jdbcType=VARCHAR},
+        clickUserId=#{clickUserId,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+    <!--处理菜单，保留近期访问的X条记录-->
+    <delete id="processMyMenuRecent" parameterType="java.util.Map">
+        delete from sys_menu_recentclick
+        <where>
+            <if test="@Ognl@isNotEmpty(howManyRecent) and @Ognl@isNotEmpty(clickUserId)">
+                id not in
+                (select temp.id from
+                (select id from sys_menu_recentclick  where clickUserId = #{clickUserId}
+                 order by UPDATE_TIME_ DESC LIMIT ${howManyRecent}) temp)
+                and clickUserId = #{clickUserId}
+            </if>
+            <if test="@Ognl@isEmpty(howManyRecent) or @Ognl@isEmpty(clickUserId)">
+                1=2
+            </if>
+        </where>
+    </delete>
+    <!--钉钉消息记录-->
+    <insert id="insertDingMessage" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into ding_message(
+        id,
+        msgType,
+        recUserIds,
+        content,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{msgType,jdbcType=VARCHAR},
+        #{recUserIds,jdbcType=VARCHAR},
+        #{content,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+</mapper>

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.meeting.core.dao.RwfjDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryRwfj" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        hygl_baseinfo.meetingTheme,
+        os_group.NAME_ AS meetingOrgDepName,
+        hygl_planinfo.*,
+        meetingPlanResp.FULLNAME_ AS meetingPlanRespName,
+        hyglResp.FULLNAME_ AS meetingOrgUserName,
+        bpm_inst.STATUS_ AS `status`,
+        bpm_inst.INST_ID_ AS instId,
+        bpm_inst.ACT_INST_ID_,
+        dep_filter.zzrDepName
+        FROM
+        hygl_planinfo
+        LEFT JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        JOIN bpm_inst ON hygl_planinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN os_user meetingPlanResp ON hygl_planinfo.meetingPlanRespUserIds = meetingPlanResp.USER_ID_
+        LEFT JOIN os_user hyglResp ON hygl_baseinfo.meetingOrgUserId = hyglResp.USER_ID_
+        LEFT JOIN (
+        SELECT
+        os_rel_inst.PARTY2_ AS zzrUserId,
+        os_rel_inst.PARTY1_ AS zzrDepId,
+        os_group.NAME_ AS zzrDepName
+        FROM
+        os_rel_inst
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND DIM1_ = '1'
+        ) dep_filter ON hygl_planinfo.meetingPlanRespUserIds = dep_filter.zzrUserId
+        <where>
+            <if test="meetingOrgDepName != null and meetingOrgDepName != ''">
+                and os_group.NAME_ like CONCAT('%',#{meetingOrgDepName},'%')
+            </if>
+            <if test="meetingPlanRespName != null and meetingPlanRespName != ''">
+                and meetingPlanResp.FULLNAME_ like CONCAT('%',#{meetingPlanRespName},'%')
+            </if>
+            <if test="meetingOrgUserName != null and meetingOrgUserName != ''">
+                and hyglResp.FULLNAME_ like CONCAT('%',#{meetingOrgUserName},'%')
+            </if>
+            <if test="isComplete != null and isComplete != ''">
+                and hygl_planinfo.isComplete like CONCAT('%',#{isComplete},'%')
+            </if>
+            <if test="zzrDepName != null and zzrDepName != ''">
+                and dep_filter.zzrDepName like CONCAT('%',#{zzrDepName},'%')
+            </if>
+            <if test="meetingContent !=null and meetingContent !=''">
+                AND hygl_planinfo.meetingContent like CONCAT('%',#{meetingContent},'%')
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND hygl_planinfo.CREATE_TIME_ &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND hygl_planinfo.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='deptRespUser'">
+                        AND
+                        (
+                        (hygl_baseinfo.meetingOrgDepId like CONCAT('%',#{currentUserMainDepId},'%')
+                        or dep_filter.zzrDepId like CONCAT('%',#{currentUserMainDepId},'%')
+                        or hygl_baseinfo.meetingOrgUserId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_planinfo.shLeaderId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_planinfo.meetingPlanRespUserIds like CONCAT('%',#{currentUserId},'%')
+                        OR hygl_planinfo.CREATE_BY_ = #{currentUserId})
+                        )
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND
+                        (
+                        ( hygl_baseinfo.meetingOrgUserId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_planinfo.shLeaderId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_planinfo.meetingPlanRespUserIds like CONCAT('%',#{currentUserId},'%')
+                        OR hygl_planinfo.CREATE_BY_ = #{currentUserId})
+                        )
+                    </when>
+                </choose>
+            </if>
+            <if test="delay !=null and delay !=''">
+                <choose>
+                    <when test="delay =='yes'">
+                        and (hygl_planinfo.meetingPlanEndTime is not null and hygl_planinfo.meetingPlanEndTime != '')
+                        and str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d') &lt; CURDATE()
+                        and bpm_inst.STATUS_ = 'RUNNING'
+                    </when>
+                    <when test="delay =='no'">
+                        and (hygl_planinfo.meetingPlanEndTime is not null and hygl_planinfo.meetingPlanEndTime != '')
+                        and str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d') > CURDATE()
+                        and bpm_inst.STATUS_ = 'RUNNING'
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countRwfjList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        hygl_planinfo
+        LEFT JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+        LEFT JOIN os_group ON hygl_baseinfo.meetingOrgDepId = os_group.GROUP_ID_
+        JOIN bpm_inst ON hygl_planinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN os_user meetingPlanResp ON hygl_planinfo.meetingPlanRespUserIds = meetingPlanResp.USER_ID_
+        LEFT JOIN os_user hyglResp ON hygl_baseinfo.meetingOrgUserId = hyglResp.USER_ID_
+        LEFT JOIN (
+        SELECT
+        os_rel_inst.PARTY2_ AS zzrUserId,
+        os_rel_inst.PARTY1_ AS zzrDepId,
+        os_group.NAME_ AS zzrDepName
+        FROM
+        os_rel_inst
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND DIM1_ = '1'
+        ) dep_filter ON hygl_planinfo.meetingPlanRespUserIds = dep_filter.zzrUserId
+        <where>
+            <if test="meetingOrgDepName != null and meetingOrgDepName != ''">
+                and os_group.NAME_ like CONCAT('%',#{meetingOrgDepName},'%')
+            </if>
+            <if test="meetingPlanRespName != null and meetingPlanRespName != ''">
+                and meetingPlanResp.FULLNAME_ like CONCAT('%',#{meetingPlanRespName},'%')
+            </if>
+            <if test="meetingOrgUserName != null and meetingOrgUserName != ''">
+                and hyglResp.FULLNAME_ like CONCAT('%',#{meetingOrgUserName},'%')
+            </if>
+            <if test="isComplete != null and isComplete != ''">
+                and hygl_planinfo.isComplete like CONCAT('%',#{isComplete},'%')
+            </if>
+            <if test="zzrDepName != null and zzrDepName != ''">
+                and dep_filter.zzrDepName like CONCAT('%',#{zzrDepName},'%')
+            </if>
+            <if test="meetingContent !=null and meetingContent !=''">
+                AND hygl_planinfo.meetingContent like CONCAT('%',#{meetingContent},'%')
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND hygl_planinfo.CREATE_TIME_ &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND hygl_planinfo.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_ = #{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='deptRespUser'">
+                        AND
+                        (
+                        (hygl_baseinfo.meetingOrgDepId like CONCAT('%',#{currentUserMainDepId},'%')
+                        or dep_filter.zzrDepId like CONCAT('%',#{currentUserMainDepId},'%')
+                        or hygl_baseinfo.meetingOrgUserId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_planinfo.shLeaderId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_planinfo.meetingPlanRespUserIds like CONCAT('%',#{currentUserId},'%')
+                        OR hygl_planinfo.CREATE_BY_ = #{currentUserId})
+                        )
+                    </when>
+                    <when test="roleName =='ptyg'">
+                        AND
+                        (
+                        ( hygl_baseinfo.meetingOrgUserId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_planinfo.shLeaderId like CONCAT('%',#{currentUserId},'%')
+                        or hygl_planinfo.meetingPlanRespUserIds like CONCAT('%',#{currentUserId},'%')
+                        OR hygl_planinfo.CREATE_BY_ = #{currentUserId})
+                        )
+                    </when>
+                </choose>
+            </if>
+            <if test="delay !=null and delay !=''">
+                <choose>
+                    <when test="delay =='yes'">
+                        and (hygl_planinfo.meetingPlanEndTime is not null and hygl_planinfo.meetingPlanEndTime != '')
+                        and str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d') &lt; CURDATE()
+                        and bpm_inst.STATUS_ = 'RUNNING'
+                    </when>
+                    <when test="delay =='no'">
+                        and (hygl_planinfo.meetingPlanEndTime is not null and hygl_planinfo.meetingPlanEndTime != '')
+                        and str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d') > CURDATE()
+                        and bpm_inst.STATUS_ = 'RUNNING'
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+    <insert id="createRwfj" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into hygl_planinfo (id,
+                                   meetingId,
+                                   meetingContent,
+                                   meetingPlanRespUserIds,
+                                   otherPlanRespUserIds,
+                                   meetingPlanEndTime,
+                                   meetingPlanCompletion,
+                                   isComplete,
+                                   CREATE_BY_,
+                                   CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{meetingId,jdbcType=VARCHAR},
+                #{meetingContent,jdbcType=VARCHAR},
+                #{meetingPlanRespUserIds,jdbcType=VARCHAR},
+                #{otherPlanRespUserIds,jdbcType=VARCHAR},
+                #{meetingPlanEndTime,jdbcType=VARCHAR},
+                #{meetingPlanCompletion,jdbcType=VARCHAR},
+                #{isComplete,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <!---->
+    <update id="updateRwfj" parameterType="com.alibaba.fastjson.JSONObject">
+        update hygl_planinfo
+        set meetingContent         = #{meetingContent,jdbcType=VARCHAR},
+            meetingPlanRespUserIds = #{meetingPlanRespUserIds,jdbcType=VARCHAR},
+            otherPlanRespUserIds   = #{otherPlanRespUserIds,jdbcType=VARCHAR},
+            meetingPlanEndTime     = #{meetingPlanEndTime,jdbcType=VARCHAR},
+            meetingPlanCompletion  = #{meetingPlanCompletion,jdbcType=VARCHAR},
+            isComplete             = #{isComplete,jdbcType=VARCHAR},
+            shLeaderId             = #{shLeaderId,jdbcType=VARCHAR},
+            shLeaderName           = #{shLeaderName,jdbcType=VARCHAR},
+            UPDATE_BY_             = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_           = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id = #{id}
+    </update>
+
+    <select id="queryRwfjById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select hygl_planinfo.*,
+               hygl_baseinfo.meetingNo,
+               hygl_baseinfo.meetingUserIds,
+               hygl_baseinfo.meetingTime,
+               hygl_baseinfo.meetingPlace,
+               hygl_baseinfo.meetingTheme,
+               hygl_baseinfo.recordStatus,
+               hygl_baseinfo.planAndResult,
+               hygl_baseinfo.meetingModelId,
+               meetingOrgDep.NAME_       AS meetingOrgDepName,
+               meetingOrg.USER_ID_       AS meetingOrgUserId,
+               meetingOrg.FULLNAME_      AS meetingOrgName,
+               meetingPlanResp.FULLNAME_ AS meetingPlanRespName,
+               bpm_inst.INST_ID_         as instId
+        from hygl_planinfo
+                 LEFT JOIN hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+                 LEFT JOIN os_group meetingOrgDep ON hygl_baseinfo.meetingOrgDepId = meetingOrgDep.GROUP_ID_
+                 LEFT JOIN os_user meetingOrg ON hygl_baseinfo.meetingOrgUserId = meetingOrg.USER_ID_
+                 LEFT JOIN os_user meetingPlanResp ON hygl_planinfo.meetingPlanRespUserIds = meetingPlanResp.USER_ID_
+                 left join bpm_inst on hygl_planinfo.id = bpm_inst.BUS_KEY_
+        where hygl_planinfo.id = #{id}
+    </select>
+
+    <select id="queryRwfjFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM hygl_fileinfo
+        WHERE meetingId = #{id}
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into hygl_fileinfo (fileId, fileName, meetingId, fileSize, CREATE_BY_, CREATE_TIME_)
+        values (#{fileId,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{meetingId,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <delete id="deleteRwfjFile" parameterType="java.util.Map">
+        delete from hygl_fileinfo
+        <where>
+            <if test="fileId != null and fileId !=''">
+                id=#{fileId}
+            </if>
+            <if test="id != null and id !=''">
+                meetingId=#{id}
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteRwfj" parameterType="java.util.Map">
+        delete
+        from hygl_planinfo
+        where id = #{id}
+    </delete>
+
+    <update id="updateFinishTime" parameterType="com.alibaba.fastjson.JSONObject">
+        update hygl_planinfo
+        set finishTime = #{finishTime}
+        where id = #{id}
+    </update>
+
+    <select id="getHyglDelay" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT hygl_planinfo.*,
+               hygl_baseinfo.applyId,
+               hygl_baseinfo.meetingTime,
+               hygl_baseinfo.meetingOrgUserId,
+               hygl_baseinfo.meetingOrgDepId,
+               meetingOrgDep.NAME_ AS meetingOrgDepName,
+               hygl_baseinfo.meetingNo,
+               hygl_baseinfo.meetingTheme,
+               hygl_baseinfo.CREATE_BY_
+        FROM hygl_planinfo
+                 left join hygl_baseinfo ON hygl_planinfo.meetingId = hygl_baseinfo.id
+                 left join bpm_inst on hygl_planinfo.id = bpm_inst.BUS_KEY_
+                 LEFT JOIN os_group meetingOrgDep ON hygl_baseinfo.meetingOrgDepId = meetingOrgDep.GROUP_ID_
+        where bpm_inst.STATUS_ = 'RUNNING'
+          and str_to_date(hygl_planinfo.meetingPlanEndTime, '%Y-%m-%d') &lt; #{nowTime}
+          and ((hygl_planinfo.sendLowNotice != 'yes' or hygl_planinfo.sendLowNotice is null)
+                or(hygl_planinfo.sendMiddleNotice != 'yes' or hygl_planinfo.sendMiddleNotice is null)
+                   or(hygl_planinfo.sendHighNotice != 'yes' or hygl_planinfo.sendHighNotice is null))
+    </select>
+
+    <update id="updateLowSendDD" parameterType="com.alibaba.fastjson.JSONObject">
+        update hygl_planinfo
+        set sendLowNotice = 'yes'
+        where id = #{id}
+    </update>
+    <update id="updateMiddleSendDD" parameterType="com.alibaba.fastjson.JSONObject">
+        update hygl_planinfo
+        set sendMiddleNotice = 'yes'
+        where id = #{id}
+    </update>
+    <update id="updateHighSendDD" parameterType="com.alibaba.fastjson.JSONObject">
+        update hygl_planinfo
+        set sendHighNotice = 'yes'
+        where id = #{id}
+    </update>
+</mapper>

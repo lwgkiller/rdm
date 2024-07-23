@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.PatentInterpretationDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+        <if test="interpreterUserDep !=null and interpreterUserDep !=''">
+            AND os_group.NAME_ like CONCAT('%',#{interpreterUserDep},'%')
+        </if>
+        <if test="professionalCategory !=null and professionalCategory !=''">
+            AND business.professionalCategory like CONCAT('%',#{professionalCategory},'%')
+        </if>
+        <if test="patentPublicationNo !=null and patentPublicationNo !=''">
+            AND business.patentPublicationNo like CONCAT('%',#{patentPublicationNo},'%')
+        </if>
+        <if test="patentName !=null and patentName !=''">
+            AND business.patentName like CONCAT('%',#{patentName},'%')
+        </if>
+        <!--<if test="openDate !=null and openDate !=''">-->
+            <!--AND business.openDate = #{openDate}-->
+        <!--</if>-->
+        <if test="openDateBegin != null and openDateBegin != ''">
+            AND business.openDate &gt;= #{openDateBegin}
+        </if>
+        <if test="openDateEnd != null and openDateEnd != ''">
+            AND business.openDate &lt;= #{openDateEnd}
+        </if>
+        <if test="patentApplicant !=null and patentApplicant !=''">
+            AND business.patentApplicant like CONCAT('%',#{patentApplicant},'%')
+        </if>
+        <if test="tortRisk !=null and tortRisk !=''">
+            AND business.tortRisk like CONCAT('%',#{tortRisk},'%')
+        </if>
+        <if test="complexity !=null and complexity !=''">
+            AND business.complexity = #{complexity}
+        </if>
+        <if test="applicationValue !=null and applicationValue !=''">
+            AND business.applicationValue like CONCAT('%',#{applicationValue},'%')
+        </if>
+        <if test="businessStatus !=null and businessStatus !=''">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+        <if test="IPCNo !=null and IPCNo !=''">
+            AND business.IPCNo = #{IPCNo}
+        </if>
+        <if test="IPCMainNo !=null and IPCMainNo !=''">
+            AND business.IPCMainNo = #{IPCMainNo}
+        </if>
+        <if test="interpreterUserAss !=null and interpreterUserAss !=''">
+            AND business.interpreterUserAss like CONCAT('%',#{interpreterUserAss},'%')
+        </if>
+        <if test="interpreterUser !=null and interpreterUser !=''">
+            AND business.interpreterUser like CONCAT('%',#{interpreterUser},'%')
+        </if>
+        <if test="leaderUser !=null and leaderUser !=''">
+            AND business.leaderUser like CONCAT('%',#{leaderUser},'%')
+        </if>
+    </sql>
+    <!--特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst.INST_ID_ AS instId。其实现在没必要了，可以用business.INST_ID_取代-->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        technologybranch.description AS technologyBranch,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        patent_interpretation AS business
+        LEFT JOIN bpm_inst on business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN patent_interpretation_technologybranch AS technologybranch
+        ON business.technologyBranchId = technologybranch.id
+        <if test="interpreterUserDep !=null and interpreterUserDep !=''">
+            LEFT JOIN os_rel_inst ON business.interpreterUserId = os_rel_inst.PARTY2_ AND os_rel_inst.DIM1_ = '1'
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        </if>
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        patent_interpretation AS business
+        LEFT JOIN bpm_inst on business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN patent_interpretation_technologybranch AS technologybranch
+        ON business.technologyBranchId = technologybranch.id
+        <if test="interpreterUserDep !=null and interpreterUserDep !=''">
+            LEFT JOIN os_rel_inst ON business.interpreterUserId = os_rel_inst.PARTY2_ AND os_rel_inst.DIM1_ = '1'
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        </if>
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from patent_interpretation_fileinfo
+        where mainId IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <delete id="deleteBusinessFile" parameterType="java.util.Map">
+        delete from patent_interpretation_fileinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from patent_interpretation
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!--和组织，用户，bpm_inst的关联没啥用了。业务表冗余存储了。特别注意，由于以前没有在业务表双向绑定INST_ID_才需要联查bpm_inst-->
+    <select id="queryDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            patent_interpretation.*,
+            technologybranch.description AS technologyBranch,
+            bpm_inst.INST_ID_            AS instId
+        FROM patent_interpretation
+            LEFT JOIN bpm_inst ON patent_interpretation.id = bpm_inst.BUS_KEY_
+            LEFT JOIN patent_interpretation_technologybranch AS technologybranch
+                ON patent_interpretation.technologyBranchId = technologybranch.id
+        WHERE patent_interpretation.id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into patent_interpretation(
+            id,
+            businessStatus,
+            professionalCategory,
+            patentPublicationNo,
+            patentName,
+            applicationDate,
+            openDate,
+            patentApplicant,
+            IPCNo,
+            IPCMainNo,
+            interpretationCompletionDate,
+            schemeDescription,
+            keyWords,
+            tortRisk,
+            tortRiskAnalysis,
+            riskToPro,
+            riskToProAlready,
+            patentNameMine,
+            technologyBranchId,
+            technicalEffect,
+            interpretationEvaluation,
+            complexity,
+            applicationValue,
+            applicationValueAnalysis,
+            applyUserId,
+            applyUser,
+            interpreterUserAssId,
+            interpreterUserAss,
+            interpreterUserId,
+            interpreterUser,
+            leaderUserId,
+            leaderUser,
+            CREATE_BY_,
+            CREATE_TIME_,
+            INST_ID_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{professionalCategory,jdbcType=VARCHAR},
+            #{patentPublicationNo,jdbcType=VARCHAR},
+            #{patentName,jdbcType=VARCHAR},
+            #{applicationDate,jdbcType=VARCHAR},
+            #{openDate,jdbcType=VARCHAR},
+            #{patentApplicant,jdbcType=VARCHAR},
+            #{IPCNo,jdbcType=VARCHAR},
+            #{IPCMainNo,jdbcType=VARCHAR},
+            #{interpretationCompletionDate,jdbcType=VARCHAR},
+            #{schemeDescription,jdbcType=VARCHAR},
+            #{keyWords,jdbcType=VARCHAR},
+            #{tortRisk,jdbcType=VARCHAR},
+            #{tortRiskAnalysis,jdbcType=VARCHAR},
+            #{riskToPro,jdbcType=VARCHAR},
+            #{riskToProAlready,jdbcType=VARCHAR},
+            #{patentNameMine,jdbcType=VARCHAR},
+            #{technologyBranchId,jdbcType=VARCHAR},
+            #{technicalEffect,jdbcType=VARCHAR},
+            #{interpretationEvaluation,jdbcType=VARCHAR},
+            #{complexity,jdbcType=VARCHAR},
+            #{applicationValue,jdbcType=VARCHAR},
+            #{applicationValueAnalysis,jdbcType=VARCHAR},
+            #{applyUserId,jdbcType=VARCHAR},
+            #{applyUser,jdbcType=VARCHAR},
+            #{interpreterUserAssId,jdbcType=VARCHAR},
+            #{interpreterUserAss,jdbcType=VARCHAR},
+            #{interpreterUserId,jdbcType=VARCHAR},
+            #{interpreterUser,jdbcType=VARCHAR},
+            #{leaderUserId,jdbcType=VARCHAR},
+            #{leaderUser,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{INST_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        update patent_interpretation
+        set
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            professionalCategory=#{professionalCategory,jdbcType=VARCHAR},
+            patentPublicationNo=#{patentPublicationNo,jdbcType=VARCHAR},
+            patentName=#{patentName,jdbcType=VARCHAR},
+            applicationDate=#{applicationDate,jdbcType=VARCHAR},
+            openDate=#{openDate,jdbcType=VARCHAR},
+            patentApplicant=#{patentApplicant,jdbcType=VARCHAR},
+            IPCNo=#{IPCNo,jdbcType=VARCHAR},
+            IPCMainNo=#{IPCMainNo,jdbcType=VARCHAR},
+            interpretationCompletionDate=#{interpretationCompletionDate,jdbcType=VARCHAR},
+            schemeDescription=#{schemeDescription,jdbcType=VARCHAR},
+            keyWords=#{keyWords,jdbcType=VARCHAR},
+            tortRisk=#{tortRisk,jdbcType=VARCHAR},
+            tortRiskAnalysis=#{tortRiskAnalysis,jdbcType=VARCHAR},
+            riskToPro=#{riskToPro,jdbcType=VARCHAR},
+            riskToProAlready=#{riskToProAlready,jdbcType=VARCHAR},
+            patentNameMine=#{patentNameMine,jdbcType=VARCHAR},
+            technologyBranchId=#{technologyBranchId,jdbcType=VARCHAR},
+            technicalEffect=#{technicalEffect,jdbcType=VARCHAR},
+            interpretationEvaluation=#{interpretationEvaluation,jdbcType=VARCHAR},
+            complexity=#{complexity,jdbcType=VARCHAR},
+            applicationValue=#{applicationValue,jdbcType=VARCHAR},
+            applicationValueAnalysis=#{applicationValueAnalysis,jdbcType=VARCHAR},
+            applyUserId=#{applyUserId,jdbcType=VARCHAR},
+            applyUser=#{applyUser,jdbcType=VARCHAR},
+            interpreterUserAssId=#{interpreterUserAssId,jdbcType=VARCHAR},
+            interpreterUserAss=#{interpreterUserAss,jdbcType=VARCHAR},
+            interpreterUserId=#{interpreterUserId,jdbcType=VARCHAR},
+            interpreterUser=#{interpreterUser,jdbcType=VARCHAR},
+            leaderUserId=#{leaderUserId,jdbcType=VARCHAR},
+            leaderUser=#{leaderUser,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into patent_interpretation_fileinfo(
+        id,
+        fileName,
+        fileSize,
+        fileDesc,
+        mainId,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <select id="queryItemList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM patent_interpretation_items
+        <where>
+            <if test="_parameter !=null">
+                mainId = #{_parameter,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <delete id="deleteBusinessItem" parameterType="java.util.Map">
+        delete from patent_interpretation_items
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="queryItemDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM patent_interpretation_items
+        WHERE id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertItem" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into patent_interpretation_items(
+        id,
+        mainId,
+        suoZhangId,
+        suoZhang,
+        chuangXinRenId,
+        chuangXinRen,
+        chuangXinFangAn,
+        chuangXinQingKuang,
+        chuangXinJiaoDiDate,
+        chuangXinWanChengDate,
+        chuangXinPingFen,
+        chuangXinJiaoDiShuNo,
+        chuangXinJiaoDiShuIPCMainNo,
+        remark,
+        isNothing,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{suoZhangId,jdbcType=VARCHAR},
+        #{suoZhang,jdbcType=VARCHAR},
+        #{chuangXinRenId,jdbcType=VARCHAR},
+        #{chuangXinRen,jdbcType=VARCHAR},
+        #{chuangXinFangAn,jdbcType=VARCHAR},
+        #{chuangXinQingKuang,jdbcType=VARCHAR},
+        #{chuangXinJiaoDiDate,jdbcType=VARCHAR},
+        #{chuangXinWanChengDate,jdbcType=VARCHAR},
+        #{chuangXinPingFen,jdbcType=VARCHAR},
+        #{chuangXinJiaoDiShuNo,jdbcType=VARCHAR},
+        #{chuangXinJiaoDiShuIPCMainNo,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{isNothing,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateItem" parameterType="com.alibaba.fastjson.JSONObject">
+        update patent_interpretation_items
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        suoZhangId=#{suoZhangId,jdbcType=VARCHAR},
+        suoZhang=#{suoZhang,jdbcType=VARCHAR},
+        chuangXinRenId=#{chuangXinRenId,jdbcType=VARCHAR},
+        chuangXinRen=#{chuangXinRen,jdbcType=VARCHAR},
+        chuangXinFangAn=#{chuangXinFangAn,jdbcType=VARCHAR},
+        chuangXinQingKuang=#{chuangXinQingKuang,jdbcType=VARCHAR},
+        chuangXinJiaoDiDate=#{chuangXinJiaoDiDate,jdbcType=VARCHAR},
+        chuangXinWanChengDate=#{chuangXinWanChengDate,jdbcType=VARCHAR},
+        chuangXinPingFen=#{chuangXinPingFen,jdbcType=VARCHAR},
+        chuangXinJiaoDiShuNo=#{chuangXinJiaoDiShuNo,jdbcType=VARCHAR},
+        chuangXinJiaoDiShuIPCMainNo=#{chuangXinJiaoDiShuIPCMainNo,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        isNothing=#{isNothing,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+</mapper>

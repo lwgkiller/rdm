@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.wwrz.core.dao.WwrzTestApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--项目流程查询-->
+    <select id="queryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        wwrz_baseinfo.*,
+        wwrz_baseinfo.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS userName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        A.FULLNAME_ as productLeaderName,
+        os_rel_inst.PARTY1_ as applyUserDepId
+        FROM
+        wwrz_baseinfo
+        LEFT JOIN os_user ON wwrz_baseinfo.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON wwrz_baseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON wwrz_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        left join os_user A on wwrz_baseinfo.productLeader = A.USER_ID_
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND wwrz_baseinfo.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="currentProcessTask != null and currentProcessTask != ''">
+                AND act_ru_task.NAME_ like CONCAT ('%',#{currentProcessTask},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND wwrz_baseinfo.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND wwrz_baseinfo.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="applyType != null and applyType != ''">
+                AND wwrz_baseinfo.applyType=#{applyType}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND wwrz_baseinfo.TENANT_ID_=#{TENANT_ID_}
+            </if>
+            <if test="reportStatus != null and reportStatus != ''">
+                AND (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_  = 'SUCCESS_END')
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT wwrz_baseinfo.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.ACT_INST_ID_,
+        A.FULLNAME_ as productLeaderName
+        FROM
+        wwrz_baseinfo
+        LEFT JOIN bpm_inst on wwrz_baseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN os_user ON wwrz_baseinfo.CREATE_BY_ = os_user.USER_ID_
+        left join os_user A on wwrz_baseinfo.productLeader = A.USER_ID_
+        <where>
+            <if test="applyId != null and applyId != ''">
+                AND wwrz_baseinfo.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="productLeaderName != null and productLeaderName != ''">
+                AND A.FULLNAME_ like CONCAT ('%',#{productLeaderName},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND wwrz_baseinfo.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND wwrz_baseinfo.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="applyType != null and applyType != ''">
+                AND wwrz_baseinfo.applyType=#{applyType}
+            </if>
+            <if test="reportStatus != null and reportStatus != ''">
+                AND (bpm_inst.STATUS_ = 'RUNNING' or bpm_inst.STATUS_  = 'SUCCESS_END')
+            </if>
+            <if test="productModel != null and productModel != ''">
+                AND wwrz_baseinfo.productModel like CONCAT ('%',#{productModel},'%')
+            </if>
+            <if test="itemName != null and itemName != ''">
+                AND wwrz_baseinfo.itemNames like CONCAT ('%',#{itemName},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+
+    <select id="getObjectById" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.INST_ID_ AS instId,
+            C.FULLNAME_ as productLeaderName
+        FROM
+            wwrz_baseinfo A
+            LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+            LEFT JOIN os_user C ON A.productLeader = C.USER_ID_
+        where  A.id = #{id}
+    </select>
+
+    <select id="getJsonObject" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT  A.*,B.INST_ID_ as instId,C.FULLNAME_ as creator
+        FROM wwrz_baseinfo A
+        left join bpm_inst B on A.id=B.BUS_KEY_
+        left join os_user C on A.CREATE_BY_ = C.USER_ID_
+        where  A.id = #{id}
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+        INSERT INTO wwrz_baseinfo (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            TENANT_ID_,
+            productModel,
+            productLeader,
+            applyNo,
+            planId,
+            planCode,
+            items,
+            itemNames,
+            startDate,
+            endDate,
+            pass,
+            productType,
+            cabForm,
+            remark,
+            deptId
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{TENANT_ID_,jdbcType=VARCHAR},
+            #{productModel,jdbcType=VARCHAR},
+            #{productLeader,jdbcType=VARCHAR},
+            #{applyNo,jdbcType=VARCHAR},
+            #{planId,jdbcType=VARCHAR},
+            #{planCode,jdbcType=VARCHAR},
+            #{items,jdbcType=VARCHAR},
+            #{itemNames,jdbcType=VARCHAR},
+            #{startDate,jdbcType=TIMESTAMP},
+            #{endDate,jdbcType=TIMESTAMP},
+            #{pass,jdbcType=VARCHAR},
+            #{productType,jdbcType=VARCHAR},
+            #{cabForm,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="update" parameterType="java.util.Map">
+        UPDATE wwrz_baseinfo SET
+        <if test="productModel != null and productModel != ''">
+            productModel=#{productModel,jdbcType=VARCHAR},
+        </if>
+        <if test="productLeader != null and productLeader != ''">
+            productLeader=#{productLeader,jdbcType=VARCHAR},
+        </if>
+        <if test="applyNo != null and applyNo != ''">
+            applyNo=#{applyNo,jdbcType=VARCHAR},
+        </if>
+        <if test="planId != null and planId != ''">
+            planId=#{planId,jdbcType=VARCHAR},
+        </if>
+        <if test="planCode != null and planCode != ''">
+            planCode=#{planCode,jdbcType=VARCHAR},
+        </if>
+        <if test="items != null and items != ''">
+            items=#{items,jdbcType=VARCHAR},
+        </if>
+        <if test="itemNames != null and itemNames != ''">
+            itemNames=#{itemNames,jdbcType=VARCHAR},
+        </if>
+        <if test="startDate != null and startDate != ''">
+            startDate=#{startDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="endDate != null and endDate != ''">
+            endDate=#{endDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="reStartDate != null and reStartDate != ''">
+            reStartDate=#{reStartDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="reEndDate != null and reEndDate != ''">
+            reEndDate=#{reEndDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="pass != null and pass != ''">
+            pass=#{pass,jdbcType=VARCHAR},
+        </if>
+        <if test="productType != null and productType != ''">
+            productType=#{productType,jdbcType=VARCHAR},
+        </if>
+        <if test="cabForm != null and cabForm != ''">
+            cabForm=#{cabForm,jdbcType=VARCHAR},
+        </if>
+        <if test="docComplete != null and docComplete != ''">
+            docComplete=#{docComplete,jdbcType=VARCHAR},
+        </if>
+        <if test="docOk != null and docOk != ''">
+            docOk=#{docOk,jdbcType=VARCHAR},
+        </if>
+        <if test="techManagerIds != null and techManagerIds != ''">
+            techManagerIds=#{techManagerIds,jdbcType=VARCHAR},
+        </if>
+        <if test="techManagerNames != null and techManagerNames != ''">
+            techManagerNames=#{techManagerNames,jdbcType=VARCHAR},
+        </if>
+        <if test="sendDate != null and sendDate != ''">
+            sendDate=#{sendDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="remark != null and remark != ''">
+            remark=#{remark,jdbcType=VARCHAR},
+        </if>
+        <if test="deptId != null and deptId != ''">
+            deptId=#{deptId,jdbcType=VARCHAR},
+        </if>
+        <if test="designModel != null and designModel != ''">
+            designModel=#{designModel,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+    <delete id="delete" parameterType="java.lang.String">
+        delete from wwrz_baseinfo
+        where wwrz_baseinfo.id=#{id}
+    </delete>
+
+    <select id="queryApplyInfo" parameterType="java.util.Map" resultType="java.util.Map">
+        select B.STATUS_ as status,A.USED as used,B.inst_id_,A.id
+        from wwrz_baseinfo A
+        left join bpm_inst B on A.id = B.BUS_KEY_
+        where 1=1
+        <if test="taskId_ != null and taskId_ != ''">
+            and A.TASKID_ = #{taskId_}
+        </if>
+        order by A.CREATE_TIME_ desc
+    </select>
+    <insert id="addProblem" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO wwrz_problems (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            problem,
+            charger,
+            plan,
+            remark,
+            standardId,
+            sectorId,
+            passed
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{problem,jdbcType=VARCHAR},
+            #{charger,jdbcType=VARCHAR},
+            #{plan,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{standardId,jdbcType=VARCHAR},
+            #{sectorId,jdbcType=VARCHAR},
+            #{passed,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateProblem" parameterType="com.alibaba.fastjson.JSONObject">
+        update wwrz_problems
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        problem=#{problem,jdbcType=VARCHAR},
+        charger=#{charger,jdbcType=VARCHAR},
+        plan=#{plan,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        standardId=#{standardId,jdbcType=VARCHAR},
+        sectorId=#{sectorId,jdbcType=VARCHAR},
+        passed=#{passed,jdbcType=VARCHAR},
+        <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delProblemById" parameterType="java.lang.String">
+        delete from wwrz_problems
+        where id = #{id}
+    </delete>
+
+    <select id="getProblemList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.FULLNAME_ as chargerName,
+            C.standardName,
+            C.standardNumber,
+			D.standardCode
+        FROM
+            wwrz_problems A
+            left join os_user B on A.charger = B.USER_ID_
+            left join wwrz_standard C on A.standardId = C.id
+			left join wwrz_standarddetail D on A.sectorId = D.id
+        WHERE A.mainId = #{mainId}
+    </select>
+    <select id="getApplyList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.STATUS_,
+            C.FULLNAME_ as chargerName,
+        (select id from wwrz_money where applyId = A.id limit 1) as moneyId
+        FROM
+            wwrz_baseinfo A
+        LEFT JOIN bpm_inst B ON A.id = B.BUS_KEY_
+        LEFT JOIN os_user C ON A.productLeader = C.USER_ID_
+        where 1=1
+        <if test="chargerName != null and chargerName != ''">
+            and C.FULLNAME_ like CONCAT('%',#{chargerName},'%')
+        </if>
+        <if test="productModel != null and productModel != ''">
+            and A.productModel like CONCAT('%',#{productModel},'%')
+        </if>
+        <if test="mainId != null and mainId != ''">
+            and A.id = #{mainId}
+        </if>
+        order by A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <select id="getAllProblemList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.mainId,
+        B.productType,
+        B.productModel,
+        B.cabForm,
+        B.itemNames,
+        A.problem,
+        A.plan,
+        D.FULLNAME_ as chargerName,
+        (select CREATE_TIME_ from wwrz_files where mainId = A.id order by CREATE_TIME_  limit 1) as finish_date
+        FROM
+        wwrz_problems A
+        LEFT JOIN wwrz_baseinfo B ON A.mainId = B.id
+        left join bpm_inst C on B.id = C.BUS_KEY_
+        left join os_user D on A.charger = D.USER_ID_
+        where (C.STATUS_ = 'SUCCESS_END' or C.STATUS_ = 'RUNNING')
+        <if test="mainId != null and mainId != ''">
+            and A.mainId like CONCAT('%',#{mainId},'%')
+        </if>
+        <if test="productModel != null and productModel != ''">
+            and B.productModel like CONCAT('%',#{productModel},'%')
+        </if>
+        order by A.mainId desc,A.CREATE_TIME_ asc
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="checkNote" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(*)
+        from ceinfo_list
+        where
+        linkWwrz=#{id}
+    </select>
+</mapper>

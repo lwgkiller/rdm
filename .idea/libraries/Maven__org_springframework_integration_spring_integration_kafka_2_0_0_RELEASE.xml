@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.springframework.integration:spring-integration-kafka:2.0.0.RELEASE">
+    <CLASSES>
+      <root url="jar://C:/XCMG_WAJI_Framework_JAVA/maven/.m2/repository/org/springframework/integration/spring-integration-kafka/2.0.0.RELEASE/spring-integration-kafka-2.0.0.RELEASE.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://C:/XCMG_WAJI_Framework_JAVA/maven/.m2/repository/org/springframework/integration/spring-integration-kafka/2.0.0.RELEASE/spring-integration-kafka-2.0.0.RELEASE-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://C:/XCMG_WAJI_Framework_JAVA/maven/.m2/repository/org/springframework/integration/spring-integration-kafka/2.0.0.RELEASE/spring-integration-kafka-2.0.0.RELEASE-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

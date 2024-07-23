@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.bjjszc.core.dao.GyqrDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    
+    <select id="queryGyqr" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        bjgyqr_info.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        bjgyqr_info
+        LEFT JOIN os_rel_inst ON bjgyqr_info.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = bjgyqr_info.CREATE_BY_
+        left join bpm_inst on bjgyqr_info.gyqrId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (bjgyqr_info.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="isBuy != null and isBuy != ''">
+            and bjgyqr_info.isBuy =#{isBuy}
+        </if>
+        <if test="applyName != null and applyName != ''">
+            and bjgyqr_info.applyName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="whName != null and whName != ''">
+            and bjgyqr_info.whName like CONCAT('%',#{whName},'%')
+        </if>
+        <if test="instStatus != null and instStatus != ''">
+            and bpm_inst.STATUS_ =#{instStatus}
+        </if>
+        <if test='wlNumber != null and wlNumber !=""'>
+            AND bjgyqr_info.gyqrId IN(
+            select bjgyqr_detail.belongId from bjgyqr_detail where bjgyqr_detail.wlNumber=#{wlNumber}
+            )
+        </if>
+        <if test='zwName != null and zwName !=""'>
+            AND bjgyqr_info.gyqrId IN(
+            select bjgyqr_detail.belongId from bjgyqr_detail where bjgyqr_detail.zwName=#{zwName}
+            )
+        </if>
+        <if test='supplier != null and supplier !=""'>
+            AND bjgyqr_info.gyqrId IN(
+            select bjgyqr_detail.belongId from bjgyqr_detail where bjgyqr_detail.supplier=#{supplier}
+            )
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countGyqrList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        bjgyqr_info
+        LEFT JOIN os_rel_inst ON bjgyqr_info.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on bjgyqr_info.gyqrId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="isBuy != null and isBuy != ''">
+                and bjgyqr_info.isBuy =#{isBuy}
+            </if>
+            <if test="applyName != null and applyName != ''">
+                and bjgyqr_info.applyName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test="whName != null and whName != ''">
+                and bjgyqr_info.whName like CONCAT('%',#{whName},'%')
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                and bpm_inst.STATUS_ =#{instStatus}
+            </if>
+            <if test='wlNumber != null and wlNumber !=""'>
+                AND bjgyqr_info.gyqrId IN(
+                select bjgyqr_detail.belongId from bjgyqr_detail where bjgyqr_detail.wlNumber=#{wlNumber}
+                )
+            </if>
+            <if test='zwName != null and zwName !=""'>
+                AND bjgyqr_info.gyqrId IN(
+                select bjgyqr_detail.belongId from bjgyqr_detail where bjgyqr_detail.zwName=#{zwName}
+                )
+            </if>
+            <if test='supplier != null and supplier !=""'>
+                AND bjgyqr_info.gyqrId IN(
+                select bjgyqr_detail.belongId from bjgyqr_detail where bjgyqr_detail.supplier=#{supplier}
+                )
+            </if>
+        </where>
+    </select>
+
+    <insert id="createGyqr" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into bjgyqr_info(
+            gyqrId
+            ,applyId
+            ,applyName
+            ,whId
+            ,whName
+            ,fwId
+            ,fwName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{gyqrId,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{applyName,jdbcType=VARCHAR},
+            #{whId,jdbcType=VARCHAR},
+            #{whName,jdbcType=VARCHAR},
+            #{fwId,jdbcType=VARCHAR},
+            #{fwName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateGyqr" parameterType="com.alibaba.fastjson.JSONObject">
+        update bjgyqr_info
+        <set>
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            whId=#{whId,jdbcType=VARCHAR},
+            whName=#{whName,jdbcType=VARCHAR},
+            fwId=#{fwId,jdbcType=VARCHAR},
+            fwName=#{fwName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        gyqrId=#{gyqrId}
+    </update>
+    
+    <select id="queryGyqrById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        bjgyqr_info.*,
+        bpm_inst.INST_ID_ as instId
+        from bjgyqr_info
+        left join os_user on bjgyqr_info.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on bjgyqr_info.gyqrId=bpm_inst.BUS_KEY_
+        where bjgyqr_info.gyqrId=#{gyqrId}
+    </select>
+
+    <delete id="deleteGyqr" parameterType="java.util.Map">
+        delete from bjgyqr_info
+        <where>
+            <if test="gyqrId != null and gyqrId !=''">
+                gyqrId=#{gyqrId}
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryGyqrDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        *
+        from bjgyqr_detail
+        where
+            belongId=#{gyqrId}
+    </select>
+
+    <insert id="createDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO bjgyqr_detail (
+        detailId,
+        zcNumber,
+        zcms,
+        wlNumber,
+        wlms,
+        supplier,
+        zwName,
+        ywName,
+        note,
+        isBuy,
+        belongId,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{detailId,jdbcType=VARCHAR},
+        #{zcNumber,jdbcType=VARCHAR},
+        #{zcms,jdbcType=VARCHAR},
+        #{wlNumber,jdbcType=VARCHAR},
+        #{wlms,jdbcType=TIMESTAMP},
+        #{supplier,jdbcType=TIMESTAMP},
+        #{zwName,jdbcType=TIMESTAMP},
+        #{ywName,jdbcType=TIMESTAMP},
+        #{note,jdbcType=TIMESTAMP},
+        #{isBuy,jdbcType=TIMESTAMP},
+        #{belongId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update bjgyqr_detail
+        <set>
+            zcNumber=#{zcNumber,jdbcType=VARCHAR},
+            zcms=#{zcms,jdbcType=VARCHAR},
+            wlNumber=#{wlNumber,jdbcType=VARCHAR},
+            wlms=#{wlms,jdbcType=TIMESTAMP},
+            supplier=#{supplier,jdbcType=TIMESTAMP},
+            zwName=#{zwName,jdbcType=TIMESTAMP},
+            ywName=#{ywName,jdbcType=TIMESTAMP},
+            note=#{note,jdbcType=TIMESTAMP},
+            isBuy=#{isBuy,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </set>
+        where
+        detailId=#{detailId}
+    </update>
+
+    <delete id="deleteDetail" parameterType="java.util.Map">
+    delete from bjgyqr_detail
+    <where>
+        <if test="detailId != null and detailId !=''">
+            detailId=#{detailId}
+        </if>
+        <if test="gyqrId != null and gyqrId !=''">
+            belongId=#{gyqrId}
+        </if>
+    </where>
+    </delete>
+
+</mapper>

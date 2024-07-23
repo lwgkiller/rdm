@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.processValidation.core.dao.ProcessValidationRequirementsDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="@Ognl@isNotEmpty(applyUser)">
+            AND business.applyUser like CONCAT('%',#{applyUser},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(validationContent)">
+            AND business.validationContent like CONCAT('%',#{validationContent},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(souceOfPVRTask)">
+            AND business.souceOfPVRTask = #{souceOfPVRTask}
+        </if>
+        <if test="@Ognl@isNotEmpty(taskExecutor)">
+            AND business.taskExecutor like CONCAT('%',#{taskExecutor},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(businessStatus)">
+            AND business.businessStatus = #{businessStatus}
+        </if>
+    </sql>
+    <!---->
+    <select id="applyDataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId
+        FROM
+        process_validation_requirements AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countApplyDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        process_validation_requirements AS business
+        LEFT JOIN os_rel_inst ON business.applyUserId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyUserId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryApplyDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.*,
+            bpm_inst.INST_ID_ AS instId
+        FROM process_validation_requirements AS business
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertApply" parameterType="java.util.Map">
+        insert into process_validation_requirements(
+            id,
+            applyTime,
+            applyUserId,
+            applyUser,
+            businessStatus,
+            validationContent,
+            requirementsDescription,
+            souceOfPVRTask,
+            taskExecutorId,
+            taskExecutor,
+            processingResults,
+            recordItems,
+            CREATE_BY_,
+            CREATE_TIME_,
+            INST_ID_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{applyTime,jdbcType=VARCHAR},
+            #{applyUserId,jdbcType=VARCHAR},
+            #{applyUser,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{validationContent,jdbcType=VARCHAR},
+            #{requirementsDescription,jdbcType=VARCHAR},
+            #{souceOfPVRTask,jdbcType=VARCHAR},
+            #{taskExecutorId,jdbcType=VARCHAR},
+            #{taskExecutor,jdbcType=VARCHAR},
+            #{processingResults,jdbcType=VARCHAR},
+            #{recordItems,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{INST_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateApply" parameterType="java.util.Map">
+        update process_validation_requirements
+        set
+            applyTime=#{applyTime,jdbcType=VARCHAR},
+            applyUserId=#{applyUserId,jdbcType=VARCHAR},
+            applyUser=#{applyUser,jdbcType=VARCHAR},
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            validationContent=#{validationContent,jdbcType=VARCHAR},
+            requirementsDescription=#{requirementsDescription,jdbcType=VARCHAR},
+            souceOfPVRTask=#{souceOfPVRTask,jdbcType=VARCHAR},
+            taskExecutorId=#{taskExecutorId,jdbcType=VARCHAR},
+            taskExecutor=#{taskExecutor,jdbcType=VARCHAR},
+            processingResults=#{processingResults,jdbcType=VARCHAR},
+            recordItems=#{recordItems,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteApply" parameterType="java.util.Map">
+        delete from process_validation_requirements
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds)">
+                1=2
+            </if>
+        </where>
+    </delete>
+</mapper>

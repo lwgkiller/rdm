@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?><wsdl:definitions name="XcmgPeieWebserviceServiceService" targetNamespace="http://peie.webservice.waji.xcmg.kmss.landray.com/" xmlns:ns1="http://schemas.xmlsoap.org/soap/http" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://peie.webservice.waji.xcmg.kmss.landray.com/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <wsdl:types>
+        <xsd:schema attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://peie.webservice.waji.xcmg.kmss.landray.com/" xmlns:tns="http://peie.webservice.waji.xcmg.kmss.landray.com/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            <xsd:element name="data" type="tns:data"/>
+            <xsd:complexType name="data">
+                <xsd:sequence/>
+            </xsd:complexType>
+            <xsd:element name="dataResponse" type="tns:dataResponse"/>
+            <xsd:complexType name="dataResponse">
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="return" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:schema>
+
+    </wsdl:types>
+    <wsdl:message name="data">
+        <wsdl:part element="tns:data" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="dataResponse">
+        <wsdl:part element="tns:dataResponse" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:portType name="IXcmgPeieWebserviceService">
+        <wsdl:operation name="data">
+            <wsdl:input message="tns:data" name="data">
+            </wsdl:input>
+            <wsdl:output message="tns:dataResponse" name="dataResponse">
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name="XcmgPeieWebserviceServiceServiceSoapBinding" type="tns:IXcmgPeieWebserviceService">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="data">
+            <soap:operation soapAction="" style="document"/>
+            <wsdl:input name="data">
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="dataResponse">
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="XcmgPeieWebserviceServiceService">
+        <wsdl:port binding="tns:XcmgPeieWebserviceServiceServiceSoapBinding" name="XcmgPeieWebserviceServicePort">
+            <soap:address location="http://10.188.0.145/sys/webservice/xcmgPeieWebserviceService"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.SgykDao">
+    <!---->
+    <select id="templateList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            sgyk_templateinfo.*,
+            os_user1.FULLNAME_ AS creator,
+            os_user2.FULLNAME_ AS updator
+        FROM
+            sgyk_templateinfo
+            LEFT JOIN os_user AS os_user1 ON sgyk_templateinfo.CREATE_BY_ = os_user1.USER_ID_
+            LEFT JOIN os_user AS os_user2 ON sgyk_templateinfo.UPDATE_BY_ = os_user2.USER_ID_
+        ORDER BY orderNum
+    </select>
+    <!---->
+    <insert id="saveTemplate" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into sgyk_templateinfo(
+            id,
+            normClass,
+            normKey,
+            normDesp,
+            orderNum,
+            calculateClass,
+            calculateParms,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{normClass,jdbcType=VARCHAR},
+            #{normKey,jdbcType=VARCHAR},
+            #{normDesp,jdbcType=VARCHAR},
+            #{orderNum,jdbcType=SMALLINT},
+            #{calculateClass,jdbcType=VARCHAR},
+            #{calculateParms,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateTemplate" parameterType="com.alibaba.fastjson.JSONObject">
+        update sgyk_templateinfo
+        set
+        normClass=#{normClass,jdbcType=VARCHAR},
+        normKey=#{normKey,jdbcType=VARCHAR},
+        normDesp=#{normDesp,jdbcType=VARCHAR},
+        orderNum=#{orderNum,jdbcType=SMALLINT},
+        calculateClass=#{calculateClass,jdbcType=VARCHAR},
+        calculateParms=#{calculateParms,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+    <!---->
+    <delete id="delTemplateByIds" parameterType="java.util.Map">
+        delete from sgyk_templateinfo
+        where id in
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <select id="sgykList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        sgyk_baseinfo.*,
+        os_user1.FULLNAME_ AS creator,
+        os_user2.FULLNAME_ AS updator
+        FROM
+        sgyk_baseinfo
+        LEFT JOIN os_user AS os_user1 ON sgyk_baseinfo.CREATE_BY_ = os_user1.USER_ID_
+        LEFT JOIN os_user AS os_user2 ON sgyk_baseinfo.UPDATE_BY_ = os_user2.USER_ID_
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND sgyk_baseinfo.signYear = #{signYear}
+            </if>
+            <if test="signMonth !=null and signMonth !=''">
+                AND sgyk_baseinfo.signMonth = #{signMonth}
+            </if>
+        </where>
+        ORDER BY signYear DESC,signMonth DESC
+    </select>
+    <!---->
+    <select id="sgykOneYearList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        sgyk_baseinfo.signYear,
+        sgyk_baseinfo.signMonth,
+        sgyk_detailedinfo.normClass,
+        sgyk_detailedinfo.normDesp,
+        sgyk_detailedinfo.normKey,
+        sgyk_detailedinfo.normValue,
+        sgyk_detailedinfo.orderNum
+        FROM
+        sgyk_baseinfo
+        INNER JOIN sgyk_detailedinfo
+        ON sgyk_baseinfo.id = sgyk_detailedinfo.sgykId
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND sgyk_baseinfo.signYear = #{signYear}
+            </if>
+            <if test="signYear ==null or signYear ==''">
+                AND sgyk_baseinfo.signYear = ''
+            </if>
+        </where>
+        ORDER BY sgyk_detailedinfo.orderNum,sgyk_baseinfo.signMonth
+    </select>
+    <!---->
+    <select id="sgykCycleReportList" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.util.Map">
+        SELECT
+        sgyk_baseinfo.signYear,
+        sgyk_baseinfo.signMonth,
+        sgyk_detailedinfo.normClass,
+        sgyk_detailedinfo.normDesp,
+        sgyk_detailedinfo.normKey,
+        sgyk_detailedinfo.normValue,
+        sgyk_detailedinfo.orderNum
+        FROM
+        sgyk_baseinfo
+        INNER JOIN sgyk_detailedinfo
+        ON sgyk_baseinfo.id = sgyk_detailedinfo.sgykId
+        <where>
+            <if test="yearBegin !=null and yearBegin !='' and monthBegin!=null and monthBegin!=''
+                      and yearEnd !=null and yearEnd !='' and monthEnd!=null and monthEnd!=''">
+                and concat(signYear,'-',signMonth) &gt;= concat(#{yearBegin},'-',#{monthBegin})
+                and concat(signYear,'-',signMonth) &lt;= concat(#{yearEnd},'-',#{monthEnd})
+            </if>
+            <if test="account != null and account != ''">
+                and sgyk_detailedinfo.normKey in
+                <foreach collection="account" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY concat(signYear,'-',signMonth),orderNum
+    </select>
+    <!---->
+    <select id="sgykDetailListByMainId" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            sgyk_detailedinfo.*,
+            sgyk_baseinfo.signYear,
+            sgyk_baseinfo.signMonth,
+            sgyk_templateinfo.calculateClass
+        FROM
+            sgyk_detailedinfo
+            INNER JOIN sgyk_baseinfo ON sgyk_detailedinfo.sgykId = sgyk_baseinfo.id
+            LEFT JOIN sgyk_templateinfo ON sgyk_detailedinfo.normKey = sgyk_templateinfo.normKey
+        WHERE sgyk_baseinfo.id = #{sgykId}
+        ORDER BY sgyk_detailedinfo.orderNum
+    </select>
+    <!---->
+    <insert id="saveSgykBase" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into sgyk_baseinfo(
+        id,
+        signYear,
+        signMonth,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{signYear,jdbcType=VARCHAR},
+        #{signMonth,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <insert id="saveSgykDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into sgyk_detailedinfo(
+        id,
+        sgykId,
+        normClass,
+        normKey,
+        normDesp,
+        normValue,
+        orderNum,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{sgykId,jdbcType=VARCHAR},
+        #{normClass,jdbcType=VARCHAR},
+        #{normKey,jdbcType=VARCHAR},
+        #{normDesp,jdbcType=VARCHAR},
+        #{normValue,jdbcType=VARCHAR},
+        #{orderNum,jdbcType=SMALLINT},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <insert id="updateSgykDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update sgyk_detailedinfo
+        set
+        id=#{id,jdbcType=VARCHAR},
+        sgykId=#{sgykId,jdbcType=VARCHAR},
+        normClass=#{normClass,jdbcType=VARCHAR},
+        normKey=#{normKey,jdbcType=VARCHAR},
+        normDesp=#{normDesp,jdbcType=VARCHAR},
+        normValue=#{normValue,jdbcType=VARCHAR},
+        orderNum=#{orderNum,jdbcType=SMALLINT},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </insert>
+</mapper>

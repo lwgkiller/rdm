@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.productDataManagement.core.dao.PDMOpsDevDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="fileName != null and fileName != ''">
+            AND pdmopsdev.fileName like CONCAT ('%',#{fileName},'%')
+        </if>
+        <if test="fileType != null and fileType != ''">
+            AND pdmopsdev.fileType like CONCAT ('%',#{fileType},'%')
+        </if>
+
+    </sql>
+    <select id="queryApplyList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        pdmopsdev.*,
+        os_user.FULLNAME_ AS creator
+        FROM
+        pdmopsdev
+        LEFT JOIN os_user ON pdmopsdev.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <include refid="query_where"/>
+        </where>
+        order by CREATE_TIME_ desc
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into pdmopsdev(
+        id,
+        fileName,
+        fileSize,
+        fileType,
+        fileDirection,
+        filePosition,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileType,jdbcType=VARCHAR},
+        #{fileDirection,jdbcType=VARCHAR},
+        #{filePosition,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <update id="updateFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        update pdmopsdev
+        set
+        fileName=#{fileName,jdbcType=VARCHAR},
+        fileSize=#{fileSize,jdbcType=VARCHAR},
+
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+
+
+    <select id="queryfileById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        t1.id,
+        t1.fileName,
+        t1.fileSize,
+        t1.fileType,
+        t1.fileDirection,
+        t1.filePosition,
+        t1.CREATE_TIME_,
+        os_user.FULLNAME_ AS creator
+        from
+        pdmopsdev t1
+        LEFT JOIN os_user ON t1.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="id != null and id != ''">
+                t1.id =#{id}
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteFile" parameterType="java.util.Map">
+        delete from pdmopsdev
+        where
+        id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>

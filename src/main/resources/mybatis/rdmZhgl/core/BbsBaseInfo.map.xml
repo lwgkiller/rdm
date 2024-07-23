@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.BbsBaseInfoDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.FULLNAME_ as publisher,
+            D.NAME_ AS currentProcessTask,
+            D.ID_ AS taskId,
+            C.STATUS_ AS instStatus,
+            C.INST_ID_
+        FROM
+            bbs_baseinfo A
+        left join os_user B on A.CREATE_BY_ = B.USER_ID_
+        LEFT JOIN bpm_inst C ON A.id = C.BUS_KEY_
+        LEFT JOIN act_ru_task D ON C.ACT_INST_ID_ = D.PROC_INST_ID_
+        where 1=1
+        <if test="title != null and title != ''">
+            and A.title like CONCAT('%',#{title},'%')
+        </if>
+        <if test="direction != null and direction != ''">
+            and A.direction like CONCAT('%',#{direction},'%')
+        </if>
+        <if test="plate != null and plate != ''">
+            and A.plate = #{plate}
+        </if>
+        <if test="model != null and model != ''">
+            and A.model = #{model}
+        </if>
+        <if test="bbsType != null and bbsType != ''">
+            and A.bbsType = #{bbsType}
+        </if>
+        <if test="isAdopt != null and isAdopt != ''">
+            and A.isAdopt = #{isAdopt}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getObject" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+         SELECT
+            A.*,
+            B.FULLNAME_ as publisher,
+            C.INST_ID_ AS instId
+        FROM
+             bbs_baseinfo A
+             left join os_user B on A.CREATE_BY_ = B.USER_ID_
+             LEFT JOIN bpm_inst C ON C.BUS_KEY_ = A.id
+	        where A.id = #{id}
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+         INSERT INTO bbs_baseinfo (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            title,
+            content,
+            direction,
+            plate,
+            model,
+            bbsType,
+            urgency,
+            replyUserId,
+            replyUserName
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{title,jdbcType=VARCHAR},
+            #{content,jdbcType=CLOB},
+            #{direction,jdbcType=VARCHAR},
+            #{plate,jdbcType=VARCHAR},
+            #{model,jdbcType=VARCHAR},
+            #{bbsType,jdbcType=VARCHAR},
+            #{urgency,jdbcType=VARCHAR},
+            #{replyUserId,jdbcType=VARCHAR},
+            #{replyUserName,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update bbs_baseinfo
+        <set>
+            <if test="title != null and title != ''">
+                title=#{title,jdbcType=VARCHAR},
+            </if>
+            <if test="content != null and content != ''">
+                content=#{content,jdbcType=CLOB},
+            </if>
+            <if test="direction != null and direction != ''">
+                direction=#{direction,jdbcType=VARCHAR},
+            </if>
+            <if test="satisfaction != null and satisfaction != ''">
+                satisfaction=#{satisfaction,jdbcType=VARCHAR},
+            </if>
+            <if test="opinion != null and opinion != ''">
+                opinion=#{opinion,jdbcType=VARCHAR},
+            </if>
+            <if test="closed != null and closed != ''">
+                closed=#{closed,jdbcType=VARCHAR},
+            </if>
+            <if test="plate != null and plate != ''">
+                plate=#{plate,jdbcType=VARCHAR},
+            </if>
+            <if test="model != null and model != ''">
+                model=#{model,jdbcType=VARCHAR},
+            </if>
+            <if test="closeDate != null and closeDate != ''">
+                closeDate=#{closeDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="bbsType != null and bbsType != ''">
+                bbsType=#{bbsType,jdbcType=VARCHAR},
+            </if>
+            <if test="urgency != null and urgency != ''">
+                urgency=#{urgency,jdbcType=VARCHAR},
+            </if>
+            <if test="replyUserId != null and replyUserId != ''">
+                replyUserId=#{replyUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="replyUserName != null and replyUserName != ''">
+                replyUserName=#{replyUserName,jdbcType=VARCHAR},
+            </if>
+            <if test="isAdopt != null and isAdopt != ''">
+                isAdopt=#{isAdopt,jdbcType=VARCHAR},
+            </if>
+            <if test="planFinishDate != null and planFinishDate != ''">
+                planFinishDate=#{planFinishDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="actFinishDate != null and actFinishDate != ''">
+                actFinishDate=#{actFinishDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="planContent != null and planContent != ''">
+                planContent=#{planContent,jdbcType=VARCHAR},
+            </if>
+            <if test="unAdoptReason != null and unAdoptReason != ''">
+                unAdoptReason=#{unAdoptReason,jdbcType=VARCHAR},
+            </if>
+            <if test="conformDate != null and conformDate != ''">
+                conformDate=#{conformDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="techOpinion != null and techOpinion != ''">
+                techOpinion=#{techOpinion,jdbcType=VARCHAR},
+            </if>
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from bbs_baseinfo
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <insert id="addPic" parameterType="java.util.Map">
+         INSERT INTO bbs_pic (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            fileName
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR}
+        )
+    </insert>
+    <delete id="batchDeletePic" parameterType="java.util.Map">
+        delete from bbs_pic
+        WHERE
+        mainId in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getPicList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from bbs_pic where mainId = #{mainId}
+    </select>
+    <select id="getBbsList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.FULLNAME_ AS publisher,
+            D.NAME_ AS currentProcessTask,
+            D.ID_ AS taskId,
+            C.STATUS_ AS instStatus,
+            C.INST_ID_,
+            E.NAME_ AS plateName,
+            (select count(1) from bbs_discuss where mainId = A.id) as totalDiscussNum
+        FROM
+        bbs_baseinfo A
+            LEFT JOIN os_user B ON A.CREATE_BY_ = B.USER_ID_
+            LEFT JOIN bpm_inst C ON A.id = C.BUS_KEY_
+            LEFT JOIN act_ru_task D ON C.ACT_INST_ID_ = D.PROC_INST_ID_
+            left join sys_subsys E on A.plate = E.KEY_
+        where 1=1
+            <if test="title != null and title != ''">
+                and A.title like CONCAT('%',#{title},'%')
+            </if>
+            <if test="bbsType != null and bbsType != ''">
+                and A.bbsType = #{bbsType}
+            </if>
+            <if test="isAdopt != null and isAdopt != ''">
+                and A.isAdopt = #{isAdopt}
+            </if>
+            <if test="direction != null and direction != ''">
+                and A.direction like CONCAT('%',#{direction},'%')
+            </if>
+            <if test="plateName != null and plateName != ''">
+                and B.NAME_ like CONCAT('%',#{plateName},'%')
+            </if>
+            <if test="publisher != null and publisher != ''">
+                and B.FULLNAME_ like CONCAT('%',#{publisher},'%')
+            </if>
+            <if test="userName != null and userName != ''">
+                and B.FULLNAME_ = #{userName}
+            </if>
+            <if test="model != null and model != ''">
+                and A.model = #{model}
+            </if>
+            <if test="satisfaction != null and satisfaction != ''">
+                and A.satisfaction = #{satisfaction}
+            </if>
+            <if test="closed != null and closed != ''">
+                and A.closed = #{closed}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND A.CREATE_TIME_ &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND A.CREATE_TIME_ &lt;= #{endTime}
+            </if>
+            <if test="finishFlag != null and finishFlag != ''">
+                and A.actFinishDate is not null
+            </if>
+            <if test="unFinishFlag != null and unFinishFlag != ''">
+                and A.actFinishDate is null
+            </if>
+            <include refid="orderBy"/>
+            <include refid="pageSql"/>
+    </select>
+    <update id="removePost" parameterType="java.util.Map">
+        update bbs_baseinfo
+        <set>
+            <if test="plate != null and plate != ''">
+                plate=#{plate,jdbcType=VARCHAR},
+                model=#{plate,jdbcType=VARCHAR},
+            </if>
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+</mapper>

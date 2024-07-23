@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitPatentDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ AS userName,
+        G.NAME_ as deptName,
+        F.patentPublicationNo,
+        F.patentName
+        FROM
+        portrait_patent A
+        LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        LEFT JOIN os_rel_inst C  ON A.userId = C.PARTY2_
+        LEFT JOIN os_dimension D  ON C.DIM1_ = D.DIM_ID_
+        left join os_group G on C.PARTY1_ = G.GROUP_ID_
+        left join patent_interpretation F on A.mainId = F.id
+        where
+        C.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND D.DIM_KEY_ = '_ADMIN'
+        AND C.PARTY1_ in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="userId != null and userId != ''">
+            AND A.userId = #{userId}
+        </if>
+        <if test="deptName != null and deptName != ''">
+            and G.NAME_ like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="userName != null and userName != ''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="patentName != null and patentName != ''">
+            and F.patentName like CONCAT('%',#{patentName},'%')
+        </if>
+        order by A.interpretationYear desc,A.UPDATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO portrait_patent (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            userId,
+            mainId,
+            interpretationYear,
+            score
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+                #{item.id,jdbcType=VARCHAR},
+                #{item.CREATE_BY_,jdbcType=VARCHAR},
+                #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+                #{item.UPDATE_BY_,jdbcType=VARCHAR},
+                #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{item.userId,jdbcType=VARCHAR},
+                #{item.mainId,jdbcType=VARCHAR},
+                #{item.interpretationYear,jdbcType=VARCHAR},
+                #{item.score,jdbcType=FLOAT}
+            )
+        </foreach>
+    </insert>
+    <select id="getPatentList" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+            A.*,
+            left(A.interpretationCompletionDate,4) as interpretationYear
+        FROM
+            patent_interpretation A
+        WHERE
+            A.async = '0'
+            and A.interpreterUserId is not null
+            and A.interpreterUserId != ''
+    </select>
+    <update id="updatePatentStatus" parameterType="java.lang.String">
+        update patent_interpretation
+        set async = '1'
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getPersonPatentReadList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        F.patentPublicationNo,
+        F.patentName
+        FROM
+        portrait_patent A
+        left join patent_interpretation F on A.mainId = F.id
+        where A.userId = #{userId}
+        <if test="reportYear != null and reportYear != ''">
+            and A.interpretationYear = #{reportYear}
+        </if>
+    </select>
+</mapper>

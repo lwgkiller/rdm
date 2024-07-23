@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardChangeDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertstandardChange" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO standard_nationchange (
+        standardId,
+        companyName,
+        standardName,
+        spNumber,
+        standardLv,
+        joinDegree,
+        enactoralter,
+        standaStauts,
+        releaseTime,
+        belongGroup,
+        note,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{standardId,jdbcType=VARCHAR},
+        #{companyName,jdbcType=VARCHAR},
+        #{standardName,jdbcType=VARCHAR},
+        #{spNumber,jdbcType=VARCHAR},
+        #{standardLv,jdbcType=VARCHAR},
+        #{joinDegree,jdbcType=VARCHAR},
+        #{enactoralter,jdbcType=VARCHAR},
+        #{standaStauts,jdbcType=VARCHAR},
+        #{releaseTime,jdbcType=TIMESTAMP},
+        #{belongGroup,jdbcType=VARCHAR},
+        #{note,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updatestandardChange" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_nationchange
+        <set>
+        <if test="companyName != null and companyName != ''">
+            companyName=#{companyName,jdbcType=VARCHAR},
+        </if>
+        <if test="standardName != null and standardName != ''">
+            standardName=#{standardName,jdbcType=VARCHAR},
+        </if>
+        <if test="spNumber != null and spNumber != ''">
+            spNumber=#{spNumber,jdbcType=VARCHAR},
+        </if>
+        <if test="standardLv != null and standardLv != ''">
+            standardLv=#{standardLv,jdbcType=VARCHAR},
+        </if>
+        <if test="joinDegree != null and joinDegree != ''">
+            joinDegree=#{joinDegree,jdbcType=VARCHAR},
+        </if>
+        <if test="enactoralter != null and enactoralter != ''">
+            enactoralter=#{enactoralter,jdbcType=VARCHAR},
+        </if>
+        <if test="standaStauts != null and standaStauts != ''">
+            standaStauts=#{standaStauts,jdbcType=VARCHAR},
+        </if>
+        <if test="releaseTime != null and releaseTime != ''">
+            releaseTime=#{releaseTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="belongGroup != null and belongGroup != ''">
+            belongGroup=#{belongGroup,jdbcType=VARCHAR},
+        </if>
+        <if test="note != null and note != ''">
+            note=#{note,jdbcType=VARCHAR}
+        </if>
+        </set>
+        where
+        standardId=#{standardId}
+    </update>
+    <select id="querystandardChangeById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select standard_nationchange.*
+        from standard_nationchange
+        where
+        standardId=#{standardId}
+    </select>
+    <select id="querystandardChangeFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        fileId,
+        fileName,
+        fileDeliveryId,
+        belongId as standardId,
+        fileSize
+        FROM
+        standard_file
+        WHERE
+        <if test="standardIds != null and standardIds !=''">
+            belongId IN
+            <foreach collection="standardIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by fileDeliveryId desc
+    </select>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_file(
+          fileId,
+          fileName,
+          fileDeliveryId,
+          fileSize,
+          belongId,
+          CREATE_BY_,
+          CREATE_TIME_
+        ) values(
+          #{fileId,jdbcType=VARCHAR},
+          #{fileName,jdbcType=VARCHAR},
+          #{fileDeliveryId,jdbcType=VARCHAR},
+          #{fileSize,jdbcType=VARCHAR},
+          #{belongId,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="queryStandardChange" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        from
+        standard_nationchange
+        <where>
+            <if test="standardId != null and standardId != ''">
+                standardId like CONCAT('%',#{standardId},'%')
+            </if>
+            <if test="companyName != null and companyName != ''">
+                and companyName like CONCAT('%',#{companyName},'%')
+            </if>
+            <if test="standardName != null and standardName != ''">
+                and standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="spNumber != null and spNumber != ''">
+                and spNumber like CONCAT('%',#{spNumber},'%')
+            </if>
+            <if test="standardLv != null and standardLv != ''">
+                and standardLv =#{standardLv}
+            </if>
+            <if test="joinDegree != null and joinDegree != ''">
+                and joinDegree =#{joinDegree}
+            </if>
+            <if test="enactoralter != null and enactoralter != ''">
+                and enactoralter =#{enactoralter}
+            </if>
+            <if test="standaStauts != null and standaStauts != ''">
+                and standaStauts =#{standaStauts}
+            </if>
+            <if test="createtime1!=null">
+                and releaseTime &gt;= #{createtime1}
+            </if>
+            <if test="createtime2!=null">
+                and releaseTime &lt;= #{createtime2}
+            </if>
+            <if test="belongGroup != null and belongGroup != ''">
+                and belongGroup like CONCAT('%',#{belongGroup},'%')
+            </if>
+        </where>
+    </select>
+    <delete id="deletestandardChangeFile" parameterType="java.util.Map">
+        delete from standard_file
+        <where>
+            <if test="id != null and id != ''">
+                fileId=#{id}
+            </if>
+            <if test="standardIds != null and standardIds !=''">
+                AND belongId IN
+                <foreach collection="standardIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deletestandardChange" parameterType="java.util.Map">
+        delete from standard_nationchange
+        <where>
+            <if test="standardIds != null and standardIds !=''">
+                AND standardId IN
+                <foreach collection="standardIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+</mapper>

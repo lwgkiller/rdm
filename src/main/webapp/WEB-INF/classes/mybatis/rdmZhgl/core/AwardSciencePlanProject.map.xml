@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.AwardSciencePlanProjectDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <delete id="deleteAsppe" parameterType="java.util.Map">
+        delete from award_science_plan_project
+        where
+        id IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <delete id="deleteAsppeFileIds" parameterType="java.util.Map">
+        delete from award_fileInfo
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <select id="queryAsppList" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        t1.id,
+        t1.award_type awardType,
+        t1.competent_organization competentOrganization,
+        t1.bonus_type bonusType,
+        t1.project_name projectName,
+        t1.commend_unit commendUnit,
+        t1.remark,
+        t1.prizewinner,
+        t1.portrayal_point_person_id portrayalPointPersonId,
+        t1.portrayal_point_person_name portrayalPointPersonName,
+        t1.fileId,
+        DATE_FORMAT(t1.contract_begin_time,'%Y-%m-%d') contractBeginTime,
+        DATE_FORMAT(t1.contract_end_time,'%Y-%m-%d') contractEndTime,
+        t1.certificate_number certificateNumber,
+        t1.project_aggregate_amount projectAggregateAmount,
+        t1.government_funding_money governmentFundingMoney,
+        t1.funding_money_time fundingMoneyTime,
+        t1.funding_money_plan_time fundingMoneyPlanTime,
+        DATE_FORMAT(t1.check_accept_time,'%Y-%m-%d') checkAcceptTime,
+        DATE_FORMAT(t1.check_accept_practical_time,'%Y-%m-%d') checkAcceptPracticalTime,
+        t1.stage_explain stageExplain,
+        t1.CREATE_BY_,
+        DATE_FORMAT(t1.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        t2.fileName,
+        t2.fileSize
+        from
+        award_science_plan_project t1
+        left join award_fileInfo t2 on t1.fileId = t2.id
+        WHERE
+        1=1
+
+        <if test="prizewinner != null and prizewinner != ''">
+            AND t1.prizewinner like CONCAT('%',#{prizewinner},'%')
+        </if>
+        <if test="commendUnit != null and commendUnit != ''">
+            AND t1.commend_unit like CONCAT('%',#{commendUnit},'%')
+        </if>
+        <if test="awardType != null and awardType != ''">
+            AND t1.award_type = #{awardType}
+        </if>
+        <if test="projetName != null and projetName != ''">
+            AND t1.projet_name like CONCAT('%',#{projetName},'%')
+        </if>
+
+       <!-- <if test="rdTimeStart !=null and rdTimeStart !=''">
+            AND t1.prize_time &gt;= #{rdTimeStart}
+        </if>
+        <if test="rdTimeEnd !=null and rdTimeEnd !=''">
+            AND t1.prize_time &lt;= #{rdTimeEnd}
+        </if>-->
+
+        order by t1.CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countAgpfyList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        award_science_plan_project t1
+        <where>
+            <if test="prizewinner != null and prizewinner != ''">
+                AND t1.prizewinner like CONCAT('%',#{prizewinner},'%')
+            </if>
+            <if test="commendUnit != null and commendUnit != ''">
+                AND t1.commend_unit like CONCAT('%',#{commendUnit},'%')
+            </if>
+            <if test="awardType != null and awardType != ''">
+                AND t1.award_type = #{awardType}
+            </if>
+            <if test="projetName != null and projetName != ''">
+                AND t1.projet_name like CONCAT('%',#{projetName},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into award_fileInfo(
+        id,
+        fileName,
+        fileSize,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <select id="queryAsppeById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        t1.id,
+        t1.award_type awardType,
+        t1.competent_organization competentOrganization,
+        t1.bonus_type bonusType,
+        t1.project_name projectName,
+        t1.commend_unit commendUnit,
+        t1.remark,
+        t1.prizewinner,
+        t1.portrayal_point_person_id portrayalPointPersonId,
+        t1.portrayal_point_person_name portrayalPointPersonName,
+        t1.fileId,
+        DATE_FORMAT(t1.contract_begin_time,'%Y-%m-%d') contractBeginTime,
+        DATE_FORMAT(t1.contract_end_time,'%Y-%m-%d') contractEndTime,
+        t1.certificate_number certificateNumber,
+        t1.project_aggregate_amount projectAggregateAmount,
+        t1.government_funding_money governmentFundingMoney,
+        t1.funding_money_time fundingMoneyTime,
+        t1.funding_money_plan_time fundingMoneyPlanTime,
+        DATE_FORMAT(t1.check_accept_time,'%Y-%m-%d') checkAcceptTime,
+        DATE_FORMAT(t1.check_accept_practical_time,'%Y-%m-%d') checkAcceptPracticalTime,
+        t1.stage_explain stageExplain,
+        t1.CREATE_BY_,
+        DATE_FORMAT(t1.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        t2.fileName,
+        t2.fileSize
+        from
+        award_science_plan_project t1
+        left join award_fileInfo t2 on t1.fileId = t2.id
+        <where>
+            <if test="awardId != null and awardId != ''">
+                t1.id =#{awardId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="saveAsppeList" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into award_science_plan_project(
+            id,
+            award_type ,
+            competent_organization,
+            bonus_type,
+            project_name ,
+            commend_unit,
+            prizewinner,
+            contract_begin_time,
+            contract_end_time,
+            certificate_number,
+            portrayal_point_person_id ,
+            portrayal_point_person_name,
+            project_aggregate_amount,
+            government_funding_money,
+            funding_money_time,
+            funding_money_plan_time,
+            stage_explain,
+            check_accept_time,
+            check_accept_practical_time,
+            remark,
+            fileId,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{awardType,jdbcType=VARCHAR},
+            #{competentOrganization,jdbcType=VARCHAR},
+            #{bonusType,jdbcType=VARCHAR},
+            #{projectName,jdbcType=VARCHAR},
+            #{commendUnit,jdbcType=VARCHAR},
+            #{prizewinner,jdbcType=VARCHAR},
+            #{contractBeginTime,jdbcType=VARCHAR},
+            #{contractEndTime,jdbcType=VARCHAR},
+            #{certificateNumber,jdbcType=VARCHAR},
+            #{portrayalPointPersonId,jdbcType=VARCHAR},
+            #{portrayalPointPersonName,jdbcType=VARCHAR},
+            #{projectAggregateAmount,jdbcType=VARCHAR},
+            #{governmentFundingMoney,jdbcType=VARCHAR},
+            #{fundingMoneyTime,jdbcType=VARCHAR},
+            #{fundingMoneyPlanTime,jdbcType=VARCHAR},
+            #{stageExplain,jdbcType=VARCHAR},
+            #{checkAcceptTime,jdbcType=VARCHAR},
+            #{checkAcceptPracticalTime,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{fjId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        update award_fileInfo
+        set
+        fileName=#{fileName,jdbcType=VARCHAR},
+        fileSize=#{fileSize,jdbcType=TIMESTAMP},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+
+    <update id="updateAgpList" parameterType="com.alibaba.fastjson.JSONObject">
+        update award_science_plan_project
+        set
+        award_type =#{awardType,jdbcType=VARCHAR},
+        competent_organization =#{competentOrganization,jdbcType=VARCHAR},
+        bonus_type =#{bonusType,jdbcType=VARCHAR},
+        project_name =#{projectName,jdbcType=VARCHAR},
+        commend_unit =#{commendUnit,jdbcType=VARCHAR},
+        prizewinner=#{prizewinner,jdbcType=VARCHAR},
+        contract_begin_time=#{contractBeginTime,jdbcType=VARCHAR},
+        contract_end_time=#{contractEndTime,jdbcType=VARCHAR},
+        certificate_number=#{certificateNumber,jdbcType=VARCHAR},
+        portrayal_point_person_id =#{portrayalPointPersonId,jdbcType=VARCHAR},
+        portrayal_point_person_name=#{portrayalPointPersonName,jdbcType=VARCHAR},
+        project_aggregate_amount=#{projectAggregateAmount,jdbcType=VARCHAR},
+        government_funding_money=#{governmentFundingMoney,jdbcType=VARCHAR},
+        funding_money_time=#{fundingMoneyTime,jdbcType=VARCHAR},
+        funding_money_plan_time=#{fundingMoneyPlanTime,jdbcType=VARCHAR},
+        stage_explain=#{stageExplain,jdbcType=VARCHAR},
+        check_accept_time=#{checkAcceptTime,jdbcType=VARCHAR},
+        check_accept_practical_time=#{checkAcceptPracticalTime,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        fileId=#{fjId,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where id=#{id}
+    </update>
+
+
+    <select id="queryNameCount" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        FULLNAME_ fullName,
+        USER_ID_ userId,
+        count(*) count
+        from
+        os_user
+        WHERE FULLNAME_ in
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        GROUP BY FULLNAME_
+        ORDER BY FIELD ( FULLNAME_,
+        <foreach collection="ids" index="index" item="item" open="" separator="," close="">
+            #{item}
+        </foreach>
+        ) asc
+    </select>
+
+    <insert id="addAgpList" parameterType="com.alibaba.fastjson.JSONObject">
+       insert into award_science_plan_project(
+            id,
+            award_type ,
+            competent_organization,
+            bonus_type,
+            project_name ,
+            commend_unit,
+            prizewinner,
+            contract_begin_time,
+            contract_end_time,
+            certificate_number,
+            portrayal_point_person_id ,
+            portrayal_point_person_name,
+            project_aggregate_amount,
+            government_funding_money,
+            funding_money_time,
+            funding_money_plan_time,
+            stage_explain,
+            check_accept_time,
+            check_accept_practical_time,
+            remark,
+            fileId,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{awardType,jdbcType=VARCHAR},
+            #{competentOrganization,jdbcType=VARCHAR},
+            #{bonusType,jdbcType=VARCHAR},
+            #{projectName,jdbcType=VARCHAR},
+            #{commendUnit,jdbcType=VARCHAR},
+            #{prizewinner,jdbcType=VARCHAR},
+            #{contractBeginTime,jdbcType=VARCHAR},
+            #{contractEndTime,jdbcType=VARCHAR},
+            #{certificateNumber,jdbcType=VARCHAR},
+            #{portrayalPointPersonId,jdbcType=VARCHAR},
+            #{portrayalPointPersonName,jdbcType=VARCHAR},
+            #{projectAggregateAmount,jdbcType=VARCHAR},
+            #{governmentFundingMoney,jdbcType=VARCHAR},
+            #{fundingMoneyTime,jdbcType=VARCHAR},
+            #{fundingMoneyPlanTime,jdbcType=VARCHAR},
+            #{stageExplain,jdbcType=VARCHAR},
+            #{checkAcceptTime,jdbcType=VARCHAR},
+            #{checkAcceptPracticalTime,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{fjId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+</mapper>

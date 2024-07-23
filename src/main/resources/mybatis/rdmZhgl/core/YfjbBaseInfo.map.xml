@@ -1,0 +1,1012 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.YfjbBaseInfoDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        select T.* from (
+        SELECT
+        A.*,
+        B.FULLNAME_ as creator,
+        C.FULLNAME_ as responseMan,
+        D.NAME_ as deptName,
+        (select processStatus from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as
+        processStatus,
+        (select yearMonth from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as yearMonth,
+        (select type from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as type,
+        (select content from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as processContent,
+        (select reason from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as reason
+        FROM
+        yfjb_baseinfo A
+        left join os_user B on A.CREATE_BY_ = B.USER_ID_
+        left join os_user C on A.response = C.USER_ID_
+        left join os_group D on A.deptId = D.GROUP_ID_
+        <where>
+            <if test="saleModel != null and saleModel != ''">
+                and A.saleModel like CONCAT('%',#{saleModel},'%')
+            </if>
+            <if test="designModel != null and designModel != ''">
+                and A.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+            <if test="responseMan != null and responseMan != ''">
+                and C.FULLNAME_ like CONCAT('%',#{responseMan},'%')
+            </if>
+            <if test="deptName != null and deptName != ''">
+                and D.NAME_ like CONCAT('%',#{deptName},'%')
+            </if>
+            <if test="costType != null and costType != ''">
+                and A.costType = #{costType}
+            </if>
+            <if test="infoStatus != null and infoStatus != ''">
+                and A.infoStatus = #{infoStatus}
+            </if>
+            <if test="createYear != null and createYear != ''">
+                and YEAR(A.CREATE_TIME_) = #{createYear}
+            </if>
+            <if test="orgItemCode != null and orgItemCode != ''">
+                and A.orgItemCode like CONCAT('%',#{orgItemCode},'%')
+            </if>
+            <if test="newItemCode != null and newItemCode != ''">
+                and A.newItemCode like CONCAT('%',#{newItemCode},'%')
+            </if>
+            <if test="replaceRate != null and replaceRate != ''">
+                and A.replaceRate like CONCAT('%',#{replaceRate},'%')
+            </if>
+            <if test="deptId != null and deptId != ''">
+                and (A.deptId = #{deptId} or A.CREATE_BY_ = #{userId} or A.response =#{userId})
+            </if>
+            <if test="isReplace != null and isReplace != ''">
+                and A.isReplace = #{isReplace}
+            </if>
+            <if test="isSz != null and isSz != ''">
+                and A.isSz = #{isSz}
+            </if>
+            <if test="isNewProcess != null and isNewProcess != ''">
+                and A.isNewProcess = #{isNewProcess} and A.isReplace != '1'
+            </if>
+            <if test="major != null and major != ''">
+                and A.major = #{major}
+            </if>
+            <if test="actChange_startDate != null and actChange_startDate != ''">
+                and replace(A.sjqh_date, '.','-') &gt;= #{actChange_startDate}
+                and (A.sjqh_date != '暂未切换' and A.sjqh_date != '/')
+            </if>
+            <if test="actChange_endDate != null and actChange_endDate != ''">
+                and replace(A.sjqh_date, '.','-') &lt;= #{actChange_endDate}
+                and (A.sjqh_date != '暂未切换' and A.sjqh_date != '/')
+            </if>
+            <if test="planChange_startDate != null and planChange_startDate != ''">
+                and replace(A.jhqh_date, '.','-') &gt;= #{planChange_startDate}
+                and (A.jhqh_date != '暂未切换' and A.jhqh_date != '/')
+            </if>
+            <if test="planChange_endDate != null and planChange_endDate != ''">
+                and replace(A.jhqh_date, '.','-') &lt;= #{planChange_endDate}
+                and (A.jhqh_date != '暂未切换' and A.jhqh_date != '/')
+            </if>
+        </where>
+        )T
+        where 1=1
+        <if test="processStatus != null and processStatus != ''">
+            and T.processStatus = #{processStatus}
+        </if>
+        <if test="yearMonth != null and yearMonth != ''">
+            and T.yearMonth = #{yearMonth}
+        </if>
+        <if test="processType != null and processType != ''">
+            and T.type = #{processType}
+        </if>
+        order by T.CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+    <select id="getItems" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*
+        FROM
+        yfjb_processtrace A
+        LEFT JOIN yfjb_baseinfo B ON A.mainId = B.id
+        <where>
+            <if test="deptName != null and deptName != ''">
+                and B.deptName=#{deptName}
+            </if>
+        </where>
+        order by B.sort+'', A.sort
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.FULLNAME_ as responseMan,
+            C.NAME_ as deptName
+        FROM
+            yfjb_baseinfo A
+            left join os_user B on A.response = B.USER_ID_
+            left join os_group C on A.deptId = C.GROUP_ID_
+            where id=#{id}
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO yfjb_baseinfo (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            saleModel,
+            designModel,
+            orgItemCode,
+            orgItemName,
+            orgItemPrice,
+            costType,
+            costMeasure,
+            newItemCode,
+            newItemName,
+            newItemPrice,
+            differentPrice,
+            perSum,
+            replaceRate,
+            perCost,
+            achieveCost,
+            risk,
+            isReplace,
+            jhsz_date,
+            sjsz_date,
+            jhxfqh_date,
+            sjxfqh_date,
+            jhqh_date,
+            sjqh_date,
+            major,
+            response,
+            plan,
+            deptId,
+            member,
+            jsfachwc_date,
+            sztzxfwc_date,
+            xnkkxyzwc_date,
+            jbfazsss_date,
+            isSz,
+            jhxfsz_date,
+            basePrice,
+            orgSupplier,
+            newSupplier
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{saleModel,jdbcType=VARCHAR},
+            #{designModel,jdbcType=VARCHAR},
+            #{orgItemCode,jdbcType=VARCHAR},
+            #{orgItemName,jdbcType=VARCHAR},
+            #{orgItemPrice,jdbcType=VARCHAR},
+            #{costType,jdbcType=VARCHAR},
+            #{costMeasure,jdbcType=VARCHAR},
+            #{newItemCode,jdbcType=VARCHAR},
+            #{newItemName,jdbcType=VARCHAR},
+            #{newItemPrice,jdbcType=VARCHAR},
+            #{differentPrice,jdbcType=VARCHAR},
+            #{perSum,jdbcType=INTEGER},
+            #{replaceRate,jdbcType=VARCHAR},
+            #{perCost,jdbcType=VARCHAR},
+            #{achieveCost,jdbcType=VARCHAR},
+            #{risk,jdbcType=VARCHAR},
+            #{isReplace,jdbcType=VARCHAR},
+            #{jhsz_date,jdbcType=VARCHAR},
+            #{sjsz_date,jdbcType=VARCHAR},
+            #{jhxfqh_date,jdbcType=VARCHAR},
+            #{sjxfqh_date,jdbcType=VARCHAR},
+            #{jhqh_date,jdbcType=VARCHAR},
+            #{sjqh_date,jdbcType=VARCHAR},
+            #{major,jdbcType=VARCHAR},
+            #{response,jdbcType=VARCHAR},
+            #{plan,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR},
+            #{member,jdbcType=VARCHAR},
+            #{jsfachwc_date,jdbcType=VARCHAR},
+            #{sztzxfwc_date,jdbcType=VARCHAR},
+            #{xnkkxyzwc_date,jdbcType=VARCHAR},
+            #{jbfazsss_date,jdbcType=VARCHAR},
+            #{isSz,jdbcType=VARCHAR},
+            #{jhxfsz_date,jdbcType=VARCHAR},
+            #{basePrice,jdbcType=VARCHAR},
+            #{orgSupplier,jdbcType=VARCHAR},
+            #{newSupplier,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update yfjb_baseinfo
+        <set>
+            <if test="saleModel != null and saleModel != ''">
+                saleModel=#{saleModel,jdbcType=VARCHAR},
+            </if>
+            <if test="designModel != null and designModel != ''">
+                designModel=#{designModel,jdbcType=VARCHAR},
+            </if>
+            <if test="orgItemCode != null and orgItemCode != ''">
+                orgItemCode=#{orgItemCode,jdbcType=VARCHAR},
+            </if>
+            <if test="orgItemName != null and orgItemName != ''">
+                orgItemName=#{orgItemName,jdbcType=VARCHAR},
+            </if>
+            <if test="orgItemPrice != null and orgItemPrice != ''">
+                orgItemPrice=#{orgItemPrice,jdbcType=VARCHAR},
+            </if>
+            <if test="costType != null and costType != ''">
+                costType=#{costType,jdbcType=VARCHAR},
+            </if>
+            <if test="costMeasure != null and costMeasure != ''">
+                costMeasure=#{costMeasure,jdbcType=VARCHAR},
+            </if>
+            <if test="newItemCode != null and newItemCode != ''">
+                newItemCode=#{newItemCode,jdbcType=VARCHAR},
+            </if>
+            <if test="newItemName != null and newItemName != ''">
+                newItemName=#{newItemName,jdbcType=VARCHAR},
+            </if>
+            <if test="newItemPrice != null and newItemPrice != ''">
+                newItemPrice=#{newItemPrice,jdbcType=VARCHAR},
+            </if>
+            <if test="differentPrice != null and differentPrice != ''">
+                differentPrice=#{differentPrice,jdbcType=VARCHAR},
+            </if>
+            <if test="perSum != null and perSum != ''">
+                perSum=#{perSum,jdbcType=INTEGER},
+            </if>
+            <if test="replaceRate != null and replaceRate != ''">
+                replaceRate=#{replaceRate,jdbcType=VARCHAR},
+            </if>
+            <if test="perCost != null and perCost != ''">
+                perCost=#{perCost,jdbcType=VARCHAR},
+            </if>
+            <if test="achieveCost != null and achieveCost != ''">
+                achieveCost=#{achieveCost,jdbcType=VARCHAR},
+            </if>
+            <if test="risk != null and risk != ''">
+                risk=#{risk,jdbcType=VARCHAR},
+            </if>
+            <if test="isReplace != null and isReplace != ''">
+                isReplace=#{isReplace,jdbcType=VARCHAR},
+            </if>
+            <if test="major != null and major != ''">
+                major=#{major,jdbcType=VARCHAR},
+            </if>
+            <if test="response != null and response != ''">
+                response=#{response,jdbcType=VARCHAR},
+            </if>
+                plan=#{plan,jdbcType=VARCHAR},
+            <if test="infoStatus != null and infoStatus != ''">
+                infoStatus=#{infoStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="deptId != null and deptId != ''">
+                deptId=#{deptId,jdbcType=VARCHAR},
+            </if>
+            <if test="isSz != null and isSz != ''">
+                isSz=#{isSz,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+            basePrice=#{basePrice,jdbcType=VARCHAR},
+            orgSupplier=#{orgSupplier,jdbcType=VARCHAR},
+            newSupplier=#{newSupplier,jdbcType=VARCHAR},
+            jhxfsz_date=#{jhxfsz_date,jdbcType=VARCHAR},
+            jbfazsss_date=#{jbfazsss_date,jdbcType=VARCHAR},
+            jbfazsss_date=#{jbfazsss_date,jdbcType=VARCHAR},
+            xnkkxyzwc_date=#{xnkkxyzwc_date,jdbcType=VARCHAR},
+            sztzxfwc_date=#{sztzxfwc_date,jdbcType=VARCHAR},
+            jsfachwc_date=#{jsfachwc_date,jdbcType=VARCHAR},
+            jhsz_date=#{jhsz_date,jdbcType=VARCHAR},
+            sjsz_date=#{sjsz_date,jdbcType=VARCHAR},
+            jhxfqh_date=#{jhxfqh_date,jdbcType=VARCHAR},
+            sjxfqh_date=#{sjxfqh_date,jdbcType=VARCHAR},
+            jhqh_date=#{jhqh_date,jdbcType=VARCHAR},
+            sjqh_date=#{sjqh_date,jdbcType=VARCHAR},
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <update id="updateInfoStatus" parameterType="java.util.Map">
+        update yfjb_baseinfo set infoStatus=#{infoStatus,jdbcType=VARCHAR}
+        where id = #{id}
+    </update>
+    <insert id="addItem" parameterType="java.util.Map">
+        INSERT INTO yfjb_processtrace (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            yearMonth,
+            type,
+            content,
+            processStatus,
+            reason
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{yearMonth,jdbcType=VARCHAR},
+            #{type,jdbcType=VARCHAR},
+            #{content,jdbcType=VARCHAR},
+            #{processStatus,jdbcType=VARCHAR},
+            #{reason,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateItem" parameterType="java.util.Map">
+        update yfjb_processtrace
+        <set>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                yearMonth=#{yearMonth,jdbcType=VARCHAR},
+            </if>
+            <if test="type != null and type != ''">
+                type=#{type,jdbcType=VARCHAR},
+            </if>
+            <if test="content != null and content != ''">
+                content=#{content,jdbcType=VARCHAR},
+            </if>
+            <if test="reason != null and reason != ''">
+                reason=#{reason,jdbcType=VARCHAR},
+            </if>
+            <if test="processStatus != null and processStatus != ''">
+                processStatus=#{processStatus,jdbcType=VARCHAR},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delItem" parameterType="java.lang.String">
+        delete from yfjb_processtrace where id = #{id}
+    </delete>
+    <insert id="addMember" parameterType="java.util.Map">
+        INSERT INTO yfjb_members (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            userId,
+            ratio,
+            remark
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{userId,jdbcType=VARCHAR},
+            #{ratio,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateMember" parameterType="java.util.Map">
+        update yfjb_members
+        <set>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+            <if test="userId != null and userId != ''">
+                userId=#{userId,jdbcType=VARCHAR},
+            </if>
+            <if test="ratio != null and ratio != ''">
+                ratio=#{ratio,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null and remark != ''">
+                remark=#{remark,jdbcType=VARCHAR},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delMember" parameterType="java.lang.String">
+        delete from yfjb_members where id = #{id}
+    </delete>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from yfjb_baseinfo
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="processList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        (case A.type when '1' then '月初进度' when '2' then '月终进度' end) as typeName,
+        (case A.processStatus when 'tq' then '提前' when 'zc' then '正常' when 'yh' then '延后' end) as processStatusName,
+        B.FULLNAME_ as creator
+        FROM
+        yfjb_processtrace A
+        LEFT JOIN os_user B on A.CREATE_BY_ = B.USER_ID_
+        <where>
+            <if test="mainId != null and mainId != ''">
+                and A.mainId = #{mainId}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getMemberList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ as userName,
+        C.FULLNAME_ as creator
+        FROM
+        yfjb_members A
+        LEFT JOIN os_user B on A.userId = B.USER_ID_
+        LEFT JOIN os_user C on A.CREATE_BY_ = C.USER_ID_
+        <where>
+            <if test="mainId != null and mainId != ''">
+                and A.mainId = #{mainId}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getBaseInfoListByIds" parameterType="java.util.Map" resultType="java.util.Map">
+        select * from yfjb_baseinfo
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="infoSubmit" parameterType="java.util.Map">
+        update yfjb_baseinfo set infoStatus = '2'
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="getInfoListByModel" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*,
+        B.FULLNAME_ as responseMan
+        FROM
+        yfjb_baseinfo A
+        left join os_user B on A.response = B.USER_ID_
+        WHERE
+        A.infoStatus = '2'
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and A.saleModel = #{saleModel}
+        </if>
+        order by A.CREATE_TIME_
+    </select>
+    <select id="getPerCost" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Float">
+        SELECT
+        sum(A.perCost) as totalPerCost
+        FROM
+        yfjb_baseinfo A
+        WHERE
+        A.infoStatus = '2'
+        and substr(A.jhqh_date,1,4)=#{reportYear}
+        <if test="saleModelList != null and saleModelList != ''">
+            and A.saleModel in
+            <foreach collection="saleModelList" index="index" item="saleModel" open="(" separator="," close=")">
+                #{saleModel}
+            </foreach>
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and A.saleModel = #{saleModel}
+        </if>
+    </select>
+    <select id="getAchieveCost" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Float">
+        SELECT
+        sum(A.achieveCost) as totalAchieveCost
+        FROM
+        yfjb_baseinfo A
+        WHERE
+        A.infoStatus = '2'
+        and substr(A.sjqh_date,1,4)=#{reportYear}
+        <if test="saleModelList != null and saleModelList != ''">
+            and A.saleModel in
+            <foreach collection="saleModelList" index="index" item="saleModel" open="(" separator="," close=")">
+                #{saleModel}
+            </foreach>
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+    </select>
+    <select id="getMonthAchieveCost" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Float">
+        SELECT
+        sum(A.achieveCost) as totalAchieveCost
+        FROM
+        yfjb_baseinfo A
+        WHERE
+        A.infoStatus = '2'
+        and sjqh_date=#{yearMonth}
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and A.saleModel = #{saleModel}
+        </if>
+        <if test="saleModelList != null and saleModelList != ''">
+            and A.saleModel in
+            <foreach collection="saleModelList" index="index" item="saleModel" open="(" separator="," close=")">
+                #{saleModel}
+            </foreach>
+        </if>
+    </select>
+    <select id="getPlanChangeList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ as responseMan
+        FROM
+        yfjb_baseinfo A
+        left join os_user B on A.response = B.USER_ID_
+        WHERE
+        A.infoStatus = '2'
+        and A.jhqh_date = #{yearMonth}
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+    </select>
+    <select id="getActualChangeList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ as responseMan
+        FROM
+        yfjb_baseinfo A
+        left join os_user B on A.response = B.USER_ID_
+        WHERE
+        A.infoStatus = '2'
+        and A.sjqh_date = #{yearMonth}
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+    </select>
+    <select id="getPlanChangeNoticeList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.noticeNo,
+        B.noticeDate,
+        B.remark,
+        C.FULLNAME_ AS responseMan
+        FROM
+        yfjb_baseinfo A
+        LEFT JOIN yfjb_changenotice B ON A.id = B.mainId
+        LEFT JOIN os_user C ON A.response = C.USER_ID_
+        WHERE
+        A.infoStatus = '2'
+        and A.jhxfqh_date = #{yearMonth}
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+
+    </select>
+    <select id="getActualChangeNoticeList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.noticeNo,
+        B.noticeDate,
+        B.remark,
+        C.FULLNAME_ AS responseMan
+        FROM
+        yfjb_baseinfo A
+        LEFT JOIN yfjb_changenotice B ON A.id = B.mainId
+        LEFT JOIN os_user C ON A.response = C.USER_ID_
+        WHERE
+        A.infoStatus = '2'
+        and A.sjxfqh_date = #{yearMonth}
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+
+    </select>
+    <select id="getPlanProduceNoticeList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.productionNo,
+        B.noticeDate,
+        B.remark,
+        C.FULLNAME_ AS responseMan
+        FROM
+        yfjb_baseinfo A
+        LEFT JOIN yfjb_productionnotice B ON A.id = B.mainId
+        LEFT JOIN os_user C ON A.response = C.USER_ID_
+        WHERE
+        A.infoStatus = '2'
+        and (A.jhsz_date = #{yearMonth} or A.jhsz_date = #{yearMonthSlot})
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+
+    </select>
+    <select id="getActualProduceNoticeList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.productionNo,
+        B.noticeDate,
+        B.remark,
+        C.FULLNAME_ AS responseMan
+        FROM
+        yfjb_baseinfo A
+        LEFT JOIN yfjb_productionnotice B ON A.id = B.mainId
+        LEFT JOIN os_user C ON A.response = C.USER_ID_
+        WHERE
+        A.infoStatus = '2'
+        and (A.sjsz_date = #{yearMonth} or A.sjsz_date = #{yearMonthSlot})
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+
+    </select>
+    <select id="getUnChangeList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.noticeNo,
+        B.noticeDate,
+        B.remark,
+        B.storageAndCar,
+        A.orgSupplier,
+        A.newSupplier,
+        C.FULLNAME_ AS responseMan
+        FROM
+        yfjb_baseinfo A
+        LEFT JOIN yfjb_changenotice B ON A.id = B.mainId
+        LEFT JOIN os_user C ON A.response = C.USER_ID_
+        WHERE
+        A.infoStatus = '2'
+        and A.isReplace != '1'
+        and A.sjxfqh_date=#{reportYearMonth}
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+    </select>
+    <select id="getCostCategoryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.id,
+        A.basePrice,
+        A.orgItemCode,
+        A.orgItemName,
+        A.orgItemPrice,
+        A.newItemCode,
+        A.newItemName,
+        A.newItemPrice,
+        A.differentPrice,
+        A.perSum,
+        A.costType,
+        A.replaceRate,
+        A.perCost,
+        A.isReplace,
+        (case A.sjqh_date when null then A.jhqh_date when '' then A.jhqh_date else A.sjqh_date end ) as sjqh_date,
+        A.jhqh_date,
+        C.FULLNAME_ as responseMan,
+        SUBSTRING_INDEX(SUBSTRING_INDEX(A.designModel,',',b.help_topic_id+1),',',-1) designModel
+        FROM
+        yfjb_baseinfo A
+        join mysql.help_topic b on b.help_topic_id&lt;(length(A.designModel)-length(replace(A.designModel,',',''))+1)
+        left join os_user C on A.response = C.USER_ID_
+        where A.infoStatus = '2'
+        <if test="reportYearMonth != null and reportYearMonth != ''">
+            and (case A.sjqh_date when null then A.jhqh_date when '' then A.jhqh_date else A.sjqh_date end ) &gt;= #{reportYearMonth}
+        </if>
+        <if test="reportStartYearMonth != null and reportStartYearMonth != ''">
+            and (case A.sjqh_date when null then A.jhqh_date when '' then A.jhqh_date else A.sjqh_date end ) &gt;= #{reportStartYearMonth}
+        </if>
+        <if test="reportEndYearMonth != null and reportEndYearMonth != ''">
+            and (case A.sjqh_date when null then A.jhqh_date when '' then A.jhqh_date else A.sjqh_date end ) &lt;= #{reportEndYearMonth}
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+        <if test="costCategory != null and costCategory != ''">
+            <choose>
+                <when test='costCategory=="wltd"'>
+                    AND (A.costType = '1' or A.costType = '2' or A.costType = '3' or A.costType = '6' or A.costType = '8')
+                </when>
+                <when test='costCategory=="wlqx"'>
+                    AND A.costType = '4'
+                </when>
+                <when test='costCategory=="zjjb"'>
+                    AND A.costType = '5'
+                </when>
+            </choose>
+        </if>
+    </select>
+    <select id="getZjjbList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.id,
+        A.orgItemCode,
+        A.orgItemName,
+        A.orgItemPrice,
+        A.newItemCode,
+        A.newItemName,
+        A.newItemPrice,
+        A.differentPrice,
+        A.perSum,
+        A.replaceRate,
+        A.perCost,
+        A.isReplace,
+        A.basePrice,
+        (case A.sjqh_date when null then A.jhqh_date when '' then A.jhqh_date else A.sjqh_date end ) sjqh_date,
+        C.FULLNAME_ as responseMan,
+        SUBSTRING_INDEX(SUBSTRING_INDEX(A.designModel,',',b.help_topic_id+1),',',-1) designModel
+        FROM
+        yfjb_baseinfo A
+        join mysql.help_topic b on b.help_topic_id&lt;(length(A.designModel)-length(replace(A.designModel,',',''))+1)
+        left join os_user C on A.response = C.USER_ID_
+        where A.infoStatus = '2'
+        AND A.costType = '5'
+        <if test="reportYearMonth != null and reportYearMonth != ''">
+            and (case A.sjqh_date when null then A.jhqh_date when '' then A.jhqh_date else A.sjqh_date end ) &gt;= #{reportYearMonth}
+        </if>
+        <if test="reportStartYearMonth != null and reportStartYearMonth != ''">
+            and (case A.sjqh_date when null then A.jhqh_date when '' then A.jhqh_date else A.sjqh_date end ) &gt;= #{reportStartYearMonth}
+        </if>
+        <if test="reportEndYearMonth != null and reportEndYearMonth != ''">
+            and (case A.sjqh_date when null then A.jhqh_date when '' then A.jhqh_date else A.sjqh_date end ) &lt;= #{reportEndYearMonth}
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+
+    </select>
+    <select id="getJbzxList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.saleModel,
+        C.NAME_ as deptName,
+        A.major,
+        A.costType,
+        A.orgItemCode,
+        A.orgItemName,
+        A.orgSupplier,
+        A.newItemCode,
+        A.newItemName,
+        A.newSupplier,
+        B.changeable,
+        B.assessment,
+        A.basePrice,
+        IFNULL(B.noticeNo,D.productionNo) noticeNo,
+        IFNULL(B.noticeDate,D.noticeDate) noticeDate
+        FROM
+        yfjb_baseinfo A left join yfjb_changenotice B on A.id = B.mainId
+        left join os_group C on A.deptId = C.GROUP_ID_
+        LEFT JOIN yfjb_productionnotice D ON A.id = D.mainId
+        WHERE
+        A.infoStatus = '2'
+        <if test="reportYearMonth != null and reportYearMonth != ''">
+         and (substr(B.noticeDate,1,7)=#{reportYearMonth} or substr(D.noticeDate,1,7)=#{reportYearMonth})
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+    </select>
+
+    <select id="getModelsByYear" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        A.*
+        FROM
+        yfjb_baseinfo A
+        WHERE
+        A.infoStatus = '2'
+        <if test="reportYear != null and reportYear != ''">
+            <if test="yearType == 'current'">
+               and  substr(A.jhqh_date,1,4)=#{reportYear}
+            </if>
+            <if test="yearType == 'lastYear'">
+                and  substr(A.sjqh_date,1,4)=#{reportYear}
+            </if>
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and A.deptId = #{deptId}
+        </if>
+        group by A.saleModel
+    </select>
+    <select id="getInfoListByMainId" parameterType="java.lang.String" resultType="java.util.Map">
+         SELECT
+            A.*,
+            B.FULLNAME_ as creator,
+            C.FULLNAME_ as responseMan,
+            D.NAME_ as deptName,
+            (select processStatus from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as processStatus,
+            (select yearMonth from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as yearMonth,
+            (select type from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as type
+            FROM
+            yfjb_baseinfo A
+            left join os_user B on A.CREATE_BY_ = B.USER_ID_
+            left join os_user C on A.response = C.USER_ID_
+            left join os_group D on A.deptId = D.GROUP_ID_
+        where  A.id = #{mainId}
+    </select>
+    <select id="getInfoListByReplace"  resultType="com.alibaba.fastjson.JSONObject">
+         SELECT
+            A.*,
+            (select processStatus from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as processStatus,
+            (select yearMonth from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as yearMonth,
+            (select type from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as type
+            FROM
+            yfjb_baseinfo A
+        where  A.isReplace != '1'
+    </select>
+    <update id="updateIsNewProcess" parameterType="com.alibaba.fastjson.JSONObject">
+        update yfjb_baseinfo set isNewProcess = #{isNewProcess} where id = #{id}
+    </update>
+
+    <select id="getDeptProjectNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.deptId,
+            B.NAME_ as deptName,
+            count( 1 ) AS totalSum
+        FROM
+            yfjb_baseinfo A
+            left join os_group B on A.deptId = B.GROUP_ID_
+            where A.infoStatus = '2'
+        GROUP BY
+            A.deptId
+    </select>
+    <select id="getDeptChangeNum" resultType="java.lang.Integer" parameterType="java.lang.String">
+        SELECT
+            count( 1 ) AS isChangeNum
+        FROM
+            yfjb_baseinfo A
+        WHERE
+            A.infoStatus = '2'
+            and A.isReplace = '1'
+            and A.deptId = #{deptId}
+    </select>
+    <select id="getMajorData" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.major,
+            B.NAME_ as majorName,
+            count( 1 ) AS totalSum
+        FROM
+            yfjb_baseinfo A
+            left join sys_dic B on A.major = B.KEY_
+            left join sys_tree C on B.TYPE_ID_ = C.TREE_ID_
+            where A.infoStatus = '2'
+            and C.KEY_ = 'YFJB-SSZY'
+        GROUP BY
+            A.major
+    </select>
+    <select id="getProjectListByDeptId" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.lang.String">
+        SELECT
+            A.*
+        FROM
+            yfjb_baseinfo A
+        WHERE
+            A.infoStatus = '2'
+            AND A.deptId = #{deptId}
+    </select>
+    <insert id="addDelayData" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO yfjb_delayreport (
+            id,
+            deptId,
+            asyncDate,
+            totalSum,
+            productDelayNum,
+            changeNoticeDelayNum,
+            changeDelayNum
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR},
+            #{asyncDate,jdbcType=TIMESTAMP},
+            #{totalSum,jdbcType=INTEGER},
+            #{productDelayNum,jdbcType=INTEGER},
+            #{changeNoticeDelayNum,jdbcType=INTEGER},
+            #{changeDelayNum,jdbcType=INTEGER}
+        )
+    </insert>
+    <update id="updateDelayData" parameterType="com.alibaba.fastjson.JSONObject">
+        update yfjb_delayreport
+         set totalSum=#{totalSum,jdbcType=INTEGER},
+         productDelayNum=#{productDelayNum,jdbcType=INTEGER},
+         changeNoticeDelayNum=#{changeNoticeDelayNum,jdbcType=INTEGER},
+         changeDelayNum=#{changeDelayNum,jdbcType=INTEGER},
+         asyncDate=#{asyncDate,jdbcType=TIMESTAMP}
+        WHERE
+        deptId=#{deptId}
+    </update>
+    <select id="getDelayData" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from yfjb_delayreport where deptId = #{deptId} limit 1
+    </select>
+    <select id="getDelayDataList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.NAME_ AS deptName
+        FROM
+            yfjb_delayreport A
+            LEFT JOIN os_group B ON A.deptId = B.GROUP_ID_
+    </select>
+    <select id="getQuarterDataList"  resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            yfjb_quarter_report A
+        Where
+            A.year = #{year}
+    </select>
+    <insert id="batchAddDelay" parameterType="java.util.List">
+        INSERT INTO yfjb_delay (
+        id,
+        deptId,
+        productId,
+        type
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" open="" close="" separator=",">
+            (
+             #{item.id,jdbcType=VARCHAR}
+            ,#{item.deptId,jdbcType=VARCHAR}
+            ,#{item.productId,jdbcType=VARCHAR}
+            ,#{item.type,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+    <delete id="delDelayInfo">
+        delete from yfjb_delay
+    </delete>
+    <select id="getDelayProductList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select A.*,
+            B.FULLNAME_ as creator,
+            C.FULLNAME_ as responseMan,
+            D.NAME_ as deptName,
+            (select processStatus from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as
+            processStatus,
+            (select yearMonth from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as yearMonth,
+            (select type from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as type,
+            (select content from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as processContent,
+            (select reason from yfjb_processtrace where mainId = A.id order by CREATE_TIME_ desc limit 1) as reason
+        FROM
+            yfjb_baseinfo A
+            left join os_user B on A.CREATE_BY_ = B.USER_ID_
+            left join os_user C on A.response = C.USER_ID_
+            left join os_group D on A.deptId = D.GROUP_ID_
+			where A.id in (select productId from yfjb_delay where deptId = #{deptId} and type = #{delayType})
+    </select>
+
+    <select id="getAuditRelation" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM yfjb_auditrelation where majorKey = #{majorKey}
+    </select>
+
+</mapper>

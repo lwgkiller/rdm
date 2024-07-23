@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.PartsAtlasFileCollectionDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="salesModel !=null and salesModel !=''">
+            AND parts.salesModel like CONCAT('%',#{salesModel},'%')
+        </if>
+        <if test="designModel !=null and designModel !=''">
+            AND parts.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="vinCode !=null and vinCode !=''">
+            AND parts.vinCode like CONCAT('%',#{vinCode},'%')
+        </if>
+        <if test="fileName !=null and fileName !=''">
+            AND parts.fileName like CONCAT('%',#{fileName},'%')
+        </if>
+        <if test="fileType !=null and fileType !=''">
+            AND parts.fileType like CONCAT('%',#{fileType},'%')
+        </if>
+        <if test="partsAtlasName !=null and partsAtlasName !=''">
+            AND parts.partsAtlasName like CONCAT('%',#{partsAtlasName},'%')
+        </if>
+        <if test="languageType != null and languageType != ''">
+            AND parts.languageType like CONCAT('%',#{languageType},'%')
+        </if>
+        <if test="creatorName != null and creatorName != ''">
+            AND parts.creatorName like CONCAT('%',#{creatorName},'%')
+        </if>
+
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT parts.* FROM
+        service_engineering_parts_achive AS parts
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM
+        service_engineering_parts_achive AS parts
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            service_engineering_parts_achive
+        WHERE
+            service_engineering_parts_achive.id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.lang.String">
+        delete from service_engineering_parts_achive
+        where id = #{id}
+    </delete>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_parts_achive(
+        id,
+        salesModel,
+        designModel,
+        vinCode,
+        partsAtlasName,
+        fileName,
+        languageType,
+        creatorName,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{salesModel,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{vinCode,jdbcType=VARCHAR},
+        #{partsAtlasName,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{languageType,jdbcType=VARCHAR},
+        #{creatorName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_parts_achive(
+        id,
+        vinCode,
+        partsAtlasName,
+        fileName,
+        fileType,
+        languageType,
+        creatorName,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{vinCode,jdbcType=VARCHAR},
+        #{partsAtlasName,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileType,jdbcType=VARCHAR},
+        #{languageType,jdbcType=VARCHAR},
+        #{creatorName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        update service_engineering_parts_achive
+        set
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        vinCode=#{vinCode,jdbcType=VARCHAR},
+        partsAtlasName=#{partsAtlasName,jdbcType=VARCHAR},
+        fileName=#{fileName,jdbcType=VARCHAR},
+        languageType=#{languageType,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+</mapper>

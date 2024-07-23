@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.StandardvalueDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_standardvalue
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND service_engineering_standardvalue.signYear = #{signYear}
+            </if>
+            <if test="signMonth !=null and signMonth !=''">
+                AND service_engineering_standardvalue.signMonth = #{signMonth}
+            </if>
+            <if test="signWeek !=null and signWeek !=''">
+                AND service_engineering_standardvalue.signWeek = #{signWeek}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_standardvalue
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND service_engineering_standardvalue.signYear = #{signYear}
+            </if>
+            <if test="signMonth !=null and signMonth !=''">
+                AND service_engineering_standardvalue.signMonth = #{signMonth}
+            </if>
+            <if test="signWeek !=null and signWeek !=''">
+                AND service_engineering_standardvalue.signWeek = #{signWeek}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_standardvalue(
+          id,
+          signYear,
+          signMonth,
+          signWeek,
+          betaTotalNumber,
+          routineTotalNumber,
+          completeTotalNumber,
+          numberOfReturnedGroupsForTest,
+          numberOfReturnedGroupsForTestActual,
+          returnRateForTest,
+          numberOfReturnedGroupsForTestWeek,
+          numberOfReturnedGroupsForTestActualWeek,
+          returnRateForTestWeek,
+          numberOfReturnedGroupsForQa,
+          numberOfReturnedGroupsForQaActual,
+          returnRateForQa,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{signYear,jdbcType=VARCHAR},
+          #{signMonth,jdbcType=VARCHAR},
+          #{signWeek,jdbcType=VARCHAR},
+          #{betaTotalNumber,jdbcType=VARCHAR},
+          #{routineTotalNumber,jdbcType=VARCHAR},
+          #{completeTotalNumber,jdbcType=VARCHAR},
+          #{numberOfReturnedGroupsForTest,jdbcType=VARCHAR},
+          #{numberOfReturnedGroupsForTestActual,jdbcType=VARCHAR},
+          #{returnRateForTest,jdbcType=VARCHAR},
+          #{numberOfReturnedGroupsForTestWeek,jdbcType=VARCHAR},
+          #{numberOfReturnedGroupsForTestActualWeek,jdbcType=VARCHAR},
+          #{returnRateForTestWeek,jdbcType=VARCHAR},
+          #{numberOfReturnedGroupsForQa,jdbcType=VARCHAR},
+          #{numberOfReturnedGroupsForQaActual,jdbcType=VARCHAR},
+          #{returnRateForQa,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateData" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_standardvalue
+        set
+        signYear=#{signYear,jdbcType=VARCHAR},
+        signMonth=#{signMonth,jdbcType=VARCHAR},
+        signWeek=#{signWeek,jdbcType=VARCHAR},
+        betaTotalNumber=#{betaTotalNumber,jdbcType=VARCHAR},
+        routineTotalNumber=#{routineTotalNumber,jdbcType=VARCHAR},
+        completeTotalNumber=#{completeTotalNumber,jdbcType=VARCHAR},
+        numberOfReturnedGroupsForTest=#{numberOfReturnedGroupsForTest,jdbcType=VARCHAR},
+        numberOfReturnedGroupsForTestActual=#{numberOfReturnedGroupsForTestActual,jdbcType=VARCHAR},
+        returnRateForTest=#{returnRateForTest,jdbcType=VARCHAR},
+        numberOfReturnedGroupsForTestWeek=#{numberOfReturnedGroupsForTestWeek,jdbcType=VARCHAR},
+        numberOfReturnedGroupsForTestActualWeek=#{numberOfReturnedGroupsForTestActualWeek,jdbcType=VARCHAR},
+        returnRateForTestWeek=#{returnRateForTestWeek,jdbcType=VARCHAR},
+        numberOfReturnedGroupsForQa=#{numberOfReturnedGroupsForQa,jdbcType=VARCHAR},
+        numberOfReturnedGroupsForQaActual=#{numberOfReturnedGroupsForQaActual,jdbcType=VARCHAR},
+        returnRateForQa=#{returnRateForQa,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteData" parameterType="java.util.Map">
+        delete from service_engineering_standardvalue
+        where id IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!--根据action获取各版总数,参数前端都保证传入-->
+    <select id="getStandardvalueTotal" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        <if test="action =='beta'">
+            SELECT SUM(betaTotalNumber) FROM
+        </if>
+        <if test="action =='routine'">
+            SELECT SUM(routineTotalNumber) FROM
+        </if>
+        <if test="action =='complete'">
+            SELECT SUM(completeTotalNumber) FROM
+        </if>
+        service_engineering_standardvalue
+        WHERE
+        CONCAT(signYear,'-',signMonth) &gt;= #{yearMonthBeginStandardvalue}
+        AND
+        CONCAT(signYear,'-',signMonth) &lt;= #{yearMonthEndStandardvalue}
+    </select>
+    <!--根据action获取各类回传组数,参数前端都保证传入-->
+    <select id="getStandardvalueReturnedGroups" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        <if test="action =='qa'">
+            SELECT SUM(numberOfReturnedGroupsForQa) FROM
+        </if>
+        <if test="action =='test'">
+            SELECT SUM(numberOfReturnedGroupsForTest) FROM
+        </if>
+        <if test="action =='qaActual'">
+            SELECT SUM(numberOfReturnedGroupsForQaActual) FROM
+        </if>
+        <if test="action =='testActual'">
+            SELECT SUM(numberOfReturnedGroupsForTestActual) FROM
+        </if>
+        service_engineering_standardvalue
+        WHERE
+        CONCAT(signYear,'-',signMonth) &gt;= #{yearMonthBeginStandardvalue}
+        AND
+        CONCAT(signYear,'-',signMonth) &lt;= #{yearMonthEndStandardvalue}
+    </select>
+
+</mapper>

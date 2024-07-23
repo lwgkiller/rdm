@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.embedsoft.core.dao.KzxtgnkfDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryKzxtMsg" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        kzxt_msg.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        kzxt_msg
+        LEFT JOIN os_user ON os_user.USER_ID_ = kzxt_msg.CREATE_BY_
+        where
+             recId =#{recId}
+    </select>
+
+    <select id="getKzxtMsgByUserId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      SELECT
+            kzxt_msg.content,
+            kzxt_msg.CREATE_TIME_,
+            kzxt_msg.kzxtId,
+            kzxt_msg.msgId
+        FROM
+            kzxt_msg
+        WHERE
+            kzxt_msg.isRead = 0
+            AND kzxt_msg.recId = #{userId}
+    </select>
+
+</mapper>

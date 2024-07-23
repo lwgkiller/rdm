@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmCommon.core.dao.CommonBpmDao">
+    <select id="queryNodeVarsByParam" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        bpm_sol_var.KEY_,
+        bpm_sol_var.NAME_,
+        bpm_sol_var.DEF_VAL_
+        FROM
+        bpm_sol_var
+        JOIN bpm_solution ON bpm_sol_var.SOL_ID_ = bpm_solution.SOL_ID_
+        AND bpm_solution.ACT_DEF_ID_ = bpm_sol_var.ACT_DEF_ID_
+        <where>
+            <if test="SCOPE_ != null and SCOPE_ != ''">
+                bpm_sol_var.SCOPE_ = #{SCOPE_}
+            </if>
+            <if test="SOL_ID_ != null and SOL_ID_ != ''">
+                and bpm_solution.SOL_ID_=#{SOL_ID_}
+            </if>
+            <if test="SOL_KEY_ != null and SOL_KEY_ != ''">
+                and bpm_solution.KEY_=#{SOL_KEY_}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                and bpm_sol_var.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryTaskListByInstId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            `act_ru_task`
+        WHERE
+            PROC_INST_ID_ IN ( SELECT ACT_INST_ID_ FROM bpm_inst WHERE INST_ID_ = #{INST_ID_} )
+    </select>
+
+    <select id="querySolByBusKey" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            bpm_solution.*
+        FROM
+            `bpm_inst`
+            LEFT JOIN bpm_solution ON bpm_inst.SOL_ID_ = bpm_solution.SOL_ID_
+        WHERE
+            bpm_inst.BUS_KEY_ = #{BUS_KEY_}
+    </select>
+</mapper>

@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.AttachedDocTranslateDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="transApplyId !=null and transApplyId !=''">
+            AND business.transApplyId like CONCAT('%',#{transApplyId},'%')
+        </if>
+        <if test="manualType !=null and manualType !=''">
+            AND business.manualType like CONCAT('%',#{manualType},'%')
+        </if>
+        <if test="saleType !=null and saleType !=''">
+            AND business.saleType like CONCAT('%',#{saleType},'%')
+        </if>
+        <if test="designType !=null and designType !=''">
+            AND business.designType like CONCAT('%',#{designType},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND business.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="manualCode !=null and manualCode !=''">
+            AND business.manualCode like CONCAT('%',#{manualCode},'%')
+        </if>
+        <if test="sourceManualLan !=null and sourceManualLan !=''">
+            AND business.sourceManualLan like CONCAT('%',#{sourceManualLan},'%')
+        </if>
+        <if test="translator !=null and translator !=''">
+            AND business.translator like CONCAT('%',#{translator},'%')
+        </if>
+        <if test="targetManualLan !=null and targetManualLan !=''">
+            AND business.targetManualLan like CONCAT('%',#{targetManualLan},'%')
+        </if>
+        <if test="currentProcessTask !=null and currentProcessTask !=''">
+            AND act_ru_task.NAME_ = #{currentProcessTask}
+        </if>
+        <if test="status != null and status != ''">
+            AND bpm_inst.STATUS_ = #{status}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgld'">
+                </when>
+                <when test="roleName =='ptyg'">
+                    AND business.applyDepId = #{currentUserMainDepId}
+                </when>
+            </choose>
+        </if>
+    </sql>
+    <sql id="query_where2">
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND service_engineering_attacheddoctrans_applyfileinfo.fileName LIKE '%sdltm%'
+        AND (service_engineering_attacheddoctrans_applyfileinfo.REF_ID_ IS NULL
+        OR service_engineering_attacheddoctrans_applyfileinfo.REF_ID_ != '1')
+        AND bpm_inst.STATUS_ != 'DRAFTED'
+        <if test="transApplyId !=null and transApplyId !=''">
+            AND business.transApplyId like CONCAT('%',#{transApplyId},'%')
+        </if>
+        <if test="manualType !=null and manualType !=''">
+            AND business.manualType like CONCAT('%',#{manualType},'%')
+        </if>
+        <if test="saleType !=null and saleType !=''">
+            AND business.saleType like CONCAT('%',#{saleType},'%')
+        </if>
+        <if test="designType !=null and designType !=''">
+            AND business.designType like CONCAT('%',#{designType},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND business.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="manualCode !=null and manualCode !=''">
+            AND business.manualCode like CONCAT('%',#{manualCode},'%')
+        </if>
+        <if test="sourceManualLan !=null and sourceManualLan !=''">
+            AND business.sourceManualLan like CONCAT('%',#{sourceManualLan},'%')
+        </if>
+        <if test="targetManualLan !=null and targetManualLan !=''">
+            AND business.targetManualLan like CONCAT('%',#{targetManualLan},'%')
+        </if>
+        <if test="translator !=null and translator !=''">
+            AND business.translator like CONCAT('%',#{translator},'%')
+        </if>
+        <if test="currentProcessTask !=null and currentProcessTask !=''">
+            AND act_ru_task.NAME_ = #{currentProcessTask}
+        </if>
+        <if test="status != null and status != ''">
+            AND bpm_inst.STATUS_ = #{status}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId,
+        date_format(DATE_ADD(bpm_inst.END_TIME_, INTERVAL 8 HOUR), '%Y-%m-%d %H:%i:%S') AS endTime
+        FROM
+        service_engineering_attacheddoctrans_apply AS business
+        LEFT JOIN os_rel_inst ON business.applyId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="query_where"></include>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM service_engineering_attacheddoctrans_apply
+        AS business
+        LEFT JOIN os_rel_inst ON business.applyId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            <include refid="query_where"></include>
+        </where>
+    </select>
+    <!---->
+    <select id="queryFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        os_user.FULLNAME_ as userName,
+        s.* from service_engineering_attacheddoctrans_applyfileinfo s
+        LEFT JOIN os_user ON s.CREATE_BY_ = os_user.USER_ID_
+        where mainId IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <delete id="deleteBusinessFile" parameterType="java.util.Map">
+        delete from service_engineering_attacheddoctrans_applyfileinfo
+        <where>
+            <if test="@Ognl@isNotEmpty(id)">
+                AND id=#{id}
+            </if>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(id) and @Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from service_engineering_attacheddoctrans_apply
+        <where>
+            <if test="@Ognl@isNotEmpty(businessIds)">
+                AND id IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(businessIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="queryDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            business.id,
+            business.sourceBusinessId,
+            business.sourceInstId,
+            business.sourceBpmSolKey,
+            business.sourceRefId,
+            business.transApplyId,
+            business.manualType,
+            business.saleType,
+            business.designType,
+            business.materialCode,
+            business.manualCode,
+            business.manualVersion,
+            business.mannulCE,
+            business.applyTime,
+            business.needTime,
+            business.sourceManualLan,
+            business.targetManualLan,
+            business.totalCodeNum,
+            business.selfTranslatePercent,
+            business.outTranslatePercent,
+            business.applyId,
+            business.creatorName,
+            business.applyDepId,
+            business.applyDep,
+            business.transportApplyId,
+            business.transportApplyNo,
+            business.translatorId,
+            business.translator,
+            business.remark,
+            business.businessStatus,
+            business.CREATE_TIME_,
+            business.CREATE_BY_,
+            business.UPDATE_BY_,
+            business.UPDATE_TIME_,
+            business.GROUP_ID_,
+            bpm_inst.INST_ID_ as instId
+        FROM service_engineering_attacheddoctrans_apply AS business
+            LEFT JOIN os_user ON business.applyId = os_user.USER_ID_
+            LEFT JOIN os_rel_inst ON business.applyId = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        WHERE business.id = #{businessId}
+              AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+              AND os_rel_inst.DIM1_ = '1'
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_attacheddoctrans_apply(
+            id,
+            sourceBusinessId,
+            sourceInstId,
+            sourceBpmSolKey,
+            sourceRefId,
+            transApplyId,
+            manualType,
+            saleType,
+            designType,
+            materialCode,
+            manualCode,
+            manualVersion,
+            mannulCE,
+            applyTime,
+            needTime,
+            sourceManualLan,
+            targetManualLan,
+            totalCodeNum,
+            selfTranslatePercent,
+            outTranslatePercent,
+            applyId,
+            creatorName,
+            applyDepId,
+            applyDep,
+            transportApplyId,
+            transportApplyNo,
+            translatorId,
+            translator,
+            remark,
+            businessStatus,
+            REF_ID_,
+            PARENT_ID_,
+            INST_ID_,
+            INST_STATUS_,
+            TENANT_ID_,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            GROUP_ID_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{sourceBusinessId,jdbcType=VARCHAR},
+            #{sourceInstId,jdbcType=VARCHAR},
+            #{sourceBpmSolKey,jdbcType=VARCHAR},
+            #{sourceRefId,jdbcType=VARCHAR},
+            #{transApplyId,jdbcType=VARCHAR},
+            #{manualType,jdbcType=VARCHAR},
+            #{saleType,jdbcType=VARCHAR},
+            #{designType,jdbcType=VARCHAR},
+            #{materialCode,jdbcType=VARCHAR},
+            #{manualCode,jdbcType=VARCHAR},
+            #{manualVersion,jdbcType=VARCHAR},
+            #{mannulCE,jdbcType=VARCHAR},
+            #{applyTime,jdbcType=VARCHAR},
+            #{needTime,jdbcType=VARCHAR},
+            #{sourceManualLan,jdbcType=VARCHAR},
+            #{targetManualLan,jdbcType=VARCHAR},
+            #{totalCodeNum,jdbcType=VARCHAR},
+            #{selfTranslatePercent,jdbcType=VARCHAR},
+            #{outTranslatePercent,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{creatorName,jdbcType=VARCHAR},
+            #{applyDepId,jdbcType=VARCHAR},
+            #{applyDep,jdbcType=VARCHAR},
+            #{transportApplyId,jdbcType=VARCHAR},
+            #{transportApplyNo,jdbcType=VARCHAR},
+            #{translatorId,jdbcType=VARCHAR},
+            #{translator,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{businessStatus,jdbcType=VARCHAR},
+            #{REF_ID_,jdbcType=VARCHAR},
+            #{PARENT_ID_,jdbcType=VARCHAR},
+            #{INST_ID_,jdbcType=VARCHAR},
+            #{INST_STATUS_,jdbcType=VARCHAR},
+            #{TENANT_ID_,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{GROUP_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_attacheddoctrans_apply
+        set
+            sourceBusinessId=#{sourceBusinessId,jdbcType=VARCHAR},
+            sourceInstId=#{sourceInstId,jdbcType=VARCHAR},
+            sourceBpmSolKey=#{sourceBpmSolKey,jdbcType=VARCHAR},
+            sourceRefId=#{sourceRefId,jdbcType=VARCHAR},
+            transApplyId=#{transApplyId,jdbcType=VARCHAR},
+            manualType=#{manualType,jdbcType=VARCHAR},
+            saleType=#{saleType,jdbcType=VARCHAR},
+            designType=#{designType,jdbcType=VARCHAR},
+            materialCode=#{materialCode,jdbcType=VARCHAR},
+            manualCode=#{manualCode,jdbcType=VARCHAR},
+            manualVersion=#{manualVersion,jdbcType=VARCHAR},
+            mannulCE=#{mannulCE,jdbcType=VARCHAR},
+            applyTime=#{applyTime,jdbcType=VARCHAR},
+            needTime=#{needTime,jdbcType=VARCHAR},
+            sourceManualLan=#{sourceManualLan,jdbcType=VARCHAR},
+            targetManualLan=#{targetManualLan,jdbcType=VARCHAR},
+            totalCodeNum=#{totalCodeNum,jdbcType=VARCHAR},
+            selfTranslatePercent=#{selfTranslatePercent,jdbcType=VARCHAR},
+            outTranslatePercent=#{outTranslatePercent,jdbcType=VARCHAR},
+            applyId=#{applyId,jdbcType=VARCHAR},
+            creatorName=#{creatorName,jdbcType=VARCHAR},
+            applyDepId=#{applyDepId,jdbcType=VARCHAR},
+            applyDep=#{applyDep,jdbcType=VARCHAR},
+            transportApplyId=#{transportApplyId,jdbcType=VARCHAR},
+            transportApplyNo=#{transportApplyNo,jdbcType=VARCHAR},
+            translatorId=#{translatorId,jdbcType=VARCHAR},
+            translator=#{translator,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            businessStatus=#{businessStatus,jdbcType=VARCHAR},
+            REF_ID_=#{REF_ID_,jdbcType=VARCHAR},
+            PARENT_ID_=#{PARENT_ID_,jdbcType=VARCHAR},
+            INST_ID_=#{INST_ID_,jdbcType=VARCHAR},
+            INST_STATUS_=#{INST_STATUS_,jdbcType=VARCHAR},
+            TENANT_ID_=#{TENANT_ID_,jdbcType=VARCHAR},
+            CREATE_BY_=#{CREATE_BY_,jdbcType=VARCHAR},
+            CREATE_TIME_=#{CREATE_TIME_,jdbcType=TIMESTAMP},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            GROUP_ID_=#{GROUP_ID_,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+    <!---->
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_attacheddoctrans_applyfileinfo(
+        id,
+        fileName,
+        fileSize,
+        fileDesc,
+        mainId,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id},
+        #{fileName},
+        #{fileSize},
+        #{fileDesc},
+        #{mainId},
+        #{CREATE_BY_},
+        #{CREATE_TIME_}
+        )
+    </insert>
+    <!---->
+    <update id="updateFileREFInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        update service_engineering_attacheddoctrans_applyfileinfo
+        set
+        REF_ID_=#{REF_ID_,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <select id="dataListQuerySdltm" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS status,
+        bpm_inst.INST_ID_ AS instId,
+        service_engineering_attacheddoctrans_applyfileinfo.fileName,
+        service_engineering_attacheddoctrans_applyfileinfo.id AS fileId
+        FROM
+        service_engineering_attacheddoctrans_apply AS business
+        LEFT JOIN os_rel_inst ON business.applyId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        INNER JOIN service_engineering_attacheddoctrans_applyfileinfo
+        ON service_engineering_attacheddoctrans_applyfileinfo.mainId = business.id
+        <where>
+            <include refid="query_where2"></include>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuerySdltm" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM service_engineering_attacheddoctrans_apply
+        AS business
+        LEFT JOIN os_rel_inst ON business.applyId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user AS applyer ON applyer.USER_ID_ = business.applyId
+        LEFT JOIN bpm_inst ON business.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        INNER JOIN service_engineering_attacheddoctrans_applyfileinfo
+        ON service_engineering_attacheddoctrans_applyfileinfo.mainId = business.id
+        <where>
+            <include refid="query_where2"></include>
+        </where>
+    </select>
+</mapper>

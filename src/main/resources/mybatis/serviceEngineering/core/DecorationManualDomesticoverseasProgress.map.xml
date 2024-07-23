@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.DecorationManualDomesticoverseasProgressDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_decorationmanual_domesticoverseas_progress
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.signYear = #{signYear}
+            </if>
+            <if test="planType !=null and planType !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.planType = #{planType}
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.materialCode like CONCAT('%',#{materialCode},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.salesModel like CONCAT('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_decorationmanual_domesticoverseas_progress
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.signYear = #{signYear}
+            </if>
+            <if test="planType !=null and planType !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.planType = #{planType}
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.materialCode like CONCAT('%',#{materialCode},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.salesModel like CONCAT('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertData" parameterType="java.util.Map">
+        insert into service_engineering_decorationmanual_domesticoverseas_progress(
+          id,
+          orderNum,
+          signYear,
+          planType,
+          materialCode,
+          salesModel,
+          designModel,
+          decorationManual,
+          disassemblyAndAssemblyManual,
+          structurefunctionAndMaintenanceManual,
+          testAndAdjustmentManual,
+          troubleshootingManual,
+          torqueAndToolStandardValueTable,
+          maintenanceStandardValueTable,
+          engineManual,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{orderNum,jdbcType=INTEGER},
+          #{signYear,jdbcType=VARCHAR},
+          #{planType,jdbcType=VARCHAR},
+          #{materialCode,jdbcType=VARCHAR},
+          #{salesModel,jdbcType=VARCHAR},
+          #{designModel,jdbcType=VARCHAR},
+          #{decorationManual,jdbcType=VARCHAR},
+          #{disassemblyAndAssemblyManual,jdbcType=VARCHAR},
+          #{structurefunctionAndMaintenanceManual,jdbcType=VARCHAR},
+          #{testAndAdjustmentManual,jdbcType=VARCHAR},
+          #{troubleshootingManual,jdbcType=VARCHAR},
+          #{torqueAndToolStandardValueTable,jdbcType=VARCHAR},
+          #{maintenanceStandardValueTable,jdbcType=VARCHAR},
+          #{engineManual,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateData" parameterType="java.util.Map">
+        update service_engineering_decorationmanual_domesticoverseas_progress
+        set
+        orderNum=#{orderNum,jdbcType=INTEGER},
+        signYear=#{signYear,jdbcType=VARCHAR},
+        planType=#{planType,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        decorationManual=#{decorationManual,jdbcType=VARCHAR},
+        disassemblyAndAssemblyManual=#{disassemblyAndAssemblyManual,jdbcType=VARCHAR},
+        structurefunctionAndMaintenanceManual=#{structurefunctionAndMaintenanceManual,jdbcType=VARCHAR},
+        testAndAdjustmentManual=#{testAndAdjustmentManual,jdbcType=VARCHAR},
+        troubleshootingManual=#{troubleshootingManual,jdbcType=VARCHAR},
+        torqueAndToolStandardValueTable=#{torqueAndToolStandardValueTable,jdbcType=VARCHAR},
+        maintenanceStandardValueTable=#{maintenanceStandardValueTable,jdbcType=VARCHAR},
+        engineManual=#{engineManual,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteData" parameterType="java.util.Map">
+        delete from service_engineering_decorationmanual_domesticoverseas_progress
+        where id in
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <select id="selectByMap" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_decorationmanual_domesticoverseas_progress
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.signYear = #{signYear}
+            </if>
+            <if test="planType !=null and planType !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.planType = #{planType}
+            </if>
+            <if test="materialCode !=null and materialCode !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.materialCode like CONCAT('%',#{materialCode},'%')
+            </if>
+            <if test="salesModel !=null and salesModel !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.salesModel like CONCAT('%',#{salesModel},'%')
+            </if>
+            <if test="designModel !=null and designModel !=''">
+                AND service_engineering_decorationmanual_domesticoverseas_progress.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+        </where>
+        limit 1
+    </select>
+</mapper>

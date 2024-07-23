@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.CustomsDeclarationRawdataDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="queryWhereDataListQuery">
+        <if test="@Ognl@isNotEmpty(batchNo)">
+            AND business.batchNo = #{batchNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(businessNo)">
+            AND business.businessNo = #{businessNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(submitter)">
+            AND business.submitter like CONCAT('%',#{submitter},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(submitTimeBegin)">
+            AND business.submitTime &gt;= #{submitTimeBegin}
+        </if>
+        <if test="@Ognl@isNotEmpty(submitTimeEnd)">
+            AND business.submitTime &lt;= #{submitTimeEnd}
+        </if>
+    </sql>
+    <sql id="queryWhereItemListQuery">
+        <if test="@Ognl@isNotEmpty(batchNo)">
+            AND main.batchNo = #{batchNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(businessNo)">
+            AND main.businessNo = #{businessNo}
+        </if>
+        <if test="@Ognl@isNotEmpty(machineModel)">
+            AND business.machineModel like CONCAT('%',#{machineModel},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCode)">
+            AND business.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(materialDescription)">
+            AND business.materialDescription like CONCAT('%',#{materialDescription},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(hsCode)">
+            AND business.hsCode like CONCAT('%',#{hsCode},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(elements)">
+            AND business.elements like CONCAT('%',#{elements},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(elementsFill)">
+            AND business.elementsFill like CONCAT('%',#{elementsFill},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(additionalInfo)">
+            AND business.additionalInfo like CONCAT('%',#{additionalInfo},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(materialCodes)">
+            AND materialCode IN
+            <foreach collection="materialCodes" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*
+        FROM
+        service_engineering_customs_declaration_rawdata as business
+        <where>
+            <include refid="queryWhereDataListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_customs_declaration_rawdata as business
+        <where>
+            <include refid="queryWhereDataListQuery"/>
+        </where>
+    </select>
+    <!---->
+    <select id="getDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM service_engineering_customs_declaration_rawdata AS business
+        WHERE business.id = #{id}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from service_engineering_customs_declaration_rawdata
+        <where>
+            <if test="@Ognl@isNotEmpty(ids)">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(ids)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into service_engineering_customs_declaration_rawdata(
+        id,
+        batchNo,
+        businessNo,
+        submitterId,
+        submitter,
+        submitTime,
+        businessStatus,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{batchNo,jdbcType=VARCHAR},
+        #{businessNo,jdbcType=VARCHAR},
+        #{submitterId,jdbcType=VARCHAR},
+        #{submitter,jdbcType=VARCHAR},
+        #{submitTime,jdbcType=VARCHAR},
+        #{businessStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateBusiness" parameterType="java.util.Map">
+        UPDATE service_engineering_customs_declaration_rawdata
+        SET
+        batchNo=#{batchNo,jdbcType=VARCHAR},
+        businessNo=#{businessNo,jdbcType=VARCHAR},
+        submitterId=#{submitterId,jdbcType=VARCHAR},
+        submitter=#{submitter,jdbcType=VARCHAR},
+        submitTime=#{submitTime,jdbcType=VARCHAR},
+        businessStatus=#{businessStatus,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <select id="getItemList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*
+        FROM
+        service_engineering_customs_declaration_rawdataitems as business
+        <where>
+            <if test="@Ognl@isNotEmpty(mainId)">
+                AND mainId = #{mainId}
+            </if>
+            <if test="@Ognl@isNotEmpty(machineModel)">
+                AND machineModel like CONCAT('%',#{machineModel},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(materialCode)">
+                AND materialCode like CONCAT('%',#{materialCode},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(elements)">
+                AND elements like CONCAT('%',#{elements},'%')
+            </if>
+            <if test="@Ognl@isNotEmpty(isSupplement) and isSupplement == 'true'">
+                AND processUser IS NOT NULL
+                AND processUser != ''
+            </if>
+            <if test="@Ognl@isNotEmpty(isSupplement) and isSupplement == 'false'">
+                AND (processUser IS NULL OR processUser = '')
+            </if>
+            <if test="@Ognl@isNotEmpty(mainIds)">
+                AND mainId IN
+                <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(mainId) and @Ognl@isEmpty(mainIds)">
+                AND 1=2
+            </if>
+        </where>
+    </select>
+    <!---->
+    <select id="itemListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*,
+        main.batchNo,
+        main.businessNo
+        FROM
+        service_engineering_customs_declaration_rawdataitems as business
+        LEFT JOIN service_engineering_customs_declaration_rawdata AS main
+        ON business.mainId = main.id
+        <where>
+            <include refid="queryWhereItemListQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countItemListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_customs_declaration_rawdataitems as business
+        LEFT JOIN service_engineering_customs_declaration_rawdata AS main
+        ON business.mainId = main.id
+        <where>
+            <include refid="queryWhereItemListQuery"/>
+        </where>
+    </select>
+    <!---->
+    <insert id="insertItem" parameterType="java.util.Map">
+        insert into service_engineering_customs_declaration_rawdataitems(
+        id,
+        mainId,
+        machineModel,
+        materialCode,
+        materialDescription,
+        hsCode,
+        elements,
+        elementsFill,
+        additionalInfo,
+        netWeight,
+        remarks,
+        processUser,
+        processTime,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{machineModel,jdbcType=VARCHAR},
+        #{materialCode,jdbcType=VARCHAR},
+        #{materialDescription,jdbcType=VARCHAR},
+        #{hsCode,jdbcType=VARCHAR},
+        #{elements,jdbcType=VARCHAR},
+        #{elementsFill,jdbcType=VARCHAR},
+        #{additionalInfo,jdbcType=VARCHAR},
+        #{netWeight,jdbcType=VARCHAR},
+        #{remarks,jdbcType=VARCHAR},
+        #{processUser,jdbcType=VARCHAR},
+        #{processTime,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateItem" parameterType="java.util.Map">
+        UPDATE service_engineering_customs_declaration_rawdataitems
+        SET
+        machineModel=#{machineModel,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        materialDescription=#{materialDescription,jdbcType=VARCHAR},
+        hsCode=#{hsCode,jdbcType=VARCHAR},
+        elements=#{elements,jdbcType=VARCHAR},
+        elementsFill=#{elementsFill,jdbcType=VARCHAR},
+        additionalInfo=#{additionalInfo,jdbcType=VARCHAR},
+        netWeight=#{netWeight,jdbcType=VARCHAR},
+        remarks=#{remarks,jdbcType=VARCHAR},
+        processUser=#{processUser,jdbcType=VARCHAR},
+        processTime=#{processTime,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteItems" parameterType="java.util.Map">
+        delete from service_engineering_customs_declaration_rawdataitems
+        <where>
+            <if test="@Ognl@isNotEmpty(ids)">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(mainIds)">
+                AND mainId IN
+                <foreach collection="mainIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(ids) and @Ognl@isEmpty(mainIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="getItemById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM service_engineering_customs_declaration_rawdataitems AS business
+        WHERE business.id = #{id}
+    </select>
+</mapper>

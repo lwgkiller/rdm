@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.info.core.dao.InfoRewardDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,B.infoChildType
+        FROM
+        info_reward A
+        left join info_urlconfig B on A.urlConfigId = B.id
+        where 1=1
+        <if test="type != null and type != ''">
+            and (B.infoChildType  like CONCAT('%',#{type},'%') or A.rewardType like CONCAT('%',#{type},'%'))
+        </if>
+        <if test="title != null and title != ''">
+            and A.title like CONCAT('%',#{title},'%')
+        </if>
+        <if test="publishDate != null and publishDate != ''">
+            and A.publishDate = #{publishDate}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="batchInsertObject" parameterType="java.util.List">
+        INSERT INTO info_reward (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        urlConfigId,
+        title,
+        publishDate
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.urlConfigId,jdbcType=VARCHAR},
+            #{item.title,jdbcType=VARCHAR},
+            #{item.publishDate,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO info_reward (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            title,
+            rewardType,
+            publishDate,
+            content,
+            async
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{title,jdbcType=VARCHAR},
+            #{rewardType,jdbcType=VARCHAR},
+            #{publishDate,jdbcType=VARCHAR},
+            #{content,jdbcType=VARCHAR},
+            #{async,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateReward" parameterType="java.util.Map">
+        update info_reward
+        <set>
+            <if test="title != null and title != ''">
+                title=#{title,jdbcType=VARCHAR},
+            </if>
+            <if test="rewardType != null and rewardType != ''">
+                rewardType=#{rewardType,jdbcType=VARCHAR},
+            </if>
+            <if test="publishDate != null and publishDate != ''">
+                publishDate=#{publishDate,jdbcType=VARCHAR},
+            </if>
+            <if test="content != null and content != ''">
+                content=#{content,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+       SELECT
+        A.*
+        FROM
+        info_reward A
+        where A.id = #{id}
+    </select>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from  info_reward
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <update id="updateObject" parameterType="com.alibaba.fastjson.JSONObject">
+        update info_reward
+        set content = #{content,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+    <select id="getObjectByTitle" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from info_reward where title = #{title} limit 1
+    </select>
+</mapper>

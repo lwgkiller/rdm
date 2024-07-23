@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.GjllDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <update id="updateGjll" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_newgjll
+        <set>
+            wtlx = #{wtlx,jdbcType=VARCHAR},
+            jiXing=#{jiXing,jdbcType=VARCHAR},
+            smallJiXing=#{smallJiXing,jdbcType=VARCHAR},
+            gzlj=#{gzlj,jdbcType=VARCHAR},
+            wtms=#{wtms,jdbcType=TIMESTAMP},
+            zrrId=#{zrrId,jdbcType=VARCHAR},
+            zrrName=#{zrrName,jdbcType=VARCHAR},
+            ssbmId=#{ssbmId,jdbcType=VARCHAR},
+            ssbmName=#{ssbmName,jdbcType=VARCHAR},
+            cqcs=#{cqcs,jdbcType=VARCHAR},
+            tzdh=#{tzdh,jdbcType=VARCHAR},
+            yjqhch=#{yjqhch,jdbcType=VARCHAR},
+            qhTime=#{qhTime,jdbcType=TIMESTAMP},
+            lbjgys=#{lbjgys,jdbcType=VARCHAR},
+            reason=#{reason,jdbcType=VARCHAR},
+            zlgjNumber=#{zlgjNumber,jdbcType=VARCHAR},
+            wtId=#{wtId,jdbcType=VARCHAR}
+        </set>
+        where
+        gjId=#{gjId}
+    </update>
+    <select id="queryGjllById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select zlgj_newgjll.*
+        from zlgj_newgjll
+        where
+        gjId=#{gjId}
+    </select>
+    <select id="queryGjllFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        fileId,
+        fileName,
+        belongId as gjId,
+        fileSize
+        FROM
+        zlgj_newgjllfile
+        WHERE
+        <if test="gjIds != null and gjIds !=''">
+            belongId IN
+            <foreach collection="gjIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+    <select id="queryGjll" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgj_newgjll.*,
+        os_user.FULLNAME_ as creator
+        from
+        zlgj_newgjll
+        left join os_user on zlgj_newgjll.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="smallJiXing != null and smallJiXing != ''">
+                zlgj_newgjll.smallJiXing like CONCAT('%',#{smallJiXing},'%')
+            </if>
+            <if test="wtlx != null and wtlx != ''">
+                AND zlgj_newgjll.wtlx like CONCAT('%',#{wtlx},'%')
+            </if>
+            <if test="gzlj != null and gzlj != ''">
+                AND zlgj_newgjll.gzlj like CONCAT('%',#{gzlj},'%')
+            </if>
+            <if test="jiXing != null and jiXing != ''">
+                AND zlgj_newgjll.jiXing like CONCAT('%',#{jiXing},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countGjllList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        zlgj_newgjll
+        <where>
+            <if test="smallJiXing != null and smallJiXing != ''">
+                smallJiXing like CONCAT('%',#{smallJiXing},'%')
+            </if>
+            <if test="wtlx != null and wtlx != ''">
+                AND wtlx like CONCAT('%',#{wtlx},'%')
+            </if>
+            <if test="gzlj != null and gzlj != ''">
+                AND gzlj like CONCAT('%',#{gzlj},'%')
+            </if>
+            <if test="jiXing != null and jiXing != ''">
+                AND jiXing like CONCAT('%',#{jiXing},'%')
+            </if>
+        </where>
+    </select>
+    <delete id="deleteGjllFile" parameterType="java.util.Map">
+        delete from zlgj_newgjllfile
+        <where>
+            <if test="fileId != null and fileId != ''">
+                fileId=#{fileId}
+            </if>
+            <if test="gjIds != null and gjIds !=''">
+                AND belongId IN
+                <foreach collection="gjIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteGjll" parameterType="java.util.Map">
+        delete from zlgj_newgjll
+        <where>
+            <if test="gjIds != null and gjIds !=''">
+                AND gjId IN
+                <foreach collection="gjIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="queryLlInfoById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        zlgj_wtsb_tab.wtId,
+        zlgj_wtsb_tab.zlgjNumber,
+        zlgj_wtsb_tab.wtlx,
+        zlgj_wtsb_tab.lbjgys,
+        zlgj_wtsb_tab.jiXing,
+        zlgj_wtsb_tab.smallJiXing,
+        zlgj_wtsb_tab.gzlj,
+        zlgj_wtsb_tab.wtms,
+        zlgj_wtsb_tab.zrrId,
+        zlgj_wtsb_tab.zrrName,
+        zlgj_wtsb_tab.ssbmId,
+        zlgj_wtsb_tab.ssbmName,
+        zlgj_jjfa_tab.cqcs,
+        zlgj_jjfa_tab.tzdh,
+        zlgj_jjfa_tab.wcTime,
+        zlgj_jjfa_tab.yjqhch,
+        zlgj_wtyy_tab.reason,
+        zlgj_wtsb_tab.lbjId,
+        component_test_kanban.componentCategory,
+        component_test_kanban.componentModel,
+        component_test_kanban.materialCode,
+        component_test_kanban.machineModel,
+        component_test_kanban.laboratory,
+        component_test_kanban.testType,
+        component_test_kanban.completeTestMonth,
+        component_test_kanban.testLeader,
+        component_test_kanban.testLeaderId,
+        component_test_kanban.sampleType,
+        component_test_kanban.nonconformingDescription,
+        component_test_kanban.improvementSuggestions,
+        component_test_kanban.testConclusion,
+        component_test_kanban.testRounds,
+        component_test_kanban.componentName
+        from zlgj_wtsb_tab
+        left join zlgj_jjfa_tab on zlgj_jjfa_tab.wtId = zlgj_wtsb_tab.wtId
+        LEFT JOIN component_test_kanban ON zlgj_wtsb_tab.lbjId = component_test_kanban.id
+        left join zlgj_wtyy_tab on zlgj_wtyy_tab.wtId = zlgj_wtsb_tab.wtId
+        <where>
+            <if test="jiXing != null and jiXing != ''">
+                zlgj_wtsb_tab.jiXing=#{jiXing}
+            </if>
+            <if test="wtId != null and wtId != ''">
+                and zlgj_wtsb_tab.wtId=#{wtId}
+            </if>
+        </where>
+    </select>
+    <insert id="autoCreateLl" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zlgj_newgjll(
+            gjId
+            ,wtlx
+            ,jiXing
+            ,smallJiXing
+            ,gzlj
+            ,wtms
+            ,zrrId
+            ,zrrName
+            ,ssbmId
+            ,ssbmName
+            ,cqcs
+            ,tzdh
+            ,yjqhch
+            ,qhTime
+            ,lbjgys
+            ,reason
+            ,zlgjNumber
+            ,wtId
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{gjId,jdbcType=VARCHAR},
+            #{wtlx,jdbcType=VARCHAR},
+            #{jiXing,jdbcType=VARCHAR},
+            #{smallJiXing,jdbcType=VARCHAR},
+            #{gzlj,jdbcType=VARCHAR},
+            #{wtms,jdbcType=VARCHAR},
+            #{zrrId,jdbcType=VARCHAR},
+            #{zrrName,jdbcType=VARCHAR},
+            #{ssbmId,jdbcType=VARCHAR},
+            #{ssbmName,jdbcType=VARCHAR},
+            #{cqcs,jdbcType=VARCHAR},
+            #{tzdh,jdbcType=VARCHAR},
+            #{yjqhch,jdbcType=VARCHAR},
+            #{qhTime,jdbcType=TIMESTAMP},
+            #{lbjgys,jdbcType=VARCHAR},
+            #{reason,jdbcType=VARCHAR},
+            #{zlgjNumber,jdbcType=VARCHAR},
+            #{wtId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="queryLlFileInfoById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        zlgj_tpfj_tab.id,
+        zlgj_tpfj_tab.fileName,
+        zlgj_tpfj_tab.fileSize,
+        zlgj_tpfj_tab.CREATE_BY_,
+        zlgj_tpfj_tab.CREATE_TIME_
+        from zlgj_tpfj_tab
+        <where>
+            zlgj_tpfj_tab.fjlx='gztp'
+            <if test="wtId != null and wtId != ''">
+                and zlgj_tpfj_tab.wtId=#{wtId}
+            </if>
+        </where>
+    </select>
+    <insert id="autoCreateLlFile" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zlgj_newgjllfile(
+            fileId
+            ,fileName
+            ,belongId
+            ,fileSize
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{fileId,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{belongId,jdbcType=VARCHAR},
+            #{fileSize,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="queryLlNewFileInfoById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        zlgj_newgjllfile.fileId
+        from zlgj_newgjllfile
+        <where>
+            <if test="wtId != null and wtId != ''">
+                zlgj_newgjllfile.belongId=#{wtId}
+            </if>
+        </where>
+    </select>
+</mapper>

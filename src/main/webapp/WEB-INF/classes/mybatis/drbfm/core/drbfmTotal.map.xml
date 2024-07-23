@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.drbfm.core.dao.DrbfmTotalDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryTotalList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        drbfm_total_baseinfo.*,
+        project_baseinfo.projectName,
+        os_user.FULLNAME_ AS creator,
+        os_group.NAME_ AS department
+        FROM
+        drbfm_total_baseinfo
+        LEFT JOIN project_baseinfo ON drbfm_total_baseinfo.projectId = project_baseinfo.projectId
+        LEFT JOIN os_user ON drbfm_total_baseinfo.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN os_group ON drbfm_total_baseinfo.departmentId = os_group.GROUP_ID_
+        <where>
+            <if test="jixing !=null and jixing !=''">
+                drbfm_total_baseinfo.jixing like concat('%',#{jixing},'%')
+            </if>
+            <if test="analyseName !=null and analyseName !=''">
+                AND drbfm_total_baseinfo.analyseName like concat('%',#{analyseName},'%')
+            </if>
+            <if test="creator !=null and creator !=''">
+                AND os_user.FULLNAME_ like concat('%',#{creator},'%')
+            </if>
+            <if test="id !=null and id !=''">
+                AND drbfm_total_baseinfo.id IN
+                <foreach collection="referIdList" open="(" separator="," close=")" item="item" index="index">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countTotalList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        drbfm_total_baseinfo
+        LEFT JOIN os_user ON drbfm_total_baseinfo.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="jixing !=null and jixing !=''">
+                drbfm_total_baseinfo.jixing like concat('%',#{jixing},'%')
+            </if>
+            <if test="analyseName !=null and analyseName !=''">
+                AND drbfm_total_baseinfo.analyseName like concat('%',#{analyseName},'%')
+            </if>
+            <if test="creator !=null and creator !=''">
+                AND os_user.FULLNAME_ like concat('%',#{creator},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="createTotal" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_total_baseInfo(
+            id
+            ,jixing
+            ,analyseName
+            ,femaType
+            ,departmentId
+            ,projectId
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values
+        (
+             #{id,jdbcType=VARCHAR}
+            ,#{jixing,jdbcType=VARCHAR}
+            ,#{analyseName,jdbcType=VARCHAR}
+            ,#{femaType,jdbcType=VARCHAR}
+            ,#{departmentId,jdbcType=VARCHAR}
+            ,#{projectId,jdbcType=VARCHAR}
+            ,#{CREATE_BY_,jdbcType=VARCHAR}
+            ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateTotal" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_total_baseInfo
+        set
+        jixing = #{jixing,jdbcType=VARCHAR},
+        analyseName=#{analyseName,jdbcType=VARCHAR},
+        femaType=#{femaType,jdbcType=VARCHAR},
+        projectId=#{projectId,jdbcType=VARCHAR},
+        departmentId=#{departmentId,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <select id="getTotalDetail" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        drbfm_total_baseinfo.*,
+        project_baseinfo.projectName,
+        os_group.NAME_ as department
+        FROM
+        drbfm_total_baseinfo
+        LEFT JOIN project_baseinfo ON drbfm_total_baseinfo.projectId = project_baseinfo.projectId
+        LEFT JOIN os_group ON drbfm_total_baseinfo.departmentId = os_group.GROUP_ID_
+        where
+        drbfm_total_baseinfo.id = #{totalId}
+    </select>
+
+    <select id="queryStructByParam" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        drbfm_total_struct.*
+        from drbfm_total_struct
+        <where>
+            <if test="id != null and id != ''">
+                drbfm_total_struct.id = #{id}
+            </if>
+            <if test="ids != null and ids !=''">
+                AND drbfm_total_struct.id IN
+                <foreach collection="ids" open="(" separator="," close=")" item="item" index="index">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="parentId != null and parentId !=''">
+                AND drbfm_total_struct.parentId = #{parentId}
+            </if>
+            <if test="pathId != null and pathId !=''">
+                AND drbfm_total_struct.pathIds like CONCAT('%.',#{pathId},'.%')
+            </if>
+            <if test="belongTotalId != null and belongTotalId !=''">
+                AND drbfm_total_struct.belongTotalId = #{belongTotalId}
+            </if>
+            <if test="scene != null and scene =='createSingle'">
+                AND drbfm_total_struct.judgeNeedAnalyse = '是'
+                AND drbfm_total_struct.id not in (
+                    SELECT DISTINCT
+                    drbfm_single_baseinfo.structId
+                    FROM
+                    drbfm_single_baseinfo
+                    LEFT JOIN bpm_inst ON drbfm_single_baseinfo.id = bpm_inst.BUS_KEY_
+                    WHERE
+                    bpm_inst.STATUS_ != 'DISCARD_END'
+                )
+            </if>
+            <if test="scene != null and scene =='copy'">
+                AND drbfm_total_struct.judgeNeedAnalyse = '是'
+            </if>
+        </where>
+        order by sn asc
+    </select>
+
+    <insert id="createStruct" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into drbfm_total_struct(
+            id
+            ,belongTotalId
+            ,structNumber
+            ,structName
+            ,judgeIsInterface
+            ,interfaceAName
+            ,interfaceBName
+            ,judgeNeedAnalyse
+            ,analyseUserId
+            ,analyseUserName
+            ,parentId
+            ,pathIds
+            ,sn
+            ,childs
+            ,oldId
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values
+        (
+             #{id,jdbcType=VARCHAR}
+            ,#{belongTotalId,jdbcType=VARCHAR}
+            ,#{structNumber,jdbcType=VARCHAR}
+            ,#{structName,jdbcType=VARCHAR}
+            ,#{judgeIsInterface,jdbcType=VARCHAR}
+            ,#{interfaceAName,jdbcType=VARCHAR}
+            ,#{interfaceBName,jdbcType=VARCHAR}
+            ,#{judgeNeedAnalyse,jdbcType=VARCHAR}
+            ,#{analyseUserId,jdbcType=VARCHAR}
+            ,#{analyseUserName,jdbcType=VARCHAR}
+            ,#{parentId,jdbcType=VARCHAR}
+            ,#{pathIds,jdbcType=VARCHAR}
+            ,#{sn,jdbcType=INTEGER}
+            ,#{childs,jdbcType=INTEGER}
+            ,#{oldId,jdbcType=VARCHAR}
+            ,#{CREATE_BY_,jdbcType=VARCHAR}
+            ,#{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateStruct" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_total_struct
+        set
+        structNumber = #{structNumber,jdbcType=VARCHAR},
+        structName = #{structName,jdbcType=VARCHAR},
+        judgeIsInterface=#{judgeIsInterface,jdbcType=VARCHAR},
+        interfaceAName=#{interfaceAName,jdbcType=VARCHAR},
+        interfaceBName=#{interfaceBName,jdbcType=VARCHAR},
+        judgeNeedAnalyse=#{judgeNeedAnalyse,jdbcType=VARCHAR},
+        analyseUserId=#{analyseUserId,jdbcType=VARCHAR},
+        analyseUserName=#{analyseUserName,jdbcType=VARCHAR},
+        parentId=#{parentId,jdbcType=VARCHAR},
+        pathIds=#{pathIds,jdbcType=VARCHAR},
+        sn=#{sn,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <update id="updateNeedAnalysis" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_total_struct
+        set
+        judgeNeedAnalyse=#{judgeNeedAnalyse,jdbcType=VARCHAR},
+        chuangxinxingLevel=#{chuangxinxingLevel,jdbcType=VARCHAR},
+        yanzhongxingLevel=#{yanzhongxingLevel,jdbcType=VARCHAR},
+        csfxpg=#{csfxpg,jdbcType=VARCHAR}
+        where
+        id = #{id}
+    </update>
+
+    <update id="updateStageStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE drbfm_total_struct
+        SET stageStatus = #{stageStatus}
+        WHERE
+            id = (
+            SELECT
+                structId
+            FROM
+                drbfm_single_baseinfo
+            WHERE
+            id = #{singleId}
+            LIMIT 1)
+    </update>
+
+    <update id="updateStageStatusById" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE drbfm_total_struct
+        SET stageStatus = #{stageStatus}
+        WHERE
+            id = #{structId}
+    </update>
+
+    <select id="countStructByParentId" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*)
+        from drbfm_total_struct
+        where
+        parentId = #{parentId}
+    </select>
+
+    <update id="updateStructChilds" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_total_struct
+        set
+        childs=#{childs,jdbcType=INTEGER}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteTotalBaseInfo" parameterType="java.util.Map">
+        delete from drbfm_total_baseInfo
+        where
+        id in
+        <foreach collection="totalIds" item="item" index="index" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteTotalStructByParam" parameterType="java.util.Map">
+        delete from drbfm_total_struct
+        <where>
+            <if test="totalIds != null and totalIds !=''">
+                belongTotalId IN
+                <foreach collection="totalIds" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="pathIds != null and pathIds !=''">
+                AND pathIds like CONCAT('%.',#{pathIds},'.%')
+            </if>
+        </where>
+    </delete>
+
+    <update id="updateParentChildsMinus1" parameterType="com.alibaba.fastjson.JSONObject">
+        update drbfm_total_struct
+        set childs = childs-1
+        where
+        id = #{parentId}
+    </update>
+
+    <select id="getYanzhongxingPage" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        drbfm_total_yanzhongxing
+        order by drbfm_total_yanzhongxing.id
+    </select>
+
+    <select id="getChuangxinxingPage" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        drbfm_total_chuangxinxing
+        order by drbfm_total_chuangxinxing.id
+    </select>
+</mapper>

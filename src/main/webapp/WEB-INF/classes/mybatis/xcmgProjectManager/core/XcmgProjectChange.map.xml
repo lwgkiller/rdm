@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectChangeDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--项目变更流程查询-->
+    <select id="queryChangeApplyList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_changeapply.*,
+        project_changeapply.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        os_rel_inst.PARTY1_ as applyUserDepId,
+        project_baseInfo.levelId,
+        project_level.levelName as projectLevel,
+        project_category.categoryName as projectType,
+        os_group.NAME_ as mainDeptName,
+        project_stagedivide.stageName as currentStage
+        FROM
+        project_changeapply
+        LEFT JOIN os_user ON project_changeapply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON project_changeapply.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON project_changeapply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        left join project_baseInfo on project_changeapply.projectId = project_baseInfo.projectId
+        left join project_level  on project_baseInfo.levelId = project_level.levelId
+        left join project_category  on project_category.categoryId = project_baseInfo.categoryId
+        left join os_group  on project_baseInfo.mainDepId = os_group.GROUP_ID_
+        left join project_stagedivide  on project_baseInfo.currentStageId = project_stagedivide.stageId
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND project_changeapply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="projectName != null and projectName != ''">
+                AND project_changeapply.projectName like CONCAT ('%',#{projectName},'%')
+            </if>
+            <if test="projectId != null and projectId != ''">
+                AND project_changeapply.projectId = #{projectId}
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND project_changeapply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND project_changeapply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="isBigChange != null and isBigChange != ''">
+                AND project_changeapply.isBigChange=#{isBigChange}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                and project_category.categoryId = #{categoryId}
+            </if>
+            <if test="levelId != null and levelId != ''">
+                and project_level.levelId = #{levelId}
+            </if>
+            <if test="deptIds !=null and deptIds != ''">
+                AND os_rel_inst.PARTY1_ IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+
+    <select id="queryProjectChangeById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT   M.*,A.number,B.levelName as projectLevel,D.FULLNAME_ as mainResUserName,E.categoryName as projectType,A.mainDepId,G.NAME_ as mainDeptName,F.INST_ID_ as instId,S.stageName as currentStage
+        FROM project_changeapply M
+        left join project_baseinfo A on M.projectId = A.projectId
+        left join project_level B on A.levelId = B.levelId
+        left join project_memberinfo C on A.projectId = C.projectId
+        left join os_user D on C.userId = D.USER_ID_
+        left join project_category E on A.categoryId = E.categoryId
+        left join os_group G on A.mainDepId = G.GROUP_ID_
+        left join bpm_inst F on F.BUS_KEY_ = M.id
+        left join project_stagedivide S on A.currentStageId = S.stageId
+        where 1=1
+        and C.roleId = 2
+        <if test="id != null and id != ''">
+            and M.id = #{id}
+        </if>
+        LIMIT 1
+    </select>
+
+
+    <insert id="addChangeApply" parameterType="java.util.Map">
+        INSERT INTO project_changeapply (
+        id,
+        projectId,
+        projectName,
+        taskId_,
+        reason,
+        currentCondition,
+        changeContent,
+        changeDesignDept,
+        adjustMeasure,
+        fj,
+        isLeader,
+        isBigChange,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{projectId,jdbcType=VARCHAR},
+        #{projectName,jdbcType=VARCHAR},
+        #{taskId_,jdbcType=VARCHAR},
+        #{reason,jdbcType=VARCHAR},
+          #{currentCondition,jdbcType=VARCHAR},
+            #{changeContent,jdbcType=VARCHAR},
+              #{changeDesignDept,jdbcType=VARCHAR},
+                #{adjustMeasure,jdbcType=VARCHAR},
+         #{fj,jdbcType=VARCHAR},
+        #{isLeader,jdbcType=VARCHAR},
+        #{isBigChange,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <insert id="updateChangeApply" parameterType="java.util.Map">
+        UPDATE project_changeapply SET
+        <if test="reason != null and reason != ''">
+            reason=#{reason,jdbcType=VARCHAR},
+        </if>
+        <if test="currentCondition != null and currentCondition != ''">
+            currentCondition=#{currentCondition,jdbcType=VARCHAR},
+        </if>
+        <if test="changeContent != null and changeContent != ''">
+            changeContent=#{changeContent,jdbcType=VARCHAR},
+        </if>
+        <if test="changeDesignDept != null and changeDesignDept != ''">
+            changeDesignDept=#{changeDesignDept,jdbcType=VARCHAR},
+        </if>
+        <if test="adjustMeasure != null and adjustMeasure != ''">
+            adjustMeasure=#{adjustMeasure,jdbcType=VARCHAR},
+        </if>
+        <if test="projectName != null and projectName != ''">
+            projectName=#{projectName,jdbcType=VARCHAR},
+        </if>
+        <if test="used != null and used != ''">
+            used=#{used,jdbcType=VARCHAR},
+        </if>
+        <if test="fj != null and fj != ''">
+            fj=#{fj,jdbcType=VARCHAR},
+        </if>
+        isLeader=#{isLeader,jdbcType=VARCHAR},
+        isBigChange=#{isBigChange,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+
+    <delete id="deleteChangeApplyById" parameterType="java.lang.String">
+        delete from project_changeapply
+        where project_changeapply.id=#{id}
+    </delete>
+
+    <select id="getProjectLevel"  parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT A.*,B.levelName
+            FROM project_baseinfo A
+		    left join project_level B on A.levelId = B.levelId
+			where 1=1
+        <if test="projectId != null and projectId != ''">
+            and A.projectId = #{projectId}
+        </if>
+    </select>
+    <!--根据项目id 获取项目相关信息-->
+    <select id="getProjectBaseInfo" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT   A.*,B.levelName as projectLevel,D.FULLNAME_ as mainResUserName,E.categoryName as projectType,G.NAME_ as mainDeptName,S.stageName as currentStage
+        FROM project_baseinfo A
+        left join project_level B on A.levelId = B.levelId
+        left join project_memberinfo C on A.projectId = C.projectId
+        left join os_user D on C.userId = D.USER_ID_
+        left join project_category E on A.categoryId = E.categoryId
+        left join os_group G on A.mainDepId = G.GROUP_ID_
+        left join project_stagedivide S on A.currentStageId = S.stageId
+        where 1=1
+        and C.roleId = 2
+        <if test="projectId != null and projectId != ''">
+            AND A.projectId = #{projectId}
+        </if>
+    </select>
+
+    <select id="updateProjectMember" parameterType="java.util.Map">
+        update project_memberinfo
+        set userId = #{currentUserId,jdbcType=VARCHAR}
+        where
+        id = #{memberId}
+    </select>
+</mapper>

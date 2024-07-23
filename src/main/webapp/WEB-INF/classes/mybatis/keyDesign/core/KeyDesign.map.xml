@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.keyDesign.core.dao.KeyDesignDao">
+    <select id="querySystemCategory" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        FROM
+        keydesign_treecategory
+        <where>
+            <if test="ids != null and ids != ''">
+                keydesign_treecategory.systemCategoryId in
+                <foreach collection="ids" index="index" item="id" separator="," open="(" close=")">
+                     #{id}
+                </foreach>
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND keydesign_treecategory.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+    </select>
+
+    <select id="querySystem"  parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        keydesign_tree.*
+        FROM
+        keydesign_tree
+        where
+        codeId=#{codeId}
+    </select>
+
+    <select id="queryBySystemIds" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        sum(num)
+        FROM(
+        SELECT
+        count(*) as num
+        FROM
+        keydesign_jsbz
+        <where>
+            <if test="belongbj!= null and belongbj != ''">
+                keydesign_jsbz.belongbj =#{belongbj}
+            </if>
+        </where>
+        union all
+        SELECT
+        count(*) as num
+        FROM
+        keydesign_jscsbase
+        <where>
+            <if test="belongbj!= null and belongbj != ''">
+                keydesign_jscsbase.belongbj =#{belongbj}
+            </if>
+        </where>
+        ) a
+    </select>
+
+    <insert id="saveSystemNode" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_tree
+        (
+        id,
+        codeName,
+        parentId,
+        codeId,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+          #{id,jdbcType=VARCHAR},
+          #{codeName,jdbcType=VARCHAR},
+          #{parentId,jdbcType=VARCHAR},
+          #{codeId,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP},
+          #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="updateSystemNode" parameterType="com.alibaba.fastjson.JSONObject">
+        update keydesign_tree SET
+         codeName= #{codeName,jdbcType=VARCHAR},
+         parentId= #{parentId,jdbcType=VARCHAR},
+         codeId= #{codeId,jdbcType=VARCHAR},
+         UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+         UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <delete id="delSystemNode" parameterType="java.lang.String">
+        delete from keydesign_tree
+        where id=#{id}
+    </delete>
+
+    <select id="queryExportSystem" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            *
+        FROM
+            keydesign_tree
+        where
+            systemCategoryId=#{systemCategoryId}
+            and parentId is not null
+            and parentId !=''
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND keydesign_tree.TENANT_ID_=#{TENANT_ID_}
+        </if>
+        order by systemNumber
+    </select>
+
+    <select id="queryGroupNamesByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select NAME_ from os_group
+        where
+        GROUP_ID_ IN
+        <foreach collection="groupIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+</mapper>

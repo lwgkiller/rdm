@@ -1,0 +1,1382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.ZlglmkDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <insert id="insertZgzlData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zltz_zhongguozhuanli (zgzlId,
+                                          serialNumber,
+                                          departmentId,
+                                          billNo,
+                                          reportName,
+                                          patentName,
+                                          zllxId,
+                                          applicationNumber,
+                                          theInventors,
+                                          thepatentee,
+                                          examinationApproval,
+                                          byCase,
+                                          filingdate,
+                                          authorizationDate,
+                                          authionization,
+                                          specifyCountry,
+                                          permissionOthers,
+                                          personPermitted,
+                                          whetherPledge,
+                                          transferredCompany,
+                                          claimsNumber,
+                                          gnztId,
+                                          patentDate,
+                                          expiryDate,
+                                          failureReason,
+                                          agencyName,
+                                          agentThe,
+                                          productName,
+                                          companyBelongs,
+                                          authorizedReward,
+                                          authirizedTime,
+                                          myCompanyUserIds,
+                                          myCompanyUserNames,
+                                          CREATE_BY_,
+                                          CREATE_TIME_,
+                                          TENANT_ID_,
+                                          UPDATE_BY_,
+                                          UPDATE_TIME_,
+                                          jllb,
+                                          beiZhu,
+                                          zhuanYe,
+                                          projectId,
+                                          projectName,
+                                          planId,
+                                          planName,
+                                          modelId,
+                                          modelName,
+                                          jsjdsId,
+                                          jsfz)
+        values (#{zgzlId,jdbcType=VARCHAR},
+                #{serialNumber,jdbcType=VARCHAR},
+                #{departmentId,jdbcType=VARCHAR},
+                #{billNo,jdbcType=VARCHAR},
+                #{reportName,jdbcType=VARCHAR},
+                #{patentName,jdbcType=VARCHAR},
+                #{zllxId,jdbcType=VARCHAR},
+                #{applicationNumber,jdbcType=VARCHAR},
+                #{theInventors,jdbcType=VARCHAR},
+                #{thepatentee,jdbcType=VARCHAR},
+                #{examinationApproval,jdbcType=TIMESTAMP},
+                #{byCase,jdbcType=TIMESTAMP},
+                #{filingdate,jdbcType=TIMESTAMP},
+                #{authorizationDate,jdbcType=TIMESTAMP},
+                #{authionization,jdbcType=TIMESTAMP},
+                #{specifyCountry,jdbcType=VARCHAR},
+                #{permissionOthers,jdbcType=VARCHAR},
+                #{personPermitted,jdbcType=VARCHAR},
+                #{whetherPledge,jdbcType=VARCHAR},
+                #{transferredCompany,jdbcType=VARCHAR},
+                #{claimsNumber,jdbcType=VARCHAR},
+                #{gnztId,jdbcType=VARCHAR},
+                #{patentDate,jdbcType=TIMESTAMP},
+                #{expiryDate,jdbcType=TIMESTAMP},
+                #{failureReason,jdbcType=VARCHAR},
+                #{agencyName,jdbcType=VARCHAR},
+                #{agentThe,jdbcType=VARCHAR},
+                #{productName,jdbcType=VARCHAR},
+                #{companyBelongs,jdbcType=VARCHAR},
+                #{authorizedReward,jdbcType=VARCHAR},
+                #{authirizedTime,jdbcType=TIMESTAMP},
+                #{myCompanyUserIds,jdbcType=VARCHAR},
+                #{myCompanyUserNames,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{TENANT_ID_,jdbcType=VARCHAR},
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{jllb,jdbcType=VARCHAR},
+                #{beiZhu,jdbcType=VARCHAR},
+                #{zhuanYe,jdbcType=VARCHAR},
+                #{projectId,jdbcType=VARCHAR},
+                #{projectName,jdbcType=VARCHAR},
+                #{planId,jdbcType=VARCHAR},
+                #{planName,jdbcType=VARCHAR},
+                #{modelId,jdbcType=VARCHAR},
+                #{modelName,jdbcType=VARCHAR},
+                #{jsjdsId,jdbcType=VARCHAR},
+                #{jsfz,jdbcType=VARCHAR})
+    </insert>
+    <insert id="insertGjzlData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zltz_guojizhuanli (gjzlId,
+                                       serialNumber,
+                                       pctName,
+                                       englishName,
+                                       applictonNumber,
+                                       applictonDay,
+                                       openDay,
+                                       openNumber,
+                                       theCountry,
+                                       nationalNamber,
+                                       nationOpenDay,
+                                       nationOpenNumbei,
+                                       authorizedNumber,
+                                       authorizedDay,
+                                       theInventor,
+                                       thePatentee_theApplicane,
+                                       theAgency,
+                                       appliedNational,
+                                       correspondingNumber,
+                                       patentName,
+                                       nationalStage,
+                                       gjztId,
+                                       rewardAmount,
+                                       rewardTime,
+                                       myCompanyUserIds,
+                                       myCompanyUserNames,
+                                       CREATE_BY_,
+                                       CREATE_TIME_,
+                                       TENANT_ID_,
+                                       UPDATE_BY_,
+                                       UPDATE_TIME_)
+        values (#{gjzlId,jdbcType=VARCHAR},
+                #{serialNumber,jdbcType=VARCHAR},
+                #{pctName,jdbcType=VARCHAR},
+                #{englishName,jdbcType=VARCHAR},
+                #{applictonNumber,jdbcType=VARCHAR},
+                #{applictonDay,jdbcType=TIMESTAMP},
+                #{openDay,jdbcType=TIMESTAMP},
+                #{openNumber,jdbcType=VARCHAR},
+                #{theCountry,jdbcType=VARCHAR},
+                #{nationalNamber,jdbcType=VARCHAR},
+                #{nationOpenDay,jdbcType=VARCHAR},
+                #{nationOpenNumbei,jdbcType=TIMESTAMP},
+                #{authorizedNumber,jdbcType=VARCHAR},
+                #{authorizedDay,jdbcType=TIMESTAMP},
+                #{theInventor,jdbcType=VARCHAR},
+                #{thePatentee_theApplicane,jdbcType=VARCHAR},
+                #{theAgency,jdbcType=VARCHAR},
+                #{appliedNational,jdbcType=VARCHAR},
+                #{correspondingNumber,jdbcType=VARCHAR},
+                #{patentName,jdbcType=VARCHAR},
+                #{nationalStage,jdbcType=VARCHAR},
+                #{gjztId,jdbcType=VARCHAR},
+                #{rewardAmount,jdbcType=VARCHAR},
+                #{rewardTime,jdbcType=TIMESTAMP},
+                #{myCompanyUserIds,jdbcType=VARCHAR},
+                #{myCompanyUserNames,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now(),
+                #{TENANT_ID_,jdbcType=VARCHAR},
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <update id="updateZgzlData" parameterType="com.alibaba.fastjson.JSONObject">
+        update zltz_zhongguozhuanli
+        set serialNumber        = #{serialNumber,jdbcType=VARCHAR},
+            departmentId        = #{departmentId,jdbcType=VARCHAR},
+            billNo              = #{billNo,jdbcType=VARCHAR},
+            reportName          = #{reportName,jdbcType=VARCHAR},
+            patentName          = #{patentName,jdbcType=VARCHAR},
+            zllxId              = #{zllxId,jdbcType=VARCHAR},
+            applicationNumber   = #{applicationNumber,jdbcType=VARCHAR},
+            theInventors        = #{theInventors,jdbcType=VARCHAR},
+            thepatentee         = #{thepatentee,jdbcType=VARCHAR},
+            examinationApproval = #{examinationApproval,jdbcType=TIMESTAMP},
+            byCase              = #{byCase,jdbcType=TIMESTAMP},
+            filingdate          = #{filingdate,jdbcType=TIMESTAMP},
+            authorizationDate   = #{authorizationDate,jdbcType=TIMESTAMP},
+            authionization      = #{authionization,jdbcType=TIMESTAMP},
+            specifyCountry      = #{specifyCountry,jdbcType=VARCHAR},
+            permissionOthers    = #{permissionOthers,jdbcType=VARCHAR},
+            personPermitted     = #{personPermitted,jdbcType=VARCHAR},
+            whetherPledge       = #{whetherPledge,jdbcType=VARCHAR},
+            transferredCompany  = #{transferredCompany,jdbcType=VARCHAR},
+            claimsNumber        = #{claimsNumber,jdbcType=VARCHAR},
+            gnztId              = #{gnztId,jdbcType=VARCHAR},
+            patentDate          = #{patentDate,jdbcType=TIMESTAMP},
+            expiryDate          = #{expiryDate,jdbcType=TIMESTAMP},
+            failureReason       = #{failureReason,jdbcType=VARCHAR},
+            agencyName          = #{agencyName,jdbcType=VARCHAR},
+            agentThe            = #{agentThe,jdbcType=VARCHAR},
+            productName         = #{productName,jdbcType=VARCHAR},
+            companyBelongs      = #{companyBelongs,jdbcType=VARCHAR},
+            authorizedReward    = #{authorizedReward,jdbcType=VARCHAR},
+            authirizedTime      = #{authirizedTime,jdbcType=TIMESTAMP},
+            myCompanyUserIds    = #{myCompanyUserIds,jdbcType=VARCHAR},
+            myCompanyUserNames  = #{myCompanyUserNames,jdbcType=VARCHAR},
+            TENANT_ID_          = #{TENANT_ID_,jdbcType=VARCHAR},
+            UPDATE_BY_          = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_        = now(),
+            jllb                = #{jllb,jdbcType=VARCHAR},
+            beiZhu              = #{beiZhu,jdbcType=VARCHAR},
+            zhuanYe             = #{zhuanYe,jdbcType=VARCHAR},
+            ipcFlh              = #{ipcFlh,jdbcType=VARCHAR},
+            ipcZflh             = #{ipcZflh,jdbcType=VARCHAR},
+            projectId           = #{projectId,jdbcType=VARCHAR},
+            projectName         = #{projectName,jdbcType=VARCHAR},
+            planId              = #{planId,jdbcType=VARCHAR},
+            planName            = #{planName,jdbcType=VARCHAR},
+            modelId             = #{modelId,jdbcType=VARCHAR},
+            modelName           = #{modelName,jdbcType=VARCHAR},
+            jsjdsId             = #{jsjdsId,jdbcType=VARCHAR},
+            jsfz                = #{jsfz,jdbcType=VARCHAR}
+        where zgzlId = #{zgzlId}
+    </update>
+    <update id="updateGjzlData" parameterType="com.alibaba.fastjson.JSONObject">
+        update zltz_guojizhuanli
+        set serialNumber             = #{serialNumber,jdbcType=VARCHAR},
+            pctName                  = #{pctName,jdbcType=VARCHAR},
+            englishName              = #{englishName,jdbcType=VARCHAR},
+            applictonNumber          = #{applictonNumber,jdbcType=VARCHAR},
+            applictonDay             = #{applictonDay,jdbcType=TIMESTAMP},
+            openDay                  = #{openDay,jdbcType=TIMESTAMP},
+            openNumber               = #{openNumber,jdbcType=VARCHAR},
+            theCountry               = #{theCountry,jdbcType=VARCHAR},
+            nationalNamber           = #{nationalNamber,jdbcType=VARCHAR},
+            nationOpenDay            = #{nationOpenDay,jdbcType=VARCHAR},
+            nationOpenNumbei         = #{nationOpenNumbei,jdbcType=TIMESTAMP},
+            authorizedNumber         = #{authorizedNumber,jdbcType=VARCHAR},
+            authorizedDay            = #{authorizedDay,jdbcType=TIMESTAMP},
+            theInventor              = #{theInventor,jdbcType=VARCHAR},
+            thePatentee_theApplicane = #{thePatentee_theApplicane,jdbcType=VARCHAR},
+            theAgency                = #{theAgency,jdbcType=VARCHAR},
+            appliedNational          = #{appliedNational,jdbcType=VARCHAR},
+            correspondingNumber      = #{correspondingNumber,jdbcType=VARCHAR},
+            patentName               = #{patentName,jdbcType=VARCHAR},
+            nationalStage            = #{nationalStage,jdbcType=VARCHAR},
+            gjztId                   = #{gjztId,jdbcType=VARCHAR},
+            rewardAmount             = #{rewardAmount,jdbcType=VARCHAR},
+            rewardTime               = #{rewardTime,jdbcType=TIMESTAMP},
+            myCompanyUserIds         = #{myCompanyUserIds,jdbcType=VARCHAR},
+            myCompanyUserNames       = #{myCompanyUserNames,jdbcType=VARCHAR},
+            jsfz                     = #{jsfz,jdbcType=VARCHAR},
+            TENANT_ID_               = #{TENANT_ID_,jdbcType=VARCHAR},
+            UPDATE_BY_               = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_             = now()
+        where gjzlId = #{gjzlId}
+    </update>
+    <!---->
+    <select id="queryZgzlList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        zgzl.zgzlId,
+        zgzl.serialNumber,
+        zgzl.departmentId,
+        zgzl.billNo,
+        zgzl.reportName,
+        zgzl.patentName,
+        zgzl.zllxId,
+        zgzl.applicationNumber,
+        zgzl.theInventors,
+        zgzl.thepatentee,
+        DATE_FORMAT(zgzl.examinationApproval,'%Y-%m-%d') examinationApproval,
+        DATE_FORMAT(zgzl.byCase,'%Y-%m-%d') byCase,
+        DATE_FORMAT(zgzl.filingdate,'%Y-%m-%d') filingdate,
+        DATE_FORMAT(zgzl.authorizationDate,'%Y-%m-%d') authorizationDate,
+        DATE_FORMAT(zgzl.authionization,'%Y-%m-%d') authionization,
+        zgzl.specifyCountry,
+        zgzl.permissionOthers,
+        zgzl.personPermitted,
+        zgzl.whetherPledge,
+        zgzl.transferredCompany,
+        zgzl.claimsNumber,
+        zgzl.gnztId,
+        DATE_FORMAT(zgzl.patentDate,'%Y-%m-%d') patentDate,
+        DATE_FORMAT(zgzl.expiryDate,'%Y-%m-%d') expiryDate,
+        zgzl.failureReason,
+        zgzl.agencyName,
+        zgzl.agentThe,
+        zgzl.productName,
+        zgzl.companyBelongs,
+        zgzl.authorizedReward,
+        DATE_FORMAT(zgzl.authirizedTime,'%Y-%m-%d') authirizedTime,
+        zgzl.myCompanyUserIds,
+        zgzl.myCompanyUserNames,
+        zgzl.CREATE_BY_,
+        DATE_FORMAT(zgzl.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        zgzl.TENANT_ID_,
+        zgzl.UPDATE_BY_,
+        DATE_FORMAT(zgzl.UPDATE_TIME_,'%Y-%m-%d') UPDATE_TIME_,
+        og.NAME_ AS deptName,
+        ze.enumName AS gnztName,
+        ze1.enumName AS zllxName,
+        ze2.enumName AS ifName,
+        ze3.enumName AS ifzyName,
+        zgzl.jllb,
+        zgzl.beiZhu,
+        zgzl.zhuanYe,
+        zgzl.ipcFlh,
+        zgzl.ipcZflh,
+        zgzl.jsfz,
+        zgzl.projectName
+        from
+        zltz_zhongguozhuanli zgzl
+        LEFT JOIN os_group og ON zgzl.departmentId = og.GROUP_ID_
+        LEFT JOIN zltz_enumtable ze on zgzl.gnztId = ze.id
+        LEFT JOIN zltz_enumtable ze1 on zgzl.zllxId = ze1.id
+        LEFT JOIN zltz_enumtable ze2 on zgzl.permissionOthers = ze2.id
+        LEFT JOIN zltz_enumtable ze3 on zgzl.whetherPledge = ze3.id
+        <where>
+            <if test="reportName != null and reportName != ''">
+                AND zgzl.reportName like CONCAT('%',#{reportName},'%')
+            </if>
+            <if test="patentName != null and patentName != ''">
+                AND zgzl.patentName like CONCAT('%',#{patentName},'%')
+            </if>
+            <if test="departmentId != null and departmentId != ''">
+                AND zgzl.departmentId like CONCAT('%',#{departmentId},'%')
+            </if>
+            <if test="zhuanYe != null and zhuanYe != ''">
+                AND zgzl.zhuanYe like CONCAT('%',#{zhuanYe},'%')
+            </if>
+            <if test="zllxId != null and zllxId != ''">
+                AND zgzl.zllxId like CONCAT('%',#{zllxId},'%')
+            </if>
+            <if test="theInventors != null and theInventors != ''">
+                AND zgzl.theInventors like CONCAT('%',#{theInventors},'%')
+            </if>
+            <if test="examinationApprovalStartTime != null and examinationApprovalStartTime != ''">
+                AND zgzl.examinationApproval &gt;= #{examinationApprovalStartTime}
+            </if>
+            <if test="examinationApprovalEndTime != null and examinationApprovalEndTime != ''">
+                AND zgzl.examinationApproval &lt;= #{examinationApprovalEndTime}
+            </if>
+            <if test="filingdateStartTime != null and filingdateStartTime != ''">
+                AND zgzl.filingdate &gt;= #{filingdateStartTime}
+            </if>
+            <if test="filingdateEndTime != null and filingdateEndTime != ''">
+                AND zgzl.filingdate &lt;= #{filingdateEndTime}
+            </if>
+            <if test="authionizationStartTime != null and authionizationStartTime != ''">
+                AND zgzl.authionization &gt;= #{authionizationStartTime}
+            </if>
+            <if test="authionizationEndTime != null and authionizationEndTime != ''">
+                AND zgzl.authionization &lt;= #{authionizationEndTime}
+            </if>
+            <if test="gnztId != null and gnztId != ''">
+                AND zgzl.gnztId = #{gnztId}
+            </if>
+            <if test="patentDateStartTime != null and patentDateStartTime != ''">
+                AND zgzl.patentDate &gt;= #{patentDateStartTime}
+            </if>
+            <if test="patentDateEndTime != null and patentDateEndTime != ''">
+                AND zgzl.patentDate &lt;= #{patentDateEndTime}
+            </if>
+            <if test="expiryDateStartTime != null and expiryDateStartTime != ''">
+                AND zgzl.expiryDate &gt;= #{expiryDateStartTime}
+            </if>
+            <if test="expiryDateEndTime != null and expiryDateEndTime != ''">
+                AND zgzl.expiryDate &lt;= #{expiryDateEndTime}
+            </if>
+            <if test="failureReason != null and failureReason != ''">
+                AND zgzl.failureReason like CONCAT('%',#{failureReason},'%')
+            </if>
+            <if test="agencyName != null and agencyName != ''">
+                AND zgzl.agencyName like CONCAT('%',#{agencyName},'%')
+            </if>
+            <if test="jllb != null and jllb != ''">
+                AND zgzl.jllb like CONCAT('%',#{jllb},'%')
+            </if>
+            <if test="authirizedTimeStartTime != null and authirizedTimeStartTime != ''">
+                AND zgzl.authirizedTime &gt;= #{authirizedTimeStartTime}
+            </if>
+            <if test="authirizedTimeEndTime != null and authirizedTimeEndTime != ''">
+                AND zgzl.authirizedTime &lt;= #{authirizedTimeEndTime}
+            </if>
+            <if test="applicationNumber != null and applicationNumber != ''">
+                AND zgzl.applicationNumber like CONCAT('%',#{applicationNumber},'%')
+            </if>
+            <!--todo:增加按照ids的查询(老李mark暂留)-->
+            <if test="outList != null and outList !=''">
+                AND zgzl.zgzlId IN
+                <foreach collection="outList" index="index" item="item" open="(" separator="," close=")">
+                    #{item.outReferId}
+                </foreach>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="queryGjzlList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        gjzl.gjzlId,
+        gjzl.serialNumber,
+        gjzl.pctName,
+        gjzl.englishName,
+        gjzl.applictonNumber,
+        DATE_FORMAT(gjzl.applictonDay,'%Y-%m-%d') applictonDay,
+        DATE_FORMAT(gjzl.openDay,'%Y-%m-%d') openDay,
+        gjzl.openNumber,
+        gjzl.theCountry,
+        gjzl.nationalNamber,
+        gjzl.nationOpenDay,
+        DATE_FORMAT(gjzl.nationOpenNumbei,'%Y-%m-%d') nationOpenNumbei,
+        gjzl.authorizedNumber,
+        DATE_FORMAT(gjzl.authorizedDay,'%Y-%m-%d') authorizedDay,
+        gjzl.theInventor,
+        gjzl.thePatentee_theApplicane,
+        gjzl.theAgency,
+        gjzl.appliedNational,
+        gjzl.correspondingNumber,
+        gjzl.patentName,
+        gjzl.nationalStage,
+        gjzl.gjztId,
+        gjzl.rewardAmount,
+        DATE_FORMAT(gjzl.rewardTime,'%Y-%m-%d') rewardTime,
+        gjzl.myCompanyUserIds,
+        gjzl.myCompanyUserNames,
+        gjzl.CREATE_BY_,
+        DATE_FORMAT(gjzl.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        gjzl.TENANT_ID_,
+        gjzl.UPDATE_BY_,
+        DATE_FORMAT(gjzl.UPDATE_TIME_,'%Y-%m-%d') UPDATE_TIME_,
+        ze.enumName AS gjztName,
+        ze1.enumName AS ifAppliedNational,
+        ze2.enumName AS ifNationalStage
+        from
+        zltz_guojizhuanli gjzl
+        LEFT JOIN zltz_enumtable ze on gjzl.gjztId = ze.id
+        LEFT JOIN zltz_enumtable ze1 on gjzl.appliedNational = ze1.id
+        LEFT JOIN zltz_enumtable ze2 on gjzl.nationalStage = ze2.id
+        <where>
+            <if test="pctName != null and pctName != ''">
+                gjzl.pctName like CONCAT('%',#{pctName},'%')
+            </if>
+            <if test="applictonNumber != null and applictonNumber != ''">
+                AND gjzl.applictonNumber like CONCAT('%',#{applictonNumber},'%')
+            </if>
+            <if test="applictonDayStartTime != null and applictonDayStartTime != ''">
+                AND gjzl.applictonDay &gt;= #{applictonDayStartTime}
+            </if>
+            <if test="applictonDayEndTime != null and applictonDayEndTime != ''">
+                AND gjzl.applictonDay &lt;= #{applictonDayEndTime}
+            </if>
+            <if test="theCountry != null and theCountry != ''">
+                AND gjzl.theCountry like CONCAT('%',#{theCountry},'%')
+            </if>
+            <if test="authorizedDayStartTime != null and authorizedDayStartTime != ''">
+                AND gjzl.authorizedDay &gt;= #{authorizedDayStartTime}
+            </if>
+            <if test="authorizedDayEndTime != null and authorizedDayEndTime != ''">
+                AND gjzl.authorizedDay &lt;= #{authorizedDayEndTime}
+            </if>
+            <if test="theInventor != null and theInventor != ''">
+                AND gjzl.theInventor like CONCAT('%',#{theInventor},'%')
+            </if>
+            <if test="theAgency != null and theAgency != ''">
+                AND gjzl.theAgency like CONCAT('%',#{theAgency},'%')
+            </if>
+            <if test="gjztId != null and gjztId != ''">
+                AND gjzl.gjztId like CONCAT('%',#{gjztId},'%')
+            </if>
+            <if test="rewardTimeStartTime != null and rewardTimeStartTime != ''">
+                AND gjzl.rewardTime &gt;= #{rewardTimeStartTime}
+            </if>
+            <if test="rewardTimeEndTime != null and rewardTimeEndTime != ''">
+                AND gjzl.rewardTime &lt;= #{rewardTimeEndTime}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countZgzlList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        zltz_zhongguozhuanli zgzl
+        <where>
+            <if test="reportName != null and reportName != ''">
+                AND zgzl.reportName like CONCAT('%',#{reportName},'%')
+            </if>
+            <if test="patentName != null and patentName != ''">
+                AND zgzl.patentName like CONCAT('%',#{patentName},'%')
+            </if>
+            <if test="departmentId != null and departmentId != ''">
+                AND zgzl.departmentId like CONCAT('%',#{departmentId},'%')
+            </if>
+            <if test="zhuanYe != null and zhuanYe != ''">
+                AND zgzl.zhuanYe like CONCAT('%',#{zhuanYe},'%')
+            </if>
+            <if test="zllxId != null and zllxId != ''">
+                AND zgzl.zllxId like CONCAT('%',#{zllxId},'%')
+            </if>
+            <if test="theInventors != null and theInventors != ''">
+                AND zgzl.theInventors like CONCAT('%',#{theInventors},'%')
+            </if>
+            <if test="examinationApprovalStartTime != null and examinationApprovalStartTime != ''">
+                AND zgzl.examinationApproval &gt;= #{examinationApprovalStartTime}
+            </if>
+            <if test="examinationApprovalEndTime != null and examinationApprovalEndTime != ''">
+                AND zgzl.examinationApproval &lt;= #{examinationApprovalEndTime}
+            </if>
+            <if test="filingdateStartTime != null and filingdateStartTime != ''">
+                AND zgzl.filingdate &gt;= #{filingdateStartTime}
+            </if>
+            <if test="filingdateEndTime != null and filingdateEndTime != ''">
+                AND zgzl.filingdate &lt;= #{filingdateEndTime}
+            </if>
+            <if test="authionizationStartTime != null and authionizationStartTime != ''">
+                AND zgzl.authionization &gt;= #{authionizationStartTime}
+            </if>
+            <if test="authionizationEndTime != null and authionizationEndTime != ''">
+                AND zgzl.authionization &lt;= #{authionizationEndTime}
+            </if>
+            <if test="gnztId != null and gnztId != ''">
+                AND zgzl.gnztId = #{gnztId}
+            </if>
+            <if test="patentDateStartTime != null and patentDateStartTime != ''">
+                AND zgzl.patentDate &gt;= #{patentDateStartTime}
+            </if>
+            <if test="patentDateEndTime != null and patentDateEndTime != ''">
+                AND zgzl.patentDate &lt;= #{patentDateEndTime}
+            </if>
+            <if test="expiryDateStartTime != null and expiryDateStartTime != ''">
+                AND zgzl.expiryDate &gt;= #{expiryDateStartTime}
+            </if>
+            <if test="expiryDateEndTime != null and expiryDateEndTime != ''">
+                AND zgzl.expiryDate &lt;= #{expiryDateEndTime}
+            </if>
+            <if test="failureReason != null and failureReason != ''">
+                AND zgzl.failureReason like CONCAT('%',#{failureReason},'%')
+            </if>
+            <if test="agencyName != null and agencyName != ''">
+                AND zgzl.agencyName like CONCAT('%',#{agencyName},'%')
+            </if>
+            <if test="jllb != null and jllb != ''">
+                AND zgzl.jllb like CONCAT('%',#{jllb},'%')
+            </if>
+            <if test="authirizedTimeStartTime != null and authirizedTimeStartTime != ''">
+                AND zgzl.authirizedTime &gt;= #{authirizedTimeStartTime}
+            </if>
+            <if test="authirizedTimeEndTime != null and authirizedTimeEndTime != ''">
+                AND zgzl.authirizedTime &lt;= #{authirizedTimeEndTime}
+            </if>
+            <if test="applicationNumber != null and applicationNumber != ''">
+                AND zgzl.applicationNumber like CONCAT('%',#{applicationNumber},'%')
+            </if>
+            <if test="outList != null and outList !=''">
+                AND zgzl.zgzlId IN
+                <foreach collection="outList" index="index" item="item" open="(" separator="," close=")">
+                    #{item.outReferId}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="countGjzlList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        zltz_guojizhuanli gjzl
+        <where>
+            <if test="pctName != null and pctName != ''">
+                gjzl.pctName like CONCAT('%',#{pctName},'%')
+            </if>
+            <if test="applictonNumber != null and applictonNumber != ''">
+                AND gjzl.applictonNumber like CONCAT('%',#{applictonNumber},'%')
+            </if>
+            <if test="applictonDayStartTime != null and applictonDayStartTime != ''">
+                AND gjzl.applictonDay &gt;= #{applictonDayStartTime}
+            </if>
+            <if test="applictonDayEndTime != null and applictonDayEndTime != ''">
+                AND gjzl.applictonDay &lt;= #{applictonDayEndTime}
+            </if>
+            <if test="theCountry != null and theCountry != ''">
+                AND gjzl.theCountry like CONCAT('%',#{theCountry},'%')
+            </if>
+            <if test="authorizedDayStartTime != null and authorizedDayStartTime != ''">
+                AND gjzl.authorizedDay &gt;= #{authorizedDayStartTime}
+            </if>
+            <if test="authorizedDayEndTime != null and authorizedDayEndTime != ''">
+                AND gjzl.authorizedDay &lt;= #{authorizedDayEndTime}
+            </if>
+            <if test="theInventor != null and theInventor != ''">
+                AND gjzl.theInventor like CONCAT('%',#{theInventor},'%')
+            </if>
+            <if test="theAgency != null and theAgency != ''">
+                AND gjzl.theAgency like CONCAT('%',#{theAgency},'%')
+            </if>
+            <if test="gjztId != null and gjztId != ''">
+                AND gjzl.gjztId like CONCAT('%',#{gjztId},'%')
+            </if>
+            <if test="rewardTimeStartTime != null and rewardTimeStartTime != ''">
+                AND gjzl.rewardTime &gt;= #{rewardTimeStartTime}
+            </if>
+            <if test="rewardTimeEndTime != null and rewardTimeEndTime != ''">
+                AND gjzl.rewardTime &lt;= #{rewardTimeEndTime}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <select id="queryZgzlId" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        zgzl.zgzlId,
+        zgzl.serialNumber,
+        zgzl.departmentId,
+        zgzl.billNo,
+        zgzl.reportName,
+        zgzl.patentName,
+        zgzl.zllxId,
+        zgzl.applicationNumber,
+        zgzl.theInventors,
+        zgzl.thepatentee,
+        DATE_FORMAT(zgzl.examinationApproval,'%Y-%m-%d') examinationApproval,
+        DATE_FORMAT(zgzl.byCase,'%Y-%m-%d') byCase,
+        DATE_FORMAT(zgzl.filingdate,'%Y-%m-%d') filingdate,
+        DATE_FORMAT(zgzl.authorizationDate,'%Y-%m-%d') authorizationDate,
+        DATE_FORMAT(zgzl.authionization,'%Y-%m-%d') authionization,
+        zgzl.specifyCountry,
+        zgzl.permissionOthers,
+        zgzl.personPermitted,
+        zgzl.whetherPledge,
+        zgzl.transferredCompany,
+        zgzl.claimsNumber,
+        zgzl.gnztId,
+        DATE_FORMAT(zgzl.patentDate,'%Y-%m-%d') patentDate,
+        DATE_FORMAT(zgzl.expiryDate,'%Y-%m-%d') expiryDate,
+        zgzl.failureReason,
+        zgzl.agencyName,
+        zgzl.agentThe,
+        zgzl.productName,
+        zgzl.companyBelongs,
+        zgzl.authorizedReward,
+        DATE_FORMAT(zgzl.authirizedTime,'%Y-%m-%d') authirizedTime,
+        zgzl.myCompanyUserIds,
+        zgzl.myCompanyUserNames,
+        zgzl.CREATE_BY_,
+        DATE_FORMAT(zgzl.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        zgzl.TENANT_ID_,
+        zgzl.UPDATE_BY_,
+        DATE_FORMAT(zgzl.UPDATE_TIME_,'%Y-%m-%d') UPDATE_TIME_,
+        og.NAME_ AS deptName,
+        zgzl.zhuanYe,
+        zgzl.jllb,
+        zgzl.beiZhu,
+        zgzl.ipcFlh,
+        zgzl.ipcZflh,
+        zgzl.projectId,
+        zgzl.projectName,
+        zgzl.planId,
+        zgzl.planName,
+        zgzl.modelId,
+        zgzl.modelName,
+        zgzl.jsjdsId,
+        zgzl.jsfz,
+        jsjds_baseinfo.zlName
+        from
+        zltz_zhongguozhuanli zgzl
+        LEFT JOIN os_group og ON zgzl.departmentId = og.GROUP_ID_
+        left join jsjds_baseinfo on jsjds_baseinfo.jsjdsId = zgzl.jsjdsId
+        <where>
+            <if test="zgzlId != null and zgzlId != ''">
+                zgzl.zgzlId = #{zgzlId}
+            </if>
+        </where>
+    </select>
+    <select id="queryGjzlId" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        gjzlId,
+        serialNumber,
+        pctName,
+        englishName,
+        applictonNumber,
+        DATE_FORMAT(applictonDay,'%Y-%m-%d') applictonDay,
+        DATE_FORMAT(openDay,'%Y-%m-%d') openDay,
+        openNumber,
+        theCountry,
+        nationalNamber,
+        nationOpenDay,
+        DATE_FORMAT(nationOpenNumbei,'%Y-%m-%d') nationOpenNumbei,
+        authorizedNumber,
+        DATE_FORMAT(authorizedDay,'%Y-%m-%d') authorizedDay,
+        theInventor,
+        thePatentee_theApplicane,
+        theAgency,
+        appliedNational,
+        correspondingNumber,
+        patentName,
+        nationalStage,
+        gjztId,
+        rewardAmount,
+        DATE_FORMAT(rewardTime,'%Y-%m-%d') rewardTime,
+        myCompanyUserIds,
+        myCompanyUserNames,
+        CREATE_BY_,
+        DATE_FORMAT(CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        TENANT_ID_,
+        UPDATE_BY_,
+        DATE_FORMAT(UPDATE_TIME_,'%Y-%m-%d') UPDATE_TIME_
+        from
+        zltz_guojizhuanli
+        <where>
+            <if test="gjzlId != null and gjzlId != ''">
+                gjzlId = #{gjzlId}
+            </if>
+        </where>
+    </select>
+    <select id="enumList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zltz_enumTable.*
+        FROM
+        zltz_enumTable
+        <where>
+            <if test="type != null and type !=''">
+                zltz_enumTable.enumType = #{type}
+            </if>
+        </where>
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO zltz_zhengshu (id,
+                                   zlId,
+                                   fileName,
+                                   fileSize,
+                                   CREATE_BY_,
+                                   CREATE_TIME_,
+                                   TENANT_ID_,
+                                   UPDATE_BY_,
+                                   UPDATE_TIME_)
+        VALUES (#{id,jdbcType=VARCHAR},
+                #{zlId,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP},
+                #{TENANT_ID_,jdbcType=VARCHAR},
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <insert id="addfyFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO zltz_piaoju (id,
+                                 costid,
+                                 fileName,
+                                 fileSize,
+                                 CREATE_BY_,
+                                 CREATE_TIME_,
+                                 TENANT_ID_,
+                                 UPDATE_BY_,
+                                 UPDATE_TIME_)
+        VALUES (#{id,jdbcType=VARCHAR},
+                #{costid,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP},
+                #{TENANT_ID_,jdbcType=VARCHAR},
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <select id="getFiles" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zz.id,
+        zz.zlId,
+        zz.fileName,
+        zz.fileSize,
+        zz.CREATE_BY_,
+        DATE_FORMAT(zz.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        os.FULLNAME_ AS CREATE_BY_NAME
+        from
+        zltz_zhengshu zz
+        left join OS_user os on zz.CREATE_BY_=os.USER_ID_
+        <where>
+            <if test="standardId != null and standardId != ''">
+                zz.zlId = #{standardId}
+            </if>
+            <if test="fileName != null and fileName != ''">
+                AND zz.fileName like concat('%', #{fileName},'%')
+            </if>
+        </where>
+    </select>
+    <select id="getfyFiles" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zp.id,
+        zp.costid,
+        zp.fileName,
+        zp.fileSize,
+        zp.CREATE_BY_,
+        DATE_FORMAT(zp.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        os.FULLNAME_ AS CREATE_BY_NAME
+        from
+        zltz_piaoju zp
+        left join OS_user os on zp.CREATE_BY_=os.USER_ID_
+        <where>
+            <if test="standardId != null and standardId != ''">
+                zp.costid = #{standardId}
+            </if>
+            <if test="fileName != null and fileName != ''">
+                AND zp.fileName like concat('%', #{fileName},'%')
+            </if>
+        </where>
+    </select>
+    <delete id="deleteFileByIds" parameterType="java.util.Map">
+        delete from zltz_zhengshu
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteJfpjFileByIds" parameterType="java.util.Map">
+        delete from zltz_piaoju
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getJiaoFeiList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zf.fyId,
+        zf.jflbId,
+        zf.paymenAmount,
+        DATE_FORMAT(zf.paymentTime,'%Y-%m-%d') paymentTime,
+        zf.zlId,
+        zf.CREATE_BY_,
+        DATE_FORMAT(zf.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        zf.TENANT_ID_,
+        zf.UPDATE_BY_,
+        DATE_FORMAT(zf.UPDATE_TIME_,'%Y-%m-%d') UPDATE_TIME_,
+        og.enumName as enumName
+        FROM
+        zltz_feiyong zf
+        LEFT JOIN zltz_enumTable og ON zf.jflbId = og.id
+        <where>
+            <if test="meetingId !=null and meetingId !=''">
+                zf.zlId = #{meetingId}
+            </if>
+        </where>
+    </select>
+    <select id="queryFYId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlId
+        FROM
+        zltz_feiyong
+        <where>
+            <if test="fyId !=null and fyId !=''">
+                fyId = #{fyId}
+            </if>
+        </where>
+    </select>
+    <insert id="insertJiaoFeiData" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO zltz_feiyong (fyId,
+                                  jflbId,
+                                  paymenAmount,
+                                  paymentTime,
+                                  zlId,
+                                  CREATE_BY_,
+                                  CREATE_TIME_,
+                                  TENANT_ID_,
+                                  UPDATE_BY_,
+                                  UPDATE_TIME_)
+        VALUES (#{fyId,jdbcType=VARCHAR},
+                #{jflbId,jdbcType=VARCHAR},
+                #{paymenAmount,jdbcType=VARCHAR},
+                #{paymentTime,jdbcType=TIMESTAMP},
+                #{zlId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP},
+                #{TENANT_ID_,jdbcType=VARCHAR},
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+    <update id="updateJiaoFeiData" parameterType="com.alibaba.fastjson.JSONObject">
+        update zltz_feiyong
+        set jflbId       = #{jflbId,jdbcType=VARCHAR},
+            paymenAmount = #{paymenAmount,jdbcType=VARCHAR},
+            paymentTime  = #{paymentTime,jdbcType=TIMESTAMP},
+            zlId         = #{zlId,jdbcType=VARCHAR},
+            TENANT_ID_   = #{TENANT_ID_,jdbcType=VARCHAR},
+            UPDATE_BY_   = #{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where fyId = #{fyId}
+    </update>
+    <!---->
+    <select id="queryZlglFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zltz_zhengshu.*
+        FROM
+        zltz_zhengshu
+        WHERE
+        zltz_zhengshu.zlId IN
+        <foreach collection="zlglIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="queryJiaoFeiFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zltz_piaoju.*
+        FROM
+        zltz_piaoju
+        WHERE
+        zltz_piaoju.costid IN
+        <foreach collection="jiaoFeiIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <delete id="deleteZlglFile" parameterType="java.util.Map">
+        delete from zltz_zhengshu
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="zgzlIds != null and zgzlIds !=''">
+                AND zlId IN
+                <foreach collection="zgzlIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteJiaoFeiFile" parameterType="java.util.Map">
+        delete from zltz_piaoju
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="jiaoFeiId != null and jiaoFeiId !=''">
+                AND costid IN
+                <foreach collection="jiaoFeiId" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteZgzl" parameterType="java.util.Map">
+        delete from zltz_zhongguozhuanli
+        <where>
+            <if test="zgzlIds != null and zgzlIds !=''">
+                zgzlId IN
+                <foreach collection="zgzlIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteJiaoFei" parameterType="java.util.Map">
+        delete from zltz_feiyong
+        <where>
+            <if test="jiaoFeiId != null and jiaoFeiId !=''">
+                fyId IN
+                <foreach collection="jiaoFeiId" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteGjzl" parameterType="java.util.Map">
+        delete from zltz_guojizhuanli
+        <where>
+            <if test="zgzlIds != null and zgzlIds !=''">
+                gjzlId IN
+                <foreach collection="zgzlIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="queryZgzlEXCList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        zgzl.zgzlId,
+        zgzl.serialNumber,
+        zgzl.departmentId,
+        zgzl.billNo,
+        zgzl.reportName,
+        zgzl.patentName,
+        zgzl.zllxId,
+        zgzl.applicationNumber,
+        zgzl.theInventors,
+        zgzl.thepatentee,
+        DATE_FORMAT(zgzl.examinationApproval,'%Y-%m-%d') examinationApproval,
+        DATE_FORMAT(zgzl.byCase,'%Y-%m-%d') byCase,
+        DATE_FORMAT(zgzl.filingdate,'%Y-%m-%d') filingdate,
+        DATE_FORMAT(zgzl.authorizationDate,'%Y-%m-%d') authorizationDate,
+        DATE_FORMAT(zgzl.authionization,'%Y-%m-%d') authionization,
+        zgzl.specifyCountry,
+        zgzl.permissionOthers,
+        zgzl.personPermitted,
+        zgzl.whetherPledge,
+        zgzl.transferredCompany,
+        zgzl.claimsNumber,
+        zgzl.gnztId,
+        DATE_FORMAT(zgzl.patentDate,'%Y-%m-%d') patentDate,
+        DATE_FORMAT(zgzl.expiryDate,'%Y-%m-%d') expiryDate,
+        zgzl.failureReason,
+        zgzl.agencyName,
+        zgzl.agentThe,
+        zgzl.productName,
+        zgzl.companyBelongs,
+        zgzl.authorizedReward,
+        DATE_FORMAT(zgzl.authirizedTime,'%Y-%m-%d') authirizedTime,
+        zgzl.myCompanyUserIds,
+        zgzl.myCompanyUserNames,
+        zgzl.CREATE_BY_,
+        DATE_FORMAT(zgzl.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        zgzl.TENANT_ID_,
+        zgzl.UPDATE_BY_,
+        DATE_FORMAT(zgzl.UPDATE_TIME_,'%Y-%m-%d') UPDATE_TIME_,
+        og.NAME_ AS deptName,
+        ze.enumName AS gnztName,
+        ze1.enumName AS zllxName,
+        ze2.enumName AS ifName,
+        ze3.enumName AS ifzyName,
+        zgzl.jllb,
+        zgzl.beiZhu,
+        zgzl.zhuanYe,
+        zgzl.projectId,
+        zgzl.projectName,
+        zgzl.planId,
+        zgzl.modelId,
+        zgzl.modelName,
+        zgzl.jsfz,
+        zgzl.projectName
+        from
+        zltz_zhongguozhuanli zgzl
+        LEFT JOIN os_group og ON zgzl.departmentId = og.GROUP_ID_
+        LEFT JOIN zltz_enumtable ze on zgzl.gnztId = ze.id
+        LEFT JOIN zltz_enumtable ze1 on zgzl.zllxId = ze1.id
+        LEFT JOIN zltz_enumtable ze2 on zgzl.permissionOthers = ze2.id
+        LEFT JOIN zltz_enumtable ze3 on zgzl.whetherPledge = ze3.id
+        <where>
+            <if test="patentName != null and patentName != ''">
+                zgzl.patentName like CONCAT('%',#{patentName},'%')
+            </if>
+            <if test="departmentId != null and departmentId != ''">
+                AND zgzl.departmentId like CONCAT('%',#{departmentId},'%')
+            </if>
+            <if test="zhuanYe != null and zhuanYe != ''">
+                AND zgzl.zhuanYe like CONCAT('%',#{zhuanYe},'%')
+            </if>
+            <if test="zllxId != null and zllxId != ''">
+                AND zgzl.zllxId like CONCAT('%',#{zllxId},'%')
+            </if>
+            <if test="theInventors != null and theInventors != ''">
+                AND zgzl.theInventors like CONCAT('%',#{theInventors},'%')
+            </if>
+            <if test="examinationApprovalStartTime != null and examinationApprovalStartTime != ''">
+                AND zgzl.examinationApproval &gt;= #{examinationApprovalStartTime}
+            </if>
+            <if test="examinationApprovalEndTime != null and examinationApprovalEndTime != ''">
+                AND zgzl.examinationApproval &lt;= #{examinationApprovalEndTime}
+            </if>
+            <if test="filingdateStartTime != null and filingdateStartTime != ''">
+                AND zgzl.filingdate &gt;= #{filingdateStartTime}
+            </if>
+            <if test="filingdateEndTime != null and filingdateEndTime != ''">
+                AND zgzl.filingdate &lt;= #{filingdateEndTime}
+            </if>
+            <if test="authionizationStartTime != null and authionizationStartTime != ''">
+                AND zgzl.authionization &gt;= #{authionizationStartTime}
+            </if>
+            <if test="authionizationEndTime != null and authionizationEndTime != ''">
+                AND zgzl.authionization &lt;= #{authionizationEndTime}
+            </if>
+            <if test="gnztId != null and gnztId != ''">
+                AND zgzl.gnztId = #{gnztId}
+            </if>
+            <if test="patentDateStartTime != null and patentDateStartTime != ''">
+                AND zgzl.patentDate &gt;= #{patentDateStartTime}
+            </if>
+            <if test="patentDateEndTime != null and patentDateEndTime != ''">
+                AND zgzl.patentDate &lt;= #{patentDateEndTime}
+            </if>
+            <if test="expiryDateStartTime != null and expiryDateStartTime != ''">
+                AND zgzl.expiryDate &gt;= #{expiryDateStartTime}
+            </if>
+            <if test="expiryDateEndTime != null and expiryDateEndTime != ''">
+                AND zgzl.expiryDate &lt;= #{expiryDateEndTime}
+            </if>
+            <if test="failureReason != null and failureReason != ''">
+                AND zgzl.failureReason like CONCAT('%',#{failureReason},'%')
+            </if>
+            <if test="agencyName != null and agencyName != ''">
+                AND zgzl.agencyName like CONCAT('%',#{agencyName},'%')
+            </if>
+            <if test="jllb != null and jllb != ''">
+                AND zgzl.jllb = like CONCAT('%',#{jllb},'%')
+            </if>
+            <if test="authirizedTimeStartTime != null and authirizedTimeStartTime != ''">
+                AND zgzl.authirizedTime &gt;= #{authirizedTimeStartTime}
+            </if>
+            <if test="authirizedTimeEndTime != null and authirizedTimeEndTime != ''">
+                AND zgzl.authirizedTime &lt;= #{authirizedTimeEndTime}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="queryGjzlEXCList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        gjzl.gjzlId,
+        gjzl.serialNumber,
+        gjzl.pctName,
+        gjzl.englishName,
+        gjzl.applictonNumber,
+        DATE_FORMAT(gjzl.applictonDay,'%Y-%m-%d') applictonDay,
+        DATE_FORMAT(gjzl.openDay,'%Y-%m-%d') openDay,
+        gjzl.openNumber,
+        gjzl.theCountry,
+        gjzl.nationalNamber,
+        gjzl.nationOpenDay,
+        DATE_FORMAT(gjzl.nationOpenNumbei,'%Y-%m-%d') nationOpenNumbei,
+        gjzl.authorizedNumber,
+        DATE_FORMAT(gjzl.authorizedDay,'%Y-%m-%d') authorizedDay,
+        gjzl.theInventor,
+        gjzl.thePatentee_theApplicane,
+        gjzl.theAgency,
+        gjzl.appliedNational,
+        gjzl.correspondingNumber,
+        gjzl.patentName,
+        gjzl.nationalStage,
+        gjzl.gjztId,
+        gjzl.rewardAmount,
+        DATE_FORMAT(gjzl.rewardTime,'%Y-%m-%d') rewardTime,
+        gjzl.myCompanyUserIds,
+        gjzl.myCompanyUserNames,
+        gjzl.CREATE_BY_,
+        DATE_FORMAT(gjzl.CREATE_TIME_,'%Y-%m-%d') CREATE_TIME_,
+        gjzl.TENANT_ID_,
+        gjzl.UPDATE_BY_,
+        DATE_FORMAT(gjzl.UPDATE_TIME_,'%Y-%m-%d') UPDATE_TIME_,
+        ze.enumName AS gjztName,
+        ze1.enumName AS ifAppliedNational,
+        ze2.enumName AS ifNationalStage
+        from
+        zltz_guojizhuanli gjzl
+        LEFT JOIN zltz_enumtable ze on gjzl.gjztId = ze.id
+        LEFT JOIN zltz_enumtable ze1 on gjzl.appliedNational = ze1.id
+        LEFT JOIN zltz_enumtable ze2 on gjzl.nationalStage = ze2.id
+        <where>
+            <if test="pctName != null and pctName != ''">
+                gjzl.pctName like CONCAT('%',#{pctName},'%')
+            </if>
+            <if test="applictonNumber != null and applictonNumber != ''">
+                AND gjzl.applictonNumber like CONCAT('%',#{applictonNumber},'%')
+            </if>
+            <if test="applictonDayStartTime != null and applictonDayStartTime != ''">
+                AND gjzl.applictonDay &gt;= #{applictonDayStartTime}
+            </if>
+            <if test="applictonDayEndTime != null and applictonDayEndTime != ''">
+                AND gjzl.applictonDay &lt;= #{applictonDayEndTime}
+            </if>
+            <if test="theCountry != null and theCountry != ''">
+                AND gjzl.theCountry like CONCAT('%',#{theCountry},'%')
+            </if>
+            <if test="authorizedDayStartTime != null and authorizedDayStartTime != ''">
+                AND gjzl.authorizedDay &gt;= #{authorizedDayStartTime}
+            </if>
+            <if test="authorizedDayEndTime != null and authorizedDayEndTime != ''">
+                AND gjzl.authorizedDay &lt;= #{authorizedDayEndTime}
+            </if>
+            <if test="theInventor != null and theInventor != ''">
+                AND gjzl.theInventor like CONCAT('%',#{theInventor},'%')
+            </if>
+            <if test="theAgency != null and theAgency != ''">
+                AND gjzl.theAgency like CONCAT('%',#{theAgency},'%')
+            </if>
+            <if test="gjztId != null and gjztId != ''">
+                AND gjzl.gjztId like CONCAT('%',#{gjztId},'%')
+            </if>
+            <if test="rewardTimeStartTime != null and rewardTimeStartTime != ''">
+                AND gjzl.rewardTime &gt;= #{rewardTimeStartTime}
+            </if>
+            <if test="rewardTimeEndTime != null and rewardTimeEndTime != ''">
+                AND gjzl.rewardTime &lt;= #{rewardTimeEndTime}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <insert id="insertZgzlDataExc" parameterType="java.util.Map">
+        insert into zltz_zhongguozhuanli (zgzlId,
+                                          serialNumber,
+                                          departmentId,
+                                          billNo,
+                                          reportName,
+                                          patentName,
+                                          zllxId,
+                                          applicationNumber,
+                                          theInventors,
+                                          thepatentee,
+                                          examinationApproval,
+                                          byCase,
+                                          filingdate,
+                                          authorizationDate,
+                                          authionization,
+                                          specifyCountry,
+                                          permissionOthers,
+                                          personPermitted,
+                                          whetherPledge,
+                                          transferredCompany,
+                                          claimsNumber,
+                                          gnztId,
+                                          patentDate,
+                                          expiryDate,
+                                          failureReason,
+                                          agencyName,
+                                          agentThe,
+                                          productName,
+                                          companyBelongs,
+                                          authorizedReward,
+                                          authirizedTime,
+                                          myCompanyUserIds,
+                                          myCompanyUserNames,
+                                          CREATE_BY_,
+                                          CREATE_TIME_,
+                                          TENANT_ID_,
+                                          UPDATE_BY_,
+                                          UPDATE_TIME_,
+                                          jllb,
+                                          beiZhu,
+                                          zhuanYe,
+                                          jsfz)
+        values (#{zgzlId,jdbcType=VARCHAR},
+                #{serialNumber,jdbcType=VARCHAR},
+                #{departmentId,jdbcType=VARCHAR},
+                #{billNo,jdbcType=VARCHAR},
+                #{reportName,jdbcType=VARCHAR},
+                #{patentName,jdbcType=VARCHAR},
+                #{zllxId,jdbcType=VARCHAR},
+                #{applicationNumber,jdbcType=VARCHAR},
+                #{theInventors,jdbcType=VARCHAR},
+                #{thepatentee,jdbcType=VARCHAR},
+                #{examinationApproval,jdbcType=TIMESTAMP},
+                #{byCase,jdbcType=TIMESTAMP},
+                #{filingdate,jdbcType=TIMESTAMP},
+                #{authorizationDate,jdbcType=TIMESTAMP},
+                #{authionization,jdbcType=TIMESTAMP},
+                #{specifyCountry,jdbcType=VARCHAR},
+                #{permissionOthers,jdbcType=VARCHAR},
+                #{personPermitted,jdbcType=VARCHAR},
+                #{whetherPledge,jdbcType=VARCHAR},
+                #{transferredCompany,jdbcType=VARCHAR},
+                #{claimsNumber,jdbcType=VARCHAR},
+                #{gnztId,jdbcType=VARCHAR},
+                #{patentDate,jdbcType=TIMESTAMP},
+                #{expiryDate,jdbcType=TIMESTAMP},
+                #{failureReason,jdbcType=VARCHAR},
+                #{agencyName,jdbcType=VARCHAR},
+                #{agentThe,jdbcType=VARCHAR},
+                #{productName,jdbcType=VARCHAR},
+                #{companyBelongs,jdbcType=VARCHAR},
+                #{authorizedReward,jdbcType=VARCHAR},
+                #{authirizedTime,jdbcType=TIMESTAMP},
+                #{myCompanyUserIds,jdbcType=VARCHAR},
+                #{myCompanyUserNames,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP},
+                #{TENANT_ID_,jdbcType=VARCHAR},
+                #{UPDATE_BY_,jdbcType=VARCHAR},
+                #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                #{jllb,jdbcType=VARCHAR},
+                #{beiZhu,jdbcType=VARCHAR},
+                #{zhuanYe,jdbcType=VARCHAR},
+                #{jsfz,jdbcType=VARCHAR})
+    </insert>
+    <select id="getEnumList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT id, enumName
+        FROM zltz_enumTable
+    </select>
+
+    <select id="queryDeptInfos" resultType="com.alibaba.fastjson.JSONObject">
+        select GROUP_ID_, NAME_
+        from os_group
+        where DIM_ID_ = '1'
+    </select>
+
+    <select id="getUserDeptInfoById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select os_group.NAME_ as groupName, os_group.GROUP_ID_ as groupId
+        from os_rel_inst
+                 left join os_group on os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        where os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+          and os_rel_inst.DIM1_ = '1'
+          and os_rel_inst.IS_MAIN_ = 'YES'
+          and os_rel_inst.PARTY2_ = #{USER_ID_}
+    </select>
+
+    <insert id="insertZgzlByJsjds" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zltz_zhongguozhuanli (zgzlId,
+                                          departmentId,
+                                          reportName,
+                                          zllxId,
+                                          theInventors,
+                                          myCompanyUserIds,
+                                          myCompanyUserNames,
+                                          thepatentee,
+                                          gnztId,
+                                          productName,
+                                          examinationApproval,
+                                          zhuanYe,
+                                          projectId,
+                                          projectName,
+                                          planId,
+                                          planName,
+                                          jsjdsId,
+                                          CREATE_BY_,
+                                          CREATE_TIME_)
+        values (#{zgzlId,jdbcType=VARCHAR},
+                #{departmentId,jdbcType=VARCHAR},
+                #{reportName,jdbcType=VARCHAR},
+                #{zllxId,jdbcType=VARCHAR},
+                #{theInventors,jdbcType=VARCHAR},
+                #{myCompanyUserIds,jdbcType=VARCHAR},
+                #{myCompanyUserNames,jdbcType=VARCHAR},
+                #{thepatentee,jdbcType=VARCHAR},
+                #{gnztId,jdbcType=VARCHAR},
+                #{productName,jdbcType=VARCHAR},
+                #{examinationApproval,jdbcType=TIMESTAMP},
+                #{zhuanYe,jdbcType=TIMESTAMP},
+                #{projectId,jdbcType=VARCHAR},
+                #{projectName,jdbcType=VARCHAR},
+                #{planId,jdbcType=VARCHAR},
+                #{planName,jdbcType=VARCHAR},
+                #{jsjdsId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                now())
+    </insert>
+    <select id="getPatentById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from zltz_zhongguozhuanli
+        where zgzlId = #{zgzlId}
+    </select>
+    <update id="updatePatentAsyncStatus" parameterType="java.lang.String">
+        update zltz_zhongguozhuanli
+        set authorizeAsync = '0'
+        WHERE zgzlId = #{zgzlId}
+    </update>
+
+    <update id="updateLastUpdateTime" parameterType="java.lang.String">
+        UPDATE SYS_PROPERTIES
+        SET VALUE_ = #{value,jdbcType=VARCHAR}
+        WHERE ALIAS_ = "ZLTZ_LAST_TIME"
+    </update>
+    <update id="updateJdsProject" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE jsjds_baseinfo
+        SET projectId   = #{projectId,jdbcType=VARCHAR},
+            projectName = #{projectName,jdbcType=VARCHAR},
+            planId      = #{planId,jdbcType=VARCHAR},
+            planName    = #{planName,jdbcType=VARCHAR},
+            sflx        = '是'
+        WHERE jsjdsId = #{jsjdsId}
+    </update>
+    <select id="checkProject" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select project_outlink.*, project_baseinfo.projectName
+        from project_outlink
+                 left join project_baseinfo on project_baseinfo.projectId = project_outlink.projectId
+        where outReferId = #{zgzlId}
+    </select>
+</mapper>

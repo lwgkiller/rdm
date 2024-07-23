@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.portrait.core.dao.PortraitFilesDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into portrait_files(
+            id,
+            fileName,
+            fileSize,
+            fileDesc,
+            mainId,
+            fileType,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{fileSize,jdbcType=VARCHAR},
+            #{fileDesc,jdbcType=VARCHAR},
+            #{mainId,jdbcType=VARCHAR},
+            #{fileType,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <select id="getFileListByMainId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from portrait_files
+        where mainId = #{mainId}
+    </select>
+    <delete id="delFileById" parameterType="java.lang.String">
+        delete from portrait_files where id = #{id}
+    </delete>
+    <delete id="delFileByDetailId" parameterType="java.lang.String">
+        delete from portrait_files
+        where detailId = #{detailId}
+    </delete>
+    <select id="getFileList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            os_user.FULLNAME_ as userName,
+            A.*
+            FROM
+            portrait_files A
+            LEFT JOIN os_user ON A.CREATE_BY_ = os_user.USER_ID_
+        where A.mainId = #{mainId}
+        AND A.fileType=#{fileType}
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+</mapper>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.digitization.core.dao.SzhDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="getMenus" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        a.*,
+        a.MENU_ID_ id,
+        ( CASE WHEN sum( b.clickCount ) IS NULL THEN 0 ELSE sum( b.clickCount ) END ) clickCount,
+        sys_subsys.principalId as subsysRespIds
+        FROM
+        SYS_MENU a
+        LEFT JOIN sys_subsys ON a.SYS_ID_ = sys_subsys.SYS_ID_
+        LEFT JOIN sys_menu_pageclick b ON a.MENU_ID_ = b.menuId
+        <where>
+            <if test="sysId != null and sysId !=''">
+                a.SYS_ID_=#{sysId}
+            </if>
+            <if test="notShowNames != null and notShowNames!=''">
+                AND sys_subsys.NAME_ not in
+                <foreach collection="notShowNames" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and startTime !=''">
+                AND (onlineTime is not null and onlineTime !='' and onlineTime &gt;= #{startTime})
+            </if>
+            <if test="endTime != null and endTime !=''">
+                AND (onlineTime is not null and onlineTime !='' and onlineTime &lt;= #{endTime})
+            </if>
+            <if test="developUser != null and developUser !=''">
+                AND a.developUser like CONCAT('%',#{developUser},'%')
+            </if>
+            <if test="gnStatus != null and gnStatus !=''">
+                AND a.gnStatus in
+                <foreach collection="gnStatus" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY
+        a.MENU_ID_
+		order by a.SYS_ID_,a.SN_ asc
+	</select>
+
+    <select id="getSubsysByParam" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+		select sys_subsys.*, sys_subsys.SYS_ID_ id
+        from sys_subsys
+		<where>
+            <if test="sysId != null and sysId !=''">
+                SYS_ID_=#{sysId}
+            </if>
+            <if test="sysIdList != null and sysIdList !=''">
+                AND SYS_ID_ in
+                <foreach collection="sysIdList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="notShowNames != null and notShowNames!=''">
+                AND NAME_ not in
+                <foreach collection="notShowNames" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by SN_ asc
+	</select>
+
+    <select id="pageClickYearMonthQueryGroupMonth" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        yearMonth,
+        sum( clickCount ) AS sumCount
+        FROM
+        sys_menu_pageclick_yearmonth
+        WHERE
+        menuId = #{menuId}
+        AND yearMonth &gt; #{startYearMonth}
+        AND yearMonth &lt;= #{endYearMonth}
+        GROUP BY
+        yearMonth
+    </select>
+
+    <select id="pageClickYearMonthQueryGroupDept" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        deptId,
+        dept as deptName,
+        sum( clickCount ) AS sumCount
+        FROM
+        sys_menu_pageclick_yearmonth
+        WHERE
+        menuId = #{menuId}
+        AND yearMonth &gt; #{startYearMonth}
+        AND yearMonth &lt;= #{endYearMonth}
+        GROUP BY
+        deptId
+        order by sumCount desc
+    </select>
+
+    <insert id="insertPageClick" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO sys_menu_pageclick ( menuId, menuName, deptId, dept, clickCount )
+        VALUES
+        ( #{menuId}, #{menuName}, #{deptId}, #{dept}, 1 )
+        ON DUPLICATE KEY UPDATE clickCount = clickCount + 1
+    </insert>
+
+    <insert id="insertPageClickYearMonth" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO sys_menu_pageclick_yearmonth ( menuId, menuName, deptId, dept, yearMonth, clickCount )
+        VALUES
+        ( #{menuId}, #{menuName}, #{deptId}, #{dept}, #{yearMonth}, 1 )
+        ON DUPLICATE KEY UPDATE clickCount = clickCount + 1
+    </insert>
+
+    <delete id="deletePageClickOneYearAgo" parameterType="java.util.Map">
+        delete from sys_menu_pageclick_yearmonth
+        where
+        yearMonth &lt;= #{yearMonth}
+    </delete>
+</mapper>

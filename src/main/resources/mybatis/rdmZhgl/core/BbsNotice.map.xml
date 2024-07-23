@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.BbsNoticeDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ as publisher,
+        C.title,
+        C.direction,
+        D.NAME_ as plateName
+        FROM
+        bbs_notice A
+        left join os_user B on A.CREATE_BY_ = B.USER_ID_
+        left join bbs_baseinfo C on A.mainId = C.id
+        left join sys_subsys D on C.plate = D.KEY_
+        where 1=1
+        <if test="mainId != null and mainId != ''">
+            and A.mainId = #{mainId}
+        </if>
+        <if test="userId != null and userId != ''">
+            and A.userId = #{userId}
+        </if>
+        <if test="isRead != null and isRead != ''">
+            and A.isRead = #{isRead}
+        </if>
+        order by A.isRead, A.CREATE_TIME_ desc
+    </select>
+    <select id="getObject" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+         SELECT
+            A.*,
+            B.FULLNAME_ as publisher
+        FROM
+             bbs_notice A
+             left join os_user B on A.CREATE_BY_ = B.USER_ID_
+	        where A.id = #{id}
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+         INSERT INTO bbs_notice (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            userId,
+            isRead
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{userId,jdbcType=VARCHAR},
+            #{isRead,jdbcType=VARCHAR}
+        )
+    </insert>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from bbs_notice
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="delByMainId" parameterType="java.lang.String">
+        delete from bbs_notice
+        WHERE
+        mainId =#{mainId}
+    </delete>
+    <delete id="batchDeleteByMainId" parameterType="java.util.Map">
+        delete from bbs_notice
+        WHERE
+        mainId in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getNoticeUsers" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            bbs_config A
+        WHERE
+            A.plate = #{plate}
+            AND A.type = #{type}
+    </select>
+    <update id="updateReadStatus" parameterType="java.util.Map">
+        update bbs_notice
+            set isRead = '1',
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        mainId = #{mainId}
+        and userId = #{userId}
+    </update>
+    <select id="getStandardUsers" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            B.*
+        FROM
+            standard_field_relation A left join standard_field B on A.fieldId = B.fieldId
+        WHERE
+            A.standardId = #{standardId}
+    </select>
+</mapper>

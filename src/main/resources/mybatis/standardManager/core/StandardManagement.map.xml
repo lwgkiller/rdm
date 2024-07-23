@@ -1,0 +1,869 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardManagementDao">
+    <select id="queryStandardList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_revisebaseinfo.*,
+        os_user.FULLNAME_ AS applyUserName,
+        bpm_inst.STATUS_ AS instStatus,
+        os_group.NAME_ as applyUserDeptName,
+        os_group.GROUP_ID_ AS creatorDepId,
+        os_user.FULLNAME_ AS creator,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_,
+        o3.NAME_ as DeptName
+        FROM
+        standard_revisebaseinfo
+        LEFT JOIN os_user ON standard_revisebaseinfo.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON standard_revisebaseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join os_user o1 on standard_revisebaseinfo.standardLeaderId=o1.USER_ID_
+        left join os_rel_inst o2 on o1.USER_ID_=o2.PARTY2_
+        left join os_group o3 on o2.PARTY1_=o3.GROUP_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1' and o2.REL_TYPE_KEY_='GROUP-USER-BELONG' and o2.DIM1_='1'
+            <if test="standardName != null and standardName != ''">
+                AND (
+                standard_revisebaseinfo.standardName like CONCAT ('%',#{standardName},'%')
+                OR standard_revisebaseinfo.oldStandardName like CONCAT ('%',#{standardName},'%')
+                )
+            </if>
+            <if test="standardLeaderName != null and standardLeaderName != ''">
+                AND standard_revisebaseinfo.standardLeaderName like CONCAT ('%',#{standardLeaderName},'%')
+            </if>
+            <if test="DeptName != null and DeptName != ''">
+                AND o3.NAME_ like CONCAT ('%',#{DeptName},'%')
+            </if>
+            <if test="applyTimeStart != null and applyTimeStart != ''">
+                AND standard_revisebaseinfo.CREATE_TIME_ &gt;= #{applyTimeStart}
+            </if>
+            <if test="applyTimeEnd != null and applyTimeEnd != ''">
+                AND standard_revisebaseinfo.CREATE_TIME_ &lt;= #{applyTimeEnd}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="feedbackId != null and feedbackId != ''">
+                AND standard_revisebaseinfo.feedbackId  like CONCAT ('%',#{feedbackId},'%')
+            </if>
+            <if test="standardPeopleName != null and standardPeopleName != ''">
+                AND standard_revisebaseinfo.standardPeopleName like CONCAT ('%',#{standardPeopleName},'%')
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+    <!--LEFT JOIN standard_source ON standard_reviseBaseInfo.problemStandardId=standard_source.id-->
+    <select id="queryDemandDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_reviseBaseInfo.id,
+            standard_reviseBaseInfo.feedbackId,
+            standard_reviseBaseInfo.standardId,
+            standard_reviseBaseInfo.rwly,
+            standard_source.standardName as finalStandardName,
+            standard_source.standardNumber as finalStandardNumber,
+            standard_reviseBaseInfo.standardName,
+            standard_reviseBaseInfo.standardAndApply,
+            standard_reviseBaseInfo.standardLeaderId,
+            standard_reviseBaseInfo.standardLeaderName,
+            standard_reviseBaseInfo.mainDraftIds,
+            standard_reviseBaseInfo.mainDraftNames,
+            DATE_FORMAT(standard_reviseBaseInfo.draftTime,'%Y-%m-%d') draftTime,
+            DATE_FORMAT(standard_reviseBaseInfo.solicitopinionsTime,'%Y-%m-%d') solicitopinionsTime,
+            DATE_FORMAT(standard_reviseBaseInfo.reviewTime,'%Y-%m-%d') reviewTime,
+            DATE_FORMAT(standard_reviseBaseInfo.reportforapprovalTime,'%Y-%m-%d') reportforapprovalTime,
+            DATE_FORMAT(standard_reviseBaseInfo.applicationTime,'%Y-%m-%d') applicationTime,
+            standard_reviseBaseInfo.standardPeopleId,
+            standard_reviseBaseInfo.standardPeopleName,
+            standard_reviseBaseInfo.modelPeopleId,
+            standard_reviseBaseInfo.modelPeopleName,
+            standard_reviseBaseInfo.referStandardIds,
+            standard_reviseBaseInfo.referStandardNames,
+            standard_reviseBaseInfo.yjUserIds,
+            standard_reviseBaseInfo.yjUserNames,
+            standard_reviseBaseInfo.CREATE_BY_,
+            standard_reviseBaseInfo.CREATE_TIME_,
+            standard_reviseBaseInfo.TENANT_ID_,
+            standard_reviseBaseInfo.rwms,
+            standard_reviseBaseInfo.oldStandardName,
+            standard_reviseBaseInfo.oldStandardId,
+            standard_reviseBaseInfo.rwlb,
+
+            standard_reviseBaseInfo.bzmd,
+            standard_reviseBaseInfo.bzfw,
+            standard_reviseBaseInfo.bzxz,
+            standard_reviseBaseInfo.scly,
+            standard_reviseBaseInfo.clsj,
+            standard_reviseBaseInfo.bzhlxyj,
+            standard_reviseBaseInfo.sffsgys,
+            standard_reviseBaseInfo.sffy,
+            standard_reviseBaseInfo.fyjg,
+            standard_reviseBaseInfo.jsxmId,
+            standard_reviseBaseInfo.jsbzzcId,
+            standard_reviseBaseInfo.otherId,
+
+            standard_reviseBaseInfo.psjl,
+            standard_reviseBaseInfo.bzscIds,
+            standard_reviseBaseInfo.bzscNmaes,
+            standard_reviseBaseInfo.ssqrIds,
+            standard_reviseBaseInfo.ssqrNames,
+            DATE_FORMAT(standard_reviseBaseInfo.sjcaTime,'%Y-%m-%d') sjcaTime,
+            DATE_FORMAT(standard_reviseBaseInfo.sjzqTime,'%Y-%m-%d') sjzqTime,
+            DATE_FORMAT(standard_reviseBaseInfo.sjpsTime,'%Y-%m-%d') sjpsTime,
+            DATE_FORMAT(standard_reviseBaseInfo.sjbpTime,'%Y-%m-%d') sjbpTime,
+            DATE_FORMAT(standard_reviseBaseInfo.sjyyTime,'%Y-%m-%d') sjyyTime,
+            os_user.FULLNAME_ AS applyUserName,
+            os_user.MOBILE_ AS applyUserPhone,
+            os_group.NAME_ AS applyUserDeptName,
+            bpm_inst.INST_ID_ as instId
+        FROM
+            standard_reviseBaseInfo
+            left join bpm_inst on standard_reviseBaseInfo.id = bpm_inst.BUS_KEY_
+            LEFT JOIN os_user ON standard_reviseBaseInfo.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+            LEFT JOIN standard_source ON standard_reviseBaseInfo.standardId=standard_source.id
+        WHERE
+            standard_reviseBaseInfo.id = #{formId}
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+    </select>
+
+    <insert id="addStandardDemand" parameterType="java.util.Map">
+        INSERT INTO standard_reviseBaseInfo
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+        <if test=" applyId                   != null and applyId                   != '' and applyId                   != 'null'">id                   ,</if>
+        <if test=" rwly                 != null and rwly                 != '' and rwly                 != 'null'">rwly           ,</if>
+        <if test=" feedbackId           != null and feedbackId           != '' and feedbackId           != 'null'">feedbackId           ,</if>
+        <if test=" standardId           != null and standardId           != '' and standardId           != 'null'">standardId           ,</if>
+        <if test=" standardName         != null and standardName         != '' and standardName         != 'null'">standardName         ,</if>
+        <if test=" standardAndApply     != null and standardAndApply     != '' and standardAndApply     != 'null'">standardAndApply     ,</if>
+        <if test=" standardLeaderId     != null and standardLeaderId     != '' and standardLeaderId     != 'null'">standardLeaderId     ,</if>
+        <if test=" standardLeaderName   != null and standardLeaderName   != '' and standardLeaderName   != 'null'">standardLeaderName   ,</if>
+        <if test=" mainDraftIds         != null and mainDraftIds         != '' and mainDraftIds         != 'null'">mainDraftIds         ,</if>
+        <if test=" mainDraftNames       != null and mainDraftNames       != '' and mainDraftNames       != 'null'">mainDraftNames       ,</if>
+        <if test=" draftTime             != null and draftTime             != '' and draftTime             != 'null'">draftTime            ,</if>
+        <if test=" solicitopinionsTime  != null and solicitopinionsTime  != '' and solicitopinionsTime  != 'null'">solicitopinionsTime  ,</if>
+        <if test=" reviewTime           != null and reviewTime           != '' and reviewTime           != 'null'">reviewTime           ,</if>
+        <if test=" reportforapprovalTime != null and reportforapprovalTime != '' and reportforapprovalTime != 'null'">reportforapprovalTime ,</if>
+        <if test=" applicationTime      != null and applicationTime      != '' and applicationTime      != 'null'">applicationTime      ,</if>
+        <if test=" standardPeopleId     != null and standardPeopleId     != '' and standardPeopleId     != 'null'">standardPeopleId     ,</if>
+        <if test=" standardPeopleName   != null and standardPeopleName   != '' and standardPeopleName   != 'null'">standardPeopleName   ,</if>
+        <if test=" referStandardIds     != null and referStandardIds     != '' and referStandardIds     != 'null'">referStandardIds     ,</if>
+        <if test=" referStandardNames   != null and referStandardNames   != '' and referStandardNames   != 'null'">referStandardNames   ,</if>
+        <if test=" yjUserIds            != null and yjUserIds            != '' and yjUserIds            != 'null'">yjUserIds            ,</if>
+        <if test=" yjUserNames          != null and yjUserNames          != '' and yjUserNames          != 'null'">yjUserNames          ,</if>
+        <if test=" CREATE_BY_           != null and CREATE_BY_           != '' and CREATE_BY_           != 'null'">CREATE_BY_           ,</if>
+        <if test=" CREATE_TIME_         != null and CREATE_TIME_         != '' and CREATE_TIME_         != 'null'">CREATE_TIME_         ,</if>
+        <if test=" TENANT_ID_           != null and TENANT_ID_           != '' and TENANT_ID_           != 'null'">TENANT_ID_           ,</if>
+        <if test=" rwms != null and rwms != '' and rwms != 'null'">rwms ,</if>
+        <if test=" oldStandardName != null and oldStandardName != '' and oldStandardName != 'null'">oldStandardName ,</if>
+        <if test=" oldStandardId != null and oldStandardId != '' and oldStandardId != 'null'">oldStandardId ,</if>
+        <if test=" rwlb != null and rwlb != '' and rwlb != 'null'">rwlb ,</if>
+        <if test=" bzmd != null and bzmd != '' and bzmd != 'null'">bzmd ,</if>
+        <if test=" bzfw != null and bzfw != '' and bzfw != 'null'">bzfw ,</if>
+        <if test=" bzxz != null and bzxz != '' and bzxz != 'null'">bzxz ,</if>
+        <if test=" scly != null and scly != '' and scly != 'null'">scly ,</if>
+        <if test=" clsj != null and clsj != '' and clsj != 'null'">clsj ,</if>
+        <if test=" jsxmId != null and jsxmId != '' and jsxmId != 'null'">jsxmId ,</if>
+        <if test=" jsbzzcId != null and jsbzzcId != '' and jsbzzcId != 'null'">jsbzzcId ,</if>
+        <if test=" otherId != null and otherId != '' and otherId != 'null'">otherId ,</if>
+        <if test=" psjl      != null and psjl      != '' and psjl      != 'null'">psjl      ,</if>
+        <if test=" bzscIds     != null and bzscIds     != '' and bzscIds     != 'null'">bzscIds     ,</if>
+        <if test=" bzscNmaes   != null and bzscNmaes   != '' and bzscNmaes   != 'null'">bzscNmaes   ,</if>
+        <if test=" ssqrIds     != null and ssqrIds     != '' and ssqrIds     != 'null'">ssqrIds     ,</if>
+        <if test=" ssqrNames   != null and ssqrNames   != '' and ssqrNames   != 'null'">ssqrNames   ,</if>
+        <if test=" sjcaTime            != null and sjcaTime            != '' and sjcaTime            != 'null'">sjcaTime            ,</if>
+        <if test=" sjzqTime          != null and sjzqTime          != '' and sjzqTime          != 'null'">sjzqTime          ,</if>
+        <if test=" sjpsTime           != null and sjpsTime           != '' and sjpsTime           != 'null'">sjpsTime           ,</if>
+        <if test=" sjbpTime         != null and sjbpTime         != '' and sjbpTime         != 'null'">sjbpTime         ,</if>
+        <if test=" sjyyTime           != null and sjyyTime           != '' and sjyyTime           != 'null'">sjyyTime          </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+        <if test=" applyId                            != null and applyId                   != '' and applyId                   != 'null'"> #{applyId,jdbcType=VARCHAR},        </if>
+        <if test=" rwly                    != null and rwly           != '' and rwly           != 'null'"> #{rwly,jdbcType=VARCHAR},        </if>
+        <if test=" feedbackId                    != null and feedbackId           != '' and feedbackId           != 'null'"> #{feedbackId,jdbcType=VARCHAR},        </if>
+        <if test=" standardId                    != null and standardId           != '' and standardId           != 'null'"> #{standardId,jdbcType=VARCHAR},        </if>
+        <if test=" standardName                  != null and standardName         != '' and standardName         != 'null'"> #{standardName,jdbcType=VARCHAR},        </if>
+        <if test=" standardAndApply              != null and standardAndApply     != '' and standardAndApply     != 'null'"> #{standardAndApply,jdbcType=VARCHAR},        </if>
+        <if test=" standardLeaderId              != null and standardLeaderId     != '' and standardLeaderId     != 'null'"> #{standardLeaderId,jdbcType=VARCHAR},        </if>
+        <if test=" standardLeaderName            != null and standardLeaderName   != '' and standardLeaderName   != 'null'"> #{standardLeaderName,jdbcType=VARCHAR},        </if>
+        <if test=" mainDraftIds                  != null and mainDraftIds         != '' and mainDraftIds         != 'null'"> #{mainDraftIds,jdbcType=VARCHAR},        </if>
+        <if test=" mainDraftNames                != null and mainDraftNames       != '' and mainDraftNames       != 'null'"> #{mainDraftNames,jdbcType=VARCHAR},        </if>
+        <if test=" draftTime                      != null and draftTime             != '' and draftTime             != 'null'"> #{draftTime,jdbcType=VARCHAR},        </if>
+        <if test=" solicitopinionsTime           != null and solicitopinionsTime  != '' and solicitopinionsTime  != 'null'"> #{solicitopinionsTime,jdbcType=VARCHAR},        </if>
+        <if test=" reviewTime                    != null and reviewTime           != '' and reviewTime           != 'null'"> #{reviewTime,jdbcType=VARCHAR},        </if>
+        <if test=" reportforapprovalTime          != null and reportforapprovalTime != '' and reportforapprovalTime != 'null'"> #{reportforapprovalTime,jdbcType=VARCHAR },       </if>
+        <if test=" applicationTime               != null and applicationTime      != '' and applicationTime      != 'null'"> #{applicationTime,jdbcType=VARCHAR},        </if>
+        <if test=" standardPeopleId              != null and standardPeopleId     != '' and standardPeopleId     != 'null'"> #{standardPeopleId,jdbcType=VARCHAR},        </if>
+        <if test=" standardPeopleName            != null and standardPeopleName   != '' and standardPeopleName   != 'null'"> #{standardPeopleName,jdbcType=VARCHAR},        </if>
+        <if test=" referStandardIds              != null and referStandardIds     != '' and referStandardIds     != 'null'"> #{referStandardIds,jdbcType=VARCHAR},        </if>
+        <if test=" referStandardNames            != null and referStandardNames   != '' and referStandardNames   != 'null'"> #{referStandardNames,jdbcType=VARCHAR},        </if>
+        <if test=" yjUserIds                     != null and yjUserIds            != '' and yjUserIds            != 'null'"> #{yjUserIds,jdbcType=VARCHAR},        </if>
+        <if test=" yjUserNames                   != null and yjUserNames          != '' and yjUserNames          != 'null'"> #{yjUserNames,jdbcType=VARCHAR},        </if>
+        <if test=" CREATE_BY_                    != null and CREATE_BY_           != '' and CREATE_BY_           != 'null'"> #{CREATE_BY_,jdbcType=VARCHAR},        </if>
+        <if test=" CREATE_TIME_                  != null and CREATE_TIME_         != '' and CREATE_TIME_         != 'null'"> #{CREATE_TIME_,jdbcType=TIMESTAMP},        </if>
+        <if test=" TENANT_ID_                    != null and TENANT_ID_           != '' and TENANT_ID_           != 'null'"> #{TENANT_ID_,jdbcType=VARCHAR}  ,      </if>
+        <if test=" rwms          != null and rwms != '' and rwms != 'null'"> #{rwms,jdbcType=VARCHAR },       </if>
+        <if test=" oldStandardName != null and oldStandardName != '' and oldStandardName != 'null'">#{oldStandardName,jdbcType=VARCHAR },</if>
+        <if test=" oldStandardId != null and oldStandardId != '' and oldStandardId != 'null'">#{oldStandardId,jdbcType=VARCHAR },</if>
+        <if test=" rwlb != null and rwlb != '' and rwlb != 'null'">#{rwlb,jdbcType=VARCHAR }, </if>
+        <if test=" bzmd != null and bzmd != '' and bzmd != 'null'">#{bzmd,jdbcType=VARCHAR }, </if>
+        <if test=" bzfw != null and bzfw != '' and bzfw != 'null'">#{bzfw,jdbcType=VARCHAR }, </if>
+        <if test=" bzxz != null and bzxz != '' and bzxz != 'null'">#{bzxz,jdbcType=VARCHAR }, </if>
+        <if test=" scly != null and scly != '' and scly != 'null'">#{scly,jdbcType=VARCHAR }, </if>
+        <if test=" clsj != null and clsj != '' and clsj != 'null'">#{clsj,jdbcType=VARCHAR }, </if>
+        <if test=" jsxmId != null and jsxmId != '' and jsxmId != 'null'">#{jsxmId,jdbcType=VARCHAR }, </if>
+        <if test=" jsbzzcId != null and jsbzzcId != '' and jsbzzcId != 'null'">#{jsbzzcId,jdbcType=VARCHAR }, </if>
+        <if test=" otherId != null and otherId != '' and otherId != 'null'">#{otherId,jdbcType=VARCHAR }, </if>
+        <if test=" psjl               != null and psjl      != '' and psjl      != 'null'"> #{psjl,jdbcType=VARCHAR},        </if>
+        <if test=" bzscIds              != null and bzscIds     != '' and bzscIds     != 'null'"> #{bzscIds,jdbcType=VARCHAR},        </if>
+        <if test=" bzscNmaes            != null and bzscNmaes   != '' and bzscNmaes   != 'null'"> #{bzscNmaes,jdbcType=VARCHAR},        </if>
+        <if test=" ssqrIds              != null and ssqrIds     != '' and ssqrIds     != 'null'"> #{ssqrIds,jdbcType=VARCHAR},        </if>
+        <if test=" ssqrNames            != null and ssqrNames   != '' and ssqrNames   != 'null'"> #{ssqrNames,jdbcType=VARCHAR},        </if>
+        <if test=" sjcaTime                     != null and sjcaTime            != '' and sjcaTime            != 'null'"> #{sjcaTime,jdbcType=TIMESTAMP},        </if>
+        <if test=" sjzqTime                   != null and sjzqTime          != '' and sjzqTime          != 'null'"> #{sjzqTime,jdbcType=TIMESTAMP},        </if>
+        <if test=" sjpsTime                    != null and sjpsTime           != '' and sjpsTime           != 'null'"> #{sjpsTime,jdbcType=TIMESTAMP},        </if>
+        <if test=" sjbpTime                  != null and sjbpTime         != '' and sjbpTime         != 'null'"> #{sjbpTime,jdbcType=TIMESTAMP},        </if>
+        <if test=" sjyyTime                    != null and sjyyTime           != '' and sjyyTime           != 'null'"> #{sjyyTime,jdbcType=TIMESTAMP}        </if>
+        </trim>
+    </insert>
+
+    <insert id="updateStandardDemand" parameterType="java.util.Map">
+        UPDATE standard_reviseBaseInfo SET
+        rwly=#{rwly,jdbcType=VARCHAR},
+        feedbackId=#{feedbackId,jdbcType=VARCHAR},
+        standardId=#{standardId,jdbcType=VARCHAR},
+        standardName=#{standardName,jdbcType=VARCHAR},
+        standardAndApply=#{standardAndApply,jdbcType=VARCHAR},
+        standardLeaderId=#{standardLeaderId,jdbcType=VARCHAR},
+        standardLeaderName=#{standardLeaderName,jdbcType=VARCHAR},
+        mainDraftIds=#{mainDraftIds,jdbcType=VARCHAR},
+        mainDraftNames=#{mainDraftNames,jdbcType=VARCHAR},
+        <if test=" draftTime                    != null and draftTime           != '' and draftTime           != 'null'">   draftTime=#{draftTime,jdbcType=VARCHAR},    </if>
+        <if test=" solicitopinionsTime                    != null and solicitopinionsTime           != '' and solicitopinionsTime           != 'null'">   solicitopinionsTime=#{solicitopinionsTime,jdbcType=VARCHAR},    </if>
+        <if test=" reviewTime                    != null and reviewTime           != '' and reviewTime           != 'null'">   reviewTime=#{reviewTime,jdbcType=VARCHAR},    </if>
+        <if test=" reportforapprovalTime                    != null and reportforapprovalTime           != '' and reportforapprovalTime           != 'null'">   reportforapprovalTime=#{reportforapprovalTime,jdbcType=VARCHAR},    </if>
+        <if test=" applicationTime                    != null and applicationTime           != '' and applicationTime           != 'null'">   applicationTime=#{applicationTime,jdbcType=VARCHAR},    </if>
+
+        standardPeopleId=#{standardPeopleId,jdbcType=VARCHAR},
+        standardPeopleName=#{standardPeopleName,jdbcType=VARCHAR},
+        modelPeopleId=#{modelPeopleId,jdbcType=VARCHAR},
+        modelPeopleName=#{modelPeopleName,jdbcType=VARCHAR},
+        referStandardIds=#{referStandardIds,jdbcType=VARCHAR},
+        referStandardNames=#{referStandardNames,jdbcType=VARCHAR},
+        yjUserIds=#{yjUserIds,jdbcType=VARCHAR},
+        yjUserNames=#{yjUserNames,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        rwms=#{rwms,jdbcType=VARCHAR},
+        oldStandardName=#{oldStandardName,jdbcType=VARCHAR},
+        oldStandardId=#{oldStandardId,jdbcType=VARCHAR},
+        rwlb=#{rwlb,jdbcType=VARCHAR},
+        bzmd=#{bzmd,jdbcType=VARCHAR},
+        bzfw=#{bzfw,jdbcType=VARCHAR},
+        bzxz=#{bzxz,jdbcType=VARCHAR},
+        scly=#{scly,jdbcType=VARCHAR},
+        clsj=#{clsj,jdbcType=VARCHAR},
+        jsxmId=#{jsxmId,jdbcType=VARCHAR},
+        jsbzzcId=#{jsbzzcId,jdbcType=VARCHAR},
+        otherId=#{otherId,jdbcType=VARCHAR},
+
+        sffy=#{sffy,jdbcType=VARCHAR},
+        fyjg=#{fyjg,jdbcType=VARCHAR},
+        bzhlxyj=#{bzhlxyj,jdbcType=VARCHAR},
+        sffsgys=#{sffsgys,jdbcType=VARCHAR},
+
+        psjl=#{psjl,jdbcType=VARCHAR},
+        bzscIds=#{bzscIds,jdbcType=VARCHAR},
+        bzscNmaes=#{bzscNmaes,jdbcType=VARCHAR},
+        ssqrIds=#{ssqrIds,jdbcType=VARCHAR},
+        ssqrNames=#{ssqrNames,jdbcType=TIMESTAMP},
+        sjcaTime=#{sjcaTime,jdbcType=VARCHAR},
+        sjzqTime=#{sjzqTime,jdbcType=VARCHAR},
+        sjpsTime=#{sjpsTime,jdbcType=VARCHAR},
+        sjbpTime=#{sjbpTime,jdbcType=VARCHAR},
+        sjyyTime=#{sjyyTime,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </insert>
+
+    <delete id="deleteStandardById" parameterType="java.lang.String">
+        delete from standard_reviseBaseInfo
+        where standard_reviseBaseInfo.id=#{applyId}
+    </delete>
+
+
+    <select id="queryStandardFileTypes" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+        standard_reviseDeliverable
+        WHERE
+        1=1
+        <if test="stageKey != null and stageKey != ''">
+            and standard_reviseDeliverable.stageKey = #{stageKey}
+        </if>
+
+
+    </select>
+
+    <select id="queryStandardFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_reviseEnclosure.*,
+        standard_reviseDeliverable.typename typename,
+        standard_reviseDeliverable.stageKey spzt,
+        os_user.FULLNAME_ AS userName
+        FROM
+        standard_reviseEnclosure
+        left JOIN standard_reviseDeliverable ON standard_reviseEnclosure.fileTypeId =
+        standard_reviseDeliverable.id
+        LEFT JOIN os_user ON os_user.USER_ID_ = standard_reviseEnclosure.CREATE_BY_
+        WHERE
+        standard_reviseEnclosure.reviseInfoId IN
+        <foreach collection="standardIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+        <if test="stageKey != null and stageKey != ''">
+            and standard_reviseDeliverable.stageKey = #{stageKey}
+        </if>
+        ORDER BY standard_reviseEnclosure.CREATE_TIME_
+    </select>
+
+    <insert id="addStandardFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_reviseEnclosure(
+        id,
+        reviseInfoId
+        ,fileTypeId
+        ,fileName
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{reviseInfoId,jdbcType=VARCHAR},
+        #{fileTypeId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <!--征求意见查询-->
+    <select id="getStandardList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+
+    SELECT
+    id,
+    reviseInfoId,
+    chapter,
+    opinion,
+    feedback,
+    os_user.FULLNAME_ AS CREATE_BY_,
+    ifyj
+    FROM
+    standard_reviseOpinon
+    left join os_user on standard_reviseOpinon.CREATE_BY_ = os_user.USER_ID_
+    WHERE
+    reviseInfoId = #{applyId}
+    <if test="isZqyj != null and isZqyj != '' and isZqyj == 'yes'">
+        and standard_reviseOpinon.CREATE_BY_  = #{user}
+    </if>
+    </select>
+
+    <!--团队成员意见查询-->
+    <select id="getTeamDraftList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+
+    SELECT
+    id,
+    applyId,
+    isAgree,
+    opinion,
+    creatorName
+    FROM
+    standard_team_opinion
+    WHERE
+    applyId = #{applyId}
+    <if test="isMkfzr != null and isMkfzr != '' and isMkfzr == 'yes'">
+        and standard_team_opinion.CREATE_BY_  = #{user}
+    </if>
+    </select>
+
+
+    <!--用户信息查询-->
+    <select id="getStandard" parameterType="java.lang.String" resultType="java.util.Map">
+
+    SELECT
+    id,
+    reviseInfoId,
+    chapter,
+    opinion,
+    feedback,
+    CREATE_BY_,
+    ifyj
+    FROM
+   standard_reviseOpinon
+    WHERE
+    id = #{standardId}
+    </select>
+
+    <!--用户信息保存-->
+    <insert id="saveUserList" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_reviseOpinon(
+            id,
+            reviseInfoId,
+            chapter,
+            opinion,
+            feedback,
+            CREATE_BY_,
+            CREATE_TIME_,
+            ifyj
+        )values(
+            #{id,jdbcType=VARCHAR},
+            #{reviseInfoId,jdbcType=VARCHAR},
+            #{chapter,jdbcType=VARCHAR},
+            #{opinion,jdbcType=VARCHAR},
+            #{feedback,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{ifyj,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <!--用户附件修改-->
+    <update id="updateUserList" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_reviseOpinon
+        set
+        chapter=#{chapter,jdbcType=VARCHAR},
+        opinion=#{opinion,jdbcType=VARCHAR},
+        feedback=#{feedback,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        ifyj=#{ifyj,jdbcType=VARCHAR}
+        where id=#{id}
+    </update>
+    <delete id="delUserListById" parameterType="java.util.Map">
+        delete from standard_reviseOpinon
+        where id = #{id}
+    </delete>
+
+    <delete id="delStandardById" parameterType="java.util.Map">
+       DELETE FROM
+        standard_reviseEnclosure
+        WHERE
+         id = #{id}
+    </delete>
+
+    <select id="queryTaskAll" parameterType="java.util.Map" resultType="java.util.Map">
+        select ID_ as taskId,
+        PROC_INST_ID_,
+        NAME_
+        from act_ru_task
+        <where>
+            <if test="actInstIds != null and actInstIds != ''">
+                act_ru_task.PROC_INST_ID_ IN
+                <foreach collection="actInstIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <update id="updateFinalStandardId2Task" parameterType="java.util.Map">
+        update standard_reviseBaseInfo
+        set
+        standardId =#{finalStandardId}
+        where
+        id=#{id}
+    </update>
+
+    <insert id="insertBzxdssyj" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_ssyjInfo(
+            id
+            ,reviseInfoId
+            ,opinion
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{reviseInfoId,jdbcType=VARCHAR},
+            #{opinion,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateBzxdssyj" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_ssyjInfo
+        set
+            opinion=#{opinion,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+    <delete id="deleteBzxdssyj" parameterType="java.util.Map">
+        delete from standard_ssyjInfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="jssjkIds != null and jssjkIds !=''">
+                AND jssjkId IN
+                <foreach collection="jssjkIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <select id="getSsyjList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+          standard_ssyjInfo.*,
+          os_user.FULLNAME_ as CREATE_BY_NAME
+        FROM
+          standard_ssyjInfo
+        left join os_user ON standard_ssyjInfo.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+          standard_ssyjInfo.reviseInfoId = #{applyId}
+    </select>
+    <update id="updateDqzt" parameterType="java.util.Map">
+        update standard_reviseBaseInfo
+        set
+            dqzt=#{dqzt,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+
+    <select id="queryRevisePlan" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_reviseplan.*,
+            os_user.FULLNAME_ AS creator,
+            os_group.NAME_ AS deptName
+        FROM
+            standard_reviseplan
+            LEFT JOIN os_user ON standard_reviseplan.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN os_group ON standard_reviseplan.deptId = os_group.GROUP_ID_
+        WHERE
+          standard_reviseplan.belongYear = #{belongYear}
+	      AND standard_reviseplan.deptId = #{deptId}
+	    order by standard_reviseplan.jdStartYearMonth
+    </select>
+
+    <insert id="insertRevisePlan" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_reviseplan(
+            id
+            ,deptId
+            ,belongYear
+            ,belongJd
+            ,jdStartYearMonth
+            ,jdEndYearMonth
+            ,planNum
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR},
+            #{belongYear,jdbcType=VARCHAR},
+            #{belongJd,jdbcType=VARCHAR},
+            #{jdStartYearMonth,jdbcType=VARCHAR},
+            #{jdEndYearMonth,jdbcType=VARCHAR},
+            #{planNum,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateRevisePlan" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_reviseplan
+        set
+            planNum = #{planNum,jdbcType=VARCHAR}
+        where
+            id=#{id}
+    </update>
+
+    <select id="queryYearTotal" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        tmp.*,
+        os_group.NAME_ AS deptName
+        FROM
+        (
+        SELECT
+        deptId,
+        sum( planNum ) as totalNum
+        FROM standard_reviseplan
+
+        WHERE
+        standard_reviseplan.jdEndYearMonth &gt;= #{startYearMonth}
+        AND standard_reviseplan.jdStartYearMonth &lt;= #{endYearMonth}
+        GROUP BY deptId ) tmp
+        LEFT JOIN os_group ON tmp.deptId = os_group.GROUP_ID_
+        ORDER BY os_group.SN_
+    </select>
+
+    <select id="queryRevisePlanTotal" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        tmp.*,
+        os_group.NAME_ AS deptName
+        FROM
+        (
+        SELECT
+        deptId,
+        sum( planNum ) as totalNum
+        FROM standard_reviseplan
+        WHERE
+        standard_reviseplan.jdEndYearMonth &gt;= #{startYearMonth}
+        AND standard_reviseplan.jdStartYearMonth &lt;= #{endYearMonth}
+        GROUP BY deptId ) tmp
+        LEFT JOIN os_group ON tmp.deptId = os_group.GROUP_ID_
+        ORDER BY os_group.SN_
+    </select>
+
+    <select id="queryReviseDeptFinish" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        deptId,
+        count( * ) as finishNum
+        FROM
+        (
+        SELECT
+        standard_revisebaseinfo.*,
+        deptTmp.deptId,
+        timeTemp.COMPLETE_TIME_,
+        timeTemp.ACT_INST_ID_
+        FROM
+        standard_revisebaseinfo
+        LEFT JOIN (
+        SELECT
+        PARTY1_ AS deptId,
+        PARTY2_ AS userId
+        FROM
+        os_rel_inst
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND os_rel_inst.IS_MAIN_ = 'YES'
+        <if test="deptIds != null and deptIds != ''">
+        AND os_rel_inst.PARTY1_ IN
+        <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+        ) deptTmp ON standard_revisebaseinfo.standardLeaderId = deptTmp.userId
+        LEFT JOIN bpm_inst ON standard_revisebaseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN
+        (
+        SELECT * FROM
+        (SELECT ACT_INST_ID_,OWNER_ID_,COMPLETE_TIME_ FROM bpm_node_jump
+        WHERE bpm_node_jump.NODE_ID_ = "sid-465837C3-F2ED-42FB-B8F8-2858CCFD4E67"
+        AND bpm_node_jump.COMPLETE_TIME_ IS NOT NULL
+        ORDER BY bpm_node_jump.COMPLETE_TIME_ DESC)  as temp
+        WHERE
+        COMPLETE_TIME_ &gt;= #{startTime}
+        AND COMPLETE_TIME_ &lt;= #{endTime}
+        GROUP BY ACT_INST_ID_,OWNER_ID_
+        ) timeTemp ON timeTemp.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+        WHERE
+        deptTmp.deptId IS NOT NULL
+        AND timeTemp.OWNER_ID_ = standard_revisebaseinfo.standardPeopleId
+        AND (standard_revisebaseinfo.standardId is not null and standard_revisebaseinfo.standardId!='')
+        ) tmp
+        GROUP BY deptId
+    </select>
+
+    <select id="queryJdTotal" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+
+        SELECT
+        belongJd,
+        sum(planNum) AS totalNum
+        FROM standard_reviseplan
+        <where>
+            1=1
+            and belongYear = #{nowYearStart}
+            <if test="deptIds != null and deptIds != ''">
+                and deptId IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+        </where>
+        GROUP BY belongJd
+
+    </select>
+
+    <select id="queryJdFinish" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        count( * ) as finishNum,
+        QUARTER ( ts.COMPLETE_TIME_ ) as jd
+        FROM(
+        SELECT
+        standard_revisebaseinfo.*,
+        deptTmp.deptId,
+        timeTemp.COMPLETE_TIME_,
+        timeTemp.ACT_INST_ID_
+        FROM
+        standard_revisebaseinfo
+        LEFT JOIN (
+        SELECT
+        PARTY1_ AS deptId,
+        PARTY2_ AS userId
+        FROM
+        os_rel_inst
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND os_rel_inst.IS_MAIN_ = 'YES'
+        <if test="deptIds != null and deptIds != ''">
+            AND os_rel_inst.PARTY1_ IN
+            <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ) deptTmp ON standard_revisebaseinfo.standardLeaderId = deptTmp.userId
+        LEFT JOIN bpm_inst ON standard_revisebaseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN
+        (
+        SELECT * FROM
+        (SELECT ACT_INST_ID_,OWNER_ID_,COMPLETE_TIME_ FROM bpm_node_jump
+        WHERE bpm_node_jump.NODE_ID_ = "sid-465837C3-F2ED-42FB-B8F8-2858CCFD4E67"
+        AND bpm_node_jump.COMPLETE_TIME_ IS NOT NULL
+        ORDER BY bpm_node_jump.COMPLETE_TIME_ DESC)  as temp
+        WHERE
+        YEAR ( temp.COMPLETE_TIME_ ) = #{nowyear}
+        GROUP BY ACT_INST_ID_,OWNER_ID_
+        ) timeTemp ON timeTemp.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+        WHERE
+        deptTmp.deptId IS NOT NULL
+        AND timeTemp.OWNER_ID_ = standard_revisebaseinfo.standardPeopleId
+        AND (standard_revisebaseinfo.standardId is not null and standard_revisebaseinfo.standardId!='')
+        )ts
+        GROUP BY QUARTER ( ts.COMPLETE_TIME_ )
+        union all
+        SELECT
+        count( * ) as finishNum,
+        YEAR ( ts.COMPLETE_TIME_ ) as jd
+        FROM(
+        SELECT
+        standard_revisebaseinfo.*,
+        deptTmp.deptId,
+        timeTemp.COMPLETE_TIME_,
+        timeTemp.ACT_INST_ID_
+        FROM
+        standard_revisebaseinfo
+        LEFT JOIN (
+        SELECT
+        PARTY1_ AS deptId,
+        PARTY2_ AS userId
+        FROM
+        os_rel_inst
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        AND os_rel_inst.IS_MAIN_ = 'YES'
+        <if test="deptIds != null and deptIds != ''">
+            AND os_rel_inst.PARTY1_ IN
+            <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ) deptTmp ON standard_revisebaseinfo.standardLeaderId = deptTmp.userId
+        LEFT JOIN bpm_inst ON standard_revisebaseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN
+        (
+        SELECT * FROM
+        (SELECT ACT_INST_ID_,OWNER_ID_,COMPLETE_TIME_ FROM bpm_node_jump
+        WHERE bpm_node_jump.NODE_ID_ = "sid-465837C3-F2ED-42FB-B8F8-2858CCFD4E67"
+        AND bpm_node_jump.COMPLETE_TIME_ IS NOT NULL
+        ORDER BY bpm_node_jump.COMPLETE_TIME_ DESC)  as temp
+        WHERE
+        YEAR ( temp.COMPLETE_TIME_ ) = #{nowyear}
+        GROUP BY ACT_INST_ID_,OWNER_ID_
+        ) timeTemp ON timeTemp.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+        WHERE
+        deptTmp.deptId IS NOT NULL
+        AND timeTemp.OWNER_ID_ = standard_revisebaseinfo.standardPeopleId
+        AND (standard_revisebaseinfo.standardId is not null and standard_revisebaseinfo.standardId!='')
+        )ts
+        GROUP BY YEAR ( ts.COMPLETE_TIME_ )
+    </select>
+
+    <select id="queryDept"  resultType="com.alibaba.fastjson.JSONObject">
+        SELECT distinct
+        tmp.deptId,
+        os_group.NAME_ AS deptName
+        FROM
+        (
+        SELECT
+        belongJd,
+        deptId,
+        planNum
+        FROM standard_reviseplan
+        where belongYear = #{nowyear}
+        GROUP BY belongJd,deptId ) tmp
+        LEFT JOIN os_group ON tmp.deptId = os_group.GROUP_ID_
+    </select>
+
+    <insert id="insertTeamDraft" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_team_opinion(
+            id
+            ,applyId
+            ,isAgree
+            ,opinion
+            ,creatorName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{isAgree,jdbcType=VARCHAR},
+            #{opinion,jdbcType=VARCHAR},
+            #{creatorName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateTeamDraft" parameterType="com.alibaba.fastjson.JSONObject">
+        update standard_team_opinion
+        set
+            opinion=#{opinion,jdbcType=VARCHAR},
+            isAgree=#{isAgree,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+            id=#{id}
+    </update>
+    <delete id="deleteTeamDraft" parameterType="java.util.Map">
+        delete from standard_team_opinion
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="ids != null and ids !=''">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryStandardByIds" resultType="com.alibaba.fastjson.JSONObject" parameterType="java.util.Map">
+        SELECT
+            id,
+            standardName
+        FROM
+            standard_source
+        WHERE
+            id IN
+            <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+</mapper>

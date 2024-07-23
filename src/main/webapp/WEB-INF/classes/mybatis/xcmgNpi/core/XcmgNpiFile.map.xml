@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgNpi.core.dao.NpiFileDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryNpiFileList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        npi_file_baseinfo.*,
+        npi_file_system.systemName,
+        npi_file_system.systemNameEn,
+        sys_dic.NAME_ AS stageName,
+        sys_dic.KEY_ AS stageNameEn,
+        os_user.FULLNAME_ AS creator
+        FROM
+        npi_file_baseinfo
+        LEFT JOIN npi_file_system ON npi_file_baseinfo.systemId = npi_file_system.id
+        LEFT JOIN os_user ON npi_file_baseinfo.CREATE_BY_ = os_user.USER_ID_
+        left join sys_dic on npi_file_baseinfo.stageDicId = sys_dic.DIC_ID_
+        <where>
+          <if test="stageDicId != null and stageDicId !=''">
+              npi_file_baseinfo.stageDicId = #{stageDicId}
+          </if>
+        <if test="fileName != null and fileName !=''">
+            AND ( npi_file_baseinfo.fileName LIKE concat( '%', #{fileName}, '%' ) OR npi_file_baseinfo.fileNameEn LIKE concat( '%', #{fileName}, '%' ) )
+        </if>
+        <if test="systemIds != null and systemIds !=''">
+            AND npi_file_baseinfo.systemId IN
+            <foreach collection="systemIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countNpiFileList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+          count( * )
+        FROM
+        npi_file_baseinfo
+        <where>
+            <if test="stageDicId != null and stageDicId !=''">
+                npi_file_baseinfo.stageDicId = #{stageDicId}
+            </if>
+            <if test="fileName != null and fileName !=''">
+                AND ( npi_file_baseinfo.fileName LIKE concat( '%', #{fileName}, '%' ) OR npi_file_baseinfo.fileNameEn LIKE concat( '%', #{fileName}, '%' ) )
+            </if>
+            <if test="systemIds != null and systemIds !=''">
+                AND npi_file_baseinfo.systemId IN
+                <foreach collection="systemIds" index="index" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="querySystem" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+      SELECT
+        *
+        FROM
+            npi_file_system
+        ORDER BY ''+sn
+    </select>
+
+    <select id="queryNpiFileById" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+      SELECT
+        npi_file_baseinfo.*,
+        npi_file_system.systemName,
+        npi_file_system.systemNameEn,
+        sys_dic.NAME_ AS stageName,
+        sys_dic.KEY_ AS stageNameEn
+        FROM
+        npi_file_baseinfo
+        LEFT JOIN npi_file_system ON npi_file_baseinfo.systemId = npi_file_system.id
+        LEFT JOIN os_user ON npi_file_baseinfo.CREATE_BY_ = os_user.USER_ID_
+        left join sys_dic on npi_file_baseinfo.stageDicId = sys_dic.DIC_ID_
+        where
+        npi_file_baseinfo.id = #{id}
+    </select>
+
+    <insert id="insertNpiFile" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO npi_file_baseinfo (
+        id,
+        fileName,
+        fileNameEn,
+        systemId,
+        stageDicId,
+        fileObjName,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileNameEn,jdbcType=VARCHAR},
+        #{systemId,jdbcType=VARCHAR},
+        #{stageDicId,jdbcType=VARCHAR},
+        #{fileObjName,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateNpiFile" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE
+        npi_file_baseinfo
+        SET
+        fileName=#{fileName,jdbcType=VARCHAR},
+        fileNameEn=#{fileNameEn,jdbcType=VARCHAR},
+        systemId=#{systemId,jdbcType=VARCHAR},
+        stageDicId=#{stageDicId,jdbcType=VARCHAR},
+        fileObjName=#{fileObjName,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+
+    <delete id="deleteNpiFileByIds" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from npi_file_baseinfo
+        where
+        id IN
+        <foreach collection="ids" separator="," close=")" open="(" item="item" index="index">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="queryNpiFileBySystemIds" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        npi_file_baseinfo
+        <where>
+            <if test="systemIds != null and systemIds != ''">
+                npi_file_baseinfo.systemId in
+                <foreach collection="systemIds" index="index" item="id" separator="," open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <insert id="saveSystemNode" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into npi_file_system
+        (id,systemName,systemNameEn,parentId,sn,CREATE_BY_,CREATE_TIME_)
+        values(
+          #{id,jdbcType=VARCHAR},
+          #{systemName,jdbcType=VARCHAR},
+          #{systemNameEn,jdbcType=VARCHAR},
+          #{parentId,jdbcType=VARCHAR},
+          #{sn,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateSystemNode" parameterType="com.alibaba.fastjson.JSONObject">
+        update npi_file_system SET
+         systemName= #{systemName,jdbcType=VARCHAR},
+         systemNameEn= #{systemNameEn,jdbcType=VARCHAR},
+         parentId= #{parentId,jdbcType=VARCHAR},
+         sn= #{sn,jdbcType=VARCHAR},
+         UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+         UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <delete id="delSystemNode" parameterType="java.lang.String">
+        delete from npi_file_system
+        where id=#{id}
+    </delete>
+
+</mapper>

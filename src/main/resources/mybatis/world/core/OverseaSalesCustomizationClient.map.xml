@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.world.core.dao.OverseaSalesCustomizationClientDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="queryWhereClientInstQuery">
+        <if test="@Ognl@isNotEmpty(modelId)">
+            AND customerinst.modelId = #{modelId}
+        </if>
+        <if test="@Ognl@isNotEmpty(salsesModel)">
+            AND models.salsesModel like CONCAT('%',#{salsesModel},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(clientGroupId)">
+            AND customerinst.clientGroupId = #{clientGroupId}
+        </if>
+        <if test="@Ognl@isNotEmpty(clientGroupName)">
+            AND os_group.NAME_ like CONCAT('%',#{clientGroupName},'%')
+        </if>
+        <if test="@Ognl@isNotEmpty(modelIds)">
+            AND customerinst.modelId IN
+            <foreach collection="modelIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+    <!---->
+    <select id="clientTreeQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            customerconfiginst.salesPrice,
+            customerconfiginst.id AS configinstId,
+            configs.*
+        FROM overseasales_customization_configs AS configs
+            LEFT JOIN overseasales_customization_customer_inst AS customerinst
+                ON configs.mainId = customerinst.modelId
+            LEFT JOIN overseasales_customization_customer_configinst AS customerconfiginst
+                ON configs.id = customerconfiginst.configId AND customerinst.id = customerconfiginst.instId
+        WHERE configs.mainId = #{modelId} AND customerinst.clientGroupId = #{clientGroupId}
+        ORDER BY orderNo, nodeName
+    </select>
+    <!---->
+    <select id="clientInstQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT customerinst.*,
+        models.id AS modelId,
+        models.fileName AS fileName,
+        models.salsesModel,
+        models.engine,
+        models.ratedPower,
+        models.bucketCapacity,
+        models.operatingMass
+        FROM overseasales_customization_customer_inst AS customerinst
+        INNER JOIN os_group ON os_group.GROUP_ID_ = customerinst.clientGroupId
+        INNER JOIN overseasales_customization_models AS models
+        ON models.id = customerinst.modelId
+        <where>
+            <include refid="queryWhereClientInstQuery"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <insert id="insertClientInst" parameterType="java.util.Map">
+        insert into overseasales_customization_customer_inst(
+        id,
+        modelId,
+        clientGroupId,
+        specialNeedsDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{modelId,jdbcType=VARCHAR},
+        #{clientGroupId,jdbcType=VARCHAR},
+        #{specialNeedsDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateClientInst" parameterType="java.util.Map">
+        UPDATE overseasales_customization_customer_inst
+        SET
+        specialNeedsDesc=#{specialNeedsDesc,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteClientInst" parameterType="java.util.Map">
+        delete from overseasales_customization_customer_inst
+        <where>
+            <if test="@Ognl@isNotEmpty(ids)">
+                AND id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(ids)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <insert id="insertClientConfigInst" parameterType="java.util.Map">
+        insert into overseasales_customization_customer_configinst(
+        id,
+        instId,
+        configId,
+        salesPrice,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{instId,jdbcType=VARCHAR},
+        #{configId,jdbcType=VARCHAR},
+        #{salesPrice,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateClientConfigInst" parameterType="java.util.Map">
+        UPDATE overseasales_customization_customer_configinst
+        SET
+        salesPrice=#{salesPrice,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteClientConfigInst" parameterType="java.util.Map">
+        delete from overseasales_customization_customer_configinst
+        <where>
+            <if test="@Ognl@isNotEmpty(configIds)">
+                AND configId IN
+                <foreach collection="configIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isNotEmpty(instIds)">
+                AND instId IN
+                <foreach collection="instIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="@Ognl@isEmpty(configIds) and @Ognl@isEmpty(instIds)">
+                AND 1=2
+            </if>
+        </where>
+    </delete>
+</mapper>

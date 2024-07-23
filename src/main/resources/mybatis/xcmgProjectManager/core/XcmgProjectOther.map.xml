@@ -1,0 +1,1616 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectOtherDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <sql id="queryListWhere">
+        <if test="projectName != null and projectName != ''">
+            project_baseinfo.projectName like CONCAT ('%',#{projectName},'%')
+        </if>
+        <if test="number != null and number != ''">
+            AND project_baseinfo.number like CONCAT ('%',#{number},'%')
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            AND project_baseinfo.sourceId=#{sourceId}
+        </if>
+        <if test="categoryId != null and categoryId != ''">
+            AND project_baseinfo.categoryId=#{categoryId}
+        </if>
+        <if test="levelId != null and levelId != ''">
+            AND project_baseinfo.levelId=#{levelId}
+        </if>
+        <if test="productName != null and productName != ''">
+            AND project_baseinfo.productNames like CONCAT ('%',#{productName},'%')
+        </if>
+        <if test="cwddh != null and cwddh != ''">
+            AND project_baseinfo.cwddh like CONCAT ('%',#{cwddh},'%')
+        </if>
+        <if test="mainDepId != null and mainDepId != ''">
+            AND project_baseinfo.mainDepId in
+            <foreach collection="mainDepId" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="buildTimeStart != null and buildTimeStart != ''">
+            AND project_baseinfo.buildTime &gt;= #{buildTimeStart}
+        </if>
+        <if test="buildTimeEnd != null and buildTimeEnd != ''">
+            AND project_baseinfo.buildTime &lt;= #{buildTimeEnd}
+        </if>
+        <if test="knotTimeStart != null and knotTimeStart != ''">
+            AND project_baseinfo.knotTime &gt;= #{knotTimeStart}
+        </if>
+        <if test="knotTimeEnd != null and knotTimeEnd != ''">
+            AND project_baseinfo.knotTime &lt;= #{knotTimeEnd}
+        </if>
+        <if test="status != null and status != ''">
+            AND bpm_inst.STATUS_ in
+            <foreach collection="status" index="index" item="oneStatus" open="(" separator="," close=")">
+                #{oneStatus}
+            </foreach>
+        </if>
+        <choose>
+            <when test='progressRunStatus == "0"'>
+                AND (project_baseinfo.progressRunStatus != '1' or project_baseinfo.progressRunStatus is null)
+            </when>
+            <when test='progressRunStatus == "1"'>
+                AND project_baseinfo.progressRunStatus = '1'
+            </when>
+        </choose>
+    </sql>
+
+
+    <select id="queryProjectSources" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT * FROM project_source
+        <where>
+            <if test="sourceId !=null and sourceId != ''">
+                sourceId=#{sourceId}
+            </if>
+        </where>
+        order by sourceId
+    </select>
+
+    <select id="queryProjectCategory" parameterType="java.util.Map" resultType="java.util.Map">
+        select * from project_category
+        <where>
+            <if test="categoryId !=null and categoryId != ''">
+                categoryId=#{categoryId}
+            </if>
+        </where>
+        order by orderSn asc
+    </select>
+
+    <select id="queryProjectLevel" parameterType="java.util.Map" resultType="java.util.Map">
+        select * from project_level
+        <where>
+            <if test="levelId !=null and levelId !=''">
+                levelId=#{levelId}
+            </if>
+        </where>
+        order by levelId
+    </select>
+
+    <select id="queryProjectList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_baseinfo.*,
+        project_source.sourceName,
+        project_category.categoryName,
+        Init.levelName as initLevelName,
+        Result.levelName as levelName,
+        project_stageDivide.stageName as currentStageName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.ACT_INST_ID_,
+        project_level_standardScore.score as standardScore
+        FROM
+        project_baseinfo
+        left join project_source on project_baseinfo.sourceId=project_source.sourceId
+        left join project_category on project_baseinfo.categoryId=project_category.categoryId
+        LEFT JOIN project_level Init ON project_baseinfo.beginLevelId = Init.levelId
+        LEFT JOIN project_level Result ON project_baseinfo.levelId = Result.levelId
+        left join project_stageDivide on project_baseinfo.currentStageId=project_stagedivide.stageId
+        left join bpm_inst on project_baseinfo.projectId=bpm_inst.BUS_KEY_
+        left join project_level_standardScore on project_baseinfo.levelId=project_level_standardScore.levelId AND
+        project_baseinfo.categoryId=project_level_standardScore.categoryId
+        <where>
+            <include refid="queryListWhere"/>
+            <if test="projectStartTime != null and projectStartTime != ''">
+                AND project_baseinfo.CREATE_TIME_ &gt;= #{projectStartTime}
+            </if>
+            <if test="projectEndTime != null and projectEndTime != ''">
+                AND project_baseinfo.CREATE_TIME_ &lt;= #{projectEndTime}
+            </if>
+            <if test="knotTimeStart != null and knotTimeStart != ''">
+                AND project_baseinfo.knotTime &gt;= #{knotTimeStart}
+            </if>
+            <if test="knotTimeEnd != null and knotTimeEnd != ''">
+                AND project_baseinfo.knotTime &lt;= #{knotTimeEnd}
+            </if>
+            <if test="(planEndTimeStart !=null and planEndTimeStart !='') or (planEndTimeEnd !=null and planEndTimeEnd !='')">
+                AND project_baseinfo.projectId IN(
+                SELECT
+                parentTable.projectId
+                FROM
+                project_plan AS parentTable
+                INNER JOIN ( SELECT projectId, max( stageId ) AS stageId FROM project_plan GROUP BY projectId ) AS subTable
+                ON parentTable.projectId = subTable.projectId
+                AND parentTable.stageId = subTable.stageId
+                <where>
+                    <if test="planEndTimeStart !=null and planEndTimeStart !=''">
+                        parentTable.planEndTime &gt;= #{planEndTimeStart}
+                    </if>
+                    <if test="planEndTimeEnd !=null and planEndTimeEnd !=''">
+                        AND parentTable.planEndTime &lt;= #{planEndTimeEnd}
+                    </if>
+                </where>
+                )
+            </if>
+            <if test="deptIds !=null and deptIds != ''">
+                AND project_baseinfo.mainDepId IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryDepNameByIds" parameterType="java.util.Map" resultType="java.util.Map">
+        select GROUP_ID_,NAME_ from os_group
+        where
+        DIM_ID_='1'
+        <if test="depIds != null and depIds != ''">
+            AND GROUP_ID_ in
+            <foreach collection="depIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+
+    <select id="queryInstInfosByBusKeys" parameterType="java.util.Map" resultType="java.util.Map">
+        select INST_ID_, BUS_KEY_ from bpm_inst
+        <where>
+            <if test="BUS_KEY_ != null and BUS_KEY_ != ''">
+                BUS_KEY_ in
+                <foreach collection="BUS_KEY_" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
+
+    <select id="queryProjectMemRole" parameterType="java.util.Map" resultType="java.util.Map">
+        select * from project_member_role
+        order by roleId
+    </select>
+
+    <select id="queryProjectLevelDivide" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_leveldivide.*,
+        project_level.levelName
+        FROM
+        project_leveldivide
+        left join project_level on project_leveldivide.levelId=project_level.levelId
+        order by levelId
+    </select>
+
+    <select id="queryProjectKnot2Rating" parameterType="java.util.Map" resultType="java.util.Map">
+        select * from project_rating_score
+        order by ratingId
+    </select>
+
+    <select id="getUserInfoById" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        os_rel_inst.PARTY2_ as userId,
+        os_user.FULLNAME_ as userName,
+        os_user.USER_NO_ as userNo,
+        os_group.NAME_ as groupName,
+        os_group.GROUP_ID_ as groupId,
+        os_dimension.DIM_KEY_ as dimKey,
+        os_group.SN_
+        from os_user
+        left join os_rel_inst on os_rel_inst.PARTY2_=os_user.USER_ID_
+        left join os_dimension on os_rel_inst.DIM1_=os_dimension.DIM_ID_
+        left join os_group on os_rel_inst.PARTY1_=os_group.GROUP_ID_
+        where os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+        and (os_dimension.DIM_KEY_ in ('GW','ZJ') or (os_dimension.DIM_KEY_='_ADMIN' and os_rel_inst.IS_MAIN_='YES'))
+        <if test="USER_ID_ != null and USER_ID_ != ''">
+            and os_rel_inst.PARTY2_=#{USER_ID_}
+        </if>
+    </select>
+
+    <update id="updateProjectInstId" parameterType="java.util.Map">
+        UPDATE project_baseInfo SET
+        INST_ID_=#{instId,jdbcType=VARCHAR}
+        WHERE
+		projectId=#{projectId}
+    </update>
+
+    <select id="queryDelivery" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT deliveryId,stageId,levelIds,deliveryName,excludeSourceIds,fileType as approvalSolutionId,fromPdm
+        FROM
+        project_stage_leveldelivery
+        <where>
+            <if test="stageId != null and stageId != ''">
+                stageId in
+                <foreach collection="stageId" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="levelId != null and levelId != ''">
+                and levelIds like CONCAT ('%',#{levelId},'%')
+            </if>
+            <if test="sourceId != null and sourceId != ''">
+                and (excludeSourceIds is null or excludeSourceIds = '' or excludeSourceIds not like CONCAT ('%',#{sourceId},'%'))
+            </if>
+        </where>
+        <if test="queryPublic != null and queryPublic != ''">
+            UNION
+            SELECT deliveryId,stageId,levelIds,deliveryName,excludeSourceIds
+            FROM
+            project_stage_leveldelivery
+            where stageId is null or stageId=''
+        </if>
+        ORDER BY stageId, deliveryId
+    </select>
+
+    <select id="queryStage" parameterType="java.util.Map" resultType="java.util.Map">
+        select stageNo,stageName,stagePercent,stageId
+        from project_stageDivide
+        <where>
+            <if test="categoryId != null and categoryId != ''">
+                and project_stageDivide.categoryId=#{categoryId}
+            </if>
+            <if test="stageId != null and stageId != ''">
+                and project_stageDivide.stageId &lt;= #{stageId}
+            </if>
+        </where>
+        ORDER BY stageNo
+    </select>
+
+    <select id="getDepRespManById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_rel_inst.*,
+        os_user.FULLNAME_,
+        os_group.NAME_ as groupName,
+        os_group.DEPT_CODE_
+        FROM
+        os_rel_inst
+        LEFT JOIN os_user ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        left join os_group on os_rel_inst.PARTY1_=os_group.GROUP_ID_
+        where REL_TYPE_KEY_='GROUP-USER-LEADER'
+        <if test="GROUP_ID_ != null and GROUP_ID_ != ''">
+            and os_rel_inst.PARTY1_=#{GROUP_ID_}
+        </if>
+        <if test="groupName != null and groupName != ''">
+            and os_group.NAME_=#{groupName}
+        </if>
+        <if test="USER_ID_ != null and USER_ID_ != ''">
+            and os_rel_inst.PARTY2_=#{USER_ID_}
+        </if>
+        <if test="groupIds != null and groupIds !=''">
+            AND os_rel_inst.PARTY1_ IN
+            <foreach collection="groupIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getUserIdOfProject" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        project_memberinfo.*,
+        project_member_role.roleName
+        from project_memberinfo
+        left join project_member_role on project_memberinfo.roleId=project_member_role.roleId
+        <where>
+            <if test="PROJECT_ID_ != null and PROJECT_ID_ != ''">
+                projectId in
+                <foreach collection="PROJECT_ID_" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="USER_ID_ != null and USER_ID_ != ''">
+                and project_memberinfo.userId=#{USER_ID_}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryStageByCategoryAndNo" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        FROM
+        project_stagedivide
+        <where>
+            <if test="categoryId != null and categoryId != ''">
+                categoryId = #{categoryId}
+            </if>
+            <if test="stageNo != null and stageNo != ''">
+                and stageNo=#{stageNo}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateProjectStageInfo" parameterType="java.util.Map">
+        UPDATE project_baseInfo
+        <set>
+            <if test="currentStageId != null and currentStageId != ''">
+                currentStageId=#{currentStageId,jdbcType=VARCHAR},
+            </if>
+            <if test="currentStageNo != null and currentStageNo != ''">
+                currentStageNo=#{currentStageNo,jdbcType=VARCHAR},
+            </if>
+        </set>
+        WHERE
+        projectId=#{projectId}
+    </update>
+
+    <update id="updateProjectPlanTime" parameterType="java.util.Map">
+        UPDATE project_plan
+        <set>
+            <if test="actualStartTime != null and actualStartTime != ''">
+                actualStartTime=#{actualStartTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="actualEndTime != null and actualEndTime != ''">
+                actualEndTime=#{actualEndTime,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        projectId=#{projectId}
+        and stageId=#{stageId}
+    </update>
+
+    <update id="updateProjectFinish" parameterType="java.util.Map">
+        UPDATE project_baseInfo
+        <set>
+            currentStageId=#{currentStageId,jdbcType=VARCHAR},
+            currentStageNo=#{currentStageNo,jdbcType=VARCHAR},
+            knotTime=#{knotTime,jdbcType=TIMESTAMP}
+        </set>
+        WHERE
+        projectId=#{projectId}
+    </update>
+
+    <select id="queryTaskExecutorsByTaskIds" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        act_ru_task.ID_ as taskId,
+        act_ru_task.DESCRIPTION_ as description,
+        os_user.FULLNAME_ AS currentProcessUser,
+        os_user.USER_ID_ AS currentProcessUserId,
+        os_user.CERT_NO_ as userCertNo,
+        act_ru_task.CREATE_TIME_
+        FROM
+        act_ru_task
+        JOIN os_user ON act_ru_task.ASSIGNEE_ = os_user.USER_ID_
+        LEFT JOIN bpm_solution on act_ru_task.SOL_ID_=bpm_solution.SOL_ID_
+        <where>
+            <if test="taskIds != null and taskIds != ''">
+                act_ru_task.ID_ in
+                <foreach collection="taskIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        UNION
+        SELECT
+        act_ru_task.ID_ as taskId,
+        act_ru_task.DESCRIPTION_ as description,
+        os_user.FULLNAME_ AS currentProcessUser,
+        os_user.USER_ID_ AS currentProcessUserId,
+        os_user.CERT_NO_ as userCertNo,
+        act_ru_task.CREATE_TIME_
+        FROM
+        act_ru_task
+        JOIN act_ru_identitylink ON act_ru_task.ID_ = act_ru_identitylink.TASK_ID_
+        JOIN os_user ON act_ru_identitylink.USER_ID_ = os_user.USER_ID_
+        LEFT JOIN bpm_solution on act_ru_task.SOL_ID_=bpm_solution.SOL_ID_
+        WHERE
+        act_ru_task.ASSIGNEE_ IS NULL
+        AND act_ru_identitylink.TYPE_ = 'candidate'
+        <if test="taskIds != null and taskIds != ''">
+            and act_ru_task.ID_ in
+            <foreach collection="taskIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="queryProjectFileInfos" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_fileinfo.*,
+        project_stage_leveldelivery.deliveryName,
+        os_user.FULLNAME_ AS creator
+        FROM
+        project_fileinfo
+        LEFT JOIN project_stage_leveldelivery ON project_fileinfo.deliveryId = project_stage_leveldelivery.deliveryId
+        LEFT JOIN os_user ON os_user.USER_ID_ = project_fileinfo.CREATE_BY_
+        <where>
+            <if test="projectId != null and projectId != ''">
+                project_fileinfo.projectId=#{projectId}
+            </if>
+            <if test="pid != null and pid != ''">
+                and project_fileinfo.pid=#{pid}
+            </if>
+            <if test="relativeFilePath != null and relativeFilePath != ''">
+                and relativeFilePath=#{relativeFilePath}
+            </if>
+            <if test="fileName != null and fileName != ''">
+                and fileName=#{fileName}
+            </if>
+            <if test="isFolder != null and isFolder != ''">
+                and isFolder=#{isFolder}
+            </if>
+            <if test="deliveryName != null and deliveryName != ''">
+                and project_stage_leveldelivery.deliveryName=#{deliveryName}
+            </if>
+            <if test="productId != null and productId != ''">
+                and project_fileinfo.productIds like CONCAT('%',#{productId},'%')
+            </if>
+        </where>
+        ORDER BY project_fileinfo.deliveryId,id
+    </select>
+
+    <select id="queryPdmProjectFileInfos" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        FROM
+        project_fileinfo
+        where
+                project_fileinfo.projectId=#{projectId}
+                and project_fileinfo.isPDMFile='1'
+        <if test="checkDelivery != null and checkDelivery != ''">
+            and (project_fileinfo.productIds is null or  project_fileinfo.productIds='')
+        </if>
+    </select>
+
+    <insert id="batchInsertPdmfile" parameterType="java.util.List">
+        INSERT INTO project_fileinfo (
+        id,
+        fileName,
+        fileSize,
+        CREATE_TIME_,
+        pid,
+        isFolder,
+        isPDMFile,
+        projectId,
+        deliveryId,
+        productIds,
+        productNames
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.fileName,jdbcType=VARCHAR},
+            #{item.fileSize,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.pid,jdbcType=VARCHAR},
+            #{item.isFolder,jdbcType=VARCHAR},
+            #{item.isPDMFile,jdbcType=VARCHAR},
+            #{item.projectId,jdbcType=VARCHAR},
+            #{item.deliveryId,jdbcType=VARCHAR},
+            #{item.productIds,jdbcType=VARCHAR},
+            #{item.productNames,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="createProjectFileInfos" parameterType="java.util.Map">
+		INSERT ignore INTO project_fileinfo
+		(
+		id,
+		fileName,
+		fileSize,
+		CREATE_BY_,
+		CREATE_TIME_,
+		pid,
+		relativeFilePath,
+		isFolder,
+		projectId,
+		deliveryId,
+		productIds,
+		productNames
+		)
+		VALUES
+		(
+		#{id,jdbcType=VARCHAR},
+		#{fileName,jdbcType=VARCHAR},
+		#{fileSize,jdbcType=VARCHAR},
+		#{CREATE_BY_,jdbcType=VARCHAR},
+		#{CREATE_TIME_,jdbcType=TIMESTAMP},
+		#{pid,jdbcType=VARCHAR},
+		#{relativeFilePath,jdbcType=VARCHAR},
+		#{isFolder,jdbcType=VARCHAR},
+		#{projectId,jdbcType=VARCHAR},
+		#{deliveryId,jdbcType=VARCHAR},
+		#{productIds,jdbcType=VARCHAR},
+		#{productNames,jdbcType=VARCHAR}
+		)
+	</insert>
+
+    <update id="updateProjectFileInfos" parameterType="java.util.Map">
+		UPDATE project_fileinfo SET
+		fileName=#{fileName,jdbcType=VARCHAR},
+		fileSize=#{fileSize,jdbcType=VARCHAR},
+		CREATE_BY_=#{CREATE_BY_,jdbcType=VARCHAR},
+		CREATE_TIME_=#{CREATE_TIME_,jdbcType=TIMESTAMP},
+		pid=#{pid,jdbcType=VARCHAR},
+		relativeFilePath=#{relativeFilePath,jdbcType=VARCHAR},
+		isFolder=#{isFolder,jdbcType=VARCHAR},
+		projectId=#{projectId,jdbcType=VARCHAR},
+		deliveryId=#{deliveryId,jdbcType=VARCHAR}
+		WHERE
+		id=#{id}
+	</update>
+
+    <delete id="deleteProjectFileInfos" parameterType="java.util.Map">
+        delete from
+        project_fileinfo
+        <where>
+        <if test="id != null and id != ''">
+            id=#{id}
+        </if>
+        <if test="fileName != null and fileName != ''">
+            and fileName=#{fileName}
+        </if>
+        <if test="projectId != null and projectId != ''">
+            and projectId=#{projectId}
+        </if>
+    </where>
+    </delete>
+
+    <update id="updateProjectBuild" parameterType="java.util.Map">
+        UPDATE project_baseInfo
+        <set>
+            <if test="buildTime != null and buildTime != ''">
+                buildTime=#{buildTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="projectNo != null and projectNo != ''">
+                number=#{projectNo,jdbcType=VARCHAR}
+            </if>
+        </set>
+        WHERE
+        projectId=#{projectId}
+    </update>
+
+
+    <select id="countForProjectNo" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        project_baseinfo
+        LEFT JOIN project_source ON project_baseinfo.sourceId = project_source.sourceId
+        LEFT JOIN project_level ON project_baseinfo.levelId = project_level.levelId
+        LEFT JOIN project_category ON project_baseinfo.categoryId = project_category.categoryId
+        WHERE
+        project_source.sourceCode = #{sourceCode}
+        AND project_level.levelName = #{levelPName}
+        AND DATE_FORMAT(DATE_ADD(buildTime, INTERVAL 8 HOUR),'%Y') = #{buildYear}
+        AND project_category.categoryCode = #{categoryCode}
+        <if test="projectId != null and projectId != ''">
+            AND project_baseinfo.projectId !=#{projectId}
+        </if>
+    </select>
+
+    <select id="queryForProjectNo" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_baseinfo.projectId,
+        project_source.sourceCode,
+        project_level.levelName AS levelPName,
+        project_category.categoryCode
+        FROM
+        project_baseinfo
+        LEFT JOIN project_category ON project_baseinfo.categoryId = project_category.categoryId
+        LEFT JOIN project_source ON project_baseinfo.sourceId = project_source.sourceId
+        LEFT JOIN project_level ON project_baseinfo.levelId = project_level.levelId
+        <where>
+            <if test="projectId != null and projectId != ''">
+                project_baseinfo.projectId=#{projectId}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryProjectRoleRankRequire" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_role_rank.*,
+        os_group.SN_ AS minRankNo,
+        os_group.NAME_ AS ZJName
+        FROM
+        project_role_rank
+        LEFT JOIN os_group ON project_role_rank.minRankKey = os_group.KEY_
+        LEFT JOIN os_dimension ON os_group.DIM_ID_ = os_dimension.DIM_ID_
+        <where>
+            (os_dimension.DIM_KEY_ = 'ZJ'
+            or os_dimension.DIM_KEY_ = 'GW')
+        </where>
+        order by roleId
+    </select>
+
+    <select id="queryUserDeps" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_rel_inst.REL_TYPE_KEY_,
+        os_rel_inst.PARTY1_,
+        os_group.NAME_,
+        os_rel_inst.IS_MAIN_
+        FROM
+        os_rel_inst
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_dimension.DIM_KEY_ = '_ADMIN'
+        AND os_rel_inst.PARTY2_ = #{userId}
+        <if test="groupName != null and groupName != ''">
+            AND os_group.NAME_=#{groupName}
+        </if>
+        <if test="typeKeyList != null and typeKeyList != ''">
+            AND os_rel_inst.REL_TYPE_KEY_ IN
+            <foreach collection="typeKeyList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="queryUserRoles" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_rel_inst.REL_TYPE_KEY_,
+        os_rel_inst.PARTY1_,
+        os_group.KEY_,
+        os_group.NAME_
+        FROM
+        os_rel_inst
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_dimension.DIM_KEY_ = '_ROLE'
+        AND os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+        AND os_rel_inst.PARTY2_ = #{userId}
+        <if test="groupName != null and groupName != ''">
+            AND os_group.NAME_=#{groupName}
+        </if>
+    </select>
+
+    <select id="queryUserZJ" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_rel_inst.REL_TYPE_KEY_,
+        os_rel_inst.PARTY1_,
+        os_group.NAME_,
+        os_group.SN_ as rankNum
+        FROM
+        os_rel_inst
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_dimension.DIM_KEY_ = 'ZJ'
+        AND os_rel_inst.PARTY2_ = #{userId}
+    </select>
+
+    <select id="queryUserGW" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_rel_inst.REL_TYPE_KEY_,
+        os_rel_inst.PARTY1_,
+        os_group.NAME_
+        FROM
+        os_rel_inst
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_dimension.DIM_KEY_ = 'GW'
+        AND os_rel_inst.PARTY2_ = #{userId}
+    </select>
+
+    <select id="getRoleRatioList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        FROM
+        project_member_role
+    </select>
+
+    <select id="queryZjList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_group.NAME_ as zjName,
+        os_group.KEY_ as zjKey,
+        os_group.GROUP_ID_
+        FROM
+        os_group
+        LEFT JOIN os_dimension ON os_group.DIM_ID_ = os_dimension.DIM_ID_
+        <where>
+            (os_dimension.DIM_KEY_ = 'ZJ'
+            or os_dimension.DIM_KEY_ = 'GW')
+        </where>
+        ORDER BY GROUP_ID_
+    </select>
+
+    <select id="queryRespManByProjectIds" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_memberinfo.projectId,
+        os_user.FULLNAME_,
+        os_user.USER_ID_
+        FROM
+        project_memberinfo
+        LEFT JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+        LEFT JOIN os_user ON project_memberinfo.userId = os_user.USER_ID_
+        WHERE
+        project_member_role.roleName='项目负责人'
+        <if test="projectIds != null and projectIds != ''">
+            and project_memberinfo.projectId in
+            <foreach collection="projectIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="queryXcmgDocMgrList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_fileinfo.*,
+        os_user.FULLNAME_ AS creator
+        FROM
+        project_fileinfo
+        LEFT JOIN os_user ON project_fileinfo.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+        projectId = ''
+        <if test="fileName != null and fileName != ''">
+            AND project_fileinfo.fileName like CONCAT ('%',#{fileName},'%')
+        </if>
+        order by CREATE_TIME_ desc
+    </select>
+
+    <select id="queryXcmgDocMgrSameNameList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        FROM
+        project_fileinfo
+        WHERE
+        projectId = ''
+        AND project_fileinfo.fileName = #{fileName}
+    </select>
+
+    <select id="queryProjectStatus" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        FROM
+        bpm_inst
+        WHERE
+        bpm_inst.BUS_KEY_ =#{busKey}
+    </select>
+
+    <select id="queryStandardStoreByPid" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_baseinfo.projectId,
+        project_baseinfo.pointStandardScore,
+        project_level_standardscore.*
+        FROM
+        project_baseinfo
+        LEFT JOIN project_level_standardscore ON project_baseinfo.categoryId = project_level_standardscore.categoryId
+        AND project_baseinfo.levelId = project_level_standardscore.levelId
+        WHERE
+        project_baseinfo.projectId = #{projectId}
+    </select>
+
+    <update id="updateProjectPlanDeductScore" parameterType="java.util.Map">
+        UPDATE project_plan
+        set
+        deductScore=#{deductScore,jdbcType=DOUBLE}
+        WHERE
+        projectId=#{projectId}
+        and stageId=#{stageId}
+    </update>
+
+    <insert id="insertMemberStageScore" parameterType="java.util.List">
+        INSERT INTO project_user_stageScore(
+            id,
+            projectId,
+            stageId,
+            userId,
+            stageRoleRatio,
+            stageScore,
+            roleId,
+            CREATE_BY_,
+            CREATE_TIME_
+        )
+        VALUES
+            (
+            #{id, jdbcType=VARCHAR},
+            #{projectId, jdbcType=VARCHAR},
+            #{stageId, jdbcType=VARCHAR},
+            #{userId, jdbcType=VARCHAR},
+            #{stageRoleRatio, jdbcType=DOUBLE},
+            #{stageScore, jdbcType=DOUBLE},
+            #{roleId, jdbcType=VARCHAR},
+            #{CREATE_BY_, jdbcType=VARCHAR},
+            #{CREATE_TIME_, jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <delete id="deleteMemberStageScore" parameterType="java.util.Map">
+        delete from project_user_stageScore
+        where
+        project_user_stageScore.projectId=#{projectId}
+        and project_user_stageScore.stageId=#{stageId}
+    </delete>
+
+    <select id="queryMemberScoreByPid" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_user_stagescore.projectId,
+        project_user_stagescore.stageId,
+        project_user_stagescore.userId,
+        project_user_stagescore.stageRoleRatio,
+        round(sum(stageScore),3) AS score
+        FROM
+        project_user_stagescore
+        WHERE
+        project_user_stagescore.projectId = #{projectId}
+        GROUP BY
+        userId
+    </select>
+
+    <select id="queryUserByGroupName" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_user.USER_ID_,
+        os_user.FULLNAME_,
+        os_user.CERT_NO_,
+        os_user.STATUS_
+        FROM
+        os_user
+        LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_group.NAME_ = #{groupName}
+    </select>
+    <select id="queryDepParentById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        son.GROUP_ID_,
+        son.NAME_,
+        parent.NAME_ as parentName
+        FROM
+        os_group son
+        LEFT JOIN os_group parent ON son.PARENT_ID_ = parent.GROUP_ID_
+        WHERE
+        son.DIM_ID_ = '1'
+        AND son.GROUP_ID_=#{groupId}
+    </select>
+    <select id="queryChangeInfo" parameterType="java.util.Map" resultType="java.util.Map">
+        select B.STATUS_ as status,A.USED as used,B.inst_id_,A.id
+        from project_changeapply A
+        left join bpm_inst B on A.id = B.BUS_KEY_
+        where 1=1
+        <if test="taskId_ != null and taskId_ != ''">
+            and A.TASKID_ = #{taskId_}
+        </if>
+        order by A.CREATE_TIME_ desc
+    </select>
+
+    <!--查询项目成果分类-->
+    <select id="queryProjectAchieveType" parameterType="java.util.Map" resultType="java.util.Map">
+        select A.id as typeId,A.catagoryName as typeName from project_achievement_type A
+        order by sequence
+    </select>
+
+    <update id="updateProgressRunStatus" parameterType="java.util.Map">
+        UPDATE project_baseinfo
+        SET
+        progressRunStatus = #{progressRunStatus,jdbcType=VARCHAR},
+        scoreGetTime = #{scoreGetTime,jdbcType=VARCHAR}
+        WHERE
+            projectId = #{projectId}
+    </update>
+
+    <insert id="insertProgressRunSetRecord" parameterType="java.util.Map">
+      insert into project_progressRunSetRecord(
+        id,
+        projectId,
+        action,
+        scoreGetTime,
+        CREATE_BY_,
+        CREATE_TIME_
+      )
+       values
+      (
+        #{id,jdbcType=VARCHAR},
+        #{projectId,jdbcType=VARCHAR},
+        #{action,jdbcType=VARCHAR},
+        #{scoreGetTime,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=VARCHAR}
+      )
+    </insert>
+
+    <delete id="deleteProgressRunSetByProjectId" parameterType="java.lang.String">
+      delete from project_progressRunSetRecord
+      where projectId=#{projectId}
+    </delete>
+
+    <!--查询室主任-->
+    <select id="getOfficeManager" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT T.*
+        FROM
+            (
+                SELECT
+                    C.NAME_,
+                    D.FULLNAME_,
+                    A.PARTY2_,
+                    A.PARTY1_
+                FROM
+                    os_rel_inst A
+                    LEFT JOIN os_dimension B ON A.DIM1_ = B.DIM_ID_
+                    LEFT JOIN os_group C ON A.PARTY1_ = C.GROUP_ID_
+                    LEFT JOIN os_user D ON A.PARTY2_ = D.USER_ID_
+                WHERE
+                    B.DIM_KEY_ = 'GW'
+                    AND A.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                    AND C.NAME_ LIKE CONCAT('%', '室主任', '%')
+            ) T
+            LEFT JOIN os_rel_inst ON T.PARTY2_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+            os_dimension.DIM_KEY_ = '_ADMIN'
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_group.NAME_ = #{groupName}
+    </select>
+    <!--查询本部门的部长、所长、或者副所长-->
+    <select id="getDepartmentManager" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT T.*
+        FROM
+            (
+                SELECT
+                    C.NAME_,
+                    D.FULLNAME_,
+                    A.PARTY2_,
+                    A.PARTY1_
+                FROM
+                    os_rel_inst A
+                    LEFT JOIN os_dimension B ON A.DIM1_ = B.DIM_ID_
+                    LEFT JOIN os_group C ON A.PARTY1_ = C.GROUP_ID_
+                    LEFT JOIN os_user D ON A.PARTY2_ = D.USER_ID_
+                WHERE
+                    B.DIM_KEY_ = 'GW'
+                    AND A.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                    AND (C.NAME_ = '部长' OR C.NAME_ = '所长' OR C.NAME_ = '副部长' OR C.NAME_ = '副所长'
+                         OR C.NAME_ = '所长助理' OR C.NAME_ = '部长助理' OR C.NAME_ = '主任')
+            ) T
+            LEFT JOIN os_rel_inst ON T.PARTY2_ = os_rel_inst.PARTY2_
+            LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+            LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+            os_dimension.DIM_KEY_ = '_ADMIN'
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_group.NAME_ = #{groupName}
+    </select>
+    <!--查詢流程方案類別-->
+    <select id="getSolutions" parameterType="java.util.Map" resultType="java.util.Map">
+        select A.KEY_ as id , A.NAME_ as text
+        from bpm_solution A where A.KEY_ in
+        <foreach collection="keys" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <update id="updatePlanDeductScoreAndEndTime" parameterType="java.util.Map">
+        UPDATE project_plan
+        SET actualEndTime = NULL,
+        deductScore = NULL
+        WHERE
+        id IN (
+            SELECT
+                *
+            FROM
+            (
+                SELECT
+                    id
+                FROM
+                    project_plan
+                    LEFT JOIN project_stagedivide ON project_plan.stageId = project_stagedivide.stageId
+                WHERE
+                    project_plan.projectId = #{projectId}
+                    AND project_stagedivide.stageNo &gt;= #{stageNo}
+            ) temp
+        )
+    </update>
+
+    <update id="updatePlanStartTime" parameterType="java.util.Map">
+        UPDATE project_plan
+        SET actualStartTime = NULL
+        WHERE
+        id IN (
+            SELECT
+                *
+            FROM
+            (
+                SELECT
+                    id
+                FROM
+                    project_plan
+                    LEFT JOIN project_stagedivide ON project_plan.stageId = project_stagedivide.stageId
+                WHERE
+                    project_plan.projectId = #{projectId}
+                    AND project_stagedivide.stageNo &gt; #{stageNo}
+            ) temp
+        )
+    </update>
+
+    <delete id="deleteUserScore" parameterType="java.util.Map">
+        delete from project_user_stagescore
+        WHERE
+        id IN (
+            SELECT
+                *
+            FROM
+            (
+                SELECT
+                    id
+                FROM
+                    project_user_stagescore
+                    LEFT JOIN project_stagedivide ON project_user_stagescore.stageId = project_stagedivide.stageId
+                WHERE
+                    project_user_stagescore.projectId = #{projectId}
+                    AND project_stagedivide.stageNo &gt;= #{stageNo}
+            ) temp
+        )
+    </delete>
+
+    <select id="queryMemberInfosByProjectId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_memberinfo.userId,
+            os_user.FULLNAME_,
+            project_member_role.roleId,
+            project_member_role.roleName
+        FROM
+            project_memberinfo
+            LEFT JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+            LEFT JOIN os_user ON project_memberinfo.userId = os_user.USER_ID_
+        WHERE
+            project_memberinfo.projectId = #{projectId}
+    </select>
+
+    <select id="queryStageDivideByProjectId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM
+            project_stagedivide
+        WHERE
+            categoryId = (SELECT categoryId
+                          FROM project_baseinfo
+                          WHERE projectId = #{projectId})
+        ORDER BY stageNo
+    </select>
+
+    <update id="updateActTaskRespman" parameterType="java.util.Map">
+        UPDATE act_ru_task
+        SET ASSIGNEE_ = #{currentRespManId}
+        WHERE
+            ID_ = (
+                SELECT
+                    *
+                FROM
+                    (
+                        SELECT
+                            act_ru_task.ID_
+                        FROM
+                            act_ru_task
+                            LEFT JOIN bpm_inst ON act_ru_task.PROC_INST_ID_ = bpm_inst.ACT_INST_ID_
+                        WHERE
+                            bpm_inst.BUS_KEY_ = #{projectId}
+                            AND act_ru_task.ASSIGNEE_ IS NOT NULL
+                            AND act_ru_task.ASSIGNEE_ = #{originalRespManId}
+                    ) tmp
+                  )
+    </update>
+
+    <update id="updateActIdentityLinkRespman" parameterType="java.util.Map">
+        UPDATE act_ru_identitylink
+        SET USER_ID_ = #{currentRespManId}
+        WHERE
+            ID_ = (
+                SELECT
+                    *
+                FROM
+                    (
+                        SELECT
+                            act_ru_identitylink.ID_
+                        FROM
+                            act_ru_identitylink
+                            LEFT JOIN act_ru_task ON act_ru_identitylink.TASK_ID_ = act_ru_task.ID_
+                            LEFT JOIN bpm_inst ON act_ru_task.PROC_INST_ID_ = bpm_inst.ACT_INST_ID_
+                        WHERE
+                            bpm_inst.BUS_KEY_ = #{projectId}
+                            AND act_ru_identitylink.TYPE_ = 'candidate'
+                            AND act_ru_identitylink.USER_ID_ = #{originalRespManId}
+                    ) tmp
+            )
+    </update>
+
+
+    <select id="queryMemberScores" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_user_stagescore.* ,
+        tmp.userValid
+        FROM
+            project_user_stagescore
+                LEFT JOIN (
+                SELECT * FROM project_memberinfo WHERE projectId = #{projectId})tmp on project_user_stagescore.userId = tmp.userId
+        WHERE
+            project_user_stagescore.projectId = #{projectId}
+        <if test="excludeOut != null and excludeOut != ''">
+          AND (tmp.userValid IS NULL OR tmp.userValid != '02')
+        </if>
+    </select>
+
+    <select id="queryPlanByProjectId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from project_plan
+        where
+        projectId = #{projectId}
+        order by stageId
+    </select>
+
+    <select id="queryDeliveryByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select *
+        from project_stage_leveldelivery
+        where
+        deliveryId in
+        <foreach collection="deliveryIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="queryProjectDeliverys" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_stage_leveldelivery.deliveryId,
+            project_stage_leveldelivery.deliveryName
+        FROM
+            project_stage_leveldelivery
+        WHERE
+            project_stage_leveldelivery.stageId IN (
+            SELECT project_stagedivide.stageId
+            FROM project_stagedivide
+            WHERE project_stagedivide.categoryId = #{projectCategoryId} )
+            AND FIND_IN_SET( #{projectLevelId}, project_stage_leveldelivery.levelIds )
+            AND ( excludeSourceIds IS NULL OR excludeSourceIds = '' OR excludeSourceIds NOT LIKE CONCAT ( '%', #{projectSourceId}, '%' ) )
+        ORDER BY
+            project_stage_leveldelivery.stageId
+    </select>
+
+    <select id="queryValidMembersByDeliverys" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            id,
+            userId,
+            respDeliveryIds
+        FROM
+            project_memberinfo
+        WHERE
+            projectId = #{projectId}
+            AND ( userValid IS NULL OR userValid != '02' )
+    </select>
+
+    <select id="queryRunningProjectList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_baseinfo.*,
+        project_memberinfo.userId,
+        os_group.NAME_ as mainDepName,
+        os_user.FULLNAME_ as respMan,
+        project_stagedivide.stageName as currentStageName,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        project_baseinfo
+        LEFT JOIN bpm_inst ON project_baseinfo.projectId = bpm_inst.BUS_KEY_
+        left join project_memberinfo on project_baseinfo.projectId = project_memberinfo.projectId
+        left join project_member_role on project_memberinfo.roleId = project_member_role.roleId
+        left join os_group on project_baseinfo.mainDepId = os_group.GROUP_ID_
+        left join os_user on project_memberinfo.userId = os_user.USER_ID_
+        left join project_stagedivide on project_baseinfo.currentStageId = project_stagedivide.stageId
+        WHERE
+        bpm_inst.STATUS_ = 'RUNNING'
+        and project_member_role.roleName = '项目负责人'
+        <if test="reportType != null and reportType != ''">
+            and project_memberinfo.userId = #{userId}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="queryInputList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from project_input
+        where
+        projectId = #{projectId}
+        order by CONVERT(inputType using GBK) ASC
+    </select>
+
+    <insert id="insertInput" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into project_input(
+        id,
+		projectId,
+		inputType,
+		inputNumber,
+		inputName,
+		referId,
+		referContent,
+		relation,
+		inputUrl,
+		CREATE_BY_,
+		CREATE_TIME_
+		)
+		VALUES
+		(
+		#{id,jdbcType=VARCHAR},
+		#{projectId,jdbcType=VARCHAR},
+		#{inputType,jdbcType=VARCHAR},
+		#{inputNumber,jdbcType=VARCHAR},
+		#{inputName,jdbcType=VARCHAR},
+		#{referId,jdbcType=VARCHAR},
+		#{referContent,jdbcType=VARCHAR},
+		#{relation,jdbcType=VARCHAR},
+		#{inputUrl,jdbcType=VARCHAR},
+		#{CREATE_BY_,jdbcType=VARCHAR},
+		#{CREATE_TIME_,jdbcType=TIMESTAMP}
+		)
+    </insert>
+
+    <update id="updateInput" parameterType="com.alibaba.fastjson.JSONObject">
+        update project_input
+        set
+        inputType=#{inputType,jdbcType=VARCHAR},
+        inputNumber=#{inputNumber,jdbcType=VARCHAR},
+        inputName=#{inputName,jdbcType=VARCHAR},
+        referId=#{referId,jdbcType=VARCHAR},
+        referContent=#{referContent,jdbcType=VARCHAR},
+        relation=#{relation,jdbcType=VARCHAR},
+        inputUrl=#{inputUrl,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteInput" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from project_input
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="projectId != null and projectId != ''">
+                and projectId=#{projectId}
+            </if>
+            <if test ="ids != null and ids !=''">
+                and id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryOutList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from project_outLink
+        <where>
+          <if test="outPlanId != null and outPlanId !=''">
+              outPlanId = #{outPlanId}
+          </if>
+        </where>
+    </select>
+
+    <select id="queryExistOutByReferId" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_outlink.*,
+            project_baseinfo.projectName
+        FROM
+            project_outlink
+            LEFT JOIN project_baseinfo ON project_outlink.projectId = project_baseinfo.projectId
+            where
+            project_outlink.outReferId=#{outReferId}
+            <if test="id !=null and id !=''">
+                and project_outlink.id !=#{id}
+            </if>
+    </select>
+
+    <insert id="insertOut" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into project_outLink(
+        id,
+		projectId,
+		outPlanId,
+		outNumber,
+		outName,
+		outReferId,
+		outUrl,
+		description,
+		CREATE_BY_,
+		CREATE_TIME_,
+		outDescription
+		)
+		VALUES
+		(
+		#{id,jdbcType=VARCHAR},
+		#{projectId,jdbcType=VARCHAR},
+		#{outPlanId,jdbcType=VARCHAR},
+		#{outNumber,jdbcType=VARCHAR},
+		#{outName,jdbcType=VARCHAR},
+		#{outReferId,jdbcType=VARCHAR},
+		#{outUrl,jdbcType=VARCHAR},
+		#{description,jdbcType=VARCHAR},
+		#{CREATE_BY_,jdbcType=VARCHAR},
+		#{CREATE_TIME_,jdbcType=TIMESTAMP},
+		#{outDescription,jdbcType=VARCHAR}
+		)
+    </insert>
+
+    <update id="updateOut" parameterType="com.alibaba.fastjson.JSONObject">
+        update project_outLink
+        set
+        outNumber=#{outNumber,jdbcType=VARCHAR},
+        outName=#{outName,jdbcType=VARCHAR},
+        outReferId=#{outReferId,jdbcType=VARCHAR},
+        outUrl=#{outUrl,jdbcType=VARCHAR},
+        description=#{description,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        outDescription=#{outDescription,jdbcType=VARCHAR}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteOut" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from project_outLink
+        <where>
+            <if test ="ids != null and ids !=''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="projectId != null and projectId != ''">
+                and projectId=#{projectId}
+            </if>
+            <if test ="outPlanIds != null and outPlanIds !=''">
+                and outPlanId in
+                <foreach collection="outPlanIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <update id="updateAchievement" parameterType="com.alibaba.fastjson.JSONObject">
+		UPDATE project_achievement
+		SET
+		projectId=#{projectId,jdbcType=VARCHAR},
+		deptId=#{deptId,jdbcType=VARCHAR},
+		typeId=#{typeId,jdbcType=VARCHAR},
+		num=#{num,jdbcType=NUMERIC},
+		description=#{description,jdbcType=VARCHAR},
+		UPDATE_BY_=#{updateBy,jdbcType=VARCHAR},
+		UPDATE_TIME_=#{updateTime,jdbcType=TIMESTAMP},
+		output_time=#{output_time,jdbcType=TIMESTAMP},
+		hzdw=#{hzdw,jdbcType=VARCHAR}
+		WHERE
+		id=#{id}
+	</update>
+
+    <insert id="insertAchievement" parameterType="com.alibaba.fastjson.JSONObject">
+		INSERT INTO project_achievement
+		(
+		    CREATE_BY_,
+		    CREATE_TIME_,
+		    id,
+		    projectId,
+		    deptId,
+		    typeId,
+		    num,
+		    description,
+		    output_time,
+		    hzdw
+		)
+		VALUES
+		(
+		    #{createBy,jdbcType=VARCHAR},
+		    #{createTime,jdbcType=TIMESTAMP},
+		    #{id,jdbcType=VARCHAR},
+		    #{projectId,jdbcType=VARCHAR},
+		    #{deptId,jdbcType=VARCHAR},
+		    #{typeId,jdbcType=VARCHAR},
+		    #{num,jdbcType=NUMERIC},
+		    #{description,jdbcType=VARCHAR},
+		    #{output_time,jdbcType=TIMESTAMP},
+		    #{hzdw,jdbcType=VARCHAR}
+		)
+	</insert>
+
+    <select id="queryUserByIds" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select * from os_user
+        where
+        USER_ID_ IN
+        <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="queryFormIdbyStandard" parameterType="java.lang.String"  resultType="java.lang.String">
+        select standard_reviseBaseinfo.id from standard_source
+        left join standard_reviseBaseinfo  on standard_source.id = standard_reviseBaseinfo.standardId
+        where standard_source.id = #{standardId}
+    </select>
+
+    <select id="getProductList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+            A.id,
+            A.designModel as productName,
+            B.important,
+            B.taskFrom
+        from product_spectrum A
+                 left join xpsz_baseinfo B on A.id = B.productId
+        GROUP BY A.id
+        order by A.designModel
+    </select>
+
+    <select id="getProjectDelivery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_stage_leveldelivery.deliveryId,
+            project_stage_leveldelivery.deliveryName,
+            xpsz_dept_items.itemCode,
+            xpsz_dept_items.itemName,
+            project_stagedivide.stageName,
+            project_baseinfo.productIds,
+            project_baseinfo.productNames,
+	        project_deliveryproduct.userId,
+	        FIND_IN_SET( #{projectLevelId}, project_stage_leveldelivery.levelIds ) as deliveryLevel
+        FROM
+            project_stage_leveldelivery
+                left join xpsz_dept_items on project_stage_leveldelivery.deliveryId = xpsz_dept_items.deliveryId
+            left join project_stagedivide on project_stage_leveldelivery.stageId = project_stagedivide.stageId
+            LEFT JOIN project_deliveryproduct ON project_stage_leveldelivery.deliveryId = project_deliveryproduct.deliveryId
+            	AND project_deliveryproduct.projectId = #{projectId}
+	            AND project_deliveryproduct.userId = #{userId}
+                LEFT JOIN project_baseinfo ON project_baseinfo.projectId = project_deliveryproduct.projectId
+        WHERE
+            project_stage_leveldelivery.stageId IN (
+            SELECT project_stagedivide.stageId
+            FROM project_stagedivide
+            WHERE project_stagedivide.categoryId = #{projectCategoryId} )
+            AND ( excludeSourceIds IS NULL OR excludeSourceIds = '' OR excludeSourceIds NOT LIKE CONCAT ( '%', #{projectSourceId}, '%' ) )
+        ORDER BY
+            project_stage_leveldelivery.stageId,
+            project_stage_leveldelivery.deliveryId
+    </select>
+
+    <select id="getOtherNeedDelivery" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            B.deliveryId,
+            B.stageId,
+            B.levelIds,
+            B.deliveryName,
+            B.excludeSourceIds,
+            B.fileType AS approvalSolutionId,
+            B.fromPdm
+        FROM
+            project_deliveryproduct A
+            LEFT JOIN project_stage_leveldelivery B ON A.deliveryId = B.deliveryId
+        WHERE
+            A.projectId = #{projectId}
+            AND A.deliveryId NOT IN
+            <foreach collection="deliveryIds" index="index" item="item" open="(" separator="," close=")">
+                #{item.deliveryId}
+            </foreach>
+            <if test="stageId != null and stageId != ''">
+                and B.stageId = #{stageId}
+            </if>
+    </select>
+    <select id="getExistProjectDelivery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            GROUP_CONCAT( A.deliveryId ) AS deliveryIds,
+            GROUP_CONCAT( B.deliveryName ) AS deliveryNames
+        FROM
+            project_deliveryproduct A
+            LEFT JOIN project_stage_leveldelivery B ON A.deliveryId = B.deliveryId
+        WHERE
+            projectId = #{projectId}
+            AND userId = #{userId}
+    </select>
+    <select id="getUnFinishDelivery" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT
+            GROUP_CONCAT( T.FULLNAME_ ) AS userName
+        FROM
+            (
+        SELECT
+            B.FULLNAME_
+        FROM
+            project_deliveryproduct A
+            LEFT JOIN os_user B ON A.userId = B.USER_ID_
+        WHERE
+            A.projectId = #{projectId}
+            AND ( A.productIds IS NULL OR A.productIds = '' )
+        GROUP BY
+            B.FULLNAME_
+            ) T
+    </select>
+
+
+    <select id="getProductProjectDelivery" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.projectId,
+            A.productIds,
+            A.productNames,
+            C.userId,
+            C.respDeliveryIds,
+            C.respDeliveryNames
+        FROM
+            project_baseinfo A
+            LEFT JOIN bpm_inst B ON A.projectId = B.BUS_KEY_
+            LEFT JOIN project_memberinfo C ON A.projectId = C.projectId
+        WHERE
+            A.categoryId = #{categoryId}
+            AND B.STATUS_ = #{STATUS_}
+            AND YEAR ( A.CREATE_TIME_ ) = #{year}
+            AND C.respDeliveryIds IS NOT NULL
+            AND C.respDeliveryNames IS NOT NULL
+            AND C.respDeliveryIds != ''
+            AND C.respDeliveryNames != ''
+    </select>
+
+    <select id="getDeptDeliveryIds" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            xpsz_dept_items A
+        WHERE
+            A.deptId like CONCAT('%',#{deptId},'%')
+    </select>
+
+    <select id="queryStageEvaluateList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_user_stage_evaluate.*,
+            os_user.FULLNAME_ AS creator,
+            project_stagedivide.stageName
+        FROM
+            project_user_stage_evaluate
+            LEFT JOIN os_user ON project_user_stage_evaluate.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN project_stagedivide ON project_user_stage_evaluate.stageId = project_stagedivide.stageId
+        WHERE
+            project_user_stage_evaluate.projectId = #{projectId}
+            <if test="userId != null and userId != ''">
+                AND project_user_stage_evaluate.userId = #{userId}
+            </if>
+            <if test="userIds != null and userIds != ''">
+                AND project_user_stage_evaluate.userId IN
+                <foreach collection="userIds" index="index" open="(" separator="," close=")" item="userId">
+                    #{userId}
+                </foreach>
+            </if>
+            <if test="stageId != null and stageId != ''">
+                AND project_user_stage_evaluate.stageId = #{stageId}
+            </if>
+    </select>
+
+    <update id="productUpdate" parameterType="com.alibaba.fastjson.JSONObject">
+        update
+        product_spectrum
+        set id = #{oldId}
+        where
+        designModel = #{designModel}
+    </update>
+
+    <select id="queryTimeByProjectId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            project_plan
+        order by projectId,stageId
+    </select>
+</mapper>

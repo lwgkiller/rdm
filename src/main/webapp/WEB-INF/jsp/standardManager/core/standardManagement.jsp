@@ -1,0 +1,48 @@
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@taglib  prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@taglib  prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<!DOCTYPE html>
+<html >
+<head>
+	<title>标准资源管理</title>
+	<%@include file="/commons/list.jsp"%>
+    <style>
+        .mini-tab-text{
+            font-size:18px
+        }
+        .mini-tab{
+            min-width:120px
+        }
+        .mini-tab-active .mini-tab-text {
+            color: #f30909;
+        }
+    </style>
+</head>
+<body>
+<div class="mini-fit" style="height: 100%;">
+	<div id="systemTab" class="mini-tabs" activeIndex="${activeTabIndex}" style="width:100%;height:100%;">
+
+	</div>
+</div>
+<script>
+	var ctxPath="${ctxPath}";
+	var standardNumber="${standardNumber}";
+    var standardName="${standardName}";
+    var standardCategory="${standardCategory}";
+    var systemCategorysJsonArray=${systemCategorysJsonArray};
+    var publishTimeFrom ="${publishTimeFrom}";
+    var publishTimeTo ="${publishTimeTo}";
+    var standardStatus="${standardStatus}";
+    var fieldId="${fieldId}";
+    var appendHtml="";
+    for(var i=0;i<systemCategorysJsonArray.length;i++) {
+        var systemCategory=systemCategorysJsonArray[i];
+        appendHtml+='<div title="'+systemCategory.systemCategoryName+'" name="'+systemCategory.systemCategoryId+'" url="'+ctxPath+'/standardManager/core/standard/tabPage.do?tabName=' +systemCategory.systemCategoryId+
+            '&standardNumber='+standardNumber+'&standardName='+standardName+'&standardCategory='+standardCategory+'&publishTimeFrom='+publishTimeFrom+'&publishTimeTo='
+			+publishTimeTo+'&standardStatus='+standardStatus+'&fieldId='+fieldId+'"></div>';
+	}
+    $("#systemTab").append(appendHtml);
+</script>
+
+</body>
+</html>

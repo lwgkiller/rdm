@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.strategicPlanning.core.dao.ZlghPlanningDao">
+
+    <resultMap id="zlghZyhd" type="com.redxun.strategicPlanning.core.domain.ZlghZyhd">
+        <id property="id" column="id"/>
+        <result property="moveName" column="move_name"/>
+        <result property="overallGoals" column="overall_goals"/>
+        <result property="initiatorId" column="initiator_id"/>
+        <result property="initiatorName" column="initiator_name"/>
+        <result property="respUserIds" column="respUserIds"/>
+        <result property="respUserNames" column="respUserNames"/>
+        <result property="respDeptIds" column="respDeptIds"/>
+        <result property="respDeptNames" column="respDeptNames"/>
+        <result property="zljcId" column="zljc_id"/>
+        <result property="zlktId" column="zlkt_id"/>
+        <result property="creator" column="creator"/>
+        <result property="createBy" column="CREATE_BY_"/>
+        <result property="createTime" column="CREATE_TIME_"/>
+        <result property="tenantId" column="TENANT_ID_"/>
+        <result property="updateBy" column="UPDATE_BY_"/>
+        <result property="updateTime" column="UPDATE_TIME_"/>
+    </resultMap>
+
+    <resultMap id="zlghZlydDTO" type="com.redxun.strategicPlanning.core.domain.dto.ZlghDto">
+        <id property="id" column="id"/>
+        <result property="zljcName" column="zljc_name"/>
+        <result property="ktName" column="kt_name"/>
+        <result property="zlktId" column="zlktId"/>
+        <result property="zyhdId" column="zyhdId"/>
+        <result property="moveName" column="move_name"/>
+        <result property="overallGoals" column="overall_goals"/>
+        <result property="initiatorId" column="initiator_id"/>
+        <result property="initiatorName" column="initiator_name"/>
+        <result property="respUserIds" column="respUserIds"/>
+        <result property="respUserNames" column="respUserNames"/>
+        <result property="respDeptIds" column="respDeptIds"/>
+        <result property="respDeptNames" column="respDeptNames"/>
+        <result property="creator" column="creator"/>
+        <result property="updator" column="updator"/>
+        <result property="createBy" column="CREATE_BY_"/>
+        <result property="createTime" column="CREATE_TIME_"/>
+        <result property="tenantId" column="TENANT_ID_"/>
+        <result property="updateBy" column="UPDATE_BY_"/>
+        <result property="updateTime" column="UPDATE_TIME_"/>
+    </resultMap>
+
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="selectZlghList" parameterType="java.util.Map"
+            resultMap="zlghZlydDTO">
+        SELECT
+        zzc.id,
+        zzc.zljc_name,
+        zzk.id as zlktId,
+        zzk.kt_name,
+        zh.id as zyhdId,
+        zh.move_name,
+        zh.overall_goals,
+        zh.initiator_id,
+        zh.initiator_name,
+        zh.respUserIds,
+        zh.respUserNames,
+        zh.respDeptIds,
+        zh.respDeptNames,
+        ouc.FULLNAME_ AS creator,
+        zh.CREATE_BY_,
+        zh.CREATE_TIME_,
+        zh.TENANT_ID_,
+        ouu.FULLNAME_ AS updator,
+        zh.UPDATE_BY_,
+        zh.UPDATE_TIME_
+        FROM zlgh_huodong zh
+        left join zlgh_zlkt zzk on zzk.id = zh.zlkt_id
+        left join zlgh_zljc zzc on  zzc.id = zzk.zljc_id
+        LEFT JOIN `os_user` ouc ON ouc.`USER_ID_` = zh.CREATE_BY_
+        LEFT JOIN `os_user` ouu ON ouu.`USER_ID_` = zh.UPDATE_BY_
+        WHERE 1=1
+        <if test="moveName != null and moveName != ''">
+            AND zh.move_name LIKE CONCAT( '%', #{moveName}, '%' )
+        </if>
+        <if test="id != null and id != ''">
+            AND zzc.zljc_id =#{id}
+        </if>
+        <if test="zlktId != null and zlktId != ''">
+            AND zzk.zljc_id =#{zlktId}
+        </if>
+        order by zzc.zljc_name asc, zzk.kt_name asc
+        <if test="sortField != null and sortField !='' and sortOrder != null and sortOrder !='' ">
+            , ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="selectZlghHdnfList" resultType="com.redxun.strategicPlanning.core.domain.ZlghHdnf">
+        SELECT
+        id AS id,
+        zyhd_id AS zyhdId,
+        year AS year,
+        jh_target AS jhTarget,
+        nz_xsjdl AS nzXsjdl,
+        nz_wczp AS nzWczp,
+        nd_xsjdl AS ndXsjdl,
+        nd_wczp AS ndWczp
+        FROM zlgh_hdnf
+        WHERE 1=1
+        <if test="zyhdId != null and zyhdId != ''">AND zyhd_id=#{zyhdId}</if>
+        and year BETWEEN(YEAR(now())-1)and(YEAR(now())+2)
+        <include refid="orderBy"/>
+    </select>
+    <select id="queryZlghHdnf" resultType="com.redxun.strategicPlanning.core.domain.ZlghHdnf">
+        SELECT
+        id AS id,
+        zyhd_id AS zyhdId,
+        year AS year,
+        jh_target AS jhTarget,
+        nz_xsjdl AS nzXsjdl,
+        nz_wczp AS nzWczp,
+        nd_xsjdl AS ndXsjdl,
+        nd_wczp AS ndWczp,
+        CREATE_BY_ AS createBy,
+        CREATE_TIME_ AS createTime,
+        UPDATE_BY_ AS updateBy,
+        UPDATE_TIME_ AS updateYime
+        FROM zlgh_hdnf
+        WHERE 1=1
+        AND id =#{id};
+    </select>
+
+    <insert id="batchInsertZlghHdnf" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                INSERT INTO zlgh_hdnf (id,zyhd_id,year,jh_target,nz_xsjdl,nz_wczp,nd_xsjdl,nd_wczp,CREATE_BY_,CREATE_TIME_,TENANT_ID_)
+                values
+                (#{item.id},#{item.zyhdId},#{item.year},#{item.jhTarget},#{item.nzXsjdl},#{item.nzWczp},#{item.ndXsjdl},#{item.ndWczp},#{item.createBy}, SYSDATE(),#{item.tenantId})
+            </foreach>
+        </if>
+    </insert>
+
+    <update id="batchUpdateZlghHdnf" parameterType="java.util.List">
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+                update zlgh_hdnf
+                <set>
+                    <if test="item.zyhdId != null and item.zyhdId != ''">zyhd_id=#{item.zyhdId},</if>
+                    <if test="item.year != null and item.year != ''">year=#{item.year},</if>
+                    <if test="item.jhTarget != null">jh_target=#{item.jhTarget},</if>
+                    <if test="item.nzXsjdl != null">nz_xsjdl=#{item.nzXsjdl},</if>
+                    <if test="item.nzWczp != null">nz_wczp=#{item.nzWczp},</if>
+                    <if test="item.ndXsjdl != null">nd_xsjdl=#{item.ndXsjdl},</if>
+                    <if test="item.ndWczp != null">nd_wczp=#{item.ndWczp},</if>
+                    <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                    <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                    UPDATE_TIME_ = SYSDATE()
+                </set>
+                where id = #{item.id}
+            </foreach>
+        </if>
+    </update>
+</mapper>

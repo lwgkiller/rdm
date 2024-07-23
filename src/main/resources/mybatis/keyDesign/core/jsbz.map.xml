@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.keyDesign.core.dao.JsbzDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryJsbz" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        keydesign_jsbz.*,
+        standard_source.standardNumber,
+        standard_source.standardName,
+        standard_category.categoryName,
+        os_user.FULLNAME_ AS userName
+        FROM
+        keydesign_jsbz
+        LEFT JOIN standard_source ON standard_source.id = keydesign_jsbz.standardId
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        LEFT JOIN os_user ON os_user.USER_ID_ = keydesign_jsbz.CREATE_BY_
+        WHERE
+        belongbj=#{belongbj}
+        <if test="standardNumber != null and standardNumber != ''">
+            AND standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+        </if>
+        <if test="standardName != null and standardName != ''">
+            and standard_source.standardName like CONCAT('%',#{standardName},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countJsbzList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        keydesign_jsbz
+        LEFT JOIN standard_source ON standard_source.id = keydesign_jsbz.standardId
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        WHERE
+        belongbj=#{belongbj}
+        <if test="standardNumber != null and standardNumber != ''">
+            AND standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+        </if>
+        <if test="standardName != null and standardName != ''">
+            and standard_source.standardName like CONCAT('%',#{standardName},'%')
+        </if>
+
+    </select>
+    <insert id="createJsbz" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_jsbz(
+            standardId
+            ,belongbj
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{standardId,jdbcType=VARCHAR},
+            #{belongbj,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <delete id="deleteJsbz" parameterType="java.util.Map">
+        delete from keydesign_jsbz
+        where
+        standardId=#{standardId}
+        and belongbj=#{belongbj}
+    </delete>
+
+
+    <select id="queryMsg" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        keydesign_msg.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        keydesign_msg
+        LEFT JOIN os_user ON os_user.USER_ID_ = keydesign_msg.CREATE_BY_
+        <where>
+            <if test="belongbj != null and belongbj != ''">
+                belongbj=#{belongbj}
+            </if>
+
+            <if test="content != null and content != ''">
+                and content like CONCAT('%',#{content},'%')
+            </if>
+            <if test="recId != null and recId != ''">
+                and recId =#{recId}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countMsgList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        keydesign_msg
+        LEFT JOIN os_user ON os_user.USER_ID_ = keydesign_msg.CREATE_BY_
+        <where>
+            belongbj=#{belongbj}
+            <if test="content != null and content != ''">
+                and content like CONCAT('%',#{content},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="createMsg" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_msg(
+            msgId
+            ,content
+            ,recId
+            ,recName
+            ,belongbj
+            ,linkaction
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{msgId,jdbcType=VARCHAR},
+            #{content,jdbcType=VARCHAR},
+            #{recId,jdbcType=VARCHAR},
+            #{recName,jdbcType=VARCHAR},
+            #{belongbj,jdbcType=VARCHAR},
+            #{linkaction,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <update id="updateMsg" parameterType="com.alibaba.fastjson.JSONObject">
+        update keydesign_msg
+        set
+            content=#{content,jdbcType=VARCHAR},
+            recId=#{recId,jdbcType=VARCHAR},
+            recName=#{recName,jdbcType=VARCHAR},
+            linkaction=#{linkaction,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        msgId=#{msgId}
+    </update>
+    <insert id="createMsgDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_standard(
+            linkId
+            ,standardId
+            ,standardNumber
+            ,needNumber
+            ,needName
+            ,belongId
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{linkId,jdbcType=VARCHAR},
+            #{standardId,jdbcType=VARCHAR},
+            #{standardNumber,jdbcType=VARCHAR},
+            #{needNumber,jdbcType=VARCHAR},
+            #{needName,jdbcType=VARCHAR},
+            #{belongId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateMsgDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update keydesign_standard
+        set
+            standardId=#{standardId,jdbcType=VARCHAR},
+            standardNumber=#{standardNumber,jdbcType=VARCHAR},
+            needNumber=#{needNumber,jdbcType=VARCHAR},
+            needName=#{needName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        linkId=#{linkId}
+    </update>
+
+    <select id="queryMsgById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        keydesign_msg
+        <where>
+            msgId =#{msgId}
+        </where>
+    </select>
+
+    <select id="queryMsgDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        keydesign_standard
+        <where>
+              belongId =#{belongId}
+        </where>
+    </select>
+    <delete id="deleteMsgDetail" parameterType="java.util.Map">
+        delete from keydesign_standard
+        <where>
+            <if test="linkId != null and linkId != ''">
+                linkId=#{linkId}
+            </if>
+            <if test="belongId != null and belongId != ''">
+                belongId=#{belongId}
+            </if>
+
+        </where>
+    </delete>
+
+    <delete id="deleteMsg" parameterType="java.util.Map">
+        delete from keydesign_msg
+        <where>
+            <if test="msgId != null and msgId != ''">
+                msgId=#{msgId}
+            </if>
+        </where>
+    </delete>
+    
+
+</mapper>

@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.report.dao.StandardReportDao">
+    <select id="queryPublishChart" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        DATE_FORMAT(DATE_ADD(standard_source.publishTime,INTERVAL 8 hour),'%Y') as publishY,
+        count(*) as countNum
+        FROM
+        standard_source
+        left join standard_system on standard_source.systemId=standard_system.id
+        left join standard_category on standard_source.standardCategoryId=standard_category.id
+        where
+        standard_source.publishTime&gt;=#{publishTimeFrom}
+        and standard_source.publishTime&lt;=#{publishTimeTo}
+        and standard_system.systemCategoryId=#{systemCategoryId}
+        AND standard_category.categoryName='企业标准'
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_source.TENANT_ID_=#{TENANT_ID_}
+        </if>
+        GROUP BY publishY
+        ORDER BY publishY
+    </select>
+
+    <select id="queryCategoryChart" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        standard_source.standardCategoryId,
+        count(*) as countNum
+        FROM
+        standard_source
+        left join standard_system on standard_source.systemId=standard_system.id
+        where
+        standard_source.standardStatus = 'enable'
+        and standard_system.systemCategoryId=#{systemCategoryId}
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_source.TENANT_ID_=#{TENANT_ID_}
+        </if>
+        GROUP BY standard_source.standardCategoryId
+    </select>
+
+    <select id="queryStandardCheckChart"  parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standardName,
+        standardNumber,
+        count( * ) AS countNumber
+        FROM
+        (
+        SELECT
+        standard_checkrecord.*,
+        standard_source.standardName,
+        standard_source.standardNumber
+        FROM
+        standard_checkrecord
+        LEFT JOIN standard_source ON standard_checkrecord.standardId = standard_source.id
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        WHERE
+        standard_checkrecord.checkCategoryId = #{checkCategoryId}
+        AND standard_system.systemCategoryId = #{systemCategoryId}
+        <if test="timeFrom != null and timeFrom != ''">
+          AND standard_checkrecord.CREATE_TIME_ &gt;= #{timeFrom}
+        </if>
+        <if test="timeTo != null and timeTo != ''">
+          AND standard_checkrecord.CREATE_TIME_ &lt;= #{timeTo}
+        </if>
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_checkrecord.TENANT_ID_=#{TENANT_ID_}
+        </if>
+        ) tmp
+        GROUP BY
+        standardId
+        ORDER BY
+        countNumber DESC
+        LIMIT 10
+    </select>
+
+    <select id="queryDepCheckStandardChart"  parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        depName,
+        count( * ) AS countNumber
+        FROM
+        (
+        SELECT
+        standard_checkrecord.*,
+        os_group.NAME_ AS depName,
+        os_group.GROUP_ID_ AS depId
+        FROM
+        standard_checkrecord
+        LEFT JOIN standard_source ON standard_checkrecord.standardId = standard_source.id
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN os_rel_inst ON os_rel_inst.PARTY2_ = standard_checkrecord.CREATE_BY_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        WHERE
+        standard_checkrecord.checkCategoryId = #{checkCategoryId}
+        AND standard_system.systemCategoryId = #{systemCategoryId}
+        AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        <if test="timeFrom != null and timeFrom != ''">
+            AND standard_checkrecord.CREATE_TIME_ &gt;= #{timeFrom}
+        </if>
+        <if test="timeTo != null and timeTo != ''">
+            AND standard_checkrecord.CREATE_TIME_ &lt;= #{timeTo}
+        </if>
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            AND standard_checkrecord.TENANT_ID_=#{TENANT_ID_}
+        </if>
+        ) temp
+        GROUP BY
+        depId
+        ORDER BY
+        countNumber DESC
+        LIMIT 10
+    </select>
+
+    <select id="groupByPublish" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_source.*,
+        DATE_FORMAT(DATE_ADD(standard_source.publishTime,INTERVAL 8 hour),'%Y') as publishY,
+        standard_system.systemName,
+        standard_system.systemNumber,
+        standard_category.categoryName,
+        standard_belongdep.belongDepName
+        FROM
+        standard_source
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        LEFT JOIN standard_belongdep ON standard_source.belongDepId = standard_belongdep.id
+        <where>
+            standard_source.publishTime is not null
+            and standard_source.publishTime != ''
+            <if test="selectedSystemIds != null and selectedSystemIds != ''">
+                AND standard_source.systemId in
+                <foreach collection="selectedSystemIds" index="index" item="systemId" open="(" separator="," close=")">
+                    #{systemId}
+                </foreach>
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_source.standardStatus=#{standardStatus}
+            </if>
+            <if test="standardCategoryId != null and standardCategoryId != ''">
+                AND standard_source.standardCategoryId=#{standardCategoryId}
+            </if>
+            <if test="belongDepId != null and belongDepId != ''">
+                AND standard_source.belongDepId=#{belongDepId}
+            </if>
+            <if test="publishTimeFrom != null and publishTimeFrom != ''">
+                AND standard_source.publishTime &gt;= #{publishTimeFrom}
+            </if>
+            <if test="publishTimeTo != null and publishTimeTo != ''">
+                AND standard_source.publishTime &lt;= #{publishTimeTo}
+            </if>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                AND standard_system.systemCategoryId=#{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        <choose>
+            <when test="sortField != null and sortField != '' and sortOrder != null and sortOrder != ''">
+                ORDER BY ${sortField} ${sortOrder}
+            </when>
+            <otherwise>
+                ORDER BY publishY,systemNumber,standardNumber
+            </otherwise>
+        </choose>
+        <if test="startIndex != null and pageSize != null">
+            limit ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <select id="groupByPublishCount" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        DATE_FORMAT(DATE_ADD(standard_source.publishTime,INTERVAL 8 hour),'%Y') as publishY,
+        count(*) as countNum
+        FROM
+        standard_source
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        LEFT JOIN standard_belongdep ON standard_source.belongDepId = standard_belongdep.id
+        <where>
+            standard_source.publishTime is not null
+            and standard_source.publishTime != ''
+            <if test="selectedSystemIds != null and selectedSystemIds != ''">
+                AND standard_source.systemId in
+                <foreach collection="selectedSystemIds" index="index" item="systemId" open="(" separator="," close=")">
+                    #{systemId}
+                </foreach>
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_source.standardStatus=#{standardStatus}
+            </if>
+            <if test="standardCategoryId != null and standardCategoryId != ''">
+                AND standard_source.standardCategoryId=#{standardCategoryId}
+            </if>
+            <if test="belongDepId != null and belongDepId != ''">
+                AND standard_source.belongDepId=#{belongDepId}
+            </if>
+            <if test="publishTimeFrom != null and publishTimeFrom != ''">
+                AND standard_source.publishTime &gt;= #{publishTimeFrom}
+            </if>
+            <if test="publishTimeTo != null and publishTimeTo != ''">
+                AND standard_source.publishTime &lt;= #{publishTimeTo}
+            </if>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                AND standard_system.systemCategoryId=#{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        GROUP BY publishY
+        ORDER BY publishY
+    </select>
+
+    <select id="groupBySystem" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_source.*,
+        standard_system.systemName,
+        standard_system.systemNumber,
+        standard_category.categoryName,
+        standard_belongdep.belongDepName
+        FROM
+        standard_source
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        LEFT JOIN standard_belongdep ON standard_source.belongDepId = standard_belongdep.id
+        <where>
+            <if test="selectedSystemIds != null and selectedSystemIds != ''">
+                standard_source.systemId in
+                <foreach collection="selectedSystemIds" index="index" item="systemId" open="(" separator="," close=")">
+                    #{systemId}
+                </foreach>
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_source.standardStatus=#{standardStatus}
+            </if>
+            <if test="standardCategoryId != null and standardCategoryId != ''">
+                AND standard_source.standardCategoryId=#{standardCategoryId}
+            </if>
+            <if test="belongDepId != null and belongDepId != ''">
+                AND standard_source.belongDepId=#{belongDepId}
+            </if>
+            <if test="publishTimeFrom != null and publishTimeFrom != ''">
+                AND standard_source.publishTime &gt;= #{publishTimeFrom}
+            </if>
+            <if test="publishTimeTo != null and publishTimeTo != ''">
+                AND standard_source.publishTime &lt;= #{publishTimeTo}
+            </if>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                AND standard_system.systemCategoryId=#{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        <choose>
+            <when test="sortField != null and sortField != '' and sortOrder != null and sortOrder != ''">
+                ORDER BY ${sortField} ${sortOrder}
+            </when>
+            <otherwise>
+                ORDER BY systemNumber,standardNumber
+            </otherwise>
+        </choose>
+        <if test="startIndex != null and pageSize != null ">
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <select id="groupBySystemCount" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        standard_system.systemNumber,
+        count(*) as countNum
+        FROM
+        standard_source
+        LEFT JOIN standard_system ON standard_source.systemId = standard_system.id
+        LEFT JOIN standard_category ON standard_source.standardCategoryId = standard_category.id
+        LEFT JOIN standard_belongdep ON standard_source.belongDepId = standard_belongdep.id
+        <where>
+            <if test="selectedSystemIds != null and selectedSystemIds != ''">
+                standard_source.systemId in
+                <foreach collection="selectedSystemIds" index="index" item="systemId" open="(" separator="," close=")">
+                    #{systemId}
+                </foreach>
+            </if>
+            <if test="standardStatus != null and standardStatus != ''">
+                AND standard_source.standardStatus=#{standardStatus}
+            </if>
+            <if test="standardCategoryId != null and standardCategoryId != ''">
+                AND standard_source.standardCategoryId=#{standardCategoryId}
+            </if>
+            <if test="belongDepId != null and belongDepId != ''">
+                AND standard_source.belongDepId=#{belongDepId}
+            </if>
+            <if test="publishTimeFrom != null and publishTimeFrom != ''">
+                AND standard_source.publishTime &gt;= #{publishTimeFrom}
+            </if>
+            <if test="publishTimeTo != null and publishTimeTo != ''">
+                AND standard_source.publishTime &lt;= #{publishTimeTo}
+            </if>
+            <if test="systemCategoryId != null and systemCategoryId != ''">
+                AND standard_system.systemCategoryId=#{systemCategoryId}
+            </if>
+            <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+                AND standard_source.TENANT_ID_=#{TENANT_ID_}
+            </if>
+        </where>
+        GROUP BY systemNumber
+        ORDER BY systemNumber
+    </select>
+
+    <select id="groupByProject" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+    project_outlink.*,
+    project_baseinfo.projectName,
+    project_baseinfo.number,
+    project_baseinfo.mainDepId,
+    project_achievement_type.catagoryName as typeName,
+    project_memberinfo.projectId,
+    os_user.FULLNAME_ as respMan,
+    os_user.USER_ID_
+    FROM
+    project_outlink
+    LEFT JOIN project_achievement ON project_achievement.id = project_outlink.outPlanId
+    LEFT JOIN project_baseinfo ON project_outlink.projectId = project_baseinfo.projectId
+    LEFT JOIN project_achievement_type ON project_achievement.typeId = project_achievement_type.id
+    LEFT JOIN project_memberinfo ON project_memberinfo.projectId = project_outlink.projectId
+    LEFT JOIN project_member_role ON project_memberinfo.roleId = project_member_role.roleId
+    LEFT JOIN os_user ON project_memberinfo.userId = os_user.USER_ID_
+    <where>
+      project_achievement.typeId in ('13','14','15','18')
+        AND
+      project_member_role.roleName='项目负责人'
+        <if test="standardNumber != null and standardNumber != ''">
+            AND project_outlink.outNumber=#{standardNumber}
+        </if>
+        <if test="standardName != null and standardName != ''">
+            AND project_outlink.outName=#{standardName}
+        </if>
+        <if test="ProjectNumber != null and ProjectNumber != ''">
+            AND project_baseinfo.number=#{ProjectNumber}
+        </if>
+        <if test="projectName != null and projectName != ''">
+            AND project_baseinfo.projectName=#{projectName}
+        </if>
+        <if test="mainDepId != null and mainDepId != ''">
+            AND project_baseinfo.mainDepId=#{mainDepId}
+        </if>
+        <if test="respMan != null and respMan != ''">
+            AND os_user.FULLNAME_=#{respMan}
+        </if>
+    </where>
+        GROUP BY project_outlink.outNumber
+        ORDER BY project_outlink.outNumber
+        <if test="startIndex != null and pageSize != null ">
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <select id="groupByProjectCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM (
+        SELECT
+        project_outlink.*,
+        project_baseinfo.projectName,
+        project_baseinfo.number,
+        project_baseinfo.mainDepId,
+        project_achievement_type.catagoryName as typeName
+        FROM
+        project_outlink
+        LEFT JOIN project_achievement ON project_achievement.id = project_outlink.outPlanId
+        LEFT JOIN project_baseinfo ON project_outlink.projectId = project_baseinfo.projectId
+        LEFT JOIN project_achievement_type ON project_achievement.typeId = project_achievement_type.id
+        where project_achievement.typeId in ('13','14','15','18')
+        <if test="standardNumber != null and standardNumber != ''">
+            AND project_outlink.outNumber=#{standardNumber}
+        </if>
+        <if test="standardName != null and standardName != ''">
+            AND project_outlink.outName=#{standardName}
+        </if>
+        <if test="ProjectNumber != null and ProjectNumber != ''">
+            AND project_baseinfo.number=#{ProjectNumber}
+        </if>
+        <if test="projectName != null and projectName != ''">
+            AND project_baseinfo.projectName=#{projectName}
+        </if>
+        <if test="mainDepId != null and mainDepId != ''">
+            AND project_baseinfo.mainDepId=#{mainDepId}
+        </if>
+        GROUP BY project_outlink.outNumber
+        ORDER BY project_outlink.outNumber
+        ) as StandardByProject
+    </select>
+</mapper>

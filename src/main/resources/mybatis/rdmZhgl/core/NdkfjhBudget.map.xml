@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.NdkfjhBudgetDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        B.*,
+        A.mainId,
+        A.products,
+        A.charge,
+        C.FULLNAME_ as 	chargerMan,
+        D.NAME_ as deptName
+        FROM
+        ndkfjh_budgetdetail A
+        LEFT JOIN ndkfjh_budget B ON A.mainId = B.id
+        left join os_user C on A.charge = C.USER_ID_
+        left join os_group D on A.deptId = D.GROUP_ID_
+        <where>
+            <if test="projectCode != null and projectCode != ''">
+                and B.projectCode like CONCAT('%',#{projectCode},'%')
+            </if>
+            <if test="projectName != null and projectName != ''">
+                and B.projectName like CONCAT('%',#{projectName},'%')
+            </if>
+            <if test="budgetYear != null and budgetYear != ''">
+                and B.budgetYear = #{budgetYear}
+            </if>
+        </where>
+        order by B.budgetYear desc,B.projectCode
+        <include refid="pageSql"/>
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            ndkfjh_budget A
+            where id=#{id}
+    </select>
+    <insert id="addObject" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO ndkfjh_budget (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            projectCode,
+            projectName,
+            target,
+            content,
+            coreTechnology,
+            newProductNum,
+            firstName,
+            upProductName,
+            improveName,
+            chiefEngineer,
+            patentNum,
+            startDate,
+            endDate,
+            budgetYear
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{projectCode,jdbcType=VARCHAR},
+            #{projectName,jdbcType=VARCHAR},
+            #{target,jdbcType=VARCHAR},
+            #{content,jdbcType=VARCHAR},
+            #{coreTechnology,jdbcType=VARCHAR},
+            #{newProductNum,jdbcType=VARCHAR},
+            #{firstName,jdbcType=VARCHAR},
+            #{upProductName,jdbcType=VARCHAR},
+            #{improveName,jdbcType=VARCHAR},
+            #{chiefEngineer,jdbcType=VARCHAR},
+            #{patentNum,jdbcType=VARCHAR},
+            #{startDate,jdbcType=TIMESTAMP},
+            #{endDate,jdbcType=TIMESTAMP},
+            #{budgetYear,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="addMapObject" parameterType="java.util.Map">
+         INSERT INTO ndkfjh_budget (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            projectCode,
+            projectName,
+            target,
+            content,
+            coreTechnology,
+            newProductNum,
+            firstName,
+            upProductName,
+            improveName,
+            chiefEngineer,
+            patentNum,
+            startDate,
+            endDate,
+            budgetYear
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{projectCode,jdbcType=VARCHAR},
+            #{projectName,jdbcType=VARCHAR},
+            #{target,jdbcType=VARCHAR},
+            #{content,jdbcType=VARCHAR},
+            #{coreTechnology,jdbcType=VARCHAR},
+            #{newProductNum,jdbcType=VARCHAR},
+            #{firstName,jdbcType=VARCHAR},
+            #{upProductName,jdbcType=VARCHAR},
+            #{improveName,jdbcType=VARCHAR},
+            #{chiefEngineer,jdbcType=VARCHAR},
+            #{patentNum,jdbcType=VARCHAR},
+            #{startDate,jdbcType=TIMESTAMP},
+            #{endDate,jdbcType=TIMESTAMP},
+            #{budgetYear,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="batchInsertBudget" parameterType="java.util.List">
+        INSERT INTO ndkfjh_budget (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        projectCode,
+        projectName,
+        target,
+        content,
+        coreTechnology,
+        newProductNum,
+        firstName,
+        upProductName,
+        improveName,
+        chiefEngineer,
+        patentNum,
+        startDate,
+        endDate,
+        budgetYear
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.projectCode,jdbcType=VARCHAR},
+            #{item.projectName,jdbcType=VARCHAR},
+            #{item.target,jdbcType=VARCHAR},
+            #{item.content,jdbcType=VARCHAR},
+            #{item.coreTechnology,jdbcType=VARCHAR},
+            #{item.newProductNum,jdbcType=VARCHAR},
+            #{item.firstName,jdbcType=VARCHAR},
+            #{item.upProductName,jdbcType=VARCHAR},
+            #{item.improveName,jdbcType=VARCHAR},
+            #{item.chiefEngineer,jdbcType=VARCHAR},
+            #{item.patentNum,jdbcType=VARCHAR},
+            #{item.startDate,jdbcType=TIMESTAMP},
+            #{item.endDate,jdbcType=TIMESTAMP},
+            #{item.budgetYear,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+    <update id="updateObject" parameterType="com.alibaba.fastjson.JSONObject">
+        update ndkfjh_budget
+            set
+                projectCode=#{projectCode,jdbcType=VARCHAR},
+                projectName=#{projectName,jdbcType=VARCHAR},
+                target=#{target,jdbcType=VARCHAR},
+                content=#{content,jdbcType=VARCHAR},
+                coreTechnology=#{coreTechnology,jdbcType=VARCHAR},
+                newProductNum=#{newProductNum,jdbcType=VARCHAR},
+                firstName=#{firstName,jdbcType=VARCHAR},
+                upProductName=#{upProductName,jdbcType=VARCHAR},
+                improveName=#{improveName,jdbcType=VARCHAR},
+                chiefEngineer=#{chiefEngineer,jdbcType=VARCHAR},
+                patentNum=#{patentNum,jdbcType=VARCHAR},
+                <if test="startDate != null and startDate != ''">
+                    startDate=#{startDate,jdbcType=TIMESTAMP},
+                </if>
+                <if test="endDate != null and endDate != ''">
+                    endDate=#{endDate,jdbcType=TIMESTAMP},
+                </if>
+                <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                    UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+                </if>
+                 UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from ndkfjh_budget
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getObjByInfo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            ndkfjh_budget A
+        WHERE
+         budgetYear=#{budgetYear}
+        and A.projectCode = #{projectCode}
+    </select>
+    <insert id="addBudgetDetail" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO ndkfjh_budgetdetail (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            products,
+            charge,
+            deptId
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{products,jdbcType=VARCHAR},
+            #{charge,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="addMapBudgetDetail" parameterType="java.util.Map">
+         INSERT INTO ndkfjh_budgetdetail (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            products,
+            charge,
+            deptId
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{products,jdbcType=VARCHAR},
+            #{charge,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="batchInsertBudgetDetail" parameterType="java.util.List">
+        INSERT INTO ndkfjh_budgetdetail (
+        id,
+        CREATE_BY_,
+        CREATE_TIME_,
+        UPDATE_BY_,
+        UPDATE_TIME_,
+        mainId,
+        products,
+        charge
+        )
+        values
+        <!--需要确保要用到的字段在item中存在-->
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.UPDATE_BY_,jdbcType=VARCHAR},
+            #{item.UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{item.mainId,jdbcType=VARCHAR},
+            #{item.products,jdbcType=VARCHAR},
+            #{item.charge,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+    <update id="updateBudgetDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update ndkfjh_budgetdetail
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        products=#{products,jdbcType=VARCHAR},
+        charge=#{charge,jdbcType=VARCHAR},
+        <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="delBudgetDetail" parameterType="java.lang.String">
+        delete from ndkfjh_budgetdetail where id = #{id}
+    </delete>
+    <select id="getBudgetListByYear" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from ndkfjh_budget A where A.budgetYear =  #{budgetYear}
+    </select>
+    <select id="getBudgetDetailList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.FULLNAME_ as userName
+        FROM
+            ndkfjh_budgetdetail A
+            left join os_user B on A.charge = B.USER_ID_
+        WHERE A.mainId = #{mainId}
+    </select>
+    <delete id="batchDeleteDetail" parameterType="java.util.Map">
+        delete from ndkfjh_budgetdetail
+        WHERE
+        mainId in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getBudgetByInfo" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            *
+        FROM
+            ndkfjh_budget A
+        WHERE
+            A.budgetYear = #{budgetYear}
+            AND A.projectCode = #{projectCode}
+            limit 1
+    </select>
+</mapper>

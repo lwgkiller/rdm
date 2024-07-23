@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.world.core.dao.ZlcdDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    
+    <select id="queryZlcd" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        overseas_zlcd.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        overseas_zlcd
+        LEFT JOIN os_rel_inst ON overseas_zlcd.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = overseas_zlcd.CREATE_BY_
+        left join bpm_inst on overseas_zlcd.zlcdId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (overseas_zlcd.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="deptName != null and deptName != ''">
+            and overseas_zlcd.deptName like CONCAT('%',#{deptName},'%')
+        </if>
+        <if test="applyName != null and applyName != ''">
+            and overseas_zlcd.applyName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test='content != null and content !=""'>
+            AND overseas_zlcd.zlcdId IN(
+            select overseas_zlDetail.belongId from overseas_zlDetail where overseas_zlDetail.content=#{content}
+            )
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countZlcdList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        overseas_zlcd
+        LEFT JOIN os_rel_inst ON overseas_zlcd.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on overseas_zlcd.zlcdId=bpm_inst.BUS_KEY_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="deptName != null and deptName != ''">
+                and overseas_zlcd.deptName like CONCAT('%',#{deptName},'%')
+            </if>
+            <if test="applyName != null and applyName != ''">
+                and overseas_zlcd.applyName like CONCAT('%',#{applyName},'%')
+            </if>
+            <if test='content != null and content !=""'>
+                AND overseas_zlcd.zlcdId IN(
+                select overseas_zlDetail.belongId from overseas_zlDetail where overseas_zlDetail.content=#{content}
+                )
+            </if>
+        </where>
+    </select>
+    <insert id="createZlcd" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into overseas_zlcd(
+            zlcdId
+            ,deptId
+            ,deptName
+            ,applyId
+            ,applyName
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{zlcdId,jdbcType=VARCHAR},
+            #{deptId,jdbcType=TIMESTAMP},
+            #{deptName,jdbcType=VARCHAR},
+            #{applyId,jdbcType=VARCHAR},
+            #{applyName,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateZlcd" parameterType="com.alibaba.fastjson.JSONObject">
+        update overseas_zlcd
+        <set>
+            deptId=#{deptId,jdbcType=TIMESTAMP},
+            deptName=#{deptName,jdbcType=VARCHAR},
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        zlcdId=#{zlcdId}
+    </update>
+    
+    <select id="queryZlcdById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        overseas_zlcd.*,
+        bpm_inst.INST_ID_ as instId
+        from overseas_zlcd
+        left join os_user on overseas_zlcd.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on overseas_zlcd.zlcdId=bpm_inst.BUS_KEY_
+        where overseas_zlcd.zlcdId=#{zlcdId}
+    </select>
+
+    <select id="queryZlcdFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        overseas_zlcdfile
+        WHERE
+        belongId=#{zlcdId}
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into overseas_zlcdfile(
+        fileId
+        ,fileName
+        ,belongId
+        ,fileSize
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteZlcdFile" parameterType="java.util.Map">
+        delete from overseas_zlcdfile
+        <where>
+            <if test="fileId != null and fileId !=''">
+                fileId=#{fileId}
+            </if>
+            <if test="detailId != null and detailId !=''">
+                belongId=#{detailId}
+            </if>
+        </where>
+    </delete>
+
+    <delete id="deleteZlcd" parameterType="java.util.Map">
+        delete from overseas_zlcd
+        where
+                zlcdId=#{zlcdId}
+    </delete>
+
+    <select id="queryZlcdDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        overseas_zlDetail.detailId,
+        overseas_zlDetail.content,
+        overseas_zlDetail.purpose,
+        overseas_zlDetail.fileType,
+        overseas_zlDetail.CREATE_BY_ AS creator,
+        overseas_zlcdfile.*
+        from overseas_zlDetail
+        left join overseas_zlcdfile on overseas_zlDetail.detailId=overseas_zlcdfile.belongId
+        where
+            overseas_zlDetail.belongId=#{zlcdId}
+    </select>
+
+    <insert id="createDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO overseas_zlDetail (
+        detailId,
+        content,
+        purpose,
+        belongId,
+        fileType,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{detailId,jdbcType=VARCHAR},
+        #{content,jdbcType=VARCHAR},
+        #{purpose,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{fileType,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update overseas_zlDetail
+        <set>
+            fileType=#{fileType,jdbcType=VARCHAR},
+            content=#{content,jdbcType=VARCHAR},
+            purpose=#{purpose,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </set>
+        where
+        detailId=#{detailId}
+    </update>
+    <delete id="deleteDetail" parameterType="java.util.Map">
+    delete from overseas_zlDetail
+    <where>
+        <if test="detailId != null and detailId !=''">
+            detailId=#{detailId}
+        </if>
+        <if test="zlcdId != null and zlcdId !=''">
+            belongId=#{zlcdId}
+        </if>
+    </where>
+</delete>
+</mapper>

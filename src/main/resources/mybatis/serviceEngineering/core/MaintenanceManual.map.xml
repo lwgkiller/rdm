@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.MaintenanceManualDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="materialCode !=null and materialCode !=''">
+            AND service_engineering_maintenance_manual.materialCode = #{materialCode}
+        </if>
+        <if test="salesModel !=null and salesModel !=''">
+            AND service_engineering_maintenance_manual.salesModel = #{salesModel}
+        </if>
+        <if test="designModel !=null and designModel !=''">
+            AND service_engineering_maintenance_manual.designModel = #{designModel}
+        </if>
+        <if test="atlasStatus !=null and atlasStatus !=''">
+            AND service_engineering_maintenance_manual.atlasStatus = #{atlasStatus}
+        </if>
+        <if test="storageQuantity !=null and storageQuantity !=''">
+            AND service_engineering_maintenance_manual.storageQuantity = #{storageQuantity}
+        </if>
+        <if test="shipmentQuantity !=null and shipmentQuantity !=''">
+            AND service_engineering_maintenance_manual.shipmentQuantity = #{shipmentQuantity}
+        </if>
+        <if test="manualCode !=null and manualCode !=''">
+            AND service_engineering_maintenance_manual.manualCode = #{manualCode}
+        </if>
+        <if test="manualDescription != null and manualDescription != ''">
+            AND service_engineering_maintenance_manual.manualDescription = #{manualDescription}
+        </if>
+        <if test="manualLanguage != null and manualLanguage != ''">
+            AND service_engineering_maintenance_manual.manualLanguage = #{manualLanguage}
+        </if>
+        <if test="department != null and department != ''">
+            AND service_engineering_maintenance_manual.department = #{department}
+        </if>
+        <if test="productSupervisor != null and productSupervisor != ''">
+            AND service_engineering_maintenance_manual.productSupervisor = #{productSupervisor}
+        </if>
+        <if test="keyUser != null and keyUser != ''">
+            AND service_engineering_maintenance_manual.keyUser = #{keyUser}
+        </if>
+        <if test="percentComplete != null and percentComplete != ''">
+            AND service_engineering_maintenance_manual.percentComplete = #{percentComplete}
+        </if>
+        <if test="isPrint != null and isPrint != ''">
+            AND service_engineering_maintenance_manual.isPrint = #{isPrint}
+        </if>
+        <if test="estimatedPrintTime != null and estimatedPrintTime != ''">
+            AND service_engineering_maintenance_manual.estimatedPrintTime &lt;= #{estimatedPrintTime}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_maintenance_manual
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_maintenance_manual
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="getListByCode" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_maintenance_manual
+        WHERE service_engineering_maintenance_manual.materialCode = #{materialCode}
+    </select>
+    <!---->
+    <insert id="insertData" parameterType="java.util.Map">
+        insert into service_engineering_maintenance_manual(
+          id,
+          materialCode,
+          salesModel,
+          designModel,
+          atlasStatus,
+          storageQuantity,
+          shipmentQuantity,
+          manualCode,
+          manualDescription,
+          manualLanguage,
+          manualStatus,
+          departmentId,
+          department,
+          productSupervisorId,
+          productSupervisor,
+          keyUserId,
+          keyUser,
+          percentComplete,
+          isPrint,
+          isCE,
+          estimatedPrintTime,
+          remark,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{materialCode,jdbcType=VARCHAR},
+          #{salesModel,jdbcType=VARCHAR},
+          #{designModel,jdbcType=VARCHAR},
+          #{atlasStatus,jdbcType=VARCHAR},
+          #{storageQuantity,jdbcType=VARCHAR},
+          #{shipmentQuantity,jdbcType=VARCHAR},
+          #{manualCode,jdbcType=VARCHAR},
+          #{manualDescription,jdbcType=VARCHAR},
+          #{manualLanguage,jdbcType=VARCHAR},
+          #{manualStatus,jdbcType=VARCHAR},
+          #{departmentId,jdbcType=VARCHAR},
+          #{department,jdbcType=VARCHAR},
+          #{productSupervisorId,jdbcType=VARCHAR},
+          #{productSupervisor,jdbcType=VARCHAR},
+          #{keyUserId,jdbcType=VARCHAR},
+          #{keyUser,jdbcType=VARCHAR},
+          #{percentComplete,jdbcType=VARCHAR},
+          #{isPrint,jdbcType=VARCHAR},
+          #{isCE,jdbcType=VARCHAR},
+          #{estimatedPrintTime,jdbcType=VARCHAR},
+          #{remark,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateData" parameterType="java.util.Map">
+        update service_engineering_maintenance_manual
+        set
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        atlasStatus=#{atlasStatus,jdbcType=VARCHAR},
+        storageQuantity=#{storageQuantity,jdbcType=VARCHAR},
+        shipmentQuantity=#{shipmentQuantity,jdbcType=VARCHAR},
+        manualCode=#{manualCode,jdbcType=VARCHAR},
+        manualDescription=#{manualDescription,jdbcType=VARCHAR},
+        manualLanguage=#{manualLanguage,jdbcType=VARCHAR},
+        manualStatus=#{manualStatus,jdbcType=VARCHAR},
+        departmentId=#{departmentId,jdbcType=VARCHAR},
+        department=#{department,jdbcType=VARCHAR},
+        productSupervisorId=#{productSupervisorId,jdbcType=VARCHAR},
+        productSupervisor=#{productSupervisor,jdbcType=VARCHAR},
+        keyUserId=#{keyUserId,jdbcType=VARCHAR},
+        keyUser=#{keyUser,jdbcType=VARCHAR},
+        percentComplete=#{percentComplete,jdbcType=VARCHAR},
+        isPrint=#{isPrint,jdbcType=VARCHAR},
+        isCE=#{isCE,jdbcType=VARCHAR},
+        estimatedPrintTime=#{estimatedPrintTime,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        el=#{el,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <update id="updateDataByCode" parameterType="java.util.Map">
+        update service_engineering_maintenance_manual
+        set
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        atlasStatus=#{atlasStatus,jdbcType=VARCHAR},
+        storageQuantity=#{storageQuantity,jdbcType=VARCHAR},
+        shipmentQuantity=#{shipmentQuantity,jdbcType=VARCHAR},
+        manualCode=#{manualCode,jdbcType=VARCHAR},
+        manualDescription=#{manualDescription,jdbcType=VARCHAR},
+        manualLanguage=#{manualLanguage,jdbcType=VARCHAR},
+        manualStatus=#{manualStatus,jdbcType=VARCHAR},
+        departmentId=#{departmentId,jdbcType=VARCHAR},
+        department=#{department,jdbcType=VARCHAR},
+        productSupervisorId=#{productSupervisorId,jdbcType=VARCHAR},
+        productSupervisor=#{productSupervisor,jdbcType=VARCHAR},
+        keyUserId=#{keyUserId,jdbcType=VARCHAR},
+        keyUser=#{keyUser,jdbcType=VARCHAR},
+        percentComplete=#{percentComplete,jdbcType=VARCHAR},
+        isPrint=#{isPrint,jdbcType=VARCHAR},
+        isCE=#{isCE,jdbcType=VARCHAR},
+        estimatedPrintTime=#{estimatedPrintTime,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        el=#{el,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        materialCode=#{materialCode}
+    </update>
+    <!---->
+    <delete id="deleteData" parameterType="java.util.Map">
+        delete from service_engineering_maintenance_manual
+        where id in
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <select id="getGroupByName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM os_group
+        WHERE NAME_ = #{depname}
+    </select>
+    <!--操保手册制作总数-->
+    <select id="getMaintenanceManualTotal" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM service_engineering_maintenance_manual
+        WHERE manualCode != ''
+    </select>
+</mapper>

@@ -1,0 +1,704 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.report.dao.XcmgProjectReportDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="countYdjf" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_group.GROUP_ID_ AS depid,
+        os_group.NAME_ AS depname,
+        ROUND( sum( project_user_stagescore.stageScore ), 3 ) AS depsumscore
+        FROM
+        project_user_stagescore
+        LEFT JOIN os_rel_inst ON project_user_stagescore.userId = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            <if test="timeFrom !=null and timeFrom != ''">
+                AND project_user_stagescore.CREATE_TIME_ &gt;= #{timeFrom}
+            </if>
+            <if test="timeTo !=null and timeTo !=''">
+                AND project_user_stagescore.CREATE_TIME_ &lt;= #{timeTo}
+            </if>
+            <if test="deptIds !=null and deptIds != ''">
+                AND os_group.GROUP_ID_ IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY
+        depid
+        ORDER BY
+        depsumscore desc
+    </select>
+
+    <select id="countProjectNumByCategoryLevel" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.util.Map">
+        SELECT
+        levelName,
+        categoryName,
+        count( * ) AS number
+        FROM
+        (
+        SELECT
+        project_baseinfo.projectId,
+        CONCAT( project_level.levelName, '级' ) AS levelName,
+        project_category.categoryName
+        FROM
+        project_baseinfo
+        LEFT JOIN bpm_inst ON project_baseinfo.projectId = bpm_inst.BUS_KEY_
+        LEFT JOIN project_level ON project_baseinfo.levelId = project_level.levelId
+        LEFT JOIN project_category ON project_baseinfo.categoryId = project_category.categoryId
+        WHERE
+        (bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = 'RUNNING')
+        <if test="buildTimeFrom != null and buildTimeFrom != ''">
+            AND project_baseinfo.CREATE_TIME_ &gt;= #{buildTimeFrom}
+        </if>
+        <if test="buildTimeTo != null and buildTimeTo != ''">
+            AND project_baseinfo.CREATE_TIME_ &lt;= #{buildTimeTo}
+        </if>
+        <if test="knotTimeFrom != null and knotTimeFrom != ''">
+            AND project_baseinfo.knotTime &gt;= #{knotTimeFrom}
+        </if>
+        <if test="knotTimeTo != null and knotTimeTo != ''">
+            AND project_baseinfo.knotTime &lt;= #{knotTimeTo}
+        </if>
+        <if test="deptIds !=null and deptIds != ''">
+            AND project_baseinfo.mainDepId IN
+            <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ) tmp
+        GROUP BY
+        levelName,
+        categoryName
+        ORDER BY
+        levelName,
+        categoryName
+    </select>
+
+    <select id="countRunningProjProcess" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_baseinfo.projectId,
+        project_baseinfo.progressRunStatus,
+        project_plan.planEndTime,
+        os_group.NAME_ as depName,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        project_baseinfo
+        left join bpm_inst ON project_baseinfo.projectId = bpm_inst.BUS_KEY_
+        left join project_plan on project_baseinfo.projectId = project_plan.projectId and
+        project_baseinfo.currentStageId=project_plan.stageId
+        left join os_group on project_baseinfo.mainDepId=os_group.GROUP_ID_
+        WHERE
+        bpm_inst.STATUS_ = 'RUNNING'
+        <if test="deptIds !=null and deptIds != ''">
+            AND project_baseinfo.mainDepId IN
+            <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="queryAllDeps" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_group.NAME_
+        FROM
+        os_group
+        LEFT JOIN os_dimension ON os_group.DIM_ID_ = os_dimension.DIM_ID_
+        WHERE
+        os_dimension.DIM_KEY_ = '_ADMIN'
+        AND os_group.CHILDS_ =0
+    </select>
+
+    <select id="countJfzb" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_baseinfo.projectId,
+        project_baseinfo.pointStandardScore,
+        project_level.levelName,
+        os_group.NAME_ as depName,
+        project_level_standardscore.score,
+        project_baseinfo.buildTime
+        FROM
+        project_baseinfo
+        LEFT JOIN bpm_inst ON project_baseinfo.projectId = bpm_inst.BUS_KEY_
+        LEFT JOIN project_level ON project_baseinfo.levelId = project_level.levelId
+        LEFT JOIN os_group on project_baseinfo.mainDepId=os_group.GROUP_ID_
+        left join project_level_standardscore on project_baseinfo.categoryId=project_level_standardscore.categoryId and
+        project_baseinfo.levelId=project_level_standardscore.levelId
+        WHERE
+        ( bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = 'RUNNING' )
+        <if test="buildTimeFrom != null and buildTimeFrom != ''">
+            AND project_baseinfo.CREATE_TIME_ &gt;= #{buildTimeFrom}
+        </if>
+        <if test="buildTimeTo != null and buildTimeTo != ''">
+            AND project_baseinfo.CREATE_TIME_ &lt;= #{buildTimeTo}
+        </if>
+        <if test="deptIds !=null and deptIds != ''">
+            AND project_baseinfo.mainDepId IN
+            <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="projectProgressReport" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_plan.stageId,
+        project_plan.planStartTime,
+        project_plan.planEndTime,
+        project_plan.actualStartTime,
+        project_plan.actualEndTime,
+        project_stagedivide.stagePercent,
+        project_stagedivide.stageNo
+        FROM
+        project_plan
+        LEFT JOIN project_stagedivide ON project_plan.stageId = project_stagedivide.stageId
+        WHERE
+        project_plan.projectId = #{projectId}
+        <if test="currentStageNo != null and currentStageNo != ''">
+            AND project_stagedivide.stageNo &lt;= #{currentStageNo}
+        </if>
+        <if test="queryEndTime != null and queryEndTime != ''">
+            AND project_plan.actualEndTime &lt; #{queryEndTime}
+        </if>
+        ORDER BY project_stagedivide.stageNo
+    </select>
+
+
+    <select id="queryProjectProgress" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        project_plan.projectId,
+        sum( project_stagedivide.stagePercent ) AS progressNum
+        FROM
+        project_plan
+        LEFT JOIN project_stagedivide ON project_plan.stageId = project_stagedivide.stageId
+        WHERE
+        project_plan.projectId in
+        <foreach collection="projectIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <choose>
+            <when test="queryEndTime != null and queryEndTime != ''">
+                AND (project_plan.actualEndTime is not null and project_plan.actualEndTime !='' and project_plan.actualEndTime &lt;= #{queryEndTime})
+            </when>
+            <otherwise>
+                AND (project_plan.actualEndTime is not null and project_plan.actualEndTime !='')
+            </otherwise>
+        </choose>
+        GROUP BY
+        project_plan.projectId
+        ORDER BY
+        project_plan.projectId
+    </select>
+
+    <select id="queryProjectCurrentProgress" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        project_plan.projectId,
+        project_plan.planEndTime
+        FROM
+        project_plan
+        WHERE
+        project_plan.projectId in
+        <foreach collection="projectIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        AND ( project_plan.actualStartTime IS NOT NULL AND project_plan.actualStartTime != '' )
+        AND ( project_plan.actualEndTime IS NULL OR project_plan.actualEndTime = '' )
+    </select>
+
+    <select id="queryChangeNumber" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        project_baseinfo.projectId,
+        COUNT(project_changeapply.projectId) AS changeNumber
+        FROM
+        project_baseinfo
+        LEFT JOIN project_changeapply ON project_baseinfo.projectId = project_changeapply.projectId
+        LEFT JOIN bpm_inst ON project_changeapply.id = bpm_inst.BUS_KEY_
+        WHERE
+        project_baseinfo.projectId in
+        <foreach collection="projectIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        AND (bpm_inst.STATUS_ = 'RUNNING' OR bpm_inst.STATUS_ = 'SUCCESS_END' )
+        GROUP BY project_baseinfo.projectId
+    </select>
+
+    <!--获取人员积分语句-->
+    <select id="personScoreList" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        ROUND(sum(A.stageScore),3) as stageScore,
+        A.userId,
+        A.CREATE_TIME_,
+        B.FULLNAME_ as name,
+        B.CERT_NO_,
+        (
+            select G.name_ from os_rel_inst R
+            left join os_group G on R.party1_ = G.group_id_
+            left join os_dimension C on G.dim_id_ = C.dim_id_
+            where R.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' and  R.PARTY2_ = A.userId and C.dim_key_ = '_ADMIN'
+            limit 1
+        ) as deptName,
+        (
+            select G.name_ from os_rel_inst R
+            left join os_group G on R.party1_ = G.group_id_
+            left join os_dimension C on G.dim_id_ = C.dim_id_
+            where  R.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' and  R.PARTY2_ = A.userId and C.dim_key_ = 'GW'
+            limit 1
+        ) as workName,
+        (
+            select G.name_ from os_rel_inst R
+            left join os_group G on R.party1_ = G.group_id_
+            left join os_dimension C on G.dim_id_ = C.dim_id_
+            where R.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' and R.PARTY2_ = A.userId and C.dim_key_ = 'ZJ'
+            limit 1
+        ) as dutyName
+        from
+        project_user_stagescore A
+        left join os_user B on A.userId = B.USER_ID_
+        LEFT JOIN os_rel_inst C ON A.userId = C.PARTY2_
+        LEFT JOIN os_group OG ON C.PARTY1_ = OG.GROUP_ID_
+        left join os_dimension OD on OG.dim_id_ = OD.dim_id_
+        left join project_baseinfo on A.projectId=project_baseinfo.projectId
+        where OD.dim_key_ = '_ADMIN'
+        and C.REL_TYPE_KEY_='GROUP-USER-BELONG'
+        <if test="startTime != null and startTime != ''">
+            and date_format(A.CREATE_TIME_,'%Y-%m-%d') &gt;=#{startTime}
+        </if>
+        <if test="endTime !=null and endTime != ''">
+            and date_format(A.CREATE_TIME_,'%Y-%m-%d') &lt;=#{endTime}
+        </if>
+        <if test="projectStartTime != null and projectStartTime != ''">
+            and date_format(project_baseinfo.CREATE_TIME_,'%Y-%m-%d') &gt;=#{projectStartTime}
+        </if>
+        <if test="projectEndTime !=null and projectEndTime != ''">
+            and date_format(project_baseinfo.CREATE_TIME_,'%Y-%m-%d') &lt;=#{projectEndTime}
+        </if>
+        <if test="categoryId !=null and categoryId != ''">
+            and project_baseinfo.categoryId=#{categoryId}
+        </if>
+        <if test="userId != null and userId != ''">
+            and A.userId = #{userId}
+        </if>
+        <if test="userName!=null and userName!=''">
+            and B.FULLNAME_ like CONCAT('%',#{userName},'%')
+        </if>
+        <if test="userDepId != null and userDepId != ''">
+            and OG.GROUP_ID_ in
+            <foreach collection="userDepId" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="deptIds !=null and deptIds != ''">
+            AND OG.GROUP_ID_ IN
+            <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY A.userId
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+        <if test="sortField == null or sortField == ''">
+            order by deptName asc, stageScore desc
+        </if>
+        <if test="pageSize !=null and pageSize !=''">
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <!--获取部门积分语句-->
+    <select id="deptScoreList" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+        T.*,
+        ROUND(T.totalScore/T.userNum,3) as avgScore
+        from
+        (
+            select ROUND(sum(A.stageScore),3) as totalScore,
+            C.NAME_ as deptName,
+            C.GROUP_ID_ as deptId,
+            (
+                select count(*)
+                  from os_rel_inst B1
+                  left join os_group C1 on B1.party1_ = C1.group_id_
+                  LEFT JOIN os_user ON B1.PARTY2_ = os_user.USER_ID_
+                where
+                  B1.DIM1_ = '1' AND os_user.STATUS_ = 'IN_JOB'  and B1.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+                  and C1.GROUP_ID_ = C.GROUP_ID_
+            ) as userNum
+            from project_user_stagescore A
+            left join project_baseInfo on A.projectId=project_baseInfo.projectId
+            left join os_rel_inst B on A.userId = B.PARTY2_
+            left join os_group C on B.party1_ = C.group_id_
+            left join os_dimension D on C.dim_id_ = D.dim_id_
+            where D.DIM_KEY_ = '_ADMIN'
+            and B.REL_TYPE_KEY_='GROUP-USER-BELONG'
+            <if test="userDepId != null and userDepId != ''">
+                AND C.GROUP_ID_  in
+                <foreach collection="userDepId" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="deptIds !=null and deptIds != ''">
+                AND C.GROUP_ID_ IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and startTime != ''">
+                and date_format(A.CREATE_TIME_,'%Y-%m-%d') &gt;=#{startTime}
+            </if>
+            <if test="endTime !=null and endTime != ''">
+                and date_format(A.CREATE_TIME_,'%Y-%m-%d') &lt;=#{endTime}
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                AND project_baseInfo.categoryId=#{categoryId}
+            </if>
+            GROUP BY C.GROUP_ID_
+        ) T
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+        <if test="sortField == null or sortField == ''">
+            order by T.totalScore desc
+        </if>
+        <if test="pageSize !=null and pageSize !=''">
+            LIMIT ${startIndex}, ${pageSize}
+        </if>
+    </select>
+
+    <!--办公桌面，统计个人积分情况-->
+    <select id="deskHomePersonScore" parameterType="java.util.Map" resultType="java.util.Map">
+            select sum(A.stageScore) as stageScore
+                from project_user_stagescore A
+				  where 1=1
+                 <if test="timeFrom != null and timeFrom != ''">
+                    and A.CREATE_TIME_ &gt;=#{timeFrom}
+                 </if>
+                 <if test="timeTo !=null and timeTo != ''">
+                    and A.CREATE_TIME_ &lt;=#{timeTo}
+                 </if>
+                 <if test="userId != null and userId != ''">
+                   and A.userId = #{userId}
+                 </if>
+			   GROUP BY A.userId
+    </select>
+
+    <!--办公桌面，统计参与项目类别情况-->
+    <select id="deskHomeProjectNumByCategoryLevel" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.util.Map">
+        SELECT
+        levelName,
+        categoryName,
+        count( * ) AS number
+        FROM
+        (
+        SELECT
+        project_baseinfo.projectId,
+        CONCAT( project_level.levelName, '级' ) AS levelName,
+        project_category.categoryName
+        FROM
+        project_baseinfo
+        LEFT JOIN bpm_inst ON project_baseinfo.projectId = bpm_inst.BUS_KEY_
+        LEFT JOIN project_level ON project_baseinfo.levelId = project_level.levelId
+        LEFT JOIN project_category ON project_baseinfo.categoryId = project_category.categoryId
+        left join project_memberinfo ON project_memberinfo.projectId = project_baseinfo.projectId
+        WHERE
+        (bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = 'RUNNING')
+        <if test="buildTimeFrom != null and buildTimeFrom != ''">
+            AND project_baseinfo.buildTime &gt;= #{buildTimeFrom}
+        </if>
+        <if test="buildTimeTo != null and buildTimeTo != ''">
+            AND project_baseinfo.buildTime &lt;= #{buildTimeTo}
+        </if>
+        <if test="knotTimeFrom != null and knotTimeFrom != ''">
+            AND project_baseinfo.knotTime &gt;= #{knotTimeFrom}
+        </if>
+        <if test="knotTimeTo != null and knotTimeTo != ''">
+            AND project_baseinfo.knotTime &lt;= #{knotTimeTo}
+        </if>
+        <if test="userId != null and userId != ''">
+            and project_memberinfo.userId = #{userId}
+        </if>
+        ) tmp
+        GROUP BY
+        levelName,
+        categoryName
+        ORDER BY
+        levelName,
+        categoryName
+    </select>
+    <select id="queryPersonProjectList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_baseinfo.*,
+        project_source.sourceName,
+        project_category.categoryName,
+        project_level.levelName,
+        project_stageDivide.stageName as currentStageName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.ACT_INST_ID_,
+        project_member_role.roleName
+        FROM
+        project_baseinfo
+        left join project_source on project_baseinfo.sourceId=project_source.sourceId
+        left join project_category on project_baseinfo.categoryId=project_category.categoryId
+        left join project_level on project_baseinfo.levelId=project_level.levelId
+        left join project_stageDivide on project_baseinfo.currentStageId=project_stagedivide.stageId
+        left join bpm_inst on project_baseinfo.projectId=bpm_inst.BUS_KEY_
+        left join project_memberinfo ON project_memberinfo.projectId = project_baseinfo.projectId
+        left join project_member_role on project_memberinfo.roleId = project_member_role.roleId
+        where bpm_inst.STATUS_ = 'RUNNING'
+            <if test="userId != null and userId != ''">
+                and project_memberinfo.userId = #{userId}
+                and (project_memberinfo.userValid is null or project_memberinfo.userValid='' or project_memberinfo.userValid='01')
+            </if>
+        <if test="roleName != null and roleName != ''">
+            AND project_member_role.roleName=#{roleName}
+        </if>
+    </select>
+
+    <select id="queryAchievements" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            os_group.GROUP_ID_ as deptId,
+            os_group.NAME_ as deptName,
+            project_achievement_type.catagoryName as typeName,
+            project_achievement.num,
+            project_achievement.projectId,
+            project_achievement.id
+        FROM
+            project_achievement
+            LEFT JOIN project_achievement_type ON project_achievement.typeId = project_achievement_type.id
+            LEFT JOIN os_group ON project_achievement.deptId = os_group.GROUP_ID_
+        <where>
+            os_group.NAME_ IS NOT NULL
+            AND os_group.NAME_ != ''
+            AND project_achievement_type.catagoryName IS NOT NULL
+            AND project_achievement_type.catagoryName != ''
+            AND project_achievement.num IS NOT NULL
+            AND project_achievement.num != ''
+            <if test="cgjhFrom != null and cgjhFrom !=''">
+                AND project_achievement.output_time &gt;= #{cgjhFrom}
+            </if>
+            <if test="cgjhTo != null and cgjhTo !=''">
+                AND project_achievement.output_time &lt;= #{cgjhTo}
+            </if>
+            <if test="deptIds !=null and deptIds != ''">
+                AND os_group.GROUP_ID_ IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryEvaluateScoreList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_baseinfo.*,
+            os_group.NAME_ AS mainDepName,
+            project_category.categoryName,
+            project_level.levelName,
+            project_level_standardScore.score AS standardScore,
+            bpm_inst.STATUS_ AS STATUS
+        FROM
+            project_baseinfo
+            LEFT JOIN os_group ON project_baseinfo.mainDepId = os_group.GROUP_ID_
+            LEFT JOIN project_category ON project_baseinfo.categoryId = project_category.categoryId
+            LEFT JOIN project_level ON project_baseinfo.levelId = project_level.levelId
+            LEFT JOIN project_level_standardScore ON project_baseinfo.levelId = project_level_standardScore.levelId
+            AND project_baseinfo.categoryId = project_level_standardScore.categoryId
+            LEFT JOIN bpm_inst ON project_baseinfo.projectId = bpm_inst.BUS_KEY_
+        <where>
+            <if test="projectName != null and projectName != ''">
+                project_baseinfo.projectName like CONCAT ('%',#{projectName},'%')
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                AND project_baseinfo.categoryId=#{categoryId}
+            </if>
+            <if test="levelId != null and levelId != ''">
+                AND project_baseinfo.levelId=#{levelId}
+            </if>
+            <if test="mainDepId != null and mainDepId != ''">
+                AND project_baseinfo.mainDepId in
+                <foreach collection="mainDepId" index="index" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="projectStartTime != null and projectStartTime != ''">
+                and project_baseinfo.CREATE_TIME_ &gt;=#{projectStartTime}
+            </if>
+            <if test="projectEndTime !=null and projectEndTime != ''">
+                and project_baseinfo.CREATE_TIME_ &lt;=#{projectEndTime}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_=#{status}
+            </if>
+            <if test="deptIds !=null and deptIds != ''">
+                AND project_baseinfo.mainDepId IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countEvaluateScoreList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        project_baseinfo
+        LEFT JOIN bpm_inst ON project_baseinfo.projectId = bpm_inst.BUS_KEY_
+        <where>
+            <if test="projectName != null and projectName != ''">
+                project_baseinfo.projectName like CONCAT ('%',#{projectName},'%')
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                AND project_baseinfo.categoryId=#{categoryId}
+            </if>
+            <if test="levelId != null and levelId != ''">
+                AND project_baseinfo.levelId=#{levelId}
+            </if>
+            <if test="mainDepId != null and mainDepId != ''">
+                AND project_baseinfo.mainDepId in
+                <foreach collection="mainDepId" index="index" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="projectStartTime != null and projectStartTime != ''">
+                and project_baseinfo.CREATE_TIME_ &gt;=#{projectStartTime}
+            </if>
+            <if test="projectEndTime !=null and projectEndTime != ''">
+                and project_baseinfo.CREATE_TIME_ &lt;=#{projectEndTime}
+            </if>
+            <if test="status != null and status != ''">
+                AND bpm_inst.STATUS_=#{status}
+            </if>
+            <if test="deptIds !=null and deptIds != ''">
+                AND project_baseinfo.mainDepId IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryStageByPlanEndTime" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            project_plan.projectId,
+            project_plan.stageId,
+            project_stagedivide.stagePercent
+        FROM
+            project_plan
+            LEFT JOIN project_stagedivide ON project_plan.stageId = project_stagedivide.stageId
+        WHERE
+            project_plan.projectId IN
+        <foreach collection="projectIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="evaluateScoreStartTime != null and evaluateScoreStartTime != ''">
+            and project_plan.planEndTime &gt;=#{evaluateScoreStartTime}
+        </if>
+        <if test="evaluateScoreEndTime !=null and evaluateScoreEndTime != ''">
+            and project_plan.planEndTime &lt;=#{evaluateScoreEndTime}
+        </if>
+    </select>
+
+    <select id="queryUnfinishStageByPlanEndTime" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        project_plan.projectId,
+        project_plan.stageId,
+        project_stagedivide.stagePercent
+        FROM
+        project_plan
+        LEFT JOIN project_stagedivide ON project_plan.stageId = project_stagedivide.stageId
+        WHERE
+        (project_plan.actualEndTime is null or project_plan.actualEndTime='')
+        and project_plan.projectId IN
+        <foreach collection="projectIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="personEvaluateScoreStartTime != null and personEvaluateScoreStartTime != ''">
+            and project_plan.planEndTime &gt;=#{personEvaluateScoreStartTime}
+        </if>
+        <if test="personEvaluateScoreEndTime !=null and personEvaluateScoreEndTime != ''">
+            and project_plan.planEndTime &lt;=#{personEvaluateScoreEndTime}
+        </if>
+    </select>
+
+    <select id="queryDeptByName" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from os_group where NAME_=#{deptName} and DIM_ID_='1'
+    </select>
+    <select id="queryPlanEndTimeById" parameterType="java.util.Map" resultType="java.util.Map" >
+        SELECT
+        project_baseinfo.projectId,
+        MIN( project_plan.planEndTime ) AS planEndTime
+        FROM
+        project_baseinfo
+        LEFT JOIN project_plan ON project_baseinfo.projectId = project_plan.projectId
+        WHERE
+        <if test="projectId != null and projectId != ''">
+            project_baseinfo.projectId = #{projectId}
+        </if>
+    </select>
+
+    <select id="queryPlanEndTimeByIdBatch" parameterType="java.util.Map" resultType="java.util.Map" >
+        SELECT projectId, MIN(planEndTime) AS planEndTime
+        FROM project_plan
+        WHERE
+            projectId IN
+        <foreach collection="projectId" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        GROUP BY projectId
+    </select>
+
+    <select id="queryProjectMemberByIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        project_memberinfo.*,
+        os_user.FULLNAME_
+        FROM
+        project_memberinfo
+        left join os_user on project_memberinfo.userId = os_user.USER_ID_
+        WHERE
+        (project_memberinfo.userValid IS NULL OR project_memberinfo.userValid != '02')
+          and project_memberinfo.roleId !='1'
+        <if test="projectIds !=null and projectIds != ''">
+            AND project_memberinfo.projectId IN
+            <foreach collection="projectIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

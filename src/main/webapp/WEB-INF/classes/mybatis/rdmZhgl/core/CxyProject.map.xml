@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.CxyProjectDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <sql id="query_where">
+        <if test="projectDesc !=null and projectDesc !=''">
+            AND cxy_project_baseinfo.projectDesc like CONCAT('%',#{projectDesc},'%')
+        </if>
+        <if test="responsibleName !=null and responsibleName !=''">
+            AND cxy_project_baseinfo.responsibleName like CONCAT('%',#{responsibleName},'%')
+        </if>
+        <if test="responsibleDepName !=null and responsibleDepName !=''">
+            AND cxy_project_baseinfo.responsibleDepName like CONCAT('%',#{responsibleDepName},'%')
+        </if>
+        <if test="beginTime != null and beginTime != ''">
+            AND cxy_project_baseinfo.beginTime &gt;= #{beginTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND cxy_project_baseinfo.endTime &lt;= #{endTime}
+        </if>
+        <if test="projectType !=null and projectType !=''">
+            AND cxy_project_baseinfo.projectType = #{projectType}
+        </if>
+        <if test="projectProperties !=null and projectProperties !=''">
+            AND cxy_project_baseinfo.projectProperties = #{projectProperties}
+        </if>
+        <if test="researchDirection !=null and researchDirection !=''">
+            AND cxy_project_baseinfo.researchDirection = #{researchDirection}
+        </if>
+        <if test="isDelay !=null and isDelay !=''">
+            AND cxy_project_baseinfo.isDelay = #{isDelay}
+        </if>
+        <if test="implementation !=null and implementation !=''">
+            AND cxy_project_baseinfo.implementation = #{implementation}
+        </if>
+        <if test="roleName !=null and roleName !=''">
+            <choose>
+                <when test="roleName =='fgld'">
+                    AND (cxy_project_baseinfo.isSubmit = '1' OR cxy_project_baseinfo.CREATE_BY_ = #{currentUserId})
+                </when>
+                <when test="(roleName =='fgzr' or roleName =='fzr') and ids.size() > 0">
+                    AND (
+                    (cxy_project_baseinfo.isSubmit = '1' AND cxy_project_baseinfo.responsibleUserDepId IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>)
+                    OR cxy_project_baseinfo.CREATE_BY_ = #{currentUserId}
+                    OR cxy_project_baseinfo.id IN
+                    <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                    )
+                </when>
+                <when test="(roleName =='fgzr' or roleName =='fzr') and ids.size() == 0">
+                    AND (
+                    (cxy_project_baseinfo.isSubmit = '1' AND cxy_project_baseinfo.responsibleUserDepId IN
+                    <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>)
+                    OR cxy_project_baseinfo.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+
+                <when test="roleName =='ptyg' and ids.size() > 0">
+                    AND (
+                    cxy_project_baseinfo.id IN
+                    <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                    OR cxy_project_baseinfo.CREATE_BY_ = #{currentUserId}
+                    )
+                </when>
+                <when test="roleName =='ptyg' and ids.size() == 0">
+                    AND cxy_project_baseinfo.CREATE_BY_ = #{currentUserId}
+                </when>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        cxy_project_baseinfo.*,
+        createUser.FULLNAME_ AS creator
+        FROM
+        cxy_project_baseinfo
+        LEFT JOIN os_user createUser
+        ON cxy_project_baseinfo.CREATE_BY_ = createUser.USER_ID_
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        cxy_project_baseinfo
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+
+    <insert id="insertCxyProjectData" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into cxy_project_baseinfo(
+        id,
+        projectDesc,
+        undertaker,
+        collaborator,
+        responsibleUserId,
+        responsibleName,
+        responsibleUserDepId,
+        responsibleDepName,
+        beginTime,
+        endTime,
+        contractAmount,
+        paidContractAmount,
+        remark,
+        projectType,
+        projectProperties,
+        researchDirection,
+        contractIndicators,
+        completedIndicators,
+        completionRate,
+        delayReason,
+        implementation,
+        isSubmit,
+        isDelay,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{projectDesc,jdbcType=VARCHAR},
+        #{undertaker,jdbcType=VARCHAR},
+        #{collaborator,jdbcType=VARCHAR},
+        #{responsibleUserId,jdbcType=VARCHAR},
+        #{responsibleName,jdbcType=VARCHAR},
+        #{responsibleUserDepId,jdbcType=VARCHAR},
+        #{responsibleDepName,jdbcType=VARCHAR},
+        #{beginTime,jdbcType=VARCHAR},
+        #{endTime,jdbcType=VARCHAR},
+        #{contractAmount,jdbcType=VARCHAR},
+        #{paidContractAmount,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{projectType,jdbcType=VARCHAR},
+        #{projectProperties,jdbcType=VARCHAR},
+        #{researchDirection,jdbcType=VARCHAR},
+        #{contractIndicators,jdbcType=VARCHAR},
+        #{completedIndicators,jdbcType=VARCHAR},
+        #{completionRate,jdbcType=VARCHAR},
+        #{delayReason,jdbcType=VARCHAR},
+        #{implementation,jdbcType=VARCHAR},
+        #{isSubmit,jdbcType=VARCHAR},
+        #{isDelay,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateCxyProjectData" parameterType="com.alibaba.fastjson.JSONObject">
+        update cxy_project_baseinfo
+        set
+        projectDesc=#{projectDesc,jdbcType=VARCHAR},
+        undertaker=#{undertaker,jdbcType=VARCHAR},
+        collaborator=#{collaborator,jdbcType=VARCHAR},
+        responsibleUserId=#{responsibleUserId,jdbcType=VARCHAR},
+        responsibleName=#{responsibleName,jdbcType=VARCHAR},
+        responsibleUserDepId=#{responsibleUserDepId,jdbcType=VARCHAR},
+        responsibleDepName=#{responsibleDepName,jdbcType=VARCHAR},
+        beginTime=#{beginTime,jdbcType=VARCHAR},
+        endTime=#{endTime,jdbcType=VARCHAR},
+        contractAmount=#{contractAmount,jdbcType=VARCHAR},
+        paidContractAmount=#{paidContractAmount,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        projectType=#{projectType,jdbcType=VARCHAR},
+        projectProperties=#{projectProperties,jdbcType=VARCHAR},
+        researchDirection=#{researchDirection,jdbcType=VARCHAR},
+        contractIndicators=#{contractIndicators,jdbcType=VARCHAR},
+        completedIndicators=#{completedIndicators,jdbcType=VARCHAR},
+        completionRate=#{completionRate,jdbcType=VARCHAR},
+        delayReason=#{delayReason,jdbcType=VARCHAR},
+        implementation=#{implementation,jdbcType=VARCHAR},
+        isSubmit=#{isSubmit,jdbcType=VARCHAR},
+        isDelay=#{isDelay,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <select id="queryCxyProjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            cxy_project_baseinfo.*,
+            createUser.FULLNAME_ AS creator
+        FROM
+            cxy_project_baseinfo
+            LEFT JOIN os_user createUser
+                ON cxy_project_baseinfo.CREATE_BY_ = createUser.USER_ID_
+        WHERE
+            cxy_project_baseinfo.id = #{cxyProjectId}
+    </select>
+
+    <delete id="deleteCxyProject" parameterType="java.util.Map">
+        delete from cxy_project_baseinfo
+        where id IN
+        <foreach collection="cxyProjectIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!--Job用-->
+    <select id="selectAllJson" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM cxy_project_baseinfo
+    </select>
+    <!---->
+    <select id="getFileNamesListByMainId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT cxy_project_fileinfo.fileName
+        FROM cxy_project_fileinfo
+            INNER JOIN cxy_project_baseinfo
+                ON cxy_project_fileinfo.cxyProjectId = cxy_project_baseinfo.id
+        WHERE cxy_project_baseinfo.id = #{id}
+    </select>
+    <!---->
+    <select id="queryDepInfosByIds" parameterType="java.util.List" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_group.NAME_ AS depName,
+        os_group.GROUP_ID_ AS depId
+        FROM
+        os_group
+        WHERE
+        os_group.GROUP_ID_ IN
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="getTotal" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM cxy_project_baseinfo
+        <where>
+            <if test="beginTime != null and beginTime != ''">
+                AND cxy_project_baseinfo.beginTime &gt;= #{beginTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND cxy_project_baseinfo.endTime &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+</mapper>

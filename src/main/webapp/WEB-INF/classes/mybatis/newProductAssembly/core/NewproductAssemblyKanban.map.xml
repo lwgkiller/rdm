@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.newProductAssembly.core.dao.NewproductAssemblyKanbanDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="query_where">
+        <if test="designModel !=null and designModel !=''">
+            AND newProduct_assembly_kanban.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="pin !=null and pin !=''">
+            AND newProduct_assembly_kanban.pin = #{pin}
+        </if>
+        <if test="productCategory !=null and productCategory !=''">
+            AND newProduct_assembly_kanban.productCategory = #{productCategory}
+        </if>
+        <if test="productDep !=null and productDep !=''">
+            AND newProduct_assembly_kanban.productDep like CONCAT('%',#{productDep},'%')
+        </if>
+        <if test="projectLeader !=null and projectLeader !=''">
+            AND newProduct_assembly_kanban.projectLeader like CONCAT('%',#{projectLeader},'%')
+        </if>
+        <if test="planCategory !=null and planCategory !=''">
+            AND newProduct_assembly_kanban.planCategory = #{planCategory}
+        </if>
+        <if test="orderReleaseTimeBegin != null and orderReleaseTimeBegin != ''">
+            AND newProduct_assembly_kanban.orderReleaseTime &gt;= #{orderReleaseTimeBegin}
+        </if>
+        <if test="orderReleaseTimeEnd != null and orderReleaseTimeEnd != ''">
+            AND newProduct_assembly_kanban.orderReleaseTime &lt;= #{orderReleaseTimeEnd}
+        </if>
+        <if test="prototypeOnLineTimeBegin != null and prototypeOnLineTimeBegin != ''">
+            AND newProduct_assembly_kanban.prototypeOnLineTime &gt;= #{prototypeOnLineTimeBegin}
+        </if>
+        <if test="prototypeOnLineTimeEnd != null and prototypeOnLineTimeEnd != ''">
+            AND newProduct_assembly_kanban.prototypeOnLineTime &lt;= #{prototypeOnLineTimeEnd}
+        </if>
+        <if test="prototypeOutLineTimeBegin != null and prototypeOutLineTimeBegin != ''">
+            AND newProduct_assembly_kanban.prototypeOutLineTime &gt;= #{prototypeOutLineTimeBegin}
+        </if>
+        <if test="prototypeOutLineTimeEnd != null and prototypeOutLineTimeEnd != ''">
+            AND newProduct_assembly_kanban.prototypeOutLineTime &lt;= #{prototypeOutLineTimeEnd}
+        </if>
+        <if test="materialDepLoadingTimeBegin != null and materialDepLoadingTimeBegin != ''">
+            AND newProduct_assembly_kanban.materialDepLoadingTime &gt;= #{materialDepLoadingTimeBegin}
+        </if>
+        <if test="materialDepLoadingTimeEnd != null and materialDepLoadingTimeEnd != ''">
+            AND newProduct_assembly_kanban.materialDepLoadingTime &lt;= #{materialDepLoadingTimeEnd}
+        </if>
+        <if test="downAssemblyTimeBegin != null and downAssemblyTimeBegin != ''">
+            AND newProduct_assembly_kanban.downAssemblyTime &gt;= #{downAssemblyTimeBegin}
+        </if>
+        <if test="downAssemblyTimeEnd != null and downAssemblyTimeEnd != ''">
+            AND newProduct_assembly_kanban.downAssemblyTime &lt;= #{downAssemblyTimeEnd}
+        </if>
+        <if test="upAssemblyTimeBegin != null and upAssemblyTimeBegin != ''">
+            AND newProduct_assembly_kanban.upAssemblyTime &gt;= #{upAssemblyTimeBegin}
+        </if>
+        <if test="upAssemblyTimeEnd != null and upAssemblyTimeEnd != ''">
+            AND newProduct_assembly_kanban.upAssemblyTime &lt;= #{upAssemblyTimeEnd}
+        </if>
+        <if test="combinedAssemblyTimeBegin != null and combinedAssemblyTimeBegin != ''">
+            AND newProduct_assembly_kanban.combinedAssemblyTime &gt;= #{combinedAssemblyTimeBegin}
+        </if>
+        <if test="combinedAssemblyTimeEnd != null and combinedAssemblyTimeEnd != ''">
+            AND newProduct_assembly_kanban.combinedAssemblyTime &lt;= #{combinedAssemblyTimeEnd}
+        </if>
+        <if test="workingDeviceAssemblyTimeBegin != null and workingDeviceAssemblyTimeBegin != ''">
+            AND newProduct_assembly_kanban.workingDeviceAssemblyTime &gt;= #{workingDeviceAssemblyTimeBegin}
+        </if>
+        <if test="workingDeviceAssemblyTimeEnd != null and workingDeviceAssemblyTimeEnd != ''">
+            AND newProduct_assembly_kanban.workingDeviceAssemblyTime &lt;= #{workingDeviceAssemblyTimeEnd}
+        </if>
+        <if test="wholeCommissionTimeBegin != null and wholeCommissionTimeBegin != ''">
+            AND newProduct_assembly_kanban.wholeCommissionTime &gt;= #{wholeCommissionTimeBegin}
+        </if>
+        <if test="wholeCommissionTimeEnd != null and wholeCommissionTimeEnd != ''">
+            AND newProduct_assembly_kanban.wholeCommissionTime &lt;= #{wholeCommissionTimeEnd}
+        </if>
+        <if test="prototypeSequenceTimeBegin != null and prototypeSequenceTimeBegin != ''">
+            AND newProduct_assembly_kanban.prototypeSequenceTime &gt;= #{prototypeSequenceTimeBegin}
+        </if>
+        <if test="prototypeSequenceTimeEnd != null and prototypeSequenceTimeEnd != ''">
+            AND newProduct_assembly_kanban.prototypeSequenceTime &lt;= #{prototypeSequenceTimeEnd}
+        </if>
+        <if test="realYear != null and realYear != ''">
+            AND newProduct_assembly_kanban.realYear = #{realYear}
+        </if>
+    </sql>
+    <sql id="query_where_exception">
+        <if test="designModel !=null and designModel !=''">
+            AND business.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="productCategory !=null and productCategory !=''">
+            AND business.productCategory = #{productCategory}
+        </if>
+        <if test="productDep !=null and productDep !=''">
+            AND business.productDep like CONCAT('%',#{productDep},'%')
+        </if>
+        <if test="projectLeader !=null and projectLeader !=''">
+            AND business.projectLeader like CONCAT('%',#{projectLeader},'%')
+        </if>
+        <if test="pin !=null and pin !=''">
+            AND exceptions.pin = #{pin}
+        </if>
+        <if test="exceptionType !=null and exceptionType !=''">
+            AND exceptions.exceptionType = #{exceptionType}
+        </if>
+        <if test="partsCategory !=null and partsCategory !=''">
+            AND exceptions.partsCategory = #{partsCategory}
+        </if>
+        <if test="assemblyNode !=null and assemblyNode !=''">
+            AND exceptions.assemblyNode = #{assemblyNode}
+        </if>
+        <if test="repDep !=null and repDep !=''">
+            AND exceptions.repDep like CONCAT('%',#{repDep},'%')
+        </if>
+        <if test="repUser !=null and repUser !=''">
+            AND exceptions.repUser like CONCAT('%',#{repUser},'%')
+        </if>
+        <if test="feedbackPerson !=null and feedbackPerson !=''">
+            AND exceptions.feedbackPerson like CONCAT('%',#{feedbackPerson},'%')
+        </if>
+        <if test="feedbackTimeBegin != null and feedbackTimeBegin != ''">
+            AND exceptions.feedbackTime &gt;= #{feedbackTimeBegin}
+        </if>
+        <if test="feedbackTimeEnd != null and feedbackTimeEnd != ''">
+            AND exceptions.feedbackTime &lt;= #{feedbackTimeEnd}
+        </if>
+        <if test="isClear !=null and isClear !=''">
+            AND exceptions.isClear = #{isClear}
+        </if>
+        <if test="orderReleaseTimeBegin != null and orderReleaseTimeBegin != ''">
+            AND business.orderReleaseTime &gt;= #{orderReleaseTimeBegin}
+        </if>
+        <if test="orderReleaseTimeEnd != null and orderReleaseTimeEnd != ''">
+            AND business.orderReleaseTime &lt;= #{orderReleaseTimeEnd}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        newProduct_assembly_kanban
+        <where>
+            <include refid="query_where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        newProduct_assembly_kanban
+        <where>
+            <include refid="query_where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="queryDataById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM newProduct_assembly_kanban
+        WHERE newProduct_assembly_kanban.id = #{businessId}
+    </select>
+    <!---->
+    <delete id="deleteBusiness" parameterType="java.util.Map">
+        delete from newProduct_assembly_kanban
+        where id IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <delete id="deleteExceptions" parameterType="java.util.Map">
+        delete from newProduct_assembly_exception
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="exceptionIds != null and exceptionIds !=''">
+                AND id IN
+                <foreach collection="exceptionIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <delete id="deleteExceptionFile" parameterType="java.util.Map">
+        delete from newProduct_assembly_exceptionfileinfo
+        <where>
+            <if test="id != null and id != ''">
+                AND id=#{id}
+            </if>
+            <if test="exceptionIds != null and exceptionIds !=''">
+                AND mainId IN
+                <foreach collection="exceptionIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="queryExceptionList" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM newProduct_assembly_exception
+        <where>
+            <if test="_parameter !=null and _parameter !=''">
+                mainId = #{_parameter,jdbcType=VARCHAR}
+            </if>
+        </where>
+        ORDER BY indexLocal
+    </select>
+    <!---->
+    <select id="queryExceptionFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from newProduct_assembly_exceptionfileinfo
+        where mainId IN
+        <foreach collection="exceptionIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <insert id="insertBusiness" parameterType="java.util.Map">
+        insert into newProduct_assembly_kanban(
+        id,
+        designModel,
+        testQuantity,
+        theExplain,
+        pin,
+        productCategory,
+        productDepId,
+        productDep,
+        projectLeaderId,
+        projectLeader,
+        planCategory,
+        orderReleaseTime,
+        prototypeOnLineTime,
+        prototypeOutLineTime,
+        materialDepLoadingTime,
+        downAssemblyTime,
+        upAssemblyTime,
+        combinedAssemblyTime,
+        workingDeviceAssemblyTime,
+        wholeCommissionTime,
+        prototypeSequenceTime,
+        realYear,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{designModel,jdbcType=VARCHAR},
+        #{testQuantity,jdbcType=VARCHAR},
+        #{theExplain,jdbcType=VARCHAR},
+        #{pin,jdbcType=VARCHAR},
+        #{productCategory,jdbcType=VARCHAR},
+        #{productDepId,jdbcType=VARCHAR},
+        #{productDep,jdbcType=VARCHAR},
+        #{projectLeaderId,jdbcType=VARCHAR},
+        #{projectLeader,jdbcType=VARCHAR},
+        #{planCategory,jdbcType=VARCHAR},
+        #{orderReleaseTime,jdbcType=VARCHAR},
+        #{prototypeOnLineTime,jdbcType=VARCHAR},
+        #{prototypeOutLineTime,jdbcType=VARCHAR},
+        #{materialDepLoadingTime,jdbcType=VARCHAR},
+        #{downAssemblyTime,jdbcType=VARCHAR},
+        #{upAssemblyTime,jdbcType=VARCHAR},
+        #{combinedAssemblyTime,jdbcType=VARCHAR},
+        #{workingDeviceAssemblyTime,jdbcType=VARCHAR},
+        #{wholeCommissionTime,jdbcType=VARCHAR},
+        #{prototypeSequenceTime,jdbcType=VARCHAR},
+        #{realYear,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <insert id="updateBusiness" parameterType="java.util.Map">
+        UPDATE newProduct_assembly_kanban
+        SET
+        designModel=#{designModel,jdbcType=VARCHAR},
+        testQuantity=#{testQuantity,jdbcType=VARCHAR},
+        theExplain=#{theExplain,jdbcType=VARCHAR},
+        pin=#{pin,jdbcType=VARCHAR},
+        productCategory=#{productCategory,jdbcType=VARCHAR},
+        productDepId=#{productDepId,jdbcType=VARCHAR},
+        productDep=#{productDep,jdbcType=VARCHAR},
+        projectLeaderId=#{projectLeaderId,jdbcType=VARCHAR},
+        projectLeader=#{projectLeader,jdbcType=VARCHAR},
+        planCategory=#{planCategory,jdbcType=VARCHAR},
+        orderReleaseTime=#{orderReleaseTime,jdbcType=VARCHAR},
+        prototypeOnLineTime=#{prototypeOnLineTime,jdbcType=VARCHAR},
+        prototypeOutLineTime=#{prototypeOutLineTime,jdbcType=VARCHAR},
+        materialDepLoadingTime=#{materialDepLoadingTime,jdbcType=VARCHAR},
+        downAssemblyTime=#{downAssemblyTime,jdbcType=VARCHAR},
+        upAssemblyTime=#{upAssemblyTime,jdbcType=VARCHAR},
+        combinedAssemblyTime=#{combinedAssemblyTime,jdbcType=VARCHAR},
+        workingDeviceAssemblyTime=#{workingDeviceAssemblyTime,jdbcType=VARCHAR},
+        wholeCommissionTime=#{wholeCommissionTime,jdbcType=VARCHAR},
+        prototypeSequenceTime=#{prototypeSequenceTime,jdbcType=VARCHAR},
+        realYear=#{realYear,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+    <!---->
+    <delete id="deleteException" parameterType="java.util.Map">
+        delete from newProduct_assembly_exception
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="businessIds != null and businessIds !=''">
+                AND mainId IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <!---->
+    <select id="queryExceptionDetailById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM newProduct_assembly_exception
+        WHERE id = #{businessId}
+    </select>
+    <!---->
+    <select id="queryExceptionDetailByRefId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM newProduct_assembly_exception
+        WHERE REF_ID_ = #{refId}
+    </select>
+    <!---->
+    <select id="queryFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select * from newProduct_assembly_exceptionfileinfo
+        where mainId IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!---->
+    <insert id="insertException" parameterType="java.util.Map">
+        insert into newProduct_assembly_exception(
+        id,
+        mainId,
+        pin,
+        exceptionType,
+        partsCategory,
+        exceptionPart,
+        exceptionDescription,
+        assemblyNode,
+        repDepLeaderId,
+        repDepLeader,
+        repDepId,
+        repDep,
+        repUserId,
+        repUser,
+        feedbackPersonId,
+        feedbackPerson,
+        feedbackTime,
+        temporaryMeasures,
+        temporaryTime,
+        permanentMeasures,
+        permanentTime,
+        isClear,
+        remark,
+        REF_ID_,
+        supplier,
+        problemLevel,
+        workingHours,
+        workingCondition,
+        failureRate,
+        failurePosition,
+        testMethod,
+        disposalMethod,
+        improvementRequirements,
+        severity,
+        isImprove,
+        noImproveReason,
+        isSyn,
+        indexLocal,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{pin,jdbcType=VARCHAR},
+        #{exceptionType,jdbcType=VARCHAR},
+        #{partsCategory,jdbcType=VARCHAR},
+        #{exceptionPart,jdbcType=VARCHAR},
+        #{exceptionDescription,jdbcType=VARCHAR},
+        #{assemblyNode,jdbcType=VARCHAR},
+        #{repDepLeaderId,jdbcType=VARCHAR},
+        #{repDepLeader,jdbcType=VARCHAR},
+        #{repDepId,jdbcType=VARCHAR},
+        #{repDep,jdbcType=VARCHAR},
+        #{repUserId,jdbcType=VARCHAR},
+        #{repUser,jdbcType=VARCHAR},
+        #{feedbackPersonId,jdbcType=VARCHAR},
+        #{feedbackPerson,jdbcType=VARCHAR},
+        #{feedbackTime,jdbcType=VARCHAR},
+        #{temporaryMeasures,jdbcType=VARCHAR},
+        #{temporaryTime,jdbcType=VARCHAR},
+        #{permanentMeasures,jdbcType=VARCHAR},
+        #{permanentTime,jdbcType=VARCHAR},
+        #{isClear,jdbcType=VARCHAR},
+        #{remark,jdbcType=VARCHAR},
+        #{REF_ID_,jdbcType=VARCHAR},
+        #{supplier,jdbcType=VARCHAR},
+        #{problemLevel,jdbcType=VARCHAR},
+        #{workingHours,jdbcType=VARCHAR},
+        #{workingCondition,jdbcType=VARCHAR},
+        #{failureRate,jdbcType=VARCHAR},
+        #{failurePosition,jdbcType=VARCHAR},
+        #{testMethod,jdbcType=VARCHAR},
+        #{disposalMethod,jdbcType=VARCHAR},
+        #{improvementRequirements,jdbcType=VARCHAR},
+        #{severity,jdbcType=VARCHAR},
+        #{isImprove,jdbcType=VARCHAR},
+        #{noImproveReason,jdbcType=VARCHAR},
+        #{isSyn,jdbcType=VARCHAR},
+        #{indexLocal,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateException" parameterType="java.util.Map">
+        update newProduct_assembly_exception
+        set
+        mainId=#{mainId,jdbcType=VARCHAR},
+        pin=#{pin,jdbcType=VARCHAR},
+        exceptionType=#{exceptionType,jdbcType=VARCHAR},
+        partsCategory=#{partsCategory,jdbcType=VARCHAR},
+        exceptionPart=#{exceptionPart,jdbcType=VARCHAR},
+        exceptionDescription=#{exceptionDescription,jdbcType=VARCHAR},
+        assemblyNode=#{assemblyNode,jdbcType=VARCHAR},
+        repDepLeaderId=#{repDepLeaderId,jdbcType=VARCHAR},
+        repDepLeader=#{repDepLeader,jdbcType=VARCHAR},
+        repDepId=#{repDepId,jdbcType=VARCHAR},
+        repDep=#{repDep,jdbcType=VARCHAR},
+        repUserId=#{repUserId,jdbcType=VARCHAR},
+        repUser=#{repUser,jdbcType=VARCHAR},
+        feedbackPersonId=#{feedbackPersonId,jdbcType=VARCHAR},
+        feedbackPerson=#{feedbackPerson,jdbcType=VARCHAR},
+        feedbackTime=#{feedbackTime,jdbcType=VARCHAR},
+        temporaryMeasures=#{temporaryMeasures,jdbcType=VARCHAR},
+        temporaryTime=#{temporaryTime,jdbcType=VARCHAR},
+        permanentMeasures=#{permanentMeasures,jdbcType=VARCHAR},
+        permanentTime=#{permanentTime,jdbcType=VARCHAR},
+        isClear=#{isClear,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        REF_ID_=#{REF_ID_,jdbcType=VARCHAR},
+        supplier=#{supplier,jdbcType=VARCHAR},
+        problemLevel=#{problemLevel,jdbcType=VARCHAR},
+        workingHours=#{workingHours,jdbcType=VARCHAR},
+        workingCondition=#{workingCondition,jdbcType=VARCHAR},
+        failureRate=#{failureRate,jdbcType=VARCHAR},
+        failurePosition=#{failurePosition,jdbcType=VARCHAR},
+        testMethod=#{testMethod,jdbcType=VARCHAR},
+        disposalMethod=#{disposalMethod,jdbcType=VARCHAR},
+        improvementRequirements=#{improvementRequirements,jdbcType=VARCHAR},
+        severity=#{severity,jdbcType=VARCHAR},
+        isImprove=#{isImprove,jdbcType=VARCHAR},
+        noImproveReason=#{noImproveReason,jdbcType=VARCHAR},
+        isSyn=#{isSyn,jdbcType=VARCHAR},
+        indexLocal=#{indexLocal,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into newProduct_assembly_exceptionfileinfo(
+        id,
+        mainId,
+        fileName,
+        fileSize,
+        fileDesc,
+        CREATE_BY_,
+        CREATE_TIME_
+        ) values(
+        #{id,jdbcType=VARCHAR},
+        #{mainId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileDesc,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <select id="getUserByFullName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM os_user
+        WHERE FULLNAME_ = #{fullName} AND STATUS_ = 'IN_JOB'
+    </select>
+    <!---->
+    <select id="getDeptByFullName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM os_group
+        WHERE NAME_ = #{fullName} AND STATUS_ = 'ENABLED'
+    </select>
+    <!--以下异常汇总相关-->
+    <!---->
+    <select id="exceptionSummaryListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.designModel,
+        business.testQuantity,
+        business.theExplain,
+        business.productCategory,
+        business.productDep,
+        business.projectLeader,
+        business.planCategory,
+        business.orderReleaseTime,
+        exceptions.pin,
+        exceptions.exceptionType,
+        exceptions.partsCategory,
+        exceptions.exceptionPart,
+        exceptions.exceptionDescription,
+        exceptions.assemblyNode,
+        exceptions.repDep,
+        exceptions.repUser,
+        exceptions.feedbackPerson,
+        exceptions.feedbackTime,
+        exceptions.disposalMethod,
+        exceptions.improvementRequirements,
+        exceptions.temporaryMeasures,
+        exceptions.temporaryTime,
+        exceptions.permanentMeasures,
+        exceptions.permanentTime,
+        exceptions.isClear,
+        exceptions.remark
+        FROM newproduct_assembly_kanban AS business
+        INNER JOIN
+        newproduct_assembly_exception AS exceptions
+        ON business.id = exceptions.mainId
+        <where>
+            <include refid="query_where_exception"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countExceptionSummaryListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM newproduct_assembly_kanban AS business
+        INNER JOIN
+        newproduct_assembly_exception AS exceptions
+        ON business.id = exceptions.mainId
+        <where>
+            <include refid="query_where_exception"/>
+        </where>
+    </select>
+    <!--以下计划相关-->
+    <!---->
+    <select id="annualPlanDepListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM newProduct_assembly_annualPlanDep
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND newProduct_assembly_annualPlanDep.signYear = #{signYear}
+            </if>
+            <if test="productDep !=null and productDep !=''">
+                AND newProduct_assembly_annualPlanDep.productDep = #{productDep}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countAnnualPlanDepListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM newProduct_assembly_annualPlanDep
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND newProduct_assembly_annualPlanDep.signYear = #{signYear}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <delete id="deleteAnnualPlanDep" parameterType="java.util.Map">
+        delete from newProduct_assembly_annualPlanDep
+        where id IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <insert id="insertAnnualPlanDep" parameterType="java.util.Map">
+        insert into newProduct_assembly_annualPlanDep(
+        id,
+        productDepId,
+        productDep,
+        signYear,
+        testQuantity,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{productDepId,jdbcType=VARCHAR},
+        #{productDep,jdbcType=VARCHAR},
+        #{signYear,jdbcType=VARCHAR},
+        #{testQuantity,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateAnnualPlanDep" parameterType="java.util.Map">
+        update newProduct_assembly_annualPlanDep
+        set
+        productDepId=#{productDepId,jdbcType=VARCHAR},
+        productDep=#{productDep,jdbcType=VARCHAR},
+        signYear=#{signYear,jdbcType=VARCHAR},
+        testQuantity=#{testQuantity,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <select id="annualPlanPrdListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM newProduct_assembly_annualPlanPrd
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND newProduct_assembly_annualPlanPrd.signYear = #{signYear}
+            </if>
+            <if test="productCategory !=null and productCategory !=''">
+                AND newProduct_assembly_annualPlanPrd.productCategory = #{productCategory}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countAnnualPlanPrdListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM newProduct_assembly_annualPlanPrd
+        <where>
+            <if test="signYear !=null and signYear !=''">
+                AND newProduct_assembly_annualPlanPrd.signYear = #{signYear}
+            </if>
+        </where>
+    </select>
+    <!---->
+    <delete id="deleteAnnualPlanPrd" parameterType="java.util.Map">
+        delete from newProduct_assembly_annualPlanPrd
+        where id IN
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <insert id="insertAnnualPlanPrd" parameterType="java.util.Map">
+        insert into newProduct_assembly_annualPlanPrd(
+        id,
+        productCategory,
+        signYear,
+        testQuantity,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{id,jdbcType=VARCHAR},
+        #{productCategory,jdbcType=VARCHAR},
+        #{signYear,jdbcType=VARCHAR},
+        #{testQuantity,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateAnnualPlanPrd" parameterType="java.util.Map">
+        update newProduct_assembly_annualPlanPrd
+        set
+        productCategory=#{productCategory,jdbcType=VARCHAR},
+        signYear=#{signYear,jdbcType=VARCHAR},
+        testQuantity=#{testQuantity,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+</mapper>

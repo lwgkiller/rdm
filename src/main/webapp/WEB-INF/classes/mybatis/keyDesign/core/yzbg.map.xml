@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.keyDesign.core.dao.YzbgDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryYzbg" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        keydesign_yzbgbase.*,
+        os_user.FULLNAME_ AS userName
+        FROM
+        keydesign_yzbgbase
+        LEFT JOIN os_user ON os_user.USER_ID_ = keydesign_yzbgbase.CREATE_BY_
+        WHERE
+        belongbj=#{belongbj}
+        <if test="code != null and code != ''">
+            AND keydesign_yzbgbase.code like CONCAT('%',#{code},'%')
+        </if>
+        <if test="codeName != null and codeName != ''">
+            and keydesign_yzbgbase.codeName like CONCAT('%',#{codeName},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countYzbgList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        keydesign_yzbgbase
+        WHERE
+        belongbj=#{belongbj}
+        <if test="code != null and code != ''">
+            AND keydesign_yzbgbase.code like CONCAT('%',#{code},'%')
+        </if>
+        <if test="codeName != null and codeName != ''">
+            and keydesign_yzbgbase.codeName like CONCAT('%',#{codeName},'%')
+        </if>
+    </select>
+    <insert id="createYzbg" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_yzbgbase(
+            bgId
+            ,code
+            ,model
+            ,supplier
+            ,codeName
+            ,belongbj
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{bgId,jdbcType=VARCHAR},
+            #{code,jdbcType=VARCHAR},
+            #{model,jdbcType=VARCHAR},
+            #{supplier,jdbcType=VARCHAR},
+            #{codeName,jdbcType=VARCHAR},
+            #{belongbj,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateYzbg" parameterType="com.alibaba.fastjson.JSONObject">
+        update keydesign_yzbgbase
+        <set>
+            code=#{code,jdbcType=VARCHAR},
+            model=#{model,jdbcType=VARCHAR},
+            supplier=#{supplier,jdbcType=VARCHAR},
+            codeName=#{codeName,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        bgId=#{bgId}
+    </update>
+    <select id="queryYzbgById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        keydesign_yzbgbase.*
+        from keydesign_yzbgbase
+        where keydesign_yzbgbase.bgId=#{bgId}
+    </select>
+    <select id="queryYzbgDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            keydesign_yzbgdetail.*
+        FROM
+            keydesign_yzbgdetail
+        where
+        keydesign_yzbgdetail.belongBg = #{belongBg}
+    </select>
+    <select id="queryYzbgDetailById" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            keydesign_yzbgdetail.*
+        FROM
+            keydesign_yzbgdetail
+        where
+        keydesign_yzbgdetail.detailId = #{detailId}
+    </select>
+
+    <select id="queryYzbgDetailFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        keydesign_yzbgfile
+        WHERE
+        keydesign_yzbgfile.belongId= #{belongId}
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_yzbgfile(
+        fileId
+        ,fileName
+        ,fileSize
+        ,belongId
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteYzbgDetailFile" parameterType="java.util.Map">
+        delete from keydesign_yzbgfile
+        <where>
+            <if test="fileId != null and fileId != ''">
+                fileId=#{fileId}
+            </if>
+            <if test="belongId != null and belongId != ''">
+                And belongId=#{belongId}
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteYzbgDetail" parameterType="java.util.Map">
+        delete from keydesign_yzbgdetail
+        where
+        detailId=#{detailId}
+    </delete>
+    <delete id="deleteYzbg" parameterType="java.util.Map">
+        delete from keydesign_yzbgbase
+        where
+        bgId=#{bgId}
+    </delete>
+
+    <insert id="createYzbgDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into keydesign_yzbgdetail(
+            detailId
+            ,name
+            ,bgType
+            ,checkJg
+            ,checkTime
+            ,note
+            ,belongBg
+            ,CREATE_BY_
+            ,CREATE_TIME_
+        )
+        values(
+            #{detailId,jdbcType=VARCHAR},
+            #{name,jdbcType=VARCHAR},
+            #{bgType,jdbcType=VARCHAR},
+            #{checkJg,jdbcType=VARCHAR},
+            #{checkTime,jdbcType=TIMESTAMP},
+            #{note,jdbcType=VARCHAR},
+            #{belongBg,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateYzbgDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update keydesign_yzbgdetail
+        <set>
+            name=#{name,jdbcType=VARCHAR},
+            bgType=#{bgType,jdbcType=VARCHAR},
+            checkJg=#{checkJg,jdbcType=VARCHAR},
+            checkTime=#{checkTime,jdbcType=TIMESTAMP},
+            note=#{note,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        detailId=#{detailId}
+    </update>
+</mapper>

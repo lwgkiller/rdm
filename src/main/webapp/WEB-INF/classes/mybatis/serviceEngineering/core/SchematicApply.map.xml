@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.SchematicApplyDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="querySchematicApply" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        schematicApply_baseinfo.*,
+        product_spectrum.productManagerName,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS creator,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        schematicApply_baseinfo
+        LEFT JOIN product_spectrum ON schematicApply_baseinfo.modelId = product_spectrum.id
+        LEFT JOIN os_rel_inst ON schematicApply_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = schematicApply_baseinfo.CREATE_BY_
+        left join bpm_inst on schematicApply_baseinfo.id=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (schematicApply_baseinfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="creator != null and creator != ''">
+            and os_user.FULLNAME_ like CONCAT('%',#{creator},'%')
+        </if>
+        <if test="productManagerName != null and productManagerName != ''">
+            and product_spectrum.productManagerName like CONCAT('%',#{productManagerName},'%')
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and schematicApply_baseinfo.saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+        <if test="modelName != null and modelName != ''">
+            and schematicApply_baseinfo.modelName like CONCAT('%',#{modelName},'%')
+        </if>
+        <if test="materialCode != null and materialCode != ''">
+            and schematicApply_baseinfo.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="noticeNo != null and noticeNo != ''">
+            and schematicApply_baseinfo.noticeNo like CONCAT('%',#{noticeNo},'%')
+        </if>
+        <if test="status != null and status != ''">
+            and bpm_inst.STATUS_ = #{status}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countSchematicApply" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        schematicApply_baseinfo
+        LEFT JOIN product_spectrum ON schematicApply_baseinfo.modelId = product_spectrum.id
+        LEFT JOIN os_rel_inst ON schematicApply_baseinfo.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = schematicApply_baseinfo.CREATE_BY_
+        left join bpm_inst on schematicApply_baseinfo.id=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (schematicApply_baseinfo.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="creator != null and creator != ''">
+            and os_user.FULLNAME_ like CONCAT('%',#{creator},'%')
+        </if>
+        <if test="productManagerName != null and productManagerName != ''">
+            and product_spectrum.productManagerName like CONCAT('%',#{productManagerName},'%')
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and schematicApply_baseinfo.saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+        <if test="modelName != null and modelName != ''">
+            and schematicApply_baseinfo.modelName like CONCAT('%',#{modelName},'%')
+        </if>
+        <if test="materialCode != null and materialCode != ''">
+            and schematicApply_baseinfo.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="noticeNo != null and noticeNo != ''">
+            and schematicApply_baseinfo.noticeNo like CONCAT('%',#{noticeNo},'%')
+        </if>
+        <if test="status != null and status != ''">
+            and bpm_inst.STATUS_ = #{status}
+        </if>
+    </select>
+
+    <insert id="createSchematicApply" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into schematicApply_baseinfo (id,
+                                             noticeNo,
+                                             machineNum,
+                                             schematicType,
+                                             saleModel,
+                                             materialCode,
+                                             modelId,
+                                             modelName,
+                                             saleArea,
+                                             needTime,
+                                             zrrId,
+                                             zrrName,
+                                             schematicVersion,
+                                             changeContent,
+                                             note,
+                                             CREATE_BY_,
+                                             CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{noticeNo,jdbcType=VARCHAR},
+                #{machineNum,jdbcType=VARCHAR},
+                #{schematicType,jdbcType=VARCHAR},
+                #{saleModel,jdbcType=VARCHAR},
+                #{materialCode,jdbcType=VARCHAR},
+                #{modelId,jdbcType=VARCHAR},
+                #{modelName,jdbcType=VARCHAR},
+                #{saleArea,jdbcType=VARCHAR},
+                #{needTime,jdbcType=VARCHAR},
+                #{zrrId,jdbcType=VARCHAR},
+                #{zrrName,jdbcType=VARCHAR},
+                #{schematicVersion,jdbcType=VARCHAR},
+                #{changeContent,jdbcType=VARCHAR},
+                #{note,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateSchematicApply" parameterType="com.alibaba.fastjson.JSONObject">
+        update schematicApply_baseinfo
+        <set>
+            machineNum=#{machineNum,jdbcType=VARCHAR},
+            schematicType=#{schematicType,jdbcType=VARCHAR},
+            saleModel=#{saleModel,jdbcType=VARCHAR},
+            materialCode=#{materialCode,jdbcType=VARCHAR},
+            modelId=#{modelId,jdbcType=VARCHAR},
+            modelName=#{modelName,jdbcType=VARCHAR},
+            saleArea=#{saleArea,jdbcType=VARCHAR},
+            needTime=#{needTime,jdbcType=VARCHAR},
+            zrrId=#{zrrId,jdbcType=VARCHAR},
+            zrrName=#{zrrName,jdbcType=VARCHAR},
+            schematicVersion=#{schematicVersion,jdbcType=VARCHAR},
+            changeContent=#{changeContent,jdbcType=VARCHAR},
+            note=#{note,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <select id="queryDetail" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT schematicApply_detailinfo.*
+        FROM schematicApply_detailinfo
+        where belongId = #{belongId}
+
+    </select>
+
+    <insert id="createDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into schematicApply_detailinfo (id,
+                                               detailMaterialCode,
+                                               detailSchematicNo,
+                                               detailNote,
+                                               belongId,
+                                               CREATE_BY_,
+                                               CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{detailMaterialCode,jdbcType=VARCHAR},
+                #{detailSchematicNo,jdbcType=VARCHAR},
+                #{detailNote,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        update schematicApply_detailinfo
+        <set>
+            detailMaterialCode=#{detailMaterialCode,jdbcType=VARCHAR},
+            detailSchematicNo=#{detailSchematicNo,jdbcType=VARCHAR},
+            detailNote=#{detailNote,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteDetail" parameterType="java.util.Map">
+        delete from schematicApply_detailinfo
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="ids != null and ids !=''">
+                belongId IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="querySchematicApplyById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select schematicApply_baseinfo.*,
+               os_user.FULLNAME_ as creator,
+               bpm_inst.INST_ID_ as instId
+        from schematicApply_baseinfo
+                 left join os_user on schematicApply_baseinfo.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on schematicApply_baseinfo.id = bpm_inst.BUS_KEY_
+        where schematicApply_baseinfo.id = #{id}
+    </select>
+
+    <select id="querySchematicApplyFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        *
+        FROM
+        schematicApply_file
+        WHERE
+        belongId IN
+        <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into schematicApply_file (fileId, fileName, belongId, fileSize, CREATE_BY_, CREATE_TIME_)
+        values (#{fileId,jdbcType=VARCHAR},
+                #{fileName,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{fileSize,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <delete id="deleteSchematicApplyFile" parameterType="java.util.Map">
+        delete from schematicApply_file
+        where
+            <if test="id != null and id != ''">
+                fileId=#{id}
+            </if>
+            <if test="ids != null and ids !=''">
+                belongId IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+    </delete>
+    <delete id="deleteSchematicApply" parameterType="java.util.Map">
+        delete from schematicApply_baseinfo
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <update id="updateSchematicApplyNumber" parameterType="java.util.Map">
+        update schematicApply_baseinfo
+        set noticeNo = #{noticeNo,jdbcType=VARCHAR}
+        where id = #{id}
+    </update>
+    <select id="queryMaxSchematicApplyNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT noticeNo
+        FROM schematicApply_baseinfo
+        WHERE noticeNo like CONCAT('%', #{applyTimeStart}, '%')
+        ORDER BY noticeNo DESC
+        LIMIT 1
+    </select>
+</mapper>

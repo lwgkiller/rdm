@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.environment.core.dao.RjbgglDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryRjbggl" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        environmental_rjbggl.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        environmental_rjbggl
+        LEFT JOIN os_rel_inst ON environmental_rjbggl.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = environmental_rjbggl.CREATE_BY_
+        left join bpm_inst on environmental_rjbggl.id=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (environmental_rjbggl.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="applyName != null and applyName != ''">
+            and environmental_rjbggl.applyName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="appDeptName != null and appDeptName != ''">
+            and environmental_rjbggl.appDeptName like CONCAT('%',#{appDeptName},'%')
+        </if>
+        <if test="modelName != null and modelName != ''">
+            and environmental_rjbggl.modelName like CONCAT('%',#{applyName},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <insert id="createRjbggl" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_rjbggl (id,
+                                          applyId,
+                                          applyName,
+                                          appDeptId,
+                                          appDeptName,
+                                          djId,
+                                          djName,
+                                          phone,
+                                          bjName,
+                                          wlNumber,
+                                          supplier,
+                                          supplierPer,
+                                          reason,
+                                          content,
+                                          CREATE_BY_,
+                                          CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{applyId,jdbcType=VARCHAR},
+                #{applyName,jdbcType=VARCHAR},
+                #{appDeptId,jdbcType=VARCHAR},
+                #{appDeptName,jdbcType=VARCHAR},
+                #{djId,jdbcType=VARCHAR},
+                #{djName,jdbcType=VARCHAR},
+                #{phone,jdbcType=VARCHAR},
+                #{bjName,jdbcType=VARCHAR},
+                #{wlNumber,jdbcType=VARCHAR},
+                #{supplier,jdbcType=VARCHAR},
+                #{supplierPer,jdbcType=VARCHAR},
+                #{reason,jdbcType=VARCHAR},
+                #{content,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateRjbggl" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_rjbggl
+        <set>
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            appDeptId=#{appDeptId,jdbcType=VARCHAR},
+            appDeptName=#{appDeptName,jdbcType=VARCHAR},
+            djId=#{djId,jdbcType=VARCHAR},
+            djName=#{djName,jdbcType=VARCHAR},
+            phone=#{phone,jdbcType=VARCHAR},
+            bjName=#{bjName,jdbcType=VARCHAR},
+            wlNumber=#{wlNumber,jdbcType=VARCHAR},
+            supplier=#{supplier,jdbcType=VARCHAR},
+            supplierPer=#{supplierPer,jdbcType=VARCHAR},
+            ifszr=#{ifszr,jdbcType=VARCHAR},
+            ifdjjsy=#{ifdjjsy,jdbcType=VARCHAR},
+            reason=#{reason,jdbcType=VARCHAR},
+            content=#{content,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <select id="querySzr" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT environmental_rjbgglszr.*
+        FROM environmental_rjbgglszr
+        where belongId = #{belongId}
+
+    </select>
+
+    <insert id="createSzr" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_rjbgglszr (id, szrId, szrName, belongId, CREATE_BY_, CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{szrId,jdbcType=VARCHAR},
+                #{szrName,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateSzr" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_rjbgglszr
+        <set>
+            szrId=#{szrId,jdbcType=VARCHAR},
+            szrName=#{szrName,jdbcType=VARCHAR},
+            ifjsy=#{ifjsy,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteSzr" parameterType="java.util.Map">
+        delete from environmental_rjbgglszr
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="ids != null and ids !=''">
+                belongId IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryJsy" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT environmental_rjbggljsy.*,
+               os_user.FULLNAME_ AS userName
+        FROM environmental_rjbggljsy
+                 LEFT JOIN os_user ON environmental_rjbggljsy.CREATE_BY_ = os_user.USER_ID_
+        where environmental_rjbggljsy.belongId = #{belongId}
+    </select>
+
+    <insert id="createJsy" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_rjbggljsy (id,
+                                             jsyId,
+                                             jsyName,
+                                             ifchange,
+                                             changeNum,
+                                             belongId,
+                                             CREATE_BY_,
+                                             CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{jsyId,jdbcType=VARCHAR},
+                #{jsyName,jdbcType=VARCHAR},
+                #{ifchange,jdbcType=VARCHAR},
+                #{changeNum,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateJsy" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_rjbggljsy
+        <set>
+            jsyId =#{jsyId,jdbcType=VARCHAR},
+            jsyName=#{jsyName,jdbcType=VARCHAR},
+            ifchange=#{ifchange,jdbcType=VARCHAR},
+            changeNum=#{changeNum,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteJsy" parameterType="java.util.Map">
+        delete from environmental_rjbggljsy
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="ids != null and ids !=''">
+                belongId IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryModel" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT environmental_rjbgglmodel.*,
+               os_user.FULLNAME_ AS userName
+        FROM environmental_rjbgglmodel
+                 LEFT JOIN os_user ON environmental_rjbgglmodel.CREATE_BY_ = os_user.USER_ID_
+        where environmental_rjbgglmodel.belongId = #{belongId}
+    </select>
+
+    <insert id="createModel" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into environmental_rjbgglmodel (id,
+                                               modelId,
+                                               modelName,
+                                               cpzgId,
+                                               cpzgName,
+                                               solution,
+                                               belongId,
+                                               CREATE_BY_,
+                                               CREATE_TIME_)
+        values (#{id,jdbcType=VARCHAR},
+                #{modelId,jdbcType=VARCHAR},
+                #{modelName,jdbcType=VARCHAR},
+                #{cpzgId,jdbcType=VARCHAR},
+                #{cpzgName,jdbcType=VARCHAR},
+                #{solution,jdbcType=VARCHAR},
+                #{belongId,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateModel" parameterType="com.alibaba.fastjson.JSONObject">
+        update environmental_rjbgglmodel
+        <set>
+            modelId=#{modelId,jdbcType=VARCHAR},
+            modelName=#{modelName,jdbcType=VARCHAR},
+            cpzgId=#{cpzgId,jdbcType=VARCHAR},
+            cpzgName=#{cpzgName,jdbcType=VARCHAR},
+            solution=#{solution,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        id=#{id}
+    </update>
+
+    <delete id="deleteModel" parameterType="java.util.Map">
+        delete from environmental_rjbgglmodel
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            <if test="ids != null and ids !=''">
+                belongId IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryRjbgglById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select environmental_rjbggl.*, bpm_inst.INST_ID_ as instId
+        from environmental_rjbggl
+                 left join os_user on environmental_rjbggl.CREATE_BY_ = os_user.USER_ID_
+                 left join bpm_inst on environmental_rjbggl.id = bpm_inst.BUS_KEY_
+        where environmental_rjbggl.id = #{id}
+    </select>
+    <delete id="deleteRjbggl" parameterType="java.util.Map">
+        delete from environmental_rjbggl
+        <where>
+            <if test="ids != null and ids !=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <update id="updateRjbgglNumber" parameterType="java.util.Map">
+        update environmental_rjbggl
+        set noticeNo = #{noticeNo,jdbcType=VARCHAR}
+        where id = #{id}
+    </update>
+    <select id="queryMaxRjbgglNum" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT noticeNo
+        FROM environmental_rjbggl
+        WHERE noticeNo like CONCAT('%', #{applyTimeStart}, '%')
+        ORDER BY noticeNo DESC
+        LIMIT 1
+    </select>
+</mapper>

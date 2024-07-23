@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.ZlgjApplyForExtensionDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <!---->
+    <select id="queryApply" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgj_applyforextension.*,
+        zlgj_wtsb_tab.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId
+        FROM
+        zlgj_applyforextension
+        LEFT JOIN zlgj_wtsb_tab on zlgj_wtsb_tab.wtId = zlgj_applyforextension.wtId
+        LEFT JOIN os_rel_inst ON zlgj_applyforextension.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = zlgj_applyforextension.CREATE_BY_
+        left join bpm_inst on zlgj_applyforextension.id=bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        <where>
+            os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_rel_inst.DIM1_ = '1'
+            and (zlgj_applyforextension.CREATE_BY_ = #{currentUserId}
+            or bpm_inst.STATUS_ != 'DRAFTED')
+            <if test="zjbh !=null and zjbh !=''">
+                and zlgj_wtsb_tab.zjbh like CONCAT('%',#{zjbh},'%')
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="queryApplyById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            zlgj_applyforextension.*,
+            zlgj_wtsb_tab.*,
+            os_user.FULLNAME_,
+            bpm_inst.INST_ID_ AS instId
+        FROM zlgj_applyforextension
+            LEFT JOIN os_user ON zlgj_applyforextension.CREATE_BY_ = os_user.USER_ID_
+            LEFT JOIN zlgj_wtsb_tab ON zlgj_wtsb_tab.wtId = zlgj_applyforextension.wtId
+            LEFT JOIN bpm_inst ON zlgj_applyforextension.id = bpm_inst.BUS_KEY_
+        WHERE zlgj_applyforextension.id = #{businessId}
+    </select>
+    <!---->
+    <insert id="insertApply" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO zlgj_applyforextension (
+        id,
+        wtId,
+        extensionReason,
+        extensionNode,
+        extensionDays,
+        CREATE_BY_,
+        CREATE_TIME_,
+        TENANT_ID_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{wtId,jdbcType=VARCHAR},
+        #{extensionReason,jdbcType=VARCHAR},
+        #{extensionNode,jdbcType=VARCHAR},
+        #{extensionDays,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=TIMESTAMP},
+        #{CREATE_TIME_,jdbcType=VARCHAR},
+        #{TENANT_ID_,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!---->
+    <update id="updateApply" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgj_applyforextension
+        set
+            wtId=#{wtId,jdbcType=VARCHAR},
+            extensionReason=#{extensionReason,jdbcType=VARCHAR},
+            extensionNode=#{extensionNode,jdbcType=VARCHAR},
+            extensionDays=#{extensionDays,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteApply" parameterType="java.util.Map">
+        delete from zlgj_applyforextension
+        where
+        <if test="businessIds != null and businessIds !=''">
+            id IN
+            <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </delete>
+</mapper>

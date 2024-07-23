@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.YfjbMonthProductionsDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*,
+        B.FULLNAME_ as creator
+        FROM
+        yfjb_monthproductions A
+        left join os_user B on A.CREATE_BY_ = B.USER_ID_
+        <where>
+            <if test="productModel != null and productModel != ''">
+                and A.productModel like CONCAT('%',#{productModel},'%')
+            </if>
+            <if test="productYear != null and productYear != ''">
+                and A.productYear = #{productYear}
+            </if>
+            <if test="deptId != null and deptId != ''">
+                and  A.deptId = #{deptId}
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            yfjb_monthproductions A
+            where id=#{id}
+    </select>
+    <insert id="addObject" parameterType="java.util.Map">
+         INSERT INTO yfjb_monthproductions (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            productYear,
+            productModel,
+            deptId,
+            january,
+            february,
+            march,
+            april,
+            may,
+            june,
+            july,
+            august,
+            september,
+            october,
+            november,
+            december
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{productYear,jdbcType=VARCHAR},
+            #{productModel,jdbcType=VARCHAR},
+            #{deptId,jdbcType=VARCHAR},
+            #{january,jdbcType=FLOAT},
+            #{february,jdbcType=FLOAT},
+            #{march,jdbcType=FLOAT},
+            #{april,jdbcType=FLOAT},
+            #{may,jdbcType=FLOAT},
+            #{june,jdbcType=FLOAT},
+            #{july,jdbcType=FLOAT},
+            #{august,jdbcType=FLOAT},
+            #{september,jdbcType=FLOAT},
+            #{october,jdbcType=FLOAT},
+            #{november,jdbcType=FLOAT},
+            #{december,jdbcType=FLOAT}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update yfjb_monthproductions
+        <set>
+            <if test="productYear != null and productYear != ''">
+                productYear=#{productYear,jdbcType=VARCHAR},
+            </if>
+            <if test="productModel != null and productModel != ''">
+                productModel=#{productModel,jdbcType=VARCHAR},
+            </if>
+            <if test="january != null and january != ''">
+                january=#{january,jdbcType=FLOAT},
+            </if>
+            <if test="february != null and february != ''">
+                february=#{february,jdbcType=FLOAT},
+            </if>
+            <if test="march != null and march != ''">
+                march=#{march,jdbcType=FLOAT},
+            </if>
+            <if test="april != null and april != ''">
+                april=#{april,jdbcType=FLOAT},
+            </if>
+            <if test="may != null and may != ''">
+                may=#{may,jdbcType=FLOAT},
+            </if>
+            <if test="june != null and june != ''">
+                june=#{june,jdbcType=FLOAT},
+            </if>
+            <if test="july != null and july != ''">
+                july=#{july,jdbcType=FLOAT},
+            </if>
+            <if test="august != null and august != ''">
+                august=#{august,jdbcType=FLOAT},
+            </if>
+            <if test="september != null and september != ''">
+                september=#{september,jdbcType=FLOAT},
+            </if>
+            <if test="october != null and october != ''">
+                october=#{october,jdbcType=FLOAT},
+            </if>
+            <if test="november != null and november != ''">
+                november=#{november,jdbcType=FLOAT},
+            </if>
+            <if test="december != null and december != ''">
+                december=#{december,jdbcType=FLOAT},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from yfjb_monthproductions
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getObjByInfo"  parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            yfjb_monthproductions A
+        WHERE
+         productYear=#{productYear}
+        and A.productModel = #{productModel}
+    </select>
+    <select id="getProductByYear" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            sum(A.january)  january,
+            sum(A.february)  february,
+            sum(A.march)  march,
+            sum(A.april)  april,
+            sum(A.may)  may,
+            sum(A.june)  june,
+            sum(A.july)  july,
+            sum(A.august)  august,
+            sum(A.september)  september,
+            sum(A.october)  october,
+            sum(A.november)  november,
+            sum(A.december)  december,
+            sum(A.january+A.february+A.march+A.april+
+            A.may+A.june+A.july+A.august+A.september+A.october+A.november+A.december) as total
+        FROM
+            yfjb_monthproductions A
+            where A.productYear = #{reportYear}
+    </select>
+</mapper>

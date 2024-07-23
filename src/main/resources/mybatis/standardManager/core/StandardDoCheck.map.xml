@@ -1,0 +1,601 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.standardManager.core.dao.StandardDoCheckDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryDoCheckList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_docheckbaseinfo.*,
+        standard_source.standardNumber,
+        standard_source.standardName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ AS instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        standard_docheckbaseinfo
+        LEFT JOIN standard_source ON standard_docheckbaseinfo.standardId = standard_source.id
+        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+        <where>
+            <if test="standardNumber !=null and standardNumber !=''">
+                standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <if test="standardName !=null and standardName !=''">
+                and standard_source.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="standardId !=null and standardId !=''">
+                and standard_docheckbaseinfo.standardId = #{standardId}
+            </if>
+            <if test="firstWriterName !=null and firstWriterName !=''">
+                and standard_docheckbaseinfo.firstWriterName like CONCAT('%',#{firstWriterName},'%')
+            </if>
+            <if test="djrUserName !=null and djrUserName !=''">
+                and standard_docheckbaseinfo.djrUserName like CONCAT('%',#{djrUserName},'%')
+            </if>
+            <if test="createYear != null and createYear != ''">
+                and YEAR(standard_docheckbaseinfo.CREATE_TIME_)=#{createYear}
+            </if>
+            <if test="checkResult != null and checkResult != ''">
+                and standard_docheckbaseinfo.checkResult=#{checkResult}
+            </if>
+            <if test="zcStatus != null and zcStatus != ''">
+                and standard_docheckbaseinfo.zcStatus=#{zcStatus}
+            </if>
+            <if test="status != null and status != ''">
+                and bpm_inst.STATUS_=#{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR standard_docheckbaseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countDoCheckList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        standard_docheckbaseinfo
+        LEFT JOIN standard_source ON standard_docheckbaseinfo.standardId = standard_source.id
+        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+        <where>
+            <if test="standardNumber !=null and standardNumber !=''">
+                standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <if test="standardName !=null and standardName !=''">
+                and standard_source.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="standardId !=null and standardId !=''">
+                and standard_docheckbaseinfo.standardId = #{standardId}
+            </if>
+            <if test="firstWriterName !=null and firstWriterName !=''">
+                and standard_docheckbaseinfo.firstWriterName like CONCAT('%',#{firstWriterName},'%')
+            </if>
+            <if test="djrUserName !=null and djrUserName !=''">
+                and standard_docheckbaseinfo.djrUserName like CONCAT('%',#{djrUserName},'%')
+            </if>
+            <if test="createYear != null and createYear != ''">
+                and YEAR(standard_docheckbaseinfo.CREATE_TIME_)=#{createYear}
+            </if>
+            <if test="checkResult != null and checkResult != ''">
+                and standard_docheckbaseinfo.checkResult=#{checkResult}
+            </if>
+            <if test="zcStatus != null and zcStatus != ''">
+                and standard_docheckbaseinfo.zcStatus=#{zcStatus}
+            </if>
+            <if test="status != null and status != ''">
+                and bpm_inst.STATUS_=#{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR standard_docheckbaseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertDoCheckBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO standard_docheckbaseinfo (
+        id, standardId, firstWriterId, firstWriterName, checkResult,
+        djrUserId, djrUserName, szrUserId, szrUserName, CREATE_BY_, CREATE_TIME_ )
+        VALUES
+            ( #{id,jdbcType=VARCHAR}
+            , #{standardId,jdbcType=VARCHAR}
+            , #{firstWriterId,jdbcType=VARCHAR}
+            , #{firstWriterName,jdbcType=VARCHAR}
+            , #{checkResult,jdbcType=VARCHAR}
+            , #{djrUserId,jdbcType=VARCHAR}
+            , #{djrUserName,jdbcType=VARCHAR}
+            , #{szrUserId,jdbcType=VARCHAR}
+            , #{szrUserName,jdbcType=VARCHAR}
+            , #{CREATE_BY_,jdbcType=VARCHAR}
+            , #{CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <update id="updateDoCheckBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE standard_docheckbaseinfo
+        SET
+        standardId = #{standardId,jdbcType=VARCHAR},
+        firstWriterId = #{firstWriterId,jdbcType=VARCHAR},
+        firstWriterName = #{firstWriterName,jdbcType=VARCHAR},
+        checkResult = #{checkResult,jdbcType=VARCHAR},
+        djrUserId = #{djrUserId,jdbcType=VARCHAR},
+        djrUserName = #{djrUserName,jdbcType=VARCHAR},
+        szrUserId = #{szrUserId,jdbcType=VARCHAR},
+        szrUserName = #{szrUserName,jdbcType=VARCHAR},
+        UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+
+    <update id="updateDoCheckStatus" parameterType="java.util.Map">
+        UPDATE standard_docheckbaseinfo
+        SET
+        zcStatus = #{zcStatus,jdbcType=VARCHAR}
+        <if test="zcResult != null and zcResult !=''">
+            ,zcResult = #{zcResult,jdbcType=VARCHAR}
+        </if>
+        where
+        id = #{id}
+    </update>
+
+    <insert id="insertDoCheckDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO standard_doCheckDetail (
+        id, baseInfoId, fileType, fileName, filePath,
+        useDesc, judge, respUserId, respUserName, modifyMethod,planFinishTime,closeDesc,CREATE_BY_, CREATE_TIME_,confirmPlan, confirmResult)
+        VALUES
+            ( #{id,jdbcType=VARCHAR}
+            , #{baseInfoId,jdbcType=VARCHAR}
+            , #{fileType,jdbcType=VARCHAR}
+            , #{fileName,jdbcType=VARCHAR}
+            , #{filePath,jdbcType=VARCHAR}
+            , #{useDesc,jdbcType=VARCHAR}
+            , #{judge,jdbcType=VARCHAR}
+            , #{respUserId,jdbcType=VARCHAR}
+            , #{respUserName,jdbcType=VARCHAR}
+            , #{modifyMethod,jdbcType=VARCHAR}
+            , #{planFinishTime,jdbcType=VARCHAR}
+            , #{closeDesc,jdbcType=VARCHAR}
+            , #{CREATE_BY_,jdbcType=VARCHAR}
+            , #{CREATE_TIME_,jdbcType=TIMESTAMP}
+            , #{confirmPlan,jdbcType=VARCHAR}
+            , #{confirmResult,jdbcType=VARCHAR}
+            )
+    </insert>
+
+    <update id="updateDoCheckDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE standard_doCheckDetail
+        SET
+        fileType = #{fileType,jdbcType=VARCHAR},
+        fileName = #{fileName,jdbcType=VARCHAR},
+        filePath = #{filePath,jdbcType=VARCHAR},
+        useDesc = #{useDesc,jdbcType=VARCHAR},
+        judge = #{judge,jdbcType=VARCHAR},
+        respUserId = #{respUserId,jdbcType=VARCHAR},
+        respUserName = #{respUserName,jdbcType=VARCHAR},
+        detailTypes = #{detailTypes,jdbcType=VARCHAR},
+        modifyMethod = #{modifyMethod,jdbcType=VARCHAR},
+        planFinishTime = #{planFinishTime,jdbcType=VARCHAR},
+        closeRespUserId = #{closeRespUserId,jdbcType=VARCHAR},
+        closeRespUserName = #{closeRespUserName,jdbcType=VARCHAR},
+        confirmPlan = #{confirmPlan,jdbcType=VARCHAR},
+        closeDesc = #{closeDesc,jdbcType=VARCHAR},
+        confirmResult = #{confirmResult,jdbcType=VARCHAR},
+        UPDATE_BY_ = #{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_ = #{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id = #{id}
+    </update>
+    <delete id="delDoCheckBaseInfo" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from standard_doCheckBaseInfo
+        <where>
+            <if test="ids != null and ids!=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="delDoCheckDetail" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from standard_doCheckDetail
+        <where>
+            <if test="ids != null and ids!=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="baseInfoIds != null and baseInfoIds !=''">
+                AND baseInfoId in
+                <foreach collection="baseInfoIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <delete id="delDoCheckFile" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from standard_doCheckFile
+        <where>
+            <if test="ids != null and ids!=''">
+                id IN
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="baseInfoIds != null and baseInfoIds !=''">
+                AND baseInfoId in
+                <foreach collection="baseInfoIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="detailIds != null and detailIds !=''">
+                AND detailId in
+                <foreach collection="detailIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryApplyJson" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_docheckbaseinfo.*,
+        standard_source.standardNumber,
+        standard_source.standardName,
+        bpm_inst.INST_ID_ as instId
+        FROM
+        standard_docheckbaseinfo
+        LEFT JOIN standard_source ON standard_docheckbaseinfo.standardId = standard_source.id
+        left join bpm_inst on standard_docheckbaseinfo.id=bpm_inst.BUS_KEY_
+        where
+        standard_docheckbaseinfo.id = #{id}
+    </select>
+
+    <select id="queryCheckDetailList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_doCheckDetail.*,
+            userDeptTemp.deptId,
+            userDeptTemp.deptName,
+            userDeptTemp2.deptId as closeDeptId,
+            userDeptTemp2.deptName as closeDeptName
+        FROM
+            standard_doCheckDetail
+        LEFT JOIN (
+            SELECT
+                os_group.NAME_ AS deptName,
+                userId2DeptId.userId,
+                userId2DeptId.deptId
+            FROM
+                ( SELECT PARTY1_ AS deptId, PARTY2_ AS userId FROM os_rel_inst WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND os_rel_inst.DIM1_ = '1' ) AS userId2DeptId
+                LEFT JOIN os_group ON userId2DeptId.deptId = os_group.GROUP_ID_
+        ) AS userDeptTemp ON standard_doCheckDetail.respUserId = userDeptTemp.userId
+        LEFT JOIN (
+            SELECT
+                os_group.NAME_ AS deptName,
+                userId2DeptId.userId,
+                userId2DeptId.deptId
+            FROM
+                ( SELECT PARTY1_ AS deptId, PARTY2_ AS userId FROM os_rel_inst WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND os_rel_inst.DIM1_ = '1' ) AS userId2DeptId
+                LEFT JOIN os_group ON userId2DeptId.deptId = os_group.GROUP_ID_
+        ) AS userDeptTemp2 ON standard_doCheckDetail.closeRespUserId = userDeptTemp2.userId
+        where
+        baseInfoId = #{baseInfoId}
+        order by CONVERT(standard_doCheckDetail.judge using GBK) ASC,standard_doCheckDetail.respUserId ASC
+    </select>
+
+    <select id="queryCheckDetailFileList" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_doCheckFile.*,
+        os_user.FULLNAME_ as creator
+        FROM
+        standard_doCheckFile
+        left join os_user on standard_doCheckFile.CREATE_BY_ = os_user.USER_ID_
+        <where>
+            <if test="baseInfoIds != null and baseInfoIds !=''">
+                AND standard_doCheckFile.baseInfoId in
+                <foreach collection="baseInfoIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="detailIds != null and detailIds !=''">
+                AND standard_doCheckFile.detailId in
+                <foreach collection="detailIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertCheckFile" parameterType="com.alibaba.fastjson.JSONObject">
+        INSERT INTO standard_doCheckFile (
+        id, fileName, fileSize,fileDesc,baseInfoId,detailId,CREATE_BY_, CREATE_TIME_ )
+        VALUES
+            (
+              #{id,jdbcType=VARCHAR}
+            , #{fileName,jdbcType=VARCHAR}
+            , #{fileSize,jdbcType=VARCHAR}
+            , #{fileDesc,jdbcType=VARCHAR}
+            , #{baseInfoId,jdbcType=VARCHAR}
+            , #{detailId,jdbcType=VARCHAR}
+            , #{CREATE_BY_,jdbcType=VARCHAR}
+            , #{CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <select id="queryStandardFirstWriterInfo" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        select
+          standardTmp.*,
+          os_user.FULLNAME_ as 'firstWriterName'
+        from
+        (
+            SELECT
+            id as standardId,
+            CASE
+                WHEN LOCATE( ',', publisherId ) > 0 THEN LEFT ( publisherId, LOCATE( ',', publisherId ) - 1 )
+                ELSE publisherId
+            END 'firstWriterId'
+            FROM
+            standard_source
+            <where>
+                <if test="ids != null and ids!=''">
+                    id IN
+                    <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+            </where>
+        )standardTmp
+        left join os_user on standardTmp.firstWriterId=os_user.USER_ID_
+    </select>
+
+    <select id="queryDoCheckStatusByStandardIds" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_docheckbaseinfo.*,
+        bpm_inst.STATUS_ as status
+        FROM
+        standard_docheckbaseinfo
+        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+        where
+            standard_docheckbaseinfo.standardId IN
+            <foreach collection="standardIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            AND (bpm_inst.STATUS_ = 'SUCCESS_END' OR bpm_inst.STATUS_ = 'RUNNING')
+            AND YEAR(standard_docheckbaseinfo.CREATE_TIME_)=#{doCheckYear}
+    </select>
+
+    <select id="queryRemindInstByParam" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            bpm_remind_inst.*,
+            userDeptTemp.userId AS processUserId,
+            userDeptTemp.userName AS processUserName,
+            userDeptTemp.deptId AS processUserDeptId,
+            userDeptTemp.deptName AS processUserDeptName,
+            standard_docheckbaseinfo.id as baseInfoId,
+            standard_source.standardNumber,
+            standard_source.standardName,
+            DATE_FORMAT(standard_docheckbaseinfo.CREATE_TIME_,'%Y') as doCheckYear
+        FROM
+            bpm_remind_inst
+            LEFT JOIN bpm_solution ON bpm_remind_inst.SOL_ID_ = bpm_solution.SOL_ID_
+            LEFT JOIN bpm_inst ON bpm_remind_inst.ACT_INST_ID_ = bpm_inst.ACT_INST_ID_
+            LEFT JOIN act_ru_task ON bpm_remind_inst.TASK_ID_ = act_ru_task.ID_
+            LEFT JOIN (
+                SELECT
+                    os_group.GROUP_ID_ AS deptId,
+                    os_group.NAME_ AS deptName,
+                    os_user.USER_ID_ AS userId,
+                    os_user.FULLNAME_ AS userName
+                FROM
+                    ( SELECT PARTY1_ AS deptId, PARTY2_ AS userId FROM os_rel_inst WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND os_rel_inst.DIM1_ = '1' ) AS userId2DeptId
+                    LEFT JOIN os_group ON userId2DeptId.deptId = os_group.GROUP_ID_
+                    LEFT JOIN os_user ON userId2DeptId.userId = os_user.USER_ID_
+            ) AS userDeptTemp ON act_ru_task.ASSIGNEE_ = userDeptTemp.userId
+            left join standard_docheckbaseinfo on bpm_inst.BUS_KEY_ = standard_docheckbaseinfo.id
+            left join standard_source on standard_docheckbaseinfo.standardId = standard_source.id
+        WHERE
+            bpm_solution.KEY_ = #{solKey}
+    </select>
+
+    <delete id="delRemindInstByIds" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from BPM_REMIND_INST
+        where
+        ID_ IN
+        <foreach collection="ids" item="item" open="(" separator="," index="index" close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <insert id="batchInsertDelayPunish" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_doCheckPunish(
+        id,
+        baseInfoId,
+        punishType,
+        delayNodeName,
+        delayTaskCreateTime,
+        delayTaskExpireTime,
+        userId,
+        userName,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        <foreach collection="list" open="" close="" separator="," item="item" index="index">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.baseInfoId,jdbcType=VARCHAR},
+            #{item.punishType,jdbcType=VARCHAR},
+            #{item.delayNodeName,jdbcType=VARCHAR},
+            #{item.delayTaskCreateTime,jdbcType=TIMESTAMP},
+            #{item.delayTaskExpireTime,jdbcType=TIMESTAMP},
+            #{item.userId,jdbcType=VARCHAR},
+            #{item.userName,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="batchInsertResultNotOkPunish" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into standard_doCheckPunish(
+        id,
+        baseInfoId,
+        punishType,
+        notOkDetailId,
+        userId,
+        userName,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        <foreach collection="list" open="" close="" separator="," item="item" index="index">
+            (
+            #{item.id,jdbcType=VARCHAR},
+            #{item.baseInfoId,jdbcType=VARCHAR},
+            #{item.punishType,jdbcType=VARCHAR},
+            #{item.notOkDetailId,jdbcType=VARCHAR},
+            #{item.userId,jdbcType=VARCHAR},
+            #{item.userName,jdbcType=VARCHAR},
+            #{item.CREATE_BY_,jdbcType=VARCHAR},
+            #{item.CREATE_TIME_,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <select id="queryCheckDetailResultNotOkList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            standard_doCheckDetail.*,
+            userDeptTemp2.deptId as closeDeptId,
+            userDeptTemp2.deptName as closeDeptName,
+            standard_docheckbaseinfo.id as baseInfoId,
+            standard_source.standardNumber,
+            standard_source.standardName,
+            DATE_FORMAT(standard_docheckbaseinfo.CREATE_TIME_,'%Y') as doCheckYear
+        FROM
+            standard_doCheckDetail
+        LEFT JOIN (
+            SELECT
+                os_group.NAME_ AS deptName,
+                userId2DeptId.userId,
+                userId2DeptId.deptId
+            FROM
+                ( SELECT PARTY1_ AS deptId, PARTY2_ AS userId FROM os_rel_inst WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND os_rel_inst.DIM1_ = '1' ) AS userId2DeptId
+                LEFT JOIN os_group ON userId2DeptId.deptId = os_group.GROUP_ID_
+        ) AS userDeptTemp2 ON standard_doCheckDetail.closeRespUserId = userDeptTemp2.userId
+        left join standard_docheckbaseinfo on standard_doCheckDetail.baseInfoId = standard_docheckbaseinfo.id
+        left join standard_source on standard_docheckbaseinfo.standardId = standard_source.id
+        where
+        standard_docheckbaseinfo.id = #{baseInfoId}
+        AND standard_doCheckDetail.confirmResult = '不符合'
+    </select>
+
+    <select id="exportDoCheckList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        standard_docheckbaseinfo.*,
+        standard_source.standardNumber,
+        standard_source.standardName,
+        bpm_inst.STATUS_ as status,
+        detailtemp.*
+        FROM
+        standard_docheckbaseinfo
+        LEFT JOIN standard_source ON standard_docheckbaseinfo.standardId = standard_source.id
+        LEFT JOIN bpm_inst ON standard_docheckbaseinfo.id = bpm_inst.BUS_KEY_
+        LEFT JOIN(
+        SELECT
+        standard_doCheckDetail.*,
+        userDeptTemp.deptId,
+        userDeptTemp.deptName,
+        userDeptTemp2.deptId as closeDeptId,
+        userDeptTemp2.deptName as closeDeptName
+        FROM
+        standard_doCheckDetail
+        LEFT JOIN (
+        SELECT
+        os_group.NAME_ AS deptName,
+        userId2DeptId.userId,
+        userId2DeptId.deptId
+        FROM
+        ( SELECT PARTY1_ AS deptId, PARTY2_ AS userId FROM os_rel_inst WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND os_rel_inst.DIM1_ = '1' ) AS userId2DeptId
+        LEFT JOIN os_group ON userId2DeptId.deptId = os_group.GROUP_ID_
+        ) AS userDeptTemp ON standard_doCheckDetail.respUserId = userDeptTemp.userId
+        LEFT JOIN (
+        SELECT
+        os_group.NAME_ AS deptName,
+        userId2DeptId.userId,
+        userId2DeptId.deptId
+        FROM
+        ( SELECT PARTY1_ AS deptId, PARTY2_ AS userId FROM os_rel_inst WHERE os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG' AND os_rel_inst.DIM1_ = '1' ) AS userId2DeptId
+        LEFT JOIN os_group ON userId2DeptId.deptId = os_group.GROUP_ID_
+        ) AS userDeptTemp2 ON standard_doCheckDetail.closeRespUserId = userDeptTemp2.userId
+        order by CONVERT(standard_doCheckDetail.judge using GBK) ASC,standard_doCheckDetail.respUserId ASC
+        ) AS detailtemp  ON standard_docheckbaseinfo.id = detailtemp.baseInfoId
+        <where>
+            <if test="standardNumber !=null and standardNumber !=''">
+                standard_source.standardNumber like CONCAT('%',#{standardNumber},'%')
+            </if>
+            <if test="standardName !=null and standardName !=''">
+                and standard_source.standardName like CONCAT('%',#{standardName},'%')
+            </if>
+            <if test="standardId !=null and standardId !=''">
+                and standard_docheckbaseinfo.standardId = #{standardId}
+            </if>
+            <if test="firstWriterName !=null and firstWriterName !=''">
+                and standard_docheckbaseinfo.firstWriterName like CONCAT('%',#{firstWriterName},'%')
+            </if>
+            <if test="djrUserName !=null and djrUserName !=''">
+                and standard_docheckbaseinfo.djrUserName like CONCAT('%',#{djrUserName},'%')
+            </if>
+            <if test="createYear != null and createYear != ''">
+                and YEAR(standard_docheckbaseinfo.CREATE_TIME_)=#{createYear}
+            </if>
+            <if test="checkResult != null and checkResult != ''">
+                and standard_docheckbaseinfo.checkResult=#{checkResult}
+            </if>
+            <if test="zcStatus != null and zcStatus != ''">
+                and standard_docheckbaseinfo.zcStatus=#{zcStatus}
+            </if>
+            <if test="status != null and status != ''">
+                and bpm_inst.STATUS_=#{status}
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR standard_docheckbaseinfo.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <include refid="orderBy"/>
+    </select>
+</mapper>

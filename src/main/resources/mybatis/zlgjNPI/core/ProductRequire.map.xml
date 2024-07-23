@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.zlgjNPI.core.dao.ProductRequireDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+
+    <select id="queryProductRequire" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        productrequire_apply.*,
+        os_group.NAME_ AS deptName,
+        os_user.FULLNAME_ AS userName,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        productrequire_apply
+        LEFT JOIN os_rel_inst ON productrequire_apply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        LEFT JOIN os_user ON os_user.USER_ID_ = productrequire_apply.CREATE_BY_
+        left join bpm_inst on productrequire_apply.cpkfId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (productrequire_apply.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="applyName != null and applyName != ''">
+            and productrequire_apply.applyName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and productrequire_apply.saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+        <if test="productName != null and productName != ''">
+            and productrequire_apply.productName like CONCAT('%',#{productName},'%')
+        </if>
+        <if test="status != null and status != ''">
+            and bpm_inst.STATUS_ =#{status}
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countProductRequireList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        productrequire_apply
+        LEFT JOIN os_rel_inst ON productrequire_apply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+        left join bpm_inst on productrequire_apply.cpkfId=bpm_inst.BUS_KEY_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+        AND os_rel_inst.DIM1_ = '1'
+        and (productrequire_apply.CREATE_BY_ = #{currentUserId}
+        or bpm_inst.STATUS_ != 'DRAFTED')
+        <if test="applyName != null and applyName != ''">
+            and productrequire_apply.applyName like CONCAT('%',#{applyName},'%')
+        </if>
+        <if test="saleModel != null and saleModel != ''">
+            and productrequire_apply.saleModel like CONCAT('%',#{saleModel},'%')
+        </if>
+        <if test="productName != null and productName != ''">
+            and productrequire_apply.productName like CONCAT('%',#{productName},'%')
+        </if>
+        <if test="status != null and status != ''">
+            and bpm_inst.STATUS_ =#{status}
+        </if>
+    </select>
+    <insert id="createProductRequire" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into productrequire_apply( cpkfId
+                                        , deptId
+                                        , deptName
+                                        , applyId
+                                        , applyName
+                                        , fileType
+                                        , productIds
+                                        , productName
+                                        , saleModel
+                                        , remark
+                                        , version
+                                        , projectId
+                                        , projectName
+                                        , ifDesignModel
+                                        , cpzgId
+                                        , cpzgName
+                                        , modelDeptId
+                                        , modelDeptName
+                                        , ifDev
+                                        , resolution
+                                        , CREATE_BY_
+                                        , CREATE_TIME_)
+        values (#{cpkfId,jdbcType=VARCHAR},
+                #{deptId,jdbcType=TIMESTAMP},
+                #{deptName,jdbcType=VARCHAR},
+                #{applyId,jdbcType=VARCHAR},
+                #{applyName,jdbcType=VARCHAR},
+                #{fileType,jdbcType=VARCHAR},
+                #{productIds,jdbcType=VARCHAR},
+                #{productName,jdbcType=VARCHAR},
+                #{saleModel,jdbcType=VARCHAR},
+                #{remark,jdbcType=VARCHAR},
+                #{version,jdbcType=VARCHAR},
+                #{projectId,jdbcType=VARCHAR},
+                #{projectName,jdbcType=VARCHAR},
+                #{ifDesignModel,jdbcType=VARCHAR},
+                #{cpzgId,jdbcType=VARCHAR},
+                #{cpzgName,jdbcType=VARCHAR},
+                #{modelDeptId,jdbcType=VARCHAR},
+                #{modelDeptName,jdbcType=VARCHAR},
+                #{ifDev,jdbcType=VARCHAR},
+                #{resolution,jdbcType=VARCHAR},
+                #{CREATE_BY_,jdbcType=VARCHAR},
+                #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateProductRequire" parameterType="com.alibaba.fastjson.JSONObject">
+        update productrequire_apply
+        <set>
+            deptId=#{deptId,jdbcType=TIMESTAMP},
+            deptName=#{deptName,jdbcType=VARCHAR},
+            applyId=#{applyId,jdbcType=VARCHAR},
+            applyName=#{applyName,jdbcType=VARCHAR},
+            fileType=#{fileType,jdbcType=VARCHAR},
+            productIds=#{productIds,jdbcType=VARCHAR},
+            productName=#{productName,jdbcType=VARCHAR},
+            saleModel=#{saleModel,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            version=#{version,jdbcType=VARCHAR},
+            projectId=#{projectId,jdbcType=VARCHAR},
+            projectName=#{projectName,jdbcType=VARCHAR},
+            ifDesignModel=#{ifDesignModel,jdbcType=VARCHAR},
+            cpzgId=#{cpzgId,jdbcType=VARCHAR},
+            cpzgName=#{cpzgName,jdbcType=VARCHAR},
+            modelDeptId=#{modelDeptId,jdbcType=VARCHAR},
+            modelDeptName=#{modelDeptName,jdbcType=VARCHAR},
+            ifDev=#{ifDev,jdbcType=VARCHAR},
+            resolution=#{resolution,jdbcType=VARCHAR},
+            UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        where
+        cpkfId=#{cpkfId}
+    </update>
+
+    <select id="queryProductRequireById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select
+        productrequire_apply.*,
+        bpm_inst.INST_ID_ as instId
+        from productrequire_apply
+        left join os_user on productrequire_apply.CREATE_BY_=os_user.USER_ID_
+        left join bpm_inst on productrequire_apply.cpkfId=bpm_inst.BUS_KEY_
+        where productrequire_apply.cpkfId=#{cpkfId}
+    </select>
+
+    <select id="queryProductRequireFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        productrequire_applyFiles.*,
+        os_user.FULLNAME_ as userName
+        FROM
+        productrequire_applyFiles
+        LEFT JOIN os_user ON productrequire_applyFiles.CREATE_BY_ = os_user.USER_ID_
+        WHERE
+        productrequire_applyFiles.belongId=#{cpkfId}
+        <if test="fileModel != null and fileModel !='' ">
+        and productrequire_applyFiles.fileModel = #{fileModel}
+        </if>
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into productrequire_applyFiles(
+        fileId
+        ,fileName
+        ,belongId
+        ,fileSize
+        ,fileModel
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{fileId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{belongId,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{fileModel,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <delete id="deleteProductRequireFile" parameterType="java.util.Map">
+        delete from productrequire_applyFiles
+        where
+                fileId=#{fileId}
+            or
+                belongId=#{cpkfId}
+    </delete>
+
+    <delete id="deleteProductRequire" parameterType="java.util.Map">
+        delete from productrequire_apply
+        where
+            cpkfId=#{cpkfId}
+    </delete>
+
+    <select id="queryMaxNumber" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        lcNum
+        FROM
+        productrequire_apply
+        <where>
+            <if test="countnumInfo !=null and countnumInfo !=''">
+                lcNum is not null and lcNum !=''
+            </if>
+            <if test="applyTimeStart !=null and applyTimeStart !=''">
+                AND CREATE_TIME_ &gt;= #{applyTimeStart}
+            </if>
+        </where>
+        ORDER BY
+        lcNum DESC
+        LIMIT 1
+    </select>
+
+    <update id="updateNum" parameterType="java.util.Map">
+		UPDATE productrequire_apply
+		SET lcNum = #{lcNum,jdbcType=VARCHAR}
+		WHERE
+		cpkfId=#{cpkfId}
+	</update>
+
+    <select id="queryProductRequireByProjectId" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            productrequire_apply.*,
+        os_user.FULLNAME_ AS creator,
+            bpm_inst.STATUS_ AS taskStatus
+        FROM
+            productrequire_apply
+            LEFT JOIN bpm_inst ON productrequire_apply.cpkfId = bpm_inst.BUS_KEY_
+        LEFT JOIN os_user ON os_user.USER_ID_ = productrequire_apply.CREATE_BY_
+        WHERE
+            productrequire_apply.projectId like CONCAT('%',#{projectId},'%')
+            AND ( bpm_inst.STATUS_ = 'RUNNING' OR bpm_inst.STATUS_ = 'SUCCESS_END' )
+        <if test="fileType !=null and fileType !=''">
+            AND fileType = #{fileType}
+        </if>
+    </select>
+</mapper>

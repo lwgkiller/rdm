@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.gkgf.core.dao.GkgfWorkTypeDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+	        A.*
+        FROM
+	        gkgf_worktype A
+	        where A.id = #{id}
+    </select>
+
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.* ,
+            B.FULLNAME_ as updateName
+        FROM
+            gkgf_worktype A
+        left join os_user B on A.UPDATE_BY_ = B.USER_ID_
+        where 1=1
+        <if test="workName != null and workName != ''">
+            and A.workName like CONCAT('%',#{workName},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getDictWorkType" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+	        A.id as workId ,A.workName
+        FROM
+            gkgf_worktype A
+        WHERE
+	       1=1
+            order by A.sortIndex
+    </select>
+    <insert id="add" parameterType="java.util.Map">
+         INSERT INTO gkgf_worktype (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            workName,
+            sortIndex
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{workName,jdbcType=VARCHAR},
+            #{sortIndex,jdbcType=INTEGER}
+        )
+    </insert>
+
+    <update id="update" parameterType="java.util.Map">
+        update gkgf_worktype
+        <set>
+            <if test="workName != null and workName != ''">
+                workName=#{workName,jdbcType=VARCHAR},
+            </if>
+            <if test="sortIndex != null and sortIndex != ''">
+                sortIndex=#{sortIndex,jdbcType=INTEGER},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+                UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        delete from gkgf_worktype
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getItemIdByName" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from gkgf_worktype
+         where 1=1
+         and workName = #{workName}
+         limit 1
+    </select>
+    <delete id="del" parameterType="java.lang.String">
+        delete from gkgf_worktype
+        where
+        id=#{id}
+    </delete>
+</mapper>

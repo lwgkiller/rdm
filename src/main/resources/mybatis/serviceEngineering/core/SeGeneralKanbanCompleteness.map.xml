@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.SeGeneralKanbanCompletenessDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+        <if test="signYear !=null and signYear !='' and signYear !='A'.toString()">
+            AND service_engineering_completeness.signYear = #{signYear}
+        </if>
+        <if test="salesModel !=null and salesModel !=''">
+            AND service_engineering_completeness.salesModel like CONCAT('%',#{salesModel},'%')
+        </if>
+        <if test="designModel !=null and designModel !=''">
+            AND service_engineering_completeness.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND service_engineering_completeness.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="completenessEvaluation !=null and completenessEvaluation !=''">
+            AND service_engineering_completeness.completenessEvaluation = #{completenessEvaluation}
+        </if>
+        <if test="maintenanceStandardValueTable !=null and maintenanceStandardValueTable !=''">
+            AND service_engineering_completeness.maintenanceStandardValueTable = #{maintenanceStandardValueTable}
+        </if>
+        <if test="partsAtlas !=null and partsAtlas !=''">
+            AND service_engineering_completeness.partsAtlas = #{partsAtlas}
+        </if>
+        <if test="maintenancePartsList !=null and maintenancePartsList !=''">
+            AND service_engineering_completeness.maintenancePartsList = #{maintenancePartsList}
+        </if>
+        <if test="wearingPartsList !=null and wearingPartsList !=''">
+            AND service_engineering_completeness.wearingPartsList = #{wearingPartsList}
+        </if>
+        <if test="regularEdition !=null and regularEdition !=''">
+            AND service_engineering_completeness.regularEdition = #{regularEdition}
+        </if>
+        <if test="CEEdition !=null and CEEdition !=''">
+            AND service_engineering_completeness.CEEdition = #{CEEdition}
+        </if>
+        <if test="packingList !=null and packingList !=''">
+            AND service_engineering_completeness.packingList = #{packingList}
+        </if>
+        <if test="decorationManual !=null and decorationManual !=''">
+            AND service_engineering_completeness.decorationManual = #{decorationManual}
+        </if>
+        <if test="disassAndAssManual !=null and disassAndAssManual !=''">
+            AND service_engineering_completeness.disassAndAssManual = #{disassAndAssManual}
+        </if>
+        <if test="structurefunctionAndPrincipleManual !=null and structurefunctionAndPrincipleManual !=''">
+            AND service_engineering_completeness.structurefunctionAndPrincipleManual = #{structurefunctionAndPrincipleManual}
+        </if>
+        <if test="testAndAdjustmentManual !=null and testAndAdjustmentManual !=''">
+            AND service_engineering_completeness.testAndAdjustmentManual = #{testAndAdjustmentManual}
+        </if>
+        <if test="troubleshootingManual !=null and troubleshootingManual !=''">
+            AND service_engineering_completeness.troubleshootingManual = #{troubleshootingManual}
+        </if>
+        <if test="torqueAndToolStandardValueTable !=null and torqueAndToolStandardValueTable !=''">
+            AND service_engineering_completeness.torqueAndToolStandardValueTable = #{torqueAndToolStandardValueTable}
+        </if>
+        <if test="engineManual !=null and engineManual !=''">
+            AND service_engineering_completeness.engineManual = #{engineManual}
+        </if>
+        <if test="lifeCycleCostList !=null and lifeCycleCostList !=''">
+            AND service_engineering_completeness.lifeCycleCostList = #{lifeCycleCostList}
+        </if>
+        <if test="airconditioningUseAndMaintenanceManual !=null and airconditioningUseAndMaintenanceManual !=''">
+            AND service_engineering_completeness.airconditioningUseAndMaintenanceManual = #{airconditioningUseAndMaintenanceManual}
+        </if>
+    </sql>
+    <sql id="where2">
+        <if test="salesModel !=null and salesModel !=''">
+            AND service_engineering_completeness.salesModel like CONCAT('%',#{salesModel},'%')
+        </if>
+        <if test="designModel !=null and designModel !=''">
+            AND service_engineering_completeness.designModel like CONCAT('%',#{designModel},'%')
+        </if>
+        <if test="materialCode !=null and materialCode !=''">
+            AND service_engineering_completeness.materialCode like CONCAT('%',#{materialCode},'%')
+        </if>
+        <if test="completenessEvaluation !=null and completenessEvaluation !=''">
+            AND service_engineering_completeness.completenessEvaluation = #{completenessEvaluation}
+        </if>
+        <if test="maintenanceStandardValueTable !=null and maintenanceStandardValueTable !=''">
+            AND service_engineering_completeness.maintenanceStandardValueTable = #{maintenanceStandardValueTable}
+        </if>
+        <if test="partsAtlas !=null and partsAtlas !=''">
+            AND service_engineering_completeness.partsAtlas = #{partsAtlas}
+        </if>
+        <if test="maintenancePartsList !=null and maintenancePartsList !=''">
+            AND service_engineering_completeness.maintenancePartsList = #{maintenancePartsList}
+        </if>
+        <if test="wearingPartsList !=null and wearingPartsList !=''">
+            AND service_engineering_completeness.wearingPartsList = #{wearingPartsList}
+        </if>
+        <if test="regularEdition !=null and regularEdition !=''">
+            AND service_engineering_completeness.regularEdition = #{regularEdition}
+        </if>
+        <if test="CEEdition !=null and CEEdition !=''">
+            AND service_engineering_completeness.CEEdition = #{CEEdition}
+        </if>
+        <if test="packingList !=null and packingList !=''">
+            AND service_engineering_completeness.packingList = #{packingList}
+        </if>
+        <if test="decorationManual !=null and decorationManual !=''">
+            AND service_engineering_completeness.decorationManual = #{decorationManual}
+        </if>
+        <if test="disassAndAssManual !=null and disassAndAssManual !=''">
+            AND service_engineering_completeness.disassAndAssManual = #{disassAndAssManual}
+        </if>
+        <if test="structurefunctionAndPrincipleManual !=null and structurefunctionAndPrincipleManual !=''">
+            AND service_engineering_completeness.structurefunctionAndPrincipleManual = #{structurefunctionAndPrincipleManual}
+        </if>
+        <if test="testAndAdjustmentManual !=null and testAndAdjustmentManual !=''">
+            AND service_engineering_completeness.testAndAdjustmentManual = #{testAndAdjustmentManual}
+        </if>
+        <if test="troubleshootingManual !=null and troubleshootingManual !=''">
+            AND service_engineering_completeness.troubleshootingManual = #{troubleshootingManual}
+        </if>
+        <if test="torqueAndToolStandardValueTable !=null and torqueAndToolStandardValueTable !=''">
+            AND service_engineering_completeness.torqueAndToolStandardValueTable = #{torqueAndToolStandardValueTable}
+        </if>
+        <if test="engineManual !=null and engineManual !=''">
+            AND service_engineering_completeness.engineManual = #{engineManual}
+        </if>
+        <if test="lifeCycleCostList !=null and lifeCycleCostList !=''">
+            AND service_engineering_completeness.lifeCycleCostList = #{lifeCycleCostList}
+        </if>
+        <if test="airconditioningUseAndMaintenanceManual !=null and airconditioningUseAndMaintenanceManual !=''">
+            AND service_engineering_completeness.airconditioningUseAndMaintenanceManual = #{airconditioningUseAndMaintenanceManual}
+        </if>
+    </sql>
+    <!---->
+    <select id="dataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT * FROM
+        service_engineering_completeness
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_completeness
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!---->
+    <select id="dataListQuery2" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        DISTINCT
+        materialCode
+        FROM
+        service_engineering_completeness
+        <where>
+            <include refid="where2"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countDataListQuery2" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        (SELECT
+        DISTINCT
+        materialCode
+        FROM
+        service_engineering_completeness
+        <where>
+            <include refid="where2"/>
+        </where>
+        )
+        AS materialCodes
+    </select>
+    <!---->
+    <select id="getListByMaterialCode" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT *
+        FROM service_engineering_completeness
+        WHERE materialCode = #{materialCode}
+    </select>
+    <!---->
+    <insert id="insertData" parameterType="java.util.Map">
+        insert into service_engineering_completeness(
+          id,
+          signYear,
+          materialCode,
+          salesModel,
+          designModel,
+          output,
+          interpret,
+          completenessEvaluation,
+          partsAtlas,
+          maintenancePartsList,
+          wearingPartsList,
+          regularEdition,
+          CEEdition,
+          packingList,
+          decorationManual,
+          disassAndAssManual,
+          structurefunctionAndPrincipleManual,
+          testAndAdjustmentManual,
+          troubleshootingManual,
+          torqueAndToolStandardValueTable,
+          maintenanceStandardValueTable,
+          engineManual,
+          lifeCycleCostList,
+          airconditioningUseAndMaintenanceManual,
+          remark,
+          CREATE_BY_,
+          CREATE_TIME_
+        )
+        values
+        (
+          #{id,jdbcType=VARCHAR},
+          #{signYear,jdbcType=VARCHAR},
+          #{materialCode,jdbcType=VARCHAR},
+          #{salesModel,jdbcType=VARCHAR},
+          #{designModel,jdbcType=VARCHAR},
+          #{output,jdbcType=VARCHAR},
+          #{interpret,jdbcType=VARCHAR},
+          #{completenessEvaluation,jdbcType=VARCHAR},
+          #{partsAtlas,jdbcType=VARCHAR},
+          #{maintenancePartsList,jdbcType=VARCHAR},
+          #{wearingPartsList,jdbcType=VARCHAR},
+          #{regularEdition,jdbcType=VARCHAR},
+          #{CEEdition,jdbcType=VARCHAR},
+          #{packingList,jdbcType=VARCHAR},
+          #{decorationManual,jdbcType=VARCHAR},
+          #{disassAndAssManual,jdbcType=VARCHAR},
+          #{structurefunctionAndPrincipleManual,jdbcType=VARCHAR},
+          #{testAndAdjustmentManual,jdbcType=VARCHAR},
+          #{troubleshootingManual,jdbcType=VARCHAR},
+          #{torqueAndToolStandardValueTable,jdbcType=VARCHAR},
+          #{maintenanceStandardValueTable,jdbcType=VARCHAR},
+          #{engineManual,jdbcType=VARCHAR},
+          #{lifeCycleCostList,jdbcType=VARCHAR},
+          #{airconditioningUseAndMaintenanceManual,jdbcType=VARCHAR},
+          #{remark,jdbcType=VARCHAR},
+          #{CREATE_BY_,jdbcType=VARCHAR},
+          #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <!---->
+    <update id="updateData" parameterType="java.util.Map">
+        update service_engineering_completeness
+        set
+        signYear=#{signYear,jdbcType=VARCHAR},
+        materialCode=#{materialCode,jdbcType=VARCHAR},
+        salesModel=#{salesModel,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        output=#{output,jdbcType=VARCHAR},
+        interpret=#{interpret,jdbcType=VARCHAR},
+        completenessEvaluation=#{completenessEvaluation,jdbcType=VARCHAR},
+        partsAtlas=#{partsAtlas,jdbcType=VARCHAR},
+        maintenancePartsList=#{maintenancePartsList,jdbcType=VARCHAR},
+        wearingPartsList=#{wearingPartsList,jdbcType=VARCHAR},
+        regularEdition=#{regularEdition,jdbcType=VARCHAR},
+        CEEdition=#{CEEdition,jdbcType=VARCHAR},
+        packingList=#{packingList,jdbcType=VARCHAR},
+        decorationManual=#{decorationManual,jdbcType=VARCHAR},
+        disassAndAssManual=#{disassAndAssManual,jdbcType=VARCHAR},
+        structurefunctionAndPrincipleManual=#{structurefunctionAndPrincipleManual,jdbcType=VARCHAR},
+        testAndAdjustmentManual=#{testAndAdjustmentManual,jdbcType=VARCHAR},
+        troubleshootingManual=#{troubleshootingManual,jdbcType=VARCHAR},
+        torqueAndToolStandardValueTable=#{torqueAndToolStandardValueTable,jdbcType=VARCHAR},
+        maintenanceStandardValueTable=#{maintenanceStandardValueTable,jdbcType=VARCHAR},
+        engineManual=#{engineManual,jdbcType=VARCHAR},
+        lifeCycleCostList=#{lifeCycleCostList,jdbcType=VARCHAR},
+        airconditioningUseAndMaintenanceManual=#{airconditioningUseAndMaintenanceManual,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+    <!---->
+    <delete id="deleteData" parameterType="java.util.Map">
+        delete from service_engineering_completeness
+        where id in
+        <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <!---->
+    <update id="updateDataByMaterialCode" parameterType="java.util.Map">
+        update service_engineering_completeness
+        set
+        <if test="designModel !=null">
+            designModel=#{designModel,jdbcType=VARCHAR},
+        </if>
+        <if test="completenessEvaluation !=null">
+            completenessEvaluation=#{completenessEvaluation,jdbcType=VARCHAR},
+        </if>
+        <if test="partsAtlas !=null">
+            partsAtlas=#{partsAtlas,jdbcType=VARCHAR},
+        </if>
+        <if test="maintenancePartsList !=null">
+            maintenancePartsList=#{maintenancePartsList,jdbcType=VARCHAR},
+        </if>
+        <if test="wearingPartsList !=null">
+            wearingPartsList=#{wearingPartsList,jdbcType=VARCHAR},
+        </if>
+        <if test="regularEdition !=null">
+            regularEdition=#{regularEdition,jdbcType=VARCHAR},
+        </if>
+        <if test="CEEdition !=null">
+            CEEdition=#{CEEdition,jdbcType=VARCHAR},
+        </if>
+        <if test="packingList !=null">
+            packingList=#{packingList,jdbcType=VARCHAR},
+        </if>
+        <if test="decorationManual !=null">
+            decorationManual=#{decorationManual,jdbcType=VARCHAR},
+        </if>
+        <if test="disassAndAssManual !=null">
+            disassAndAssManual=#{disassAndAssManual,jdbcType=VARCHAR},
+        </if>
+        <if test="structurefunctionAndPrincipleManual !=null">
+            structurefunctionAndPrincipleManual=#{structurefunctionAndPrincipleManual,jdbcType=VARCHAR},
+        </if>
+        <if test="testAndAdjustmentManual !=null">
+            testAndAdjustmentManual=#{testAndAdjustmentManual,jdbcType=VARCHAR},
+        </if>
+        <if test="troubleshootingManual !=null">
+            troubleshootingManual=#{troubleshootingManual,jdbcType=VARCHAR},
+        </if>
+        <if test="torqueAndToolStandardValueTable !=null">
+            torqueAndToolStandardValueTable=#{torqueAndToolStandardValueTable,jdbcType=VARCHAR},
+        </if>
+        <if test="maintenanceStandardValueTable !=null">
+            maintenanceStandardValueTable=#{maintenanceStandardValueTable,jdbcType=VARCHAR},
+        </if>
+        <if test="engineManual !=null">
+            engineManual=#{engineManual,jdbcType=VARCHAR},
+        </if>
+        <if test="lifeCycleCostList !=null">
+            lifeCycleCostList=#{lifeCycleCostList,jdbcType=VARCHAR},
+        </if>
+        <if test="airconditioningUseAndMaintenanceManual !=null">
+            airconditioningUseAndMaintenanceManual=#{airconditioningUseAndMaintenanceManual,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        materialCode=#{materialCode}
+    </update>
+    <!---->
+    <update id="updateDataByMaterialCodeAndSingYear" parameterType="java.util.Map">
+        update service_engineering_completeness
+        set
+        <if test="salesModel !=null">
+            salesModel=#{salesModel,jdbcType=VARCHAR},
+        </if>
+        <if test="designModel !=null">
+            designModel=#{designModel,jdbcType=VARCHAR},
+        </if>
+        <if test="output !=null">
+            output=#{output,jdbcType=VARCHAR},
+        </if>
+        <if test="interpret !=null">
+            interpret=#{interpret,jdbcType=VARCHAR},
+        </if>
+
+
+        <if test="completenessEvaluation !=null">
+            completenessEvaluation=#{completenessEvaluation,jdbcType=VARCHAR},
+        </if>
+        <if test="partsAtlas !=null">
+            partsAtlas=#{partsAtlas,jdbcType=VARCHAR},
+        </if>
+        <if test="maintenancePartsList !=null">
+            maintenancePartsList=#{maintenancePartsList,jdbcType=VARCHAR},
+        </if>
+        <if test="wearingPartsList !=null">
+            wearingPartsList=#{wearingPartsList,jdbcType=VARCHAR},
+        </if>
+        <if test="regularEdition !=null">
+            regularEdition=#{regularEdition,jdbcType=VARCHAR},
+        </if>
+        <if test="CEEdition !=null">
+            CEEdition=#{CEEdition,jdbcType=VARCHAR},
+        </if>
+        <if test="packingList !=null">
+            packingList=#{packingList,jdbcType=VARCHAR},
+        </if>
+        <if test="decorationManual !=null">
+            decorationManual=#{decorationManual,jdbcType=VARCHAR},
+        </if>
+        <if test="disassAndAssManual !=null">
+            disassAndAssManual=#{disassAndAssManual,jdbcType=VARCHAR},
+        </if>
+        <if test="structurefunctionAndPrincipleManual !=null">
+            structurefunctionAndPrincipleManual=#{structurefunctionAndPrincipleManual,jdbcType=VARCHAR},
+        </if>
+        <if test="testAndAdjustmentManual !=null">
+            testAndAdjustmentManual=#{testAndAdjustmentManual,jdbcType=VARCHAR},
+        </if>
+        <if test="troubleshootingManual !=null">
+            troubleshootingManual=#{troubleshootingManual,jdbcType=VARCHAR},
+        </if>
+        <if test="torqueAndToolStandardValueTable !=null">
+            torqueAndToolStandardValueTable=#{torqueAndToolStandardValueTable,jdbcType=VARCHAR},
+        </if>
+        <if test="maintenanceStandardValueTable !=null">
+            maintenanceStandardValueTable=#{maintenanceStandardValueTable,jdbcType=VARCHAR},
+        </if>
+        <if test="engineManual !=null">
+            engineManual=#{engineManual,jdbcType=VARCHAR},
+        </if>
+        <if test="lifeCycleCostList !=null">
+            lifeCycleCostList=#{lifeCycleCostList,jdbcType=VARCHAR},
+        </if>
+        <if test="airconditioningUseAndMaintenanceManual !=null">
+            airconditioningUseAndMaintenanceManual=#{airconditioningUseAndMaintenanceManual,jdbcType=VARCHAR},
+        </if>
+        <if test="remark !=null">
+            remark=#{remark,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        <where>
+            <if test="materialCode!=null and materialCode !='' and signYear !=null and signYear !=''">
+                AND materialCode = #{materialCode}
+                AND signYear = #{signYear}
+            </if>
+        </where>
+    </update>
+</mapper>

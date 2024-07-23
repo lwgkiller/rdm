@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.xcmgProjectManager.core.dao.XcmgProjectAbolishDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <!--项目变更流程查询-->
+    <select id="queryList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        project_abolishapply.*,
+        project_abolishapply.CREATE_TIME_ AS applyTime,
+        os_user.FULLNAME_ AS applyUserName,
+        act_ru_task.NAME_ AS currentProcessTask,
+        act_ru_task.ID_ AS taskId,
+        bpm_inst.STATUS_ AS instStatus,
+        bpm_inst.INST_ID_,
+        os_rel_inst.PARTY1_ as applyUserDepId,
+        project_baseInfo.levelId,
+        project_level.levelName as projectLevel,
+        project_category.categoryName as projectType,
+        os_group.NAME_ as mainDeptName,
+        project_stagedivide.stageName as currentStage
+        FROM
+        project_abolishapply
+        LEFT JOIN os_user ON project_abolishapply.CREATE_BY_ = os_user.USER_ID_
+        LEFT JOIN bpm_inst ON project_abolishapply.id = bpm_inst.BUS_KEY_
+        LEFT JOIN act_ru_task ON bpm_inst.ACT_INST_ID_ = act_ru_task.PROC_INST_ID_
+        LEFT JOIN os_rel_inst ON project_abolishapply.CREATE_BY_ = os_rel_inst.PARTY2_
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        left join project_baseInfo on project_abolishapply.projectId = project_baseInfo.projectId
+        left join project_level  on project_baseInfo.levelId = project_level.levelId
+        left join project_category  on project_category.categoryId = project_baseInfo.categoryId
+        left join os_group  on project_baseInfo.mainDepId = os_group.GROUP_ID_
+        left join project_stagedivide  on project_baseInfo.currentStageId = project_stagedivide.stageId
+        <where>
+            AND os_rel_inst.REL_TYPE_KEY_ = 'GROUP-USER-BELONG'
+            AND os_dimension.DIM_KEY_ = '_ADMIN'
+            <if test="applyId != null and applyId != ''">
+                AND project_abolishapply.id like CONCAT ('%',#{applyId},'%')
+            </if>
+            <if test="applyUserName != null and applyUserName != ''">
+                AND os_user.FULLNAME_ like CONCAT ('%',#{applyUserName},'%')
+            </if>
+            <if test="projectName != null and projectName != ''">
+                AND project_abolishapply.projectName like CONCAT ('%',#{projectName},'%')
+            </if>
+            <if test="apply_startTime != null and apply_startTime != ''">
+                AND project_abolishapply.CREATE_TIME_ &gt;= #{apply_startTime}
+            </if>
+            <if test="apply_endTime != null and apply_endTime != ''">
+                AND project_abolishapply.CREATE_TIME_ &lt;= #{apply_endTime}
+            </if>
+            <if test="instStatus != null and instStatus != ''">
+                AND bpm_inst.STATUS_=#{instStatus}
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                and project_category.categoryId = #{categoryId}
+            </if>
+            <if test="levelId != null and levelId != ''">
+                and project_level.levelId = #{levelId}
+            </if>
+            <if test="deptIds !=null and deptIds != ''">
+                AND os_rel_inst.PARTY1_ IN
+                <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder !=''">
+            order by ${sortField} ${sortOrder}
+        </if>
+    </select>
+
+
+    <select id="getObject" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT   M.*,A.number,B.levelName as projectLevel,D.FULLNAME_ as mainResUserName,E.categoryName as projectType,A.mainDepId,G.NAME_ as mainDeptName,F.INST_ID_ as instId,S.stageName as currentStage
+        FROM project_abolishapply M
+        left join project_baseinfo A on M.projectId = A.projectId
+        left join project_level B on A.levelId = B.levelId
+        left join project_memberinfo C on A.projectId = C.projectId
+        left join os_user D on C.userId = D.USER_ID_
+        left join project_category E on A.categoryId = E.categoryId
+        left join os_group G on A.mainDepId = G.GROUP_ID_
+        left join bpm_inst F on F.BUS_KEY_ = M.id
+        left join project_stagedivide S on A.currentStageId = S.stageId
+        where 1=1
+        and C.roleId = 2
+        <if test="id != null and id != ''">
+            and M.id = #{id}
+        </if>
+        LIMIT 1
+    </select>
+
+
+    <insert id="add" parameterType="java.util.Map">
+        INSERT INTO project_abolishapply (
+        id,
+        projectId,
+        projectName,
+        taskId_,
+        reason,
+        fj,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values(
+        #{id,jdbcType=VARCHAR},
+        #{projectId,jdbcType=VARCHAR},
+        #{projectName,jdbcType=VARCHAR},
+        #{taskId_,jdbcType=VARCHAR},
+        #{reason,jdbcType=VARCHAR},
+         #{fj,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <insert id="update" parameterType="java.util.Map">
+        UPDATE project_abolishapply SET
+        <if test="reason != null and reason != ''">
+            reason=#{reason,jdbcType=VARCHAR},
+        </if>
+        <if test="projectName != null and projectName != ''">
+            projectName=#{projectName,jdbcType=VARCHAR},
+        </if>
+        <if test="used != null and used != ''">
+            used=#{used,jdbcType=VARCHAR},
+        </if>
+        <if test="fj != null and fj != ''">
+            fj=#{fj,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        id=#{id}
+    </insert>
+
+    <delete id="delete" parameterType="java.lang.String">
+        delete from project_abolishapply
+        where project_abolishapply.id=#{id}
+    </delete>
+
+    <!--根据solid 查询key-->
+    <select id="getBmpSolution" parameterType="java.util.Map" resultType="java.util.Map">
+        select A.* from bpm_solution A
+        where 1=1
+        <if test="solId != null and solId != ''">
+            AND A.SOL_ID_ = #{solId}
+        </if>
+    </select>
+
+    <select id="queryAbolishInfo" parameterType="java.util.Map" resultType="java.util.Map">
+        select B.STATUS_  as status,A.USED as used,B.inst_id_,A.id
+        from project_abolishapply A
+        left join bpm_inst B on A.id = B.BUS_KEY_
+        where 1=1
+        <if test="taskId_ != null and taskId_ != ''">
+            and A.TASKID_ = #{taskId_}
+        </if>
+        order by A.CREATE_TIME_ desc
+    </select>
+</mapper>

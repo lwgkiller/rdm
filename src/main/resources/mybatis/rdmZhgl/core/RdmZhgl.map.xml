@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.RdmZhglDao">
+    <select id="queryTaskByActInstIds" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        select ID_,PROC_INST_ID_
+        from act_ru_task
+        <where>
+            <if test="actInstIds != null and actInstIds != ''">
+                act_ru_task.PROC_INST_ID_ IN
+                <foreach collection="actInstIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="currentUserId != null and currentUserId != ''">
+                AND act_ru_task.ASSIGNEE_ =#{currentUserId}
+            </if>
+        </where>
+    </select>
+
+    <!--根据部门和关系查询人-->
+    <select id="queryUserByDeptNameAndRel" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_user.USER_ID_,
+        os_user.FULLNAME_
+        FROM
+        os_user
+        LEFT JOIN os_rel_inst ON os_user.USER_ID_ = os_rel_inst.PARTY2_
+        WHERE
+        os_rel_inst.REL_TYPE_KEY_ = #{REL_TYPE_KEY_}
+        AND os_rel_inst.PARTY1_ = (
+          SELECT os_group.GROUP_ID_
+          FROM os_group
+          WHERE
+          os_group.NAME_ = #{deptName}
+        )
+    </select>
+
+    <select id="getProjectManager" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.projectId,B.userId,
+            C.FULLNAME_ as userName
+        FROM
+            project_baseinfo A
+        LEFT JOIN project_memberinfo B on A.projectId = B.projectId and B.roleId = '2'
+        left join os_user C on B.userId = C.USER_ID_
+        where
+        A.cwddh = #{orderCode} OR A.gbcwddh = #{orderCode}
+        limit 1
+    </select>
+
+</mapper>

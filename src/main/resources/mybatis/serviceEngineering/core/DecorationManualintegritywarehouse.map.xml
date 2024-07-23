@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.serviceEngineering.core.dao.DecorationManualIntegrityWarehouseDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <sql id="where">
+
+        <if test="materialCode !=null and materialCode !=''">
+            AND business.materialCode = #{materialCode}
+        </if>
+    </sql>
+
+    <select id="warehouseDataListQuery" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        business.*
+        FROM
+        service_engineering_decoration_manualintegritywarehouse AS business
+        <where>
+            <include refid="where"/>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <!---->
+    <select id="countWarehouseDataListQuery" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM
+        service_engineering_decoration_manualintegritywarehouse AS business
+        <where>
+            <include refid="where"/>
+        </where>
+    </select>
+    <!---->
+
+    <select id="queryByMaterialCode" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT business.*
+        FROM service_engineering_decoration_manualintegritywarehouse AS business
+        WHERE business.materialCode = #{materialCode}
+    </select>
+
+    <!---->
+    <delete id="deleteStoreItem" parameterType="java.util.Map">
+        delete from service_engineering_decoration_manualintegritywarehouse
+        <where>
+            <if test="businessIds != null and businessIds !=''">
+                materialCode IN
+                <foreach collection="businessIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+
+
+    <insert id="insertWarehouse" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into service_engineering_decoration_manualintegritywarehouse(
+        materialCode,
+        materialName,
+        materialDesc,
+        useDescBook,
+        useTopicCode,
+        useBpmStatus,
+        repairBook,
+        repairTopicCode,
+        repairBpmStatus,
+        CREATE_BY_,
+        CREATE_TIME_
+        )
+        values
+        (
+        #{materialCode,jdbcType=VARCHAR},
+        #{materialName,jdbcType=VARCHAR},
+        #{materialDesc,jdbcType=VARCHAR},
+        #{useDescBook,jdbcType=VARCHAR},
+        #{useTopicCode,jdbcType=VARCHAR},
+        #{useBpmStatus,jdbcType=VARCHAR},
+        #{repairBook,jdbcType=VARCHAR},
+        #{repairTopicCode,jdbcType=VARCHAR},
+        #{repairBpmStatus,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        );
+    </insert>
+
+
+
+    <update id="updateWarehouse" parameterType="com.alibaba.fastjson.JSONObject">
+        UPDATE service_engineering_decoration_manualintegritywarehouse
+        SET
+        materialName=#{materialName,jdbcType=VARCHAR},
+        materialDesc=#{materialDesc,jdbcType=VARCHAR},
+        useDescBook=#{useDescBook,jdbcType=VARCHAR},
+        useTopicCode=#{useTopicCode,jdbcType=VARCHAR},
+        useBpmStatus=#{useBpmStatus,jdbcType=VARCHAR},
+        repairBook=#{repairBook,jdbcType=VARCHAR},
+        repairTopicCode=#{repairTopicCode,jdbcType=VARCHAR},
+        repairBpmStatus=#{repairBpmStatus,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        materialCode=#{materialCode};
+    </update>
+
+    <update id="updateWareItem" parameterType="java.util.Map">
+        UPDATE service_engineering_decoration_manualintegritywarehouse
+        SET
+        materialName=#{materialName,jdbcType=VARCHAR},
+        materialDesc=#{materialDesc,jdbcType=VARCHAR},
+        useDescBook=#{useDescBook,jdbcType=VARCHAR},
+        useTopicCode=#{useTopicCode,jdbcType=VARCHAR},
+        useBpmStatus=#{useBpmStatus,jdbcType=VARCHAR},
+        repairBook=#{repairBook,jdbcType=VARCHAR},
+        repairTopicCode=#{repairTopicCode,jdbcType=VARCHAR},
+        repairBpmStatus=#{repairBpmStatus,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        WHERE
+        materialCode=#{materialCode};
+    </update>
+
+</mapper>

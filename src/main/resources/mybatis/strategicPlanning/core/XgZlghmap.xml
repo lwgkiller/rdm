@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.strategicPlanning.core.dao.XgZlghDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="queryZlghList" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+          t1.*
+        from
+          zlgh_baseinfo t1
+        WHERE
+          t1.type=#{type}
+        <if test="zlghName != null and zlghName != ''">
+            AND t1.zlghName like CONCAT('%',#{zlghName},'%')
+        </if>
+        <if test="ghzgbmName != null and ghzgbmName != ''">
+            AND t1.ghzgbmName like CONCAT('%',#{ghzgbmName},'%')
+        </if>
+        <if test="ghfzrName != null and ghfzrName != ''">
+            AND t1.ghfzrName like CONCAT('%',#{ghfzrName},'%')
+        </if>
+        <if test="ghnf != null and ghnf != ''">
+            AND t1.ghnf like CONCAT('%',#{ghnf},'%')
+        </if>
+        order by t1.CREATE_TIME_ desc
+        <include refid="pageSql"/>
+    </select>
+
+
+    <select id="countZlghList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+          count( * )
+        FROM
+          zlgh_baseinfo t1
+        <where>
+            t1.type=#{type}
+            <if test="zlghName != null and zlghName != ''">
+                AND t1.zlghName like CONCAT('%',#{zlghName},'%')
+            </if>
+            <if test="ghzgbmName != null and ghzgbmName != ''">
+                AND t1.ghzgbmName like CONCAT('%',#{ghzgbmName},'%')
+            </if>
+            <if test="ghfzrName != null and ghfzrName != ''">
+                AND t1.ghfzrName like CONCAT('%',#{ghfzrName},'%')
+            </if>
+            <if test="ghnf != null and ghnf != ''">
+                AND t1.ghnf like CONCAT('%',#{ghnf},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zlgh_fileinfo(
+        id,
+        zlghId,
+        fileName,
+        fileSize,
+        CREATE_BY_,
+        CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{zlghId,jdbcType=VARCHAR},
+        #{fileName,jdbcType=VARCHAR},
+        #{fileSize,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <select id="queryZlghById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        t1.zlghId,
+        t1.zlghName ,
+        t1.ghnr ,
+        t1.ghzgbmId,
+        t1.ghzgbmName,
+        t1.ghfzrId,
+        t1.ghfzrName,
+        t1.ghnf ,
+        DATE_FORMAT(t1.ghwcTime,'%Y-%m-%d') ghwcTime,
+        t1.ghbb,
+        DATE_FORMAT(t1.ghyxqs,'%Y-%m-%d') ghyxqs,
+        DATE_FORMAT(t1.ghyxqe,'%Y-%m-%d') ghyxqe,
+        t1.xbbmId,
+        t1.xbbmName,
+        t1.xbbmfzrId,
+        t1.xbbmfzrName,
+        t1.remark,
+        t1.type,
+        t1.CREATE_BY_,
+        t1.CREATE_TIME_
+        from
+          zlgh_baseinfo t1
+        <where>
+            <if test="zlghId != null and zlghId != ''">
+                t1.zlghId =#{zlghId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="saveZlghList" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into zlgh_baseinfo(
+            zlghId,
+            zlghName ,
+            ghnr ,
+            ghzgbmId,
+            ghzgbmName,
+            ghfzrId,
+            ghfzrName,
+            ghnf ,
+            ghwcTime,
+            ghbb,
+            ghyxqs,
+            ghyxqe,
+            xbbmId,
+            xbbmName,
+            xbbmfzrId,
+            xbbmfzrName,
+            remark,
+            type,
+            CREATE_BY_,
+            CREATE_TIME_
+        )values(
+            #{zlghId,jdbcType=VARCHAR},
+            #{zlghName,jdbcType=VARCHAR},
+            #{ghnr,jdbcType=VARCHAR},
+            #{ghzgbmId,jdbcType=VARCHAR},
+            #{ghzgbmName,jdbcType=VARCHAR},
+            #{ghfzrId,jdbcType=VARCHAR},
+            #{ghfzrName,jdbcType=VARCHAR},
+            #{ghnf,jdbcType=VARCHAR},
+            #{ghwcTime,jdbcType=TIMESTAMP},
+            #{ghbb,jdbcType=VARCHAR},
+            #{ghyxqs,jdbcType=TIMESTAMP},
+            #{ghyxqe,jdbcType=TIMESTAMP},
+            #{xbbmId,jdbcType=VARCHAR},
+            #{xbbmName,jdbcType=VARCHAR},
+            #{xbbmfzrId,jdbcType=VARCHAR},
+            #{xbbmfzrName,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{type,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <update id="updateZlghList" parameterType="com.alibaba.fastjson.JSONObject">
+        update zlgh_baseinfo
+        set
+        zlghName =#{zlghName,jdbcType=VARCHAR},
+        ghnr =#{ghnr,jdbcType=VARCHAR},
+        ghzgbmId=#{ghzgbmId,jdbcType=VARCHAR},
+        ghzgbmName=#{ghzgbmName,jdbcType=VARCHAR},
+        ghfzrId=#{ghfzrId,jdbcType=VARCHAR},
+        ghfzrName=#{ghfzrName,jdbcType=VARCHAR},
+        ghnf =#{ghnf,jdbcType=VARCHAR},
+        ghwcTime=#{ghwcTime,jdbcType=TIMESTAMP},
+        ghbb=#{ghbb,jdbcType=VARCHAR},
+        ghyxqs=#{ghyxqs,jdbcType=TIMESTAMP},
+        ghyxqe=#{ghyxqe,jdbcType=TIMESTAMP},
+        xbbmId=#{xbbmId,jdbcType=VARCHAR},
+        xbbmName=#{xbbmName,jdbcType=VARCHAR},
+        xbbmfzrId=#{xbbmfzrId,jdbcType=VARCHAR},
+        xbbmfzrName=#{xbbmfzrName,jdbcType=VARCHAR},
+        remark=#{remark,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where zlghId=#{zlghId}
+    </update>
+
+    <select id="getFiles" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        a.id,
+        a.zlghId,
+        a.fileName,
+        a.fileSize,
+        a.CREATE_BY_,
+        DATE_FORMAT(a.CREATE_TIME_,'%Y-%m-%d')  CREATE_TIME_,
+        b.FULLNAME_ AS CREATE_BY_NAME
+        from
+        zlgh_fileinfo a
+        left join OS_user b on a.CREATE_BY_=b.USER_ID_
+        <where>
+            <if test="standardId != null and standardId != ''">
+                a.zlghId = #{standardId}
+            </if>
+            <if test="fileName != null and fileName != ''">
+                AND a.fileName like concat('%', #{fileName},'%')
+            </if>
+        </where>
+    </select>
+    <delete id="deleteFileByIds" parameterType="java.util.Map">
+        delete from zlgh_fileinfo
+        where
+        id IN
+        <foreach collection="fileIds" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <select id="getDepManById" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        os_rel_inst.*,
+        os_user.USER_ID_,
+        os_user.FULLNAME_,
+        os_group.NAME_ as groupName
+        FROM
+        os_rel_inst
+        LEFT JOIN os_user ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+        left join os_group on os_rel_inst.PARTY1_=os_group.GROUP_ID_
+        where REL_TYPE_KEY_='GROUP-USER-LEADER'
+        <if test="GROUP_ID_ != null and GROUP_ID_ != ''">
+            and os_rel_inst.PARTY1_=#{GROUP_ID_}
+        </if>
+        <if test="groupName != null and groupName != ''">
+            and os_group.NAME_=#{groupName}
+        </if>
+        <if test="USER_ID_ != null and USER_ID_ != ''">
+            and os_rel_inst.PARTY2_=#{USER_ID_}
+        </if>
+        <if test="TENANT_ID_ != null and TENANT_ID_ != ''">
+            and os_rel_inst.TENANT_ID_=#{TENANT_ID_}
+        </if>
+        <if test="deptIds !=null and deptIds != ''">
+            AND os_rel_inst.PARTY1_ IN
+            <foreach collection="deptIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="queryZlghFileList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zlgh_fileinfo.*
+        FROM
+        zlgh_fileinfo
+        WHERE
+        zlgh_fileinfo.zlghId IN
+        <foreach collection="zlghIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <delete id="deleteZlghFile" parameterType="java.util.Map">
+        delete from zlgh_fileinfo
+        <where>
+            <if test="zlghIds != null and zlghIds !=''">
+                AND zlghId IN
+                <foreach collection="zlghIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+    <delete id="deleteZlgh" parameterType="java.util.Map">
+        delete from zlgh_baseinfo
+        <where>
+            <if test="zlghIds != null and zlghIds !=''">
+                zlghId IN
+                <foreach collection="zlghIds" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+</mapper>

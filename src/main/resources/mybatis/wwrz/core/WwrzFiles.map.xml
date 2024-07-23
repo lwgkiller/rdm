@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.wwrz.core.dao.WwrzFilesDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <insert id="addFileInfos" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into wwrz_files(
+            id,
+            fileName,
+            fileSize,
+            fileDesc,
+            mainId,
+            fileType,
+            reportType,
+            reportCode,
+            <if test="reportDate != null and reportDate != ''">
+                reportDate,
+            </if>
+            <if test="reportValidity != null and reportValidity != ''">
+                reportValidity,
+            </if>
+            productModel,
+            reportName,
+            productManager,
+        productManagerId,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            indexSort,
+            designModel
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{fileSize,jdbcType=VARCHAR},
+            #{fileDesc,jdbcType=VARCHAR},
+            #{mainId,jdbcType=VARCHAR},
+            #{fileType,jdbcType=VARCHAR},
+            #{reportType,jdbcType=VARCHAR},
+            #{reportCode,jdbcType=VARCHAR},
+            <if test="reportDate != null and reportDate != ''">
+                #{reportDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="reportValidity != null and reportValidity != ''">
+                #{reportValidity,jdbcType=TIMESTAMP},
+            </if>
+            #{productModel,jdbcType=VARCHAR},
+            #{reportName,jdbcType=VARCHAR},
+            #{productManager,jdbcType=VARCHAR},
+        #{productManagerId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{indexSort,jdbcType=VARCHAR},
+            #{designModel,jdbcType=VARCHAR}
+        )
+    </insert>
+    <select id="getFileListByMainId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        select * from wwrz_files
+        where mainId = #{mainId}
+    </select>
+    <delete id="delFileById" parameterType="java.lang.String">
+        delete from wwrz_files where id = #{id}
+    </delete>
+    <select id="getFileList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            os_user.FULLNAME_ as userName,
+            A.*
+            FROM
+            wwrz_files A
+            LEFT JOIN os_user ON A.CREATE_BY_ = os_user.USER_ID_
+        where A.mainId = #{mainId}
+        AND A.fileType=#{fileType}
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getFileListByParam" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        os_user.FULLNAME_ as userName,
+        A.*
+        FROM
+        wwrz_files A
+        LEFT JOIN os_user ON A.CREATE_BY_ = os_user.USER_ID_
+        where A.mainId = #{mainId}
+        AND A.fileType=#{fileType}
+    </select>
+    <select id="getReportFileList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            A.*,
+            B.FULLNAME_ as creator,
+            A.indexSort,
+            (case A.valid when '0' then '有效' when '1' then '作废' end) as validText
+        FROM
+            wwrz_files A
+            left join os_user B on A.CREATE_BY_ = B.USER_ID_
+        <where>
+            <if test="fileType != null and fileType != ''">
+                and A.fileType = #{fileType}
+            </if>
+            <if test="productModel != null and productModel != ''">
+                and A.productModel like CONCAT('%',#{productModel},'%')
+            </if>
+            <if test="fileName != null and fileName != ''">
+                and A.fileName like CONCAT('%',#{fileName},'%')
+            </if>
+            <if test="reportType != null and reportType != ''">
+                and A.reportType = #{reportType}
+            </if>
+            <if test="valid != null and valid != ''">
+                and A.valid = #{valid}
+            </if>
+            <if test="reportName != null and reportName != ''">
+                and A.reportName like CONCAT('%',#{reportName},'%')
+            </if>
+            <if test="reportDate_start != null and reportDate_start != ''">
+                AND A.reportDate &gt;= #{reportDate_start}
+            </if>
+            <if test="reportDate_end != null and reportDate_end != ''">
+                AND A.reportDate &lt;= #{reportDate_end}
+            </if>
+            <if test="reportValidity_start != null and reportValidity_start != ''">
+                AND A.reportValidity &gt;= #{reportValidity_start}
+            </if>
+            <if test="reportValidity_end != null and reportValidity_end != ''">
+                AND A.reportValidity &lt;= #{reportValidity_end}
+            </if>
+            <if test="reportDate != null and reportDate != ''">
+                and DATE_FORMAT(A.reportDate,'%Y-%m-%d') = #{reportDate}
+            </if>
+            <if test="reportValidity != null and reportValidity != ''">
+                and DATE_FORMAT(A.reportValidity,'%Y-%m-%d') = #{reportValidity}
+            </if>
+            <if test="reportCode != null and reportCode != ''">
+                and A.reportCode like CONCAT('%',#{reportCode},'%')
+            </if>
+            <if test="productManager != null and productManager != ''">
+                and A.productManager like CONCAT('%',#{productManager},'%')
+            </if>
+            <if test="designModel != null and designModel != ''">
+                and A.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getFileObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+         SELECT
+            A.*
+        FROM
+            wwrz_files A
+        where A.id = #{fileId}
+    </select>
+    <update id="updateReportFile" parameterType="java.util.Map">
+        update wwrz_files
+        set
+        <if test="mainId != null and mainId != ''">
+            mainId=#{mainId,jdbcType=VARCHAR},
+        </if>
+        <if test="fileName != null and fileName != ''">
+            fileName=#{fileName,jdbcType=VARCHAR},
+        </if>
+        <if test="fileSize != null and fileSize != ''">
+            fileSize=#{fileSize,jdbcType=VARCHAR},
+        </if>
+        <if test="reportType != null and reportType != ''">
+            reportType=#{reportType,jdbcType=VARCHAR},
+        </if>
+        <if test="reportCode != null and reportCode != ''">
+            reportCode=#{reportCode,jdbcType=VARCHAR},
+        </if>
+        <if test="reportDate != null and reportDate != ''">
+            reportDate=#{reportDate,jdbcType=TIMESTAMP},
+        </if>
+        <if test="reportName != null and reportName != ''">
+            reportName=#{reportName,jdbcType=VARCHAR},
+        </if>
+        <if test="valid != null and valid != ''">
+            valid=#{valid,jdbcType=VARCHAR},
+        </if>
+        <if test="productManager != null and productManager != ''">
+            productManager=#{productManager,jdbcType=VARCHAR},
+        </if>
+        <if test="productManagerId != null and productManagerId != ''">
+            productManagerId=#{productManagerId,jdbcType=VARCHAR},
+        </if>
+        <if test="productModel != null and productModel != ''">
+            productModel=#{productModel,jdbcType=VARCHAR},
+        </if>
+        <if test="reportValidity != null and reportValidity != ''">
+            reportValidity=#{reportValidity,jdbcType=TIMESTAMP},
+        </if>
+        <if test="UPDATE_TIME_ != null and UPDATE_TIME_ != ''">
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+        </if>
+        <if test="designModel != null and designModel != ''">
+            designModel=#{designModel,jdbcType=VARCHAR},
+        </if>
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR}
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getFileByReportCode" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+         SELECT
+            A.*
+        FROM
+            wwrz_files A
+        where A.reportCode = #{reportCode}
+            and A.reportType = #{reportType}
+            and A.productModel = #{productModel}
+            and A.reportName = #{reportName}
+    </select>
+
+    <delete id="batchSetValid" parameterType="java.util.Map">
+        update  wwrz_files set valid = '1'
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="addReportFileInfos" parameterType="java.util.Map">
+        insert into wwrz_files(
+            id,
+            fileName,
+            fileSize,
+            fileDesc,
+            mainId,
+            fileType,
+            reportType,
+            reportCode,
+            <if test="reportDate != null and reportDate != ''">
+                reportDate,
+            </if>
+            <if test="reportValidity != null and reportValidity != ''">
+                reportValidity,
+            </if>
+            productModel,
+            reportName,
+            productManager,
+        productManagerId,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            valid,
+            designModel
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{fileName,jdbcType=VARCHAR},
+            #{fileSize,jdbcType=VARCHAR},
+            #{fileDesc,jdbcType=VARCHAR},
+            #{mainId,jdbcType=VARCHAR},
+            #{fileType,jdbcType=VARCHAR},
+            #{reportType,jdbcType=VARCHAR},
+            #{reportCode,jdbcType=VARCHAR},
+            <if test="reportDate != null and reportDate != ''">
+                #{reportDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="reportValidity != null and reportValidity != ''">
+                #{reportValidity,jdbcType=TIMESTAMP},
+            </if>
+            #{productModel,jdbcType=VARCHAR},
+            #{reportName,jdbcType=VARCHAR},
+            #{productManager,jdbcType=VARCHAR},
+        #{productManagerId,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{valid,jdbcType=VARCHAR},
+            #{designModel,jdbcType=VARCHAR}
+        )
+    </insert>
+
+
+    <update id="updateIndexSort" parameterType="java.util.Map">
+        update wwrz_files
+        set
+        indexSort = #{indexSort}
+        WHERE
+        id=#{id}
+    </update>
+
+    <select id="getOutDateReportList" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.id,
+            DATE_FORMAT(A.reportValidity,'%Y-%m-%d') as reportValidity
+        FROM
+         wwrz_files A
+        WHERE
+        A.fileType = 'report'
+        AND A.valid = '0'
+        and A.reportValidity is not null
+        and (TO_DAYS(A.reportValidity) - TO_DAYS(now()) &lt; 0)
+    </select>
+    <update id="updateReportStatus" parameterType="java.lang.String">
+        update wwrz_files set valid = '1' where id = #{id}
+    </update>
+    <select id="getReport" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        *
+        from
+        wwrz_files
+        <where>
+            valid = '0'
+            <if test="send3Msg != null and send3Msg != ''">
+            and (send3Msg ='' or send3Msg is null)
+            </if>
+            <if test="send1Msg != null and send1Msg != ''">
+                and (send1Msg ='' or send1Msg is null)
+            </if>
+            <if test="fileType != null and fileType != ''">
+                and fileType = #{fileType}
+            </if>
+            <if test="reportValidity != null and reportValidity != ''">
+                and DATE_FORMAT(reportValidity,'%Y-%m-%d')  &lt;= #{reportValidity}
+            </if>
+        </where>
+    </select>
+    <update id="updateReportSend1Msg" parameterType="java.lang.String">
+        update wwrz_files set send1Msg = 'yes' where id = #{id}
+    </update>
+    <update id="updateReportSend3Msg" parameterType="java.lang.String">
+        update wwrz_files set send3Msg = 'yes' where id = #{id}
+    </update>
+</mapper>

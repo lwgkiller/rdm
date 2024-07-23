@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.productDataManagement.core.dao.CpxhsqDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryApplyList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        product_design_model_apply_base.*,
+        bpm_inst.STATUS_ as status,
+        bpm_inst.INST_ID_ as instId,
+        bpm_inst.ACT_INST_ID_
+        FROM
+        product_design_model_apply_base
+        left join bpm_inst on product_design_model_apply_base.id=bpm_inst.BUS_KEY_
+        <where>
+            <if test="applyNumber != null and applyNumber != ''">
+                product_design_model_apply_base.applyNumber like CONCAT('%',#{applyNumber},'%')
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND product_design_model_apply_base.creatorName like CONCAT('%',#{creatorName},'%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND product_design_model_apply_base.productName like CONCAT('%',#{productName},'%')
+            </if>
+            <if test="designModel != null and designModel != ''">
+                AND product_design_model_apply_base.designModel like CONCAT('%',#{designModel},'%')
+            </if>
+            <if test="productNotes != null and productNotes != ''">
+                AND product_design_model_apply_base.productNotes like CONCAT('%',#{productNotes},'%')
+            </if>
+            <if test="mainParamDesc != null and mainParamDesc != ''">
+                AND product_design_model_apply_base.mainParamDesc like CONCAT('%',#{mainParamDesc},'%')
+            </if>
+            <if test="roleName !=null and roleName !=''">
+                <choose>
+                    <when test="roleName =='other'">
+                        AND (bpm_inst.STATUS_ != 'DRAFTED' OR product_design_model_apply_base.CREATE_BY_ = #{currentUserId})
+                    </when>
+                </choose>
+            </if>
+
+        </where>
+        <include refid="orderBy"/>
+    </select>
+
+
+    <select id="queryApplyDetail" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select
+        product_design_model_apply_base.*,
+        bpm_inst.INST_ID_ as instId
+        from
+        product_design_model_apply_base left join bpm_inst on product_design_model_apply_base.id=bpm_inst.BUS_KEY_
+        where
+        id =#{id}
+    </select>
+
+    <select id="queryUserListByRole" parameterType="java.util.Map" resultType="java.util.Map">
+         SELECT
+				os_rel_inst.PARTY2_ as userId,
+				os_user.FULLNAME_ as userName,
+        os_group.NAME_
+        FROM
+        os_rel_inst
+        LEFT JOIN os_dimension ON os_rel_inst.DIM1_ = os_dimension.DIM_ID_
+        LEFT JOIN os_group ON os_rel_inst.PARTY1_ = os_group.GROUP_ID_
+				LEFT JOIN os_user ON os_rel_inst.PARTY2_ = os_user.USER_ID_
+				        WHERE
+        os_dimension.DIM_KEY_ = '_ROLE'
+				AND os_rel_inst.REL_TYPE_KEY_='GROUP-USER-BELONG'
+				AND os_group.KEY_ = #{groupKey}
+    </select>
+
+
+    <insert id="insertCpxhsq" parameterType="com.alibaba.fastjson.JSONObject">
+        insert into product_design_model_apply_base(
+        id
+        ,productName
+        ,departId
+        ,departName
+        ,designModel
+        ,dischargeStage
+        ,mainParamDesc
+        ,productNotes
+        ,region
+        ,motor
+        ,mainPump
+        ,mainValve
+        ,location
+        ,creatorName
+        ,jsggType
+        ,abroad
+        ,productManagerId
+        ,productManagerName
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR}
+        ,#{productName,jdbcType=VARCHAR}
+        ,#{departId,jdbcType=VARCHAR}
+        ,#{departName,jdbcType=VARCHAR}
+        ,#{designModel,jdbcType=VARCHAR}
+        ,#{dischargeStage,jdbcType=VARCHAR}
+        ,#{mainParamDesc,jdbcType=VARCHAR}
+        ,#{productNotes,jdbcType=VARCHAR}
+        ,#{region,jdbcType=VARCHAR}
+        ,#{motor,jdbcType=VARCHAR}
+        ,#{mainPump,jdbcType=VARCHAR}
+        ,#{mainValve,jdbcType=VARCHAR}
+        ,#{location,jdbcType=VARCHAR}
+        ,#{creatorName,jdbcType=VARCHAR}
+        ,#{jsggType,jdbcType=VARCHAR}
+        ,#{abroad,jdbcType=VARCHAR}
+        ,#{productManagerId,jdbcType=VARCHAR}
+        ,#{productManagerName,jdbcType=VARCHAR}
+        ,#{CREATE_BY_,jdbcType=VARCHAR}
+        ,#{CREATE_TIME_ ,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+
+    <update id="updateCpxhsq" parameterType="com.alibaba.fastjson.JSONObject">
+        update product_design_model_apply_base
+        set
+        productName=#{productName,jdbcType=VARCHAR},
+        designModel=#{designModel,jdbcType=VARCHAR},
+        dischargeStage=#{dischargeStage,jdbcType=VARCHAR},
+        mainParamDesc=#{mainParamDesc,jdbcType=VARCHAR},
+        productNotes=#{productNotes,jdbcType=VARCHAR},
+        region=#{region,jdbcType=VARCHAR},
+        motor=#{motor,jdbcType=VARCHAR},
+        mainPump=#{mainPump,jdbcType=VARCHAR},
+        mainValve=#{mainValve,jdbcType=VARCHAR},
+        location=#{location,jdbcType=VARCHAR},
+        jsggType=#{jsggType,jdbcType=VARCHAR},
+        abroad=#{abroad,jdbcType=VARCHAR},
+        productManagerId=#{productManagerId,jdbcType=VARCHAR},
+        productManagerName=#{productManagerName,jdbcType=VARCHAR},
+        pin8=#{pin8,jdbcType=VARCHAR},
+        wlNumber=#{wlNumber,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where
+        id=#{id}
+    </update>
+
+    <update id="updateCpxhsqNumber" parameterType="com.alibaba.fastjson.JSONObject">
+        update product_design_model_apply_base
+        set
+        applyNumber=#{applyNumber,jdbcType=VARCHAR}
+        where
+        id=#{id}
+    </update>
+
+
+    <delete id="deleteCpxhsq" parameterType="com.alibaba.fastjson.JSONObject">
+        delete from product_design_model_apply_base
+        <where>
+            <if test="ids != null and ids != ''">
+                id in
+                <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="queryDesignModelValid" parameterType="com.alibaba.fastjson.JSONObject" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            product_design_model_apply_base.*
+        FROM
+            product_design_model_apply_base
+            LEFT JOIN bpm_inst ON product_design_model_apply_base.id = bpm_inst.BUS_KEY_
+        WHERE
+            product_design_model_apply_base.designModel = #{designModel}
+            AND product_design_model_apply_base.id != #{id}
+            AND (
+                bpm_inst.STATUS_ = 'SUCCESS_END'
+                OR bpm_inst.STATUS_ = 'RUNNING'
+            )
+    </select>
+</mapper>

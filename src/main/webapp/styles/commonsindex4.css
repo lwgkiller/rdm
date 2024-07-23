@@ -1,0 +1,552 @@
+
+.description h3 {
+    color: #CC0000;
+    border-bottom: solid 1px #888;
+}
+
+/*待办任务管理-tab增加背景*/
+.mini-toolbar tr:nth-of-type(1) {
+    border-bottom: 1px solid #fff; /* background:#eee; */
+    color: #666;
+}
+
+.mini-toolbar tr:nth-of-type(2) {
+    background: #fff;
+    color: #666;
+}
+
+.mini-toolbar-background, .liucheng-background {
+    background: #fff;
+}
+
+.background-top a {
+    color: #555;
+}
+
+.top-bar-bg a {
+    color: #555;
+}
+
+.mini-button .mini-button-icon-text {
+    color: #666;
+}
+
+.form-in-detail tr th {
+    border: 1px solid #ccc;
+    background-color: #eee;
+    color: #666;
+}
+
+.form-in-detail tr td {
+    border: 1px solid #ccc;
+}
+
+.form-in-detail caption {
+    color: #333;
+    background-color: #fff;
+}
+
+.form-in-detail input {
+    border: 1px solid #ccc;
+    background-color: #FFFFE6;
+    color: #333;
+}
+
+.form-in-detail select {
+    border: 1px solid #ccc;
+    background-color: #FFFFE6;
+}
+
+.form-in-detail textarea {
+    border: 1px solid #ccc;
+    color: #333;
+}
+
+/* table-list */
+body {
+    color: #333;
+    font-size: 14px;
+}
+
+.table-list {
+    border: 1px solid #ddd;
+}
+
+.table-list th, .table-list td {
+    border: 1px solid #ddd;
+    padding: 8px 0px;
+}
+
+.table-list tbody tr:hover {
+    background: #f5f5f5;
+}
+
+.topBtn {
+    margin: 0 auto;
+    padding: 0;
+    background-color: white !important;
+}
+
+/**------*/
+.mini-button-text {
+    color: #fff;
+}
+
+.mini-button .mini-button-icon-text, .mini-button .mini-button-icon:before {
+    color: #fff !important;
+}
+
+.mini-button .mini-button-icon:before {
+    color: #fff;
+}
+
+/*销售目标管理明细*/
+#mini-toolbar1 .mini-toolbar {
+    background: #eee;
+}
+
+html body .mini-grid-table .mini-grid-row-selected, html body .mini-grid-table .mini-grid-row-selected .mini-grid-cell {
+    background: #29A5BF !important;
+}
+
+/*折叠按钮*/
+.searchSelectionBtn:hover {
+    color: #409eff;
+}
+
+.searchSelectionBtn {
+    color: #999;
+}
+
+#west #toolbar1 {
+    border-bottom: 1px solid #eee;
+    box-sizing: border-box;
+}
+
+.mini-grid-rows-view {
+    background: #fff;
+}
+
+/*树的tr颜色统一改为白色*/
+.mini-tree-nowrap tr.mini-grid-row, .mini-tree-nodes tbody tr.mini-grid-row {
+    background: #fff !important;
+}
+
+/*分配用户-用户选择下拉框*/
+.mini-listbox-item-selected td {
+    background: #66b1ff;
+    color: #fff;
+}
+
+/*分配用户-用户选择*/
+.mini-panel-header-inner {
+    background: #409EFF;
+    padding: 10px 4px 5px 8px;
+}
+
+.mini-panel .mini-panel-icon:before, .mini-panel .mini-panel-title {
+    color: #fff;
+}
+
+/*下拉框*/
+.mini-popup {
+    border: 1px solid #eee;
+}
+
+/*分配用户-用户选择-用户组*/
+.mini-layout-region-header {
+    border-bottom: 1px solid #ddd;
+    padding: 0;
+}
+
+/*分配用户-用户选择-树的背景色*/
+.mini-layout-region-west {
+    background: #fff;
+}
+
+.mini-layout-region {
+    border-color: #ececec !important;
+    border-top: 0;
+}
+
+.mini-tabs-bodys {
+    border-color: #cce2ed;
+}
+
+.buttonContainer > span:hover:before {
+    color: #fff;
+}
+
+/*关联表单*/
+.mini-panel-toolbar {
+    background: #fff;
+    border-bottom: none;
+}
+
+.detail .shadowBox th {
+    border: 1px solid #ececec;
+    border-top: 0px;
+}
+
+.detail .shadowBox td {
+    border-bottom: 1px solid #ececec;
+}
+
+.detail .shadowBox tr:first-child th, .detail .shadowBox tr:first-child td {
+    border-top: 1px solid #ececec;
+}
+
+.detail .shadowBox tr td:last-child {
+    border-right: 1px solid #ececec;
+}
+
+.mini-tab {
+    border-color: transparent;
+    background: #fff;
+}
+
+/*选中*/
+
+.mini-tab-active {
+    background: #fff;
+    /* border-bottom: none;*/
+    border-bottom: 2px solid #409EFF;
+}
+
+/*报表管理    新增报表  上传报表-上传按钮*/
+.mini-htmlfile .mini-buttonedit-button {
+    background: #29A5BF;
+    color: #fff;
+}
+
+div.topToolBar > div {
+    background: #fff;
+}
+
+.mini-toolbar {
+    background: #fff;
+}
+
+.mini-toolbar table {
+    background: #fff;
+}
+
+.mini-layout-border {
+    background: #fff;
+}
+
+.mini-textboxlist .mini-textboxlist-item {
+    background: #ecf5ff;
+    color: #409eff;
+}
+
+.mini-tips .msg-content {
+    border: solid 1px #66b1ff;
+    background-color: #66b1ff;
+
+}
+
+.mini-tips em.MyCenter {
+    background: #66b1ff;
+}
+
+.mini-tips em.colorRed {
+    background: #ff5050;
+}
+
+em.MyCenter .MyHint {
+    background: #fff;
+    color: #555;
+}
+
+em.MyCenter .MyContent {
+    background: #fff;
+}
+
+em.MyCenter .MyContent .MyYuan {
+    background: #ff5050;
+    color: #fff;
+}
+
+em.MyCenter .MyContent h4 {
+    color: #ff5050;
+}
+
+em.MyCenter .MyContent h4 > span {
+    color: #555;
+}
+
+em.MyCenter .MyContent .ConentS {
+    color: #555;
+}
+
+em.MyCenter .MyContent .MyLook {
+    color: #ff5050;
+    border: 1px solid #ff5050;
+
+}
+
+/*首页消息弹出框*/
+.mini-messagebox {
+    background: #409EFF;
+}
+
+.mini-messagebox em.dot {
+    color: #ccc;
+}
+
+.mini-messagebox a.remind span {
+    font-size: 14px;
+    color: #333;
+}
+
+.mini-messagebox a.remind span:hover {
+    color: #458bff;
+}
+
+.form-container {
+    box-shadow: 0px 5px 5px 0px rgba(179, 179, 179, 0.15);
+}
+
+.table-detail {
+    border: solid 1px #d1d1d1;
+}
+
+.table-detail caption {
+    color: #999;
+}
+
+.table-detail > tbody > tr > td {
+    color: #999;
+}
+
+.form-messages li {
+    color: #999;
+}
+
+.tabHeader {
+    border-bottom: 1px solid #e6e6e6;
+    background: #fff;
+}
+
+.tabHeaderRight span {
+    color: #999;
+}
+
+.tabHeaderRight span:hover i {
+    color: #3581ff;
+}
+
+.tabRollBox li {
+    color: #333;
+}
+
+.tabRollBox li.activeSpan {
+    border-bottom: 2px solid #3581ff;
+}
+
+.tabRollBox li b {
+    background: #f2511c;
+}
+
+/*-----------------------------------shouyeTab end-----------------------------------------------*/
+
+/*-----------------------------------------------------------------------------------element开始-------------------------------------------------------------------------*/
+body .mini-button {
+    background: #409EFF;
+    border: 1px solid #409EFF;
+}
+
+body a:hover.mini-button {
+    border-color: #66b1ff;
+    background: #66b1ff;
+}
+
+body a.mini-button-disabled,
+body a:hover.mini-button-disabled {
+    border-color: #66b1ff;
+    background: #66b1ff;
+}
+
+.mini-button .mini-button-text {
+    color: #fff;
+}
+
+/*下拉按钮*/
+body .mini-menubutton {
+    border: 1px solid;
+    border-color: #409EFF;
+}
+
+.mini-menubutton .mini-button-text {
+    color: #fff;
+}
+
+body a:hover.mini-menubutton {
+    border-color: #66b1ff;
+    background-color: #66b1ff;
+}
+
+body a.mini-button-popup {
+    padding: 0 6px;
+    background: #66b1ff;
+    border-color: #66b1ff;
+    background-color: #66b1ff;
+}
+
+/*按钮颜色*/
+body .mini-button.btn-red {
+    border-color: #fbc4c4;
+    background: #fef0f0;
+    color: #f56c6c;
+}
+
+body .mini-button.btn-red:hover {
+    border-color: #f78989;
+    background: #f56c6c;
+    color: #fff;
+}
+
+.btn-red .mini-button-text {
+    color: #f56c6c;
+}
+
+.btn-red:hover .mini-button-text {
+    color: #fff;
+}
+
+/*下拉按钮hover*/
+.mini-menuitem-hover {
+    background: #f5f7fa;
+    border: 0;
+}
+
+/*获得焦点时的颜色*/
+.mini-textbox-focus .mini-textbox-border,
+.mini-buttonedit-focus .mini-buttonedit-border {
+    border-color: #ddd;
+}
+
+.mini-textbox-border,
+.mini-buttonedit-border {
+    border-color: #ddd;
+}
+
+.searchBox li > span,
+.searchBox li span.text {
+    color: #777;
+}
+
+.unfoldBtn {
+    color: #409EFF;
+}
+
+/*分页按钮栏*/
+.mini-pager {
+    background: #fff;
+}
+
+.mini-grid-pager {
+    border-top: 1px solid #ebeef5;
+}
+
+.mini-pager .mini-button {
+    background: #409EFF;
+}
+
+/* 列表头部  颜色*/
+.mini-grid-headerCell {
+    background: #f5f7fa;
+    border: 0;
+    border-bottom: 1px solid #ebeef5;
+}
+
+.moreHeader .mini-grid-headerCell {
+    border: 1px solid #e6eaf2;
+}
+
+.mini-grid-cell {
+    border: 0;
+    border-bottom: 1px solid #ebeef5;
+}
+
+/*表单奇数偶数行颜色设置颜色*/
+.mini-grid-row-alt {
+    background: #fff;
+}
+
+/*table列表hover变黄色*/
+tbody tr.mini-grid-row:hover, body tr.mini-grid-row-hover {
+    background: #eef6ff;
+}
+
+/*点击行变色*/
+html body .mini-grid-table .mini-grid-row-selected, html body .mini-grid-table .mini-grid-row-selected .mini-grid-cell {
+    background: #eef6ff !important;
+}
+
+/*行的字体颜色*/
+.mini-grid-cell-inner a,
+.mini-grid-cell-inner,
+.mini-grid-headerCell-inner {
+    color: #909399;
+}
+
+/*列表 操作栏  更多 */
+div.ops_btn {
+    color: #409EFF;
+}
+
+div.buttonContainer span {
+    background: #fff;
+}
+
+div.buttonContainer span:hover {
+    background: #66b1ff;
+    color: #fff;
+}
+
+.ops_btnOne span {
+    color: #409EFF;
+}
+
+.ops_btnOne span:hover {
+    color: #1287ff;
+}
+
+.ops_btnOne span:first-child:after {
+    color: #d0e7ff;
+}
+
+.ops_btn:before {
+    color: #d0e7ff;
+}
+
+/*表单设计---边框容器*/
+.fieldsetContainer .title {
+    color: #555;
+}
+
+/*树的颜色*/
+.mini-tree-icon::before {
+    color: #8ac3ff;
+}
+
+.mini-tab-active {
+    border-bottom-color: #409EFF;
+}
+
+.rx-font:before {
+    color: #409EFF;
+}
+
+.removeFile .rx-font:before {
+    color: #f56c6c;
+}
+
+.mini-textbox-focus .mini-textbox-border {
+    border-color: #409EFF;
+
+}
+
+/*-----------------------------------------------------------------------------------element结束-------------------------------------------------------------------------*/

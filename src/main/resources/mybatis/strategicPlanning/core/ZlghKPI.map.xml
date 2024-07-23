@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.strategicPlanning.core.dao.ZlghKPIDao">
+
+
+    <resultMap id="zlghKpi" type="com.redxun.strategicPlanning.core.domain.ZlghKpi">
+        <id property="id" column="id" />
+        <result property="kpiName" column="KPI_name" />
+        <result property="creator" column="creator" />
+    </resultMap>
+
+    <resultMap id="zlghAnnualData" type="com.redxun.strategicPlanning.core.domain.ZlghAnnualData">
+        <id property="id" column="id" />
+        <result property="kpiId" column="KPI_id" />
+        <result property="folk" column="folk" />
+        <result property="target" column="target" />
+        <result property="reality" column="reality" />
+        <result property="creator" column="creator" />
+        <result property="createBy" column="CREATE_BY_" />
+        <result property="createTime" column="CREATE_TIME_" />
+        <result property="tenantId" column="TENANT_ID_" />
+        <result property="updateBy" column="UPDATE_BY_" />
+        <result property="updateTime" column="UPDATE_TIME_" />
+        <association property="zlghKpi" column="KPI_id" javaType="com.redxun.strategicPlanning.core.domain.ZlghKpi" resultMap="zlghKpi" />
+    </resultMap>
+
+    <resultMap id="zlghKpiData" type="com.redxun.strategicPlanning.core.domain.ZlghKpi">
+        <id property="id" column="id" />
+        <result property="kpiName" column="KPI_name" />
+        <result property="creator" column="kpiCreator" />
+        <collection property="zlghAnnualDataList" ofType="com.redxun.strategicPlanning.core.domain.ZlghAnnualData">
+            <id property="id" column="dataId" />
+            <result property="kpiId" column="KPI_id" />
+            <result property="folk" column="folk" />
+            <result property="target" column="target" />
+            <result property="reality" column="reality" />
+            <result property="creator" column="kpiDataCreator" />
+            <result property="createBy" column="CREATE_BY_" />
+            <result property="createTime" column="CREATE_TIME_" />
+            <result property="tenantId" column="TENANT_ID_" />
+            <result property="updateBy" column="UPDATE_BY_" />
+            <result property="updateTime" column="UPDATE_TIME_" />
+        </collection>
+    </resultMap>
+
+
+    <sql id="selectAllField" >
+        id, KPI_id, folk, target, reality, CREATE_BY_, CREATE_TIME_, TENANT_ID_, UPDATE_BY_, UPDATE_TIME_
+    </sql>
+
+    <select id="selectZlghAnnualDataList" parameterType="map" resultMap="zlghKpiData">
+        SELECT
+        zk.id,
+        zk.KPI_name,
+        zad.id as dataId,
+        zad.KPI_id,
+        zad.folk,
+        zad.target,
+        zad.reality,
+        zad.CREATE_BY_,
+        ouzk.FULLNAME_ AS kpiCreator,
+        ouzad.FULLNAME_ AS kpiDataCreator,
+        zad.CREATE_TIME_,
+        zad.TENANT_ID_,
+        zad.UPDATE_BY_,
+        zad.UPDATE_TIME_
+        FROM
+            zlgh_kpi zk
+            LEFT JOIN `zlgh_annual_data` zad ON zad.KPI_id = zk.id
+            LEFT JOIN os_user ouzk ON zk.CREATE_BY_ = ouzk.USER_ID_
+            LEFT JOIN os_user ouzad ON zad.CREATE_BY_ = ouzad.USER_ID_
+        WHERE
+            1 = 1
+            AND folk BETWEEN ( YEAR ( now( ) ) - 1 )
+            AND ( YEAR ( now( ) ) + 4 )
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryKPITest" parameterType="java.util.Map" resultMap="zlghKpi">
+        SELECT
+        zk.id AS id,
+        zk.KPI_name AS KPI_name,
+        os_user.FULLNAME_ AS creator
+        FROM
+        `zlgh_kpi` AS zk
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zk`.CREATE_BY_
+        <where>
+            <if test="KPI_name != null and KPI_name != ''">
+                zk.KPI_name like CONCAT('%',#{KPI_name},'%')
+            </if>
+
+        </where>
+        <if test="sortOrder != null and sortOrder !='' ">
+            order by ${sortField} ${sortOrder}
+        </if>
+        <include refid="pageSql"/>
+    </select>
+   <!-- /* and zk.id in(SELECT KPI_id FROM zlgh_annual_data WHERE folk BETWEEN(YEAR(now())-1)and(YEAR(now())+4))*/-->
+
+    <select id="selectAnnualData" parameterType="java.util.Map" resultMap="zlghAnnualData">
+        SELECT id, KPI_id, folk, target, reality, zlgh_annual_data.CREATE_BY_, FULLNAME_ AS creator, zlgh_annual_data.CREATE_TIME_,
+        zlgh_annual_data.TENANT_ID_, zlgh_annual_data.UPDATE_BY_, zlgh_annual_data.UPDATE_TIME_
+        FROM zlgh_annual_data LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = zlgh_annual_data.CREATE_BY_
+        <where>
+            <if test="KPI_id != null and KPI_id != ''">
+                KPI_id= #{KPI_id,jdbcType=VARCHAR}
+            </if>
+            and folk BETWEEN(YEAR(now())-1)and(YEAR(now())+4)
+        </where>
+        <include refid="orderBy"/>
+    </select>
+
+    <select id="queryAnnualData" parameterType="java.util.Map" resultMap="zlghAnnualData">
+        SELECT
+        zad.id, zad.KPI_id, zad.folk, zad.target, zad.reality, zad.CREATE_BY_, FULLNAME_ AS creator, zad.CREATE_TIME_,
+        zad.TENANT_ID_, zad.UPDATE_BY_, zad.UPDATE_TIME_
+        FROM
+        zlgh_annual_data zad
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zad`.CREATE_BY_
+        <where>
+            <if test="kpiId != null and kpiId != ''">
+                KPI_id= #{kpiId}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryKPIList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        zk.KPI_name AS KPI_name,
+        zk.UPDATE_TIME_,
+        zad.folk AS folk,
+        zad.target AS target,
+        zad.reality AS reality,
+        os_user.FULLNAME_ AS creator
+        FROM
+        `zlgh_kpi` AS zk
+        left join `zlgh_annual_data` AS zad on zk.id=zad.KPI_id
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zk`.CREATE_BY_
+        <where>
+            <if test="KPI_name != null and KPI_name != ''">
+                zk.KPI_name like CONCAT('%',#{KPI_name},'%')
+            </if>
+        </where>
+        GROUP BY KPI_name,folk
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countKPIList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( 1 )
+        FROM
+        zlgh_Kpi  AS zk
+        <where>
+            <if test="KPI_name != null and KPI_name != ''">
+                zk.KPI_name like CONCAT('%',#{KPI_name},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="createKpi" parameterType="java.util.Map">
+        insert into
+        zlgh_annual_data
+        (id,
+        KPI_id,
+        folk,
+        target,
+        reality,
+        ,CREATE_BY_
+        ,CREATE_TIME_)
+        VALUES(
+        #{id,jdbcType=VARCHAR},
+        #{KPI_id,jdbcType=VARCHAR},
+        #{folk,jdbcType=VARCHAR},
+        #{target,jdbcType=VARCHAR},
+        #{reality,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+<!--根据id跟年份判定指标是否存在-->
+    <select id="queryKpiByIdAndFolk" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+         *
+        FROM
+        zlgh_annual_data
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+            and folk=#{folk}
+        </where>
+    </select>
+
+    <insert id="insertE" parameterType="java.util.List">
+        <foreach collection="selE" item="item" separator=";">
+            INSERT INTO zlgh_annual_data(folk,target,reality)
+            VALUES(
+            #{folk},
+            #{target},
+            #{reality})
+        </foreach>
+    </insert>
+
+    <update id="updateKpi" parameterType="java.util.List">
+
+        <foreach collection="list" item="bean" index="index" open="" close="" separator=";">
+            UPDATE zlgh_annual_data
+            set
+                     target=#{bean.target},
+                     reality=#{bean.reality}
+            <where>
+                KPI_id=#{bean.id}
+                <if test="bean.folk!=null and bean.folk!=''">
+                   and folk=#{bean.folk}
+                </if>
+
+            </where>
+        </foreach>
+
+    </update>
+
+
+    <insert id="insertUpData" parameterType="java.util.List">
+        <foreach collection="list" item="item" separator=";">
+            INSERT INTO zlgh_annual_data(id,KPI_id,folk,target,reality)
+            VALUES(
+            UUID(),
+            #{item.id},
+            #{item.folk},
+            #{item.target},
+            #{item.reality})
+        </foreach>
+    </insert>
+
+    <delete id="deleteKpi" parameterType="java.lang.String">
+        delete from zlgh_annual_data
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+        </where>
+    </delete>
+
+    <select id="selectSaveData" resultType="com.alibaba.fastjson.JSONObject">
+          select  KPI_id,folk from zlgh_annual_data
+    </select>
+
+    <insert id="createKpiAu" parameterType="java.util.Map">
+        INSERT into zlgh_annual_data(
+        id,
+        KPI_id,
+        folk,
+        CREATE_BY_,
+        CREATE_TIME_)
+        VALUES(
+        #{id,jdbcType=VARCHAR},
+        #{KPI_id,jdbcType=VARCHAR},
+        #{folk,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP})
+    </insert>
+<!--========================================我是美丽的分割线========================================-->
+    <select id="queryKPINameList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT zk.*,os_user.FULLNAME_ AS creator
+        FROM zlgh_kpi AS zk
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zk`.CREATE_BY_
+        <where>
+            <if test="KPI_name != null and KPI_name != ''">
+                zk.KPI_name like CONCAT('%',#{KPI_name},'%')
+            </if>
+        </where>
+        order by `order`+0 asc
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="countKPINameList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count( * )
+        FROM
+        zlgh_Kpi  AS zk
+        <where>
+            <if test="KPI_name != null and KPI_name != ''">
+                zk.KPI_name like CONCAT('%',#{KPI_name},'%')
+            </if>
+        </where>
+    </select>
+    <select id="selectById" parameterType="com.redxun.strategicPlanning.core.domain.ZlghAnnualData" resultMap="zlghAnnualData">
+        SELECT
+        id, KPI_id, folk, target, reality, `zlgh_annual_data`.CREATE_BY_, FULLNAME_ AS creator, `zlgh_annual_data`.CREATE_TIME_,
+        `zlgh_annual_data`.TENANT_ID_, `zlgh_annual_data`.UPDATE_BY_, `zlgh_annual_data`.UPDATE_TIME_
+        FROM
+        zlgh_annual_data
+        LEFT JOIN `os_user` ON `os_user`.`USER_ID_` = `zlgh_annual_data`.CREATE_BY_
+        <where>
+            <if test="id != null and id != ''">
+                id= #{id}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateKpiName" parameterType="java.util.Map">
+        UPDATE zlgh_kpi SET
+		`order`=#{order,jdbcType=VARCHAR},
+		KPI_name=#{KPI_name,jdbcType=VARCHAR},
+		UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+		UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP},
+		TENANT_ID_=#{TENANT_ID_,jdbcType=VARCHAR}
+		WHERE
+		id=#{id}
+    </update>
+    <update id="batchUpdate" parameterType="java.util.List">
+        <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+            update zlgh_annual_data
+            <set>
+                <if test="item.kpiId != null and item.kpiId != ''">KPI_id=#{item.kpiId},</if>
+                <if test="item.folk != null and item.folk != ''">folk=#{item.folk},</if>
+                <if test="item.target != null">target=#{item.target},</if>
+                <if test="item.reality != null">reality=#{item.reality},</if>
+                <if test="item.createBy != null and item.createBy != ''">CREATE_BY_=#{item.createBy},</if>
+                <if test="item.tenantId != null and item.tenantId != ''">TENANT_ID_=#{item.tenantId},</if>
+                <if test="item.updateBy != null and item.updateBy != ''">UPDATE_BY_=#{item.updateBy},</if>
+                UPDATE_TIME_ = SYSDATE()
+            </set>
+            where id = #{item.id}
+        </foreach>
+    </update>
+
+
+    <delete id="deleteKpiName" parameterType="java.lang.String">
+        delete from zlgh_kpi
+        <where>
+            <if test="id != null and id != ''">
+                id=#{id}
+            </if>
+        </where>
+    </delete>
+    <delete id="batchDelete">
+        delete from zlgh_annual_data where id in
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="createKpiName" parameterType="java.util.Map">
+        INSERT INTO zlgh_kpi
+		(
+		id
+        ,`order`
+        ,KPI_name
+        ,CREATE_BY_
+        ,CREATE_TIME_
+        )values(
+        #{id,jdbcType=VARCHAR},
+        #{order,jdbcType=VARCHAR},
+        #{KPI_name,jdbcType=VARCHAR},
+        #{CREATE_BY_,jdbcType=VARCHAR},
+        #{CREATE_TIME_,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <insert id="batchInsert" parameterType="java.util.List">
+        <foreach collection="list" item="item" index="index" open="" separator=";" close="">
+            INSERT INTO zlgh_annual_data (id,KPI_id,folk,target,reality,CREATE_BY_,CREATE_TIME_)
+            values
+            (#{item.id},#{item.kpiId},#{item.folk},#{item.target},#{item.reality},#{item.createBy}, SYSDATE())
+        </foreach>
+    </insert>
+
+</mapper>

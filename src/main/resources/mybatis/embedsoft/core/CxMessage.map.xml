@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.embedsoft.core.dao.CxMessageDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="startIndex != null and startIndex != '' ">
+                limit ${startIndex}, ${pageSize}
+            </if>
+            <if test="startIndex == null or startIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="queryCxMsgList" parameterType="java.util.Map" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        soft_message.*,
+        (select isRead
+        from soft_sendlist
+        where
+        soft_sendlist.msgId = soft_message.msgId and soft_sendlist.recId = #{userId})
+        as isRead,
+        os_user.FULLNAME_ AS userName
+        FROM
+        soft_message
+        LEFT JOIN os_user ON os_user.USER_ID_ = soft_message.CREATE_BY_
+        <where>
+            <if test="content != null and content != ''">
+                content like CONCAT('%',#{content},'%')
+            </if>
+            <if test="userId != null and userId != ''">
+                and
+                #{userId} in (
+                select soft_sendlist.recId
+                from soft_sendlist
+                where soft_sendlist.msgId = soft_message.msgId
+                )
+            </if>
+        </where>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="countCxMsgList" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        soft_message
+        LEFT JOIN os_user ON os_user.USER_ID_ = soft_message.CREATE_BY_
+        <if test="content != null and content != ''">
+            content like CONCAT('%',#{content},'%')
+        </if>
+        <if test="userId != null and userId != ''">
+            and
+            #{userId} in (
+            select soft_sendlist.recId
+            from soft_sendlist
+            where soft_sendlist.msgId = soft_message.msgId
+            )
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+
+    <select id="getCxMsgByUserId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+      SELECT
+            B.content,
+            B.CREATE_TIME_,
+            B.cxResId,
+            A.linkId,
+            A.msgId,
+            E.designModel as designTypeName,
+            D.cxName
+        FROM
+            soft_sendlist A
+            LEFT JOIN soft_message B ON A.msgId = B.msgId
+            LEFT JOIN soft_cxRes D ON B.cxResId = D.id
+            LEFT JOIN product_spectrum E ON D.designType = E.id
+        WHERE
+            A.isRead = 0
+            AND A.recId = #{userId}
+    </select>
+    <update id="updateReadStatus" parameterType="com.alibaba.fastjson.JSONObject">
+        update soft_sendlist
+        set
+        isRead=#{isRead,jdbcType=VARCHAR},
+        UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+        UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        where msgId =#{msgId}
+        and recId=#{userId}
+    </update>
+</mapper>

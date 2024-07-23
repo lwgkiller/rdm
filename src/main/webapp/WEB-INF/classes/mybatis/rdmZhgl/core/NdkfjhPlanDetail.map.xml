@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.redxun.rdmZhgl.core.dao.NdkfjhPlanDetailDao">
+    <sql id="pageSql">
+        <if test="pageSize != null and pageSize != '' ">
+            <if test="currentIndex != null and currentIndex != '' ">
+                limit ${currentIndex}, ${pageSize}
+            </if>
+            <if test="currentIndex == null or currentIndex == '' ">
+                limit ${pageSize}
+            </if>
+        </if>
+    </sql>
+    <sql id="orderBy">
+        <if test="sortField != null and sortField != '' ">
+            <if test="sortOrder != null and sortOrder !='' ">
+                order by ${sortField} ${sortOrder}
+            </if>
+            <if test="sortOrder == null or sortOrder =='' ">
+                order by ${sortField} asc
+            </if>
+        </if>
+    </sql>
+    <select id="query" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        B.planCode,
+        CONCAT( DATE_FORMAT( A.startDate, '%Y-%m-%d' ), '至', DATE_FORMAT( A.endDate, '%Y-%m-%d' ) ) AS startEndDate,
+        A.*,
+        C.FULLNAME_ as chargerManName,
+        D.FULLNAME_ as managerName,
+        E.FULLNAME_ as responsorName,
+        F.NAME_ as chargerDeptName
+        FROM
+        ndkfjh_plandetail A
+        LEFT JOIN ndkfjh_plan B ON A.mainId = B.id
+        left join os_user C on A.chargerMan = C.USER_ID_
+        left join os_user D on A.manager = D.USER_ID_
+        left join os_user E on A.responsor = E.USER_ID_
+        left join os_group F on A.chargerDept = F.GROUP_ID_
+        where isDel = '0'
+        <if test="planYear != null and planYear != ''">
+            and B.planYear = #{planYear}
+        </if>
+        <if test="planCode != null and planCode != ''">
+            and B.planCode like CONCAT('%',#{planCode},'%')
+        </if>
+        <if test="planSource != null and planSource != ''">
+            and A.planSource = #{planSource}
+        </if>
+        <if test="id != null and id != ''">
+            and A.id = #{id}
+        </if>
+        <if test="userId != null and userId != ''">
+            and (A.chargerMan = #{userId} or A.responsor = #{userId})
+        </if>
+        <if test="chargerManName != null and chargerManName != ''">
+            and C.FULLNAME_ like CONCAT('%',#{chargerManName},'%')
+        </if>
+        <if test="chargerDeptName != null and chargerDeptName != ''">
+            and F.NAME_ like CONCAT('%',#{chargerDeptName},'%')
+        </if>
+        <if test="managerName != null and managerName != ''">
+            and D.FULLNAME_ like CONCAT('%',#{managerName},'%')
+        </if>
+        <if test="responsorName != null and responsorName != ''">
+            and E.FULLNAME_ like CONCAT('%',#{responsorName},'%')
+        </if>
+        <if test="productName != null and productName != ''">
+            and A.productName like CONCAT('%',#{productName},'%')
+        </if>
+        order by B.budgetId,A.id
+        <include refid="pageSql"/>
+    </select>
+    <select id="getObjectById" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*,
+            B.planCode,
+            C.FULLNAME_ as chargerManName,
+            D.FULLNAME_ as managerName,
+            E.FULLNAME_ as responsorName,
+            F.NAME_ as chargerDeptName
+        FROM
+            ndkfjh_plandetail A
+            left join ndkfjh_plan B on A.mainId = B.id
+            left join os_user C on A.chargerMan = C.USER_ID_
+            left join os_user D on A.manager = D.USER_ID_
+            left join os_user E on A.responsor = E.USER_ID_
+            left join os_group F on A.chargerDept = F.GROUP_ID_
+        WHERE
+	    A.id = #{id}
+    </select>
+    <select id="getObjectByDetailId" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            ndkfjh_plandetail A
+            where id=#{detailId}
+    </select>
+    <select id="getObjectByParam" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            ndkfjh_plandetail A
+            where id=#{detailId}
+            and yearMonth = #{yearMonth}
+    </select>
+    <insert id="addObject" parameterType="com.alibaba.fastjson.JSONObject">
+         INSERT INTO ndkfjh_plandetail (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            mainId,
+            productName,
+            detailId,
+            target,
+            planSource,
+            startDate,
+            endDate,
+            chargerMan,
+            chargerDept,
+            responsor,
+            currentStage,
+            stageFinishDate,
+            finishRate,
+            isDelay,
+            delayDays,
+            remark,
+            yearMonth
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{mainId,jdbcType=VARCHAR},
+            #{productName,jdbcType=VARCHAR},
+            #{detailId,jdbcType=VARCHAR},
+            #{target,jdbcType=VARCHAR},
+            #{planSource,jdbcType=VARCHAR},
+            #{startDate,jdbcType=TIMESTAMP},
+            #{endDate,jdbcType=TIMESTAMP},
+            #{chargerMan,jdbcType=VARCHAR},
+            #{chargerDept,jdbcType=VARCHAR},
+            #{responsor,jdbcType=VARCHAR},
+            #{currentStage,jdbcType=VARCHAR},
+            #{stageFinishDate,jdbcType=TIMESTAMP},
+            #{finishRate,jdbcType=VARCHAR},
+            #{isDelay,jdbcType=VARCHAR},
+            #{delayDays,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{yearMonth,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateObject" parameterType="java.util.Map">
+        update ndkfjh_plandetail
+        <set>
+            <if test="productName != null and productName != ''">
+                productName=#{productName,jdbcType=VARCHAR},
+            </if>
+            <if test="detailId != null and detailId != ''">
+                detailId=#{detailId,jdbcType=VARCHAR},
+            </if>
+            <if test="target != null and target != ''">
+                target=#{target,jdbcType=VARCHAR},
+            </if>
+            <if test="planSource != null and planSource != ''">
+                planSource=#{planSource,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceName != null and sourceName != ''">
+                sourceName=#{sourceName,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceId != null and sourceId != ''">
+                sourceId=#{sourceId,jdbcType=VARCHAR},
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                yearMonth=#{yearMonth,jdbcType=VARCHAR},
+            </if>
+            <if test="startDate != null and startDate != ''">
+                startDate=#{startDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="endDate != null and endDate != ''">
+                endDate=#{endDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="chargerMan != null and chargerMan != ''">
+                chargerMan=#{chargerMan,jdbcType=VARCHAR},
+            </if>
+            <if test="responseMan != null and responseMan != ''">
+                responseMan=#{responseMan,jdbcType=VARCHAR},
+            </if>
+            <if test="chargerDept != null and chargerDept != ''">
+                chargerDept=#{chargerDept,jdbcType=VARCHAR},
+            </if>
+            <if test="manager != null and manager != ''">
+                manager=#{manager,jdbcType=VARCHAR},
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                yearMonth=#{yearMonth,jdbcType=VARCHAR},
+            </if>
+            <if test="responsor != null and responsor != ''">
+                responsor=#{responsor,jdbcType=VARCHAR},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            currentStage=#{currentStage,jdbcType=VARCHAR},
+            stageFinishDate=#{stageFinishDate,jdbcType=TIMESTAMP},
+            finishRate=#{finishRate,jdbcType=VARCHAR},
+            isDelay=#{isDelay,jdbcType=VARCHAR},
+            delayDays=#{delayDays,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <delete id="batchDelete" parameterType="java.util.Map">
+        update ndkfjh_plandetail set isDel = '1'
+        WHERE
+        id in
+        <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="delById" parameterType="java.lang.String">
+        update  ndkfjh_plandetail set isDel = '1' where id = #{id}
+    </delete>
+    <delete id="delHistoryById" parameterType="java.lang.String">
+        delete from ndkfjh_processhistory where detailId = #{mainId}
+    </delete>
+    <select id="getSpecialOrderList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        export_info.*
+        FROM
+        export_info
+        LEFT JOIN bpm_inst ON export_info.ckddId = bpm_inst.BUS_KEY_
+        WHERE
+        bpm_inst.STATUS_ != 'DRAFTED'
+        <if test="model != null and model != ''">
+            and export_info.model = #{model}
+        </if>
+        <if test="cpzg != null and cpzg != ''">
+            and export_info.cpzg like CONCAT('%',#{cpzg},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getNewProductList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.*
+        FROM
+        xpsz_baseinfo A
+        where 1=1
+        <if test="productModel != null and productModel != ''">
+            and A.productModel like CONCAT('%',#{productModel},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getNewProductObj" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT
+        A.*
+        FROM
+        xpsz_baseinfo A
+        where id=#{id}
+    </select>
+    <select id="getProjectList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        A.projectId,
+        A.projectName,
+        B.stageName as currentStage,
+        A.currentStageId,
+        C.planEndTime as stageFinishDate,
+        (select min(planStartTime) from project_plan where projectId = A.projectId) as startDate,
+        (select max(planEndTime) from project_plan where projectId = A.projectId) as endDate
+        FROM
+        project_baseinfo A
+        LEFT JOIN project_stagedivide B ON A.currentStageId = B.stageId
+        left join project_plan C on A.currentStageId = C.stageId and C.projectId = A.projectId
+        LEFT JOIN bpm_inst D ON A.projectId = D.BUS_KEY_
+        where D.STATUS_ != 'DRAFTED'
+        AND A.mainDepId in
+        <foreach collection="deptIds" index="index" item="deptId" open="(" separator="," close=")">
+            #{deptId}
+        </foreach>
+        <if test="projectName != null and projectName != ''">
+            and A.projectName like CONCAT('%',#{projectName},'%')
+        </if>
+        <include refid="orderBy"/>
+        <include refid="pageSql"/>
+    </select>
+    <select id="getPlanDetailList" resultType="java.util.Map" parameterType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.*
+        FROM
+            ndkfjh_plandetail A
+            LEFT JOIN ndkfjh_plan B ON A.mainId = B.id
+            where  A.planSource is not null
+                and A.isDel = '0'
+            	and B.planYear = #{planYear}
+    </select>
+    <select id="getProjectObj" parameterType="java.lang.String" resultType="com.alibaba.fastjson.JSONObject">
+         SELECT
+            A.projectId,
+            A.projectName,
+            B.stageName as currentStage,
+            A.currentStageId,
+            C.planEndTime as stageFinishDate,
+            (select min(planStartTime) from project_plan where projectId = A.projectId) as startDate,
+            (select max(planEndTime) from project_plan where projectId = A.projectId) as endDate
+        FROM
+         project_baseinfo A
+        LEFT JOIN project_stagedivide B ON A.currentStageId = B.stageId
+        left join project_plan C on A.currentStageId = C.stageId and C.projectId = A.projectId
+        LEFT JOIN bpm_inst D ON A.projectId = D.BUS_KEY_
+        where A.projectId = #{projectId}
+    </select>
+    <insert id="addProcessHistory" parameterType="java.util.Map">
+         INSERT INTO ndkfjh_processhistory (
+            id,
+            CREATE_BY_,
+            CREATE_TIME_,
+            UPDATE_BY_,
+            UPDATE_TIME_,
+            detailId,
+            processDate,
+            currentStage,
+            stageFinishDate,
+            finishRate,
+            isDelay,
+            delayDays,
+            remark
+        )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{CREATE_BY_,jdbcType=VARCHAR},
+            #{CREATE_TIME_,jdbcType=TIMESTAMP},
+            #{UPDATE_BY_,jdbcType=VARCHAR},
+            #{UPDATE_TIME_,jdbcType=TIMESTAMP},
+            #{detailId,jdbcType=VARCHAR},
+            #{processDate,jdbcType=VARCHAR},
+            #{currentStage,jdbcType=VARCHAR},
+            #{stageFinishDate,jdbcType=TIMESTAMP},
+            #{finishRate,jdbcType=VARCHAR},
+            #{isDelay,jdbcType=VARCHAR},
+            #{delayDays,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateProcessHistory" parameterType="java.util.Map">
+        update ndkfjh_processhistory
+        <set>
+            <if test="currentStage != null and currentStage != ''">
+                currentStage=#{currentStage,jdbcType=VARCHAR},
+            </if>
+            <if test="stageFinishDate != null and stageFinishDate != ''">
+                stageFinishDate=#{stageFinishDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="UPDATE_BY_ != null and UPDATE_BY_ != ''">
+                UPDATE_BY_=#{UPDATE_BY_,jdbcType=VARCHAR},
+            </if>
+            finishRate=#{finishRate,jdbcType=VARCHAR},
+            isDelay=#{isDelay,jdbcType=VARCHAR},
+            delayDays=#{delayDays,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},
+            UPDATE_TIME_=#{UPDATE_TIME_,jdbcType=TIMESTAMP}
+        </set>
+        WHERE
+        id=#{id}
+    </update>
+    <select id="getProcessHistory" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        select * from ndkfjh_processhistory where detailId = #{detailId} and processDate =#{yearMonth}
+    </select>
+    <select id="getProcessList" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+         SELECT
+        A.*,
+        B.productName,
+        C.FULLNAME_ AS chargerManName,
+        E.FULLNAME_ AS responsorName
+    FROM
+        ndkfjh_processhistory A
+        LEFT JOIN ndkfjh_plandetail B ON A.detailId = B.id
+        LEFT JOIN os_user C ON B.chargerMan = C.USER_ID_
+        LEFT JOIN os_user E ON B.responsor = E.USER_ID_
+        WHERE
+            A.isDelay = '1'
+            AND A.processDate = #{yearMonth}
+        ORDER BY A.delayDays+'' DESC
+    </select>
+    <select id="reportResponseFinishRate" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.responsor,
+            B.FULLNAME_ AS responsorName,
+            count( 1 ) AS totalNum
+        FROM
+            ndkfjh_plandetail A
+            LEFT JOIN os_user B ON A.responsor = B.USER_ID_
+        WHERE
+            A.isDel = '0'
+            AND A.yearMonth = #{yearMonth}
+            <if test="isDelay != null and isDelay != ''">
+                and A.isDelay = #{isDelay}
+            </if>
+        GROUP BY
+            A.responsor
+    </select>
+    <select id="getPlanNumByResponse" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count( 1 ) AS totalNum
+        FROM
+        ndkfjh_plandetail A
+        LEFT JOIN os_user B ON A.responsor = B.USER_ID_
+        WHERE
+        A.isDel = '0'
+        AND A.yearMonth = #{yearMonth}
+        and A.isDelay = '1'
+        and A.responsor = #{responsor}
+    </select>
+    <select id="reportDeptFinishRate" parameterType="com.alibaba.fastjson.JSONObject"
+            resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            A.chargerDept,
+            B.NAME_ AS deptName,
+            count( 1 ) AS totalNum
+        FROM
+            ndkfjh_plandetail A
+            LEFT JOIN os_group B ON A.chargerDept = B.GROUP_ID_
+        WHERE
+            A.isDel = '0'
+            AND A.yearMonth = #{yearMonth}
+        GROUP BY
+            A.chargerDept
+    </select>
+    <select id="getPlanNumByDept" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.lang.Integer">
+        SELECT
+        count( 1 ) AS totalNum
+        FROM
+        ndkfjh_plandetail A
+        WHERE
+        A.isDel = '0'
+        AND A.yearMonth = #{yearMonth}
+        and A.isDelay = '1'
+        and A.chargerDept = #{chargerDept}
+    </select>
+    <select id="getReportDetailList" parameterType="com.alibaba.fastjson.JSONObject" resultType="java.util.Map">
+          SELECT
+            B.planCode,
+            CONCAT( DATE_FORMAT( A.startDate, '%Y-%m-%d' ), '至', DATE_FORMAT( A.endDate, '%Y-%m-%d' ) ) AS startEndDate,
+            A.*,
+            C.FULLNAME_ as chargerManName,
+            D.FULLNAME_ as managerName,
+            E.FULLNAME_ as responsorName,
+            F.NAME_ as chargerDeptName
+            FROM
+            ndkfjh_plandetail A
+            LEFT JOIN ndkfjh_plan B ON A.mainId = B.id
+            left join os_user C on A.chargerMan = C.USER_ID_
+            left join os_user D on A.manager = D.USER_ID_
+            left join os_user E on A.responsor = E.USER_ID_
+            left join os_group F on A.chargerDept = F.GROUP_ID_
+            where A.isDel = '0'
+				and A.yearMonth = #{yearMonth}
+				<if test="userName != null and userName !=''">
+                    and  E.FULLNAME_ = #{userName}
+                </if>
+                <if test="isDelay != null and isDelay !=''">
+                    and  A.isDelay = #{isDelay}
+                </if>
+                <if test="deptName != null and deptName !=''">
+                    and  F.NAME_ = #{deptName}
+                </if>
+    </select>
+</mapper>
